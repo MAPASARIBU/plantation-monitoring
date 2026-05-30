@@ -632,7 +632,10 @@ const renderPemupukanTable = () => {
     if (!tbody) return;
     tbody.innerHTML = '';
     [...db.pemupukan].reverse().forEach(p => {
-        const pct = getProgressStr(p.realizedKg, p.targetKg);
+        const tKg = p.targetkg || p.targetKg || 0;
+        const rKg = p.realizedkg || p.realizedKg || 0;
+        const sDate = p.startdate || p.startDate;
+        const pct = getProgressStr(rKg, tKg);
         let actionBtn = '-';
         if (currentUser.role !== 'Senior Field Manager') {
             const riwayatBtn = `<button class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="viewPemupukanHistory(${p.id}, '${p.block}', '${p.plan}')"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat</button>`;
@@ -647,7 +650,7 @@ const renderPemupukanTable = () => {
             } else {
                 actionBtn = `
                     <div style="display:flex; flex-direction:column; gap:3px;">
-                        <button class="btn btn-primary" style="padding: 2px 6px; font-size: 0.7rem;" onclick="openAddRealizationModal(${p.id}, '${p.block}', '${p.plan}', '${p.startDate}')"><i class="fa-solid fa-plus"></i> Tambah</button>
+                        <button class="btn btn-primary" style="padding: 2px 6px; font-size: 0.7rem;" onclick="openAddRealizationModal(${p.id}, '${p.block}', '${p.plan}', '${sDate}')"><i class="fa-solid fa-plus"></i> Tambah</button>
                         ${riwayatBtn}
                         <button class="btn btn-logout" style="padding: 2px 6px; font-size: 0.7rem; background: #ef4444; color: white; border-radius: 4px;" onclick="closePemupukan(${p.id}, '${p.block}')"><i class="fa-solid fa-check"></i> Tutup</button>
                     </div>
@@ -657,11 +660,11 @@ const renderPemupukanTable = () => {
             
         tbody.innerHTML += `
             <tr>
-                <td>${p.startDate || '-'}</td>
+                <td>${sDate || '-'}</td>
                 <td><strong>${p.block}</strong></td>
                 <td>${p.plan}</td>
-                <td>${p.targetKg}</td>
-                <td>${p.realizedKg}</td>
+                <td>${tKg}</td>
+                <td>${rKg}</td>
                 <td>
                     <div style="display:flex; align-items:center; gap:10px;">
                         <div class="progress-wrapper" style="width: 100px; margin:0;"><div class="progress-fill" style="width: ${pct}%"></div></div>
@@ -798,8 +801,10 @@ window.viewPemupukanHistory = async (id, block, plan) => {
             rows = '<tr><td colspan="3" style="text-align:center;">Belum ada riwayat</td></tr>';
         } else {
             data.forEach(h => {
-                const prestasi = (h.manpower && h.manpower > 0) ? (h.addedKg / h.manpower).toFixed(1) + ' Kg/HK' : '-';
-                rows += `<tr><td>${h.dateAdded}</td><td><strong>+ ${h.addedKg} Kg</strong></td><td>${h.manpower || 0} Org <br><small style="color:gray;">${prestasi}</small></td></tr>`;
+                const dAdded = h.dateadded || h.dateAdded;
+                const aKg = h.addedkg || h.addedKg;
+                const prestasi = (h.manpower && h.manpower > 0) ? (aKg / h.manpower).toFixed(1) + ' Kg/HK' : '-';
+                rows += `<tr><td>${dAdded}</td><td><strong>+ ${aKg} Kg</strong></td><td>${h.manpower || 0} Org <br><small style="color:gray;">${prestasi}</small></td></tr>`;
             });
         }
         
