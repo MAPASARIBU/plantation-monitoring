@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plantation Monitoring System</title>
+    <meta name="description" content="Modern Dashboard for Estate Plantation Monitoring">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-card glass-card animate-fade-in">
+            <div class="login-header">
+                <div class="logo-icon large">
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+                <h2>AgriMonitor</h2>
+                <h3 style="font-size: 1rem; color: #1f2937; margin: 10px 0 5px; text-transform: uppercase;">PT Tolan Tiga - Region Bengkulu</h3>
+            </div>
+            <form id="login-form">
+                <div class="form-group">
+                    <select id="login-estate" class="form-control" required style="text-align: center; font-weight: bold;">
+                        <option value="" disabled selected>LIST ESTATE</option>
+                        <option>Bunga Tanjung Estate</option>
+                        <option>Sungai Teramang Estate</option>
+                        <option>Air Bukik Estate</option>
+                        <option>Air Buluh Estate</option>
+                        <option>Malin Demang Estate</option>
+                        <option>Batu Kuda Estate</option>
+                        <option>Sungai Jerinjing Estate</option>
+                        <option>Muko Muko Estate</option>
+                        <option>Talang Petai Estate</option>
+                        <option>Sungai Kiang Estate</option>
+                        <option>Tanah Rekah Estate</option>
+                        <option>Air Majunto Estate</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Nama Pengguna</label>
+                    <input type="text" id="login-username" class="form-control" placeholder="Masukkan nama..." required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password" class="form-control" placeholder="Masukkan password..." required>
+                </div>
+                <div id="login-error" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 10px; display: none;"></div>
+                <button type="submit" class="btn btn-primary btn-block">Masuk <i class="fa-solid fa-arrow-right"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-container" id="app-container" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+                <h2>AgriMonitor</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item active" data-view="dashboard">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        <span>Dashboard</span>
+                    </li>
+                    <li class="nav-item" data-view="vehicle">
+                        <i class="fa-solid fa-truck"></i>
+                        <span>Vehicle Motion</span>
+                    </li>
+                    <li class="nav-item" data-view="pemupukan">
+                        <i class="fa-solid fa-seedling"></i>
+                        <span>Pemupukan</span>
+                    </li>
+                    <li class="nav-item" data-view="upkeep">
+                        <i class="fa-solid fa-hand-holding-droplet"></i>
+                        <span>Upkeep</span>
+                    </li>
+                    <li class="nav-item" data-view="tonase">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                        <span>Tonase / Jam</span>
+                    </li>
+                    <li class="nav-item" data-view="harvesting" onclick="switchModule('harvesting')">
+                        <i class="fa-solid fa-basket-shopping"></i>
+                        <span>Harvesting</span>
+                    </li>
+                    <li class="nav-item" data-view="master" onclick="switchModule('master')">
+                        <i class="fa-solid fa-database"></i>
+                        <span>Master Data</span>
+                    </li>
+                    <li class="nav-item" data-view="users" id="nav-users" onclick="switchModule('users')" style="display: none;">
+                        <i class="fa-solid fa-users-gear"></i>
+                        <span>User Management</span>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <button id="btn-logout" class="btn btn-logout">
+                    <i class="fa-solid fa-right-from-bracket"></i> Keluar
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="mobile-toggle" id="mobile-toggle">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h1 id="page-title">Dashboard</h1>
+                </div>
+                
+                <div class="topbar-right">
+                    <div class="notification-bell">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="user-profile">
+                        <img src="https://ui-avatars.com/api/?name=User&background=0D8B4E&color=fff" alt="User Profile" class="avatar">
+                        <div class="user-info">
+                            <span class="user-name">John Doe</span>
+                            <span class="user-role" id="display-role">Senior Field Manager</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dynamic Views Container -->
+            <div class="view-container" id="view-container">
+                <!-- Content will be injected here by app.js -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Auto Redirect & Cache Busting -->
+    <script>
+        if (window.location.port === "3000") {
+            window.location.href = "http://localhost:3005";
+        }
+    </script>
+    
+    <!-- Custom JS -->
+    <script src="app.js?v=26"></script>
+</body>
+</html>

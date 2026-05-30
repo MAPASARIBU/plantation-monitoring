@@ -1,0 +1,35 @@
+PLANTATION MONITORING
+APLIKASI INI DIRENCANAKAN UNTUK MELAKUKAN MONITORING AKTIVITY DI ESTATE AGAR PERFORMANCE DAPAT DIMONITOR SECARA UPDATE
+ADAPUN APLIKASI MELIPUTI KEGIATAN 
+1.VEHICLE MOTION MONITORING
+   MONITORING KENDARAAN INI BERTUJUAN UNTUK MEMONITORING AKTIFITAS KENDARAAN SAAT JAM BERAPA MULAI PENGIRIMAN TBS DARI BLOK DI DIVISI HINGGA TIBA DI PKS
+ITEM YANG DIMUAT DI VEHICLE MONITORING INI MELIPUTI :
+   a. Plate nomor truk (pic supir)
+   b. Supir (supir/krani)
+   c. No. Ritase Truk plate mengikuti plate nomor (pic : supir/krani)
+   c. Jumlah janjang (pic krani/supir)
+   e. Jam keberangkatan (krani atau supir yang memphoto kendaraan ) dan menginput 
+   f. Jam tiba di PKS ( pic : security :)
+   g. Sistem akan menghitung otomatis berapa lama waktu yang dibutuhkan truk dari mulai berangkat dari estate hingga sampai di depan PKS (termonitor ) 
+d.Akan ada tabel monitoring setiap truk terkait 
+   truk plate nomor ; ritase ke berapa; blok berapa (titik berangkat); jam berapa (titik berangakat);jjk;jam tiba di pks 
+
+2.UPKEEP MONITORING
+  
+3.TONASE PER JAM MONITORING
+4.PEMUPUKAN MONITORING
+   Nama blok :
+   Planing : 
+   Jumlah (pupuk):pic : assistent
+   Realisasi  : (pic krani /mandor ) 
+termonitori bertahap (in progress hingga selesai ) dan terlihat di monitor % realisasi)
+
+ROLE YANG TERLIBAT DALAM APLIKASI INI MELIPUTI :
+1.SENIOR FIELD MANAGER
+2.ESTATE MANAGER
+3.ASISTEN KEPALA
+4.DIVISION MANAGER
+5.MANDOR
+6.KRANI DIVISI
+7.Supir
+8.Security
