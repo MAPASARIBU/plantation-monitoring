@@ -1347,7 +1347,7 @@ window.addMasterBulk = async (type) => {
     const text = document.getElementById(`m-bulk-${type}`).value;
     if(!text || !text.trim()) return;
     
-    const items = text.split('\\n').map(l => l.trim()).filter(l => l !== '');
+    const items = text.split(/[\n\t,]+/).map(l => l.trim()).filter(l => l !== '');
     if(items.length === 0) return;
     
     try {
