@@ -16,6 +16,10 @@ app.use(express.json());
 // Serve static frontend files from current directory
 app.use(express.static(path.join(__dirname)));
 
+// Fallback route to serve index.html for frontend routing
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 // Database Setup
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
