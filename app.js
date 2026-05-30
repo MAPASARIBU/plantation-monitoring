@@ -1184,11 +1184,12 @@ window.renderSelectedDivisi = () => {
     const bloks = masterData.blok.filter(b => b.divisi === d.name);
     const blokRows = bloks.map(b => `<tr><td>${b.name}</td><td>${b.bjr}</td><td style="width:120px; text-align:right;"><button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-right:5px;" onclick="editMasterBlok(${b.id}, '${b.name}', ${b.bjr})">Edit</button><button type="button" class="btn btn-logout" style="padding:2px 6px; font-size:0.7rem;" onclick="deleteMaster('blok', ${b.id})">Hapus</button></td></tr>`).join('');
     
+    const safeDivName = d.name.replace(/['"\\n\\r]/g, ' ');
     contentDiv.innerHTML = `
         <div style="display:inline-flex; align-items:center; background:#f1f5f9; padding:10px 16px; border-radius:8px; font-size:0.95rem; border:1px solid #cbd5e1; margin-bottom: 20px;">
             <strong style="font-size:1.1rem; margin-right: 20px;">${d.name}</strong>
-            <button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.8rem; margin-right:5px;" onclick="editMaster('divisi', ${d.id}, '${d.name}')"><i class="fa-solid fa-pen"></i> Edit Divisi</button>
-            <button type="button" class="btn btn-logout" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteMaster('divisi', ${d.id})"><i class="fa-solid fa-trash"></i> Hapus Divisi</button>
+            <button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.8rem; margin-right:5px;" onclick="editMaster('divisi', ${d.id}, '${safeDivName}')"><i class="fa-solid fa-pen"></i> Edit Divisi</button>
+            <button type="button" class="btn btn-logout" style="background:#ef4444; color:white; border:none; padding:4px 8px; font-size:0.8rem;" onclick="deleteMaster('divisi', ${d.id})"><i class="fa-solid fa-trash"></i> Hapus Divisi</button>
         </div>
         
         <h4>Daftar Blok di ${d.name}</h4>
@@ -1226,11 +1227,12 @@ window.renderSelectedTruk = () => {
     }
     const t = masterData.truk.find(x => x.plate_number === trukPlate);
     if(t) {
+        const safeName = t.plate_number.replace(/['"\\n\\r]/g, ' ');
         contentDiv.innerHTML = `
             <div style="display:inline-flex; align-items:center; background:#f1f5f9; padding:10px 16px; border-radius:8px; font-size:0.95rem; border:1px solid #cbd5e1;">
-                <strong style="font-size:1.1rem; margin-right: 20px;">${t.plate_number}</strong>
-                <button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.8rem; margin-right:5px;" onclick="editMaster('truk', ${t.id}, '${t.plate_number}')"><i class="fa-solid fa-pen"></i> Edit</button>
-                <button type="button" class="btn btn-logout" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteMaster('truk', ${t.id})"><i class="fa-solid fa-trash"></i> Hapus</button>
+                <strong style="font-size:1.1rem; margin-right: 20px;">${safeName}</strong>
+                <button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.8rem; margin-right:5px;" onclick="editMaster('truk', ${t.id}, '${safeName}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                <button type="button" class="btn btn-logout" style="background:#ef4444; color:white; border:none; padding:4px 8px; font-size:0.8rem;" onclick="deleteMaster('truk', ${t.id})"><i class="fa-solid fa-trash"></i> Hapus</button>
             </div>
         `;
     }
@@ -1251,11 +1253,12 @@ window.renderSelectedSupir = () => {
     }
     const s = masterData.supir.find(x => x.name === supirName);
     if(s) {
+        const safeName = s.name.replace(/['"\\n\\r]/g, ' ');
         contentDiv.innerHTML = `
             <div style="display:inline-flex; align-items:center; background:#f1f5f9; padding:10px 16px; border-radius:8px; font-size:0.95rem; border:1px solid #cbd5e1;">
-                <strong style="font-size:1.1rem; margin-right: 20px;">${s.name}</strong>
-                <button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.8rem; margin-right:5px;" onclick="editMaster('supir', ${s.id}, '${s.name}')"><i class="fa-solid fa-pen"></i> Edit</button>
-                <button type="button" class="btn btn-logout" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteMaster('supir', ${s.id})"><i class="fa-solid fa-trash"></i> Hapus</button>
+                <strong style="font-size:1.1rem; margin-right: 20px;">${safeName}</strong>
+                <button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.8rem; margin-right:5px;" onclick="editMaster('supir', ${s.id}, '${safeName}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                <button type="button" class="btn btn-logout" style="background:#ef4444; color:white; border:none; padding:4px 8px; font-size:0.8rem;" onclick="deleteMaster('supir', ${s.id})"><i class="fa-solid fa-trash"></i> Hapus</button>
             </div>
         `;
     }
