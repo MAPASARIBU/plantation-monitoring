@@ -1105,6 +1105,8 @@ window.loadMasterData = async () => {
 };
 
 window.currentSelectedDivisi = window.currentSelectedDivisi || null;
+window.currentSelectedTruk = window.currentSelectedTruk || null;
+window.currentSelectedSupir = window.currentSelectedSupir || null;
 
 window.renderMasterTables = () => {
     const estateDisplays = document.querySelectorAll('.estate-name-display');
@@ -1134,10 +1136,28 @@ window.renderMasterTables = () => {
     }
     
     const cTruk = document.getElementById('container-master-truk');
-    if(cTruk) cTruk.innerHTML = masterData.truk.map(t => `<div style="display:inline-flex; align-items:center; background:#f1f5f9; padding:6px 12px; border-radius:20px; font-size:0.85rem; border:1px solid #cbd5e1; margin: 0 5px 5px 0;"><strong>${t.plate_number}</strong><div style="margin-left:10px; display:flex; gap:8px;"><i class="fa-solid fa-pen" title="Edit" style="color:var(--info); cursor:pointer;" onclick="editMaster('truk', ${t.id}, '${t.plate_number}')"></i><i class="fa-solid fa-trash" title="Hapus" style="color:var(--danger); cursor:pointer;" onclick="deleteMaster('truk', ${t.id})"></i></div></div>`).join('');
+    if (cTruk) {
+        let opts = `<option value="">-- Pilih Truk --</option>`;
+        masterData.truk.forEach(t => opts += `<option value="${t.plate_number}" ${window.currentSelectedTruk === t.plate_number ? 'selected' : ''}>${t.plate_number}</option>`);
+        cTruk.innerHTML = `
+            <label style="font-weight:bold; display:block; margin-bottom:8px;">Pilih Truk untuk Dikelola:</label>
+            <select id="select-truk-view" class="form-control" style="max-width: 300px;" onchange="selectTruk(this.value)">${opts}</select>
+            <div id="truk-selected-content" style="margin-top: 15px;"></div>
+        `;
+        if (window.currentSelectedTruk) renderSelectedTruk();
+    }
 
     const cSupir = document.getElementById('container-master-supir');
-    if(cSupir) cSupir.innerHTML = masterData.supir.map(s => `<div style="display:inline-flex; align-items:center; background:#f1f5f9; padding:6px 12px; border-radius:20px; font-size:0.85rem; border:1px solid #cbd5e1; margin: 0 5px 5px 0;"><strong>${s.name}</strong><div style="margin-left:10px; display:flex; gap:8px;"><i class="fa-solid fa-pen" title="Edit" style="color:var(--info); cursor:pointer;" onclick="editMaster('supir', ${s.id}, '${s.name}')"></i><i class="fa-solid fa-trash" title="Hapus" style="color:var(--danger); cursor:pointer;" onclick="deleteMaster('supir', ${s.id})"></i></div></div>`).join('');
+    if (cSupir) {
+        let opts = `<option value="">-- Pilih Supir --</option>`;
+        masterData.supir.forEach(s => opts += `<option value="${s.name}" ${window.currentSelectedSupir === s.name ? 'selected' : ''}>${s.name}</option>`);
+        cSupir.innerHTML = `
+            <label style="font-weight:bold; display:block; margin-bottom:8px;">Pilih Supir untuk Dikelola:</label>
+            <select id="select-supir-view" class="form-control" style="max-width: 300px;" onchange="selectSupir(this.value)">${opts}</select>
+            <div id="supir-selected-content" style="margin-top: 15px;"></div>
+        `;
+        if (window.currentSelectedSupir) renderSelectedSupir();
+    }
     
     const tbPupuk = document.getElementById('tbody-master-pupuk');
     if(tbPupuk) tbPupuk.innerHTML = masterData.pupuk.map(p => `<tr><td>${p.name}</td><td style="width:120px; text-align:right;"><button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-right:5px;" onclick="editMaster('pupuk', ${p.id}, '${p.name}')">Edit</button><button type="button" class="btn btn-logout" style="padding:2px 6px; font-size:0.7rem;" onclick="deleteMaster('pupuk', ${p.id})">Hapus</button></td></tr>`).join('');
@@ -1165,36 +1185,80 @@ window.renderSelectedDivisi = () => {
     const blokRows = bloks.map(b => `<tr><td>${b.name}</td><td>${b.bjr}</td><td style="width:120px; text-align:right;"><button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-right:5px;" onclick="editMasterBlok(${b.id}, '${b.name}', ${b.bjr})">Edit</button><button type="button" class="btn btn-logout" style="padding:2px 6px; font-size:0.7rem;" onclick="deleteMaster('blok', ${b.id})">Hapus</button></td></tr>`).join('');
     
     contentDiv.innerHTML = `
-        <div style="border: 1px solid rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; background: rgba(0,0,0,0.05);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-                <h4 style="margin:0; font-size: 1.1rem; color: #43a047;"><i class="fa-solid fa-map"></i> ${d.name}</h4>
-                <div>
-                    <button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.8rem; margin-right:5px;" onclick="editMaster('divisi', ${d.id}, '${d.name}')"><i class="fa-solid fa-pen"></i> Edit Divisi</button>
-                    <button type="button" class="btn btn-logout" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteMaster('divisi', ${d.id})"><i class="fa-solid fa-trash"></i> Hapus Divisi</button>
-                </div>
-            </div>
-            
-            <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px; margin-bottom: 15px;">
-                <label style="font-size: 0.85rem; display:block; margin-bottom: 8px;">Input Manual 1 Blok:</label>
-                <form onsubmit="addBlokToDivisi(event, '${d.name}')" style="display:flex; gap:10px;">
-                    <input type="text" id="mb-name-${d.name.replace(/\s+/g, '-')}" class="form-control" placeholder="Nama Blok" required>
-                    <input type="number" step="0.1" id="mb-bjr-${d.name.replace(/\s+/g, '-')}" class="form-control" placeholder="BJR (Kg)" required style="width: 100px;">
-                    <button type="submit" class="btn btn-primary" style="white-space:nowrap; padding: 4px 15px;">+ Blok</button>
-                </form>
-            </div>
-
-            <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px; margin-bottom: 15px;">
-                <label style="font-size: 0.85rem; display:block; margin-bottom: 8px;">Atau Paste Banyak Blok sekaligus dari Excel (Kolom 1: Blok, Kolom 2: BJR):</label>
-                <textarea id="bulk-paste-${d.name.replace(/\s+/g, '-')}" class="form-control" rows="4" placeholder="112&#9;3.5&#10;113&#9;3.2&#10;Paste di sini..."></textarea>
-                <button type="button" class="btn btn-primary" style="margin-top: 8px; font-size: 0.85rem; padding: 6px 15px;" onclick="addBlokBulk('${d.name}')"><i class="fa-solid fa-paste"></i> Simpan Hasil Paste Excel</button>
-            </div>
-            
-            <table class="data-table" style="font-size:0.85rem;">
-                <thead><tr><th>Blok</th><th>BJR (Kg)</th><th style="text-align:right;">Aksi</th></tr></thead>
-                <tbody>${blokRows || '<tr><td colspan="3" style="text-align:center;">Belum ada blok di divisi ini.</td></tr>'}</tbody>
-            </table>
+        <div style="display:inline-flex; align-items:center; background:#f1f5f9; padding:10px 16px; border-radius:8px; font-size:0.95rem; border:1px solid #cbd5e1; margin-bottom: 20px;">
+            <strong style="font-size:1.1rem; margin-right: 20px;">${d.name}</strong>
+            <button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.8rem; margin-right:5px;" onclick="editMaster('divisi', ${d.id}, '${d.name}')"><i class="fa-solid fa-pen"></i> Edit Divisi</button>
+            <button type="button" class="btn btn-logout" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteMaster('divisi', ${d.id})"><i class="fa-solid fa-trash"></i> Hapus Divisi</button>
         </div>
+        
+        <h4>Daftar Blok di ${d.name}</h4>
+        <div style="margin: 15px 0; display:flex; gap:10px;">
+            <form onsubmit="addBlokToDivisi(event, '${d.name}')" style="display:flex; gap:10px;">
+                <input type="text" id="mb-name-${d.name.replace(/\s+/g, '-')}" class="form-control" placeholder="Nama Blok Baru" required style="width: 150px;">
+                <input type="number" step="0.1" id="mb-bjr-${d.name.replace(/\s+/g, '-')}" class="form-control" placeholder="BJR" required style="width: 100px;">
+                <button type="submit" class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem;"><i class="fa-solid fa-plus"></i> Blok</button>
+            </form>
+            
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="bulk-paste-${d.name.replace(/\s+/g, '-')}" class="form-control" placeholder="Paste data excel di sini (Blok\tBJR)" style="width: 250px;">
+                <button type="button" class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem;" onclick="addBlokBulk('${d.name}')"><i class="fa-solid fa-paste"></i> Paste</button>
+            </div>
+        </div>
+        <table class="data-table" style="font-size:0.85rem;">
+            <thead><tr><th>Nama Blok</th><th>BJR (Kg)</th><th>Aksi</th></tr></thead>
+            <tbody>${blokRows || '<tr><td colspan="3" style="text-align:center;">Belum ada blok di divisi ini.</td></tr>'}</tbody>
+        </table>
     `;
+};
+
+window.selectTruk = (trukPlate) => {
+    window.currentSelectedTruk = trukPlate;
+    renderSelectedTruk();
+};
+
+window.renderSelectedTruk = () => {
+    const contentDiv = document.getElementById('truk-selected-content');
+    if (!contentDiv) return;
+    const trukPlate = window.currentSelectedTruk;
+    if (!trukPlate) {
+        contentDiv.innerHTML = '';
+        return;
+    }
+    const t = masterData.truk.find(x => x.plate_number === trukPlate);
+    if(t) {
+        contentDiv.innerHTML = `
+            <div style="display:inline-flex; align-items:center; background:#f1f5f9; padding:10px 16px; border-radius:8px; font-size:0.95rem; border:1px solid #cbd5e1;">
+                <strong style="font-size:1.1rem; margin-right: 20px;">${t.plate_number}</strong>
+                <button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.8rem; margin-right:5px;" onclick="editMaster('truk', ${t.id}, '${t.plate_number}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                <button type="button" class="btn btn-logout" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteMaster('truk', ${t.id})"><i class="fa-solid fa-trash"></i> Hapus</button>
+            </div>
+        `;
+    }
+};
+
+window.selectSupir = (supirName) => {
+    window.currentSelectedSupir = supirName;
+    renderSelectedSupir();
+};
+
+window.renderSelectedSupir = () => {
+    const contentDiv = document.getElementById('supir-selected-content');
+    if (!contentDiv) return;
+    const supirName = window.currentSelectedSupir;
+    if (!supirName) {
+        contentDiv.innerHTML = '';
+        return;
+    }
+    const s = masterData.supir.find(x => x.name === supirName);
+    if(s) {
+        contentDiv.innerHTML = `
+            <div style="display:inline-flex; align-items:center; background:#f1f5f9; padding:10px 16px; border-radius:8px; font-size:0.95rem; border:1px solid #cbd5e1;">
+                <strong style="font-size:1.1rem; margin-right: 20px;">${s.name}</strong>
+                <button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.8rem; margin-right:5px;" onclick="editMaster('supir', ${s.id}, '${s.name}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                <button type="button" class="btn btn-logout" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteMaster('supir', ${s.id})"><i class="fa-solid fa-trash"></i> Hapus</button>
+            </div>
+        `;
+    }
 };
 
 window.promptAddMaster = async (type) => {
