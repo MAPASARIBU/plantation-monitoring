@@ -579,10 +579,12 @@ const renderVehicleTable = () => {
     tbody.innerHTML = '';
     
     [...db.vehicles].reverse().forEach(v => {
-        const duration = calculateDuration(v.timeDepart, v.timeArrive);
-        const actionBtn = (!v.timeArrive && currentUser.role !== 'Senior Field Manager') ? 
+        const tDepart = v.timedepart || v.timeDepart;
+        const tArrive = v.timearrive || v.timeArrive;
+        const duration = calculateDuration(tDepart, tArrive);
+        const actionBtn = (!tArrive && currentUser.role !== 'Senior Field Manager') ? 
             `<button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem;" onclick="setArrival(${v.id})">Tiba di PKS</button>` : 
-            (!v.timeArrive ? `<span class="status-badge" style="background:#f59e0b">Di Perjalanan</span>` : `<span class="status-badge status-done">Selesai</span>`);
+            (!tArrive ? `<span class="status-badge" style="background:#f59e0b">Di Perjalanan</span>` : `<span class="status-badge status-done">Selesai</span>`);
             
         tbody.innerHTML += `
             <tr>
@@ -590,8 +592,8 @@ const renderVehicleTable = () => {
                 <td>${v.ritase}</td>
                 <td>${v.block}</td>
                 <td>${v.janjang}</td>
-                <td>${v.timeDepart}</td>
-                <td>${v.timeArrive || '-'}</td>
+                <td>${tDepart}</td>
+                <td>${tArrive || '-'}</td>
                 <td><strong>${duration}</strong></td>
                 <td>${actionBtn}</td>
             </tr>
