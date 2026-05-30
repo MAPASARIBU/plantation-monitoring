@@ -492,10 +492,7 @@ const views = {
                         <h3>Master Jenis Pupuk</h3>
                         <button type="button" class="btn btn-primary" onclick="promptAddMaster('pupuk')"><i class="fa-solid fa-plus"></i> Tambah Pupuk</button>
                     </div>
-                    <table class="data-table" style="margin-top:15px;">
-                        <thead><tr><th>Jenis Pupuk</th><th>Aksi</th></tr></thead>
-                        <tbody id="tbody-master-pupuk"></tbody>
-                    </table>
+                    <div id="container-master-pupuk"></div>
                 </div>
             </div>
         </div>
@@ -1107,6 +1104,7 @@ window.loadMasterData = async () => {
 window.currentSelectedDivisi = window.currentSelectedDivisi || null;
 window.currentSelectedTruk = window.currentSelectedTruk || null;
 window.currentSelectedSupir = window.currentSelectedSupir || null;
+window.currentSelectedPupuk = window.currentSelectedPupuk || null;
 
 window.renderMasterTables = () => {
     const estateDisplays = document.querySelectorAll('.estate-name-display');
@@ -1159,8 +1157,17 @@ window.renderMasterTables = () => {
         if (window.currentSelectedSupir) renderSelectedSupir();
     }
     
-    const tbPupuk = document.getElementById('tbody-master-pupuk');
-    if(tbPupuk) tbPupuk.innerHTML = masterData.pupuk.map(p => `<tr><td>${p.name}</td><td style="width:120px; text-align:right;"><button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-right:5px;" onclick="editMaster('pupuk', ${p.id}, '${p.name}')">Edit</button><button type="button" class="btn btn-logout" style="padding:2px 6px; font-size:0.7rem;" onclick="deleteMaster('pupuk', ${p.id})">Hapus</button></td></tr>`).join('');
+    const cPupuk = document.getElementById('container-master-pupuk');
+    if (cPupuk) {
+        let opts = `<option value="">-- Pilih Pupuk --</option>`;
+        masterData.pupuk.forEach(p => opts += `<option value="${p.name}" ${window.currentSelectedPupuk === p.name ? 'selected' : ''}>${p.name}</option>`);
+        cPupuk.innerHTML = `
+            <label style="font-weight:bold; display:block; margin-bottom:8px; margin-top:15px;">Pilih Pupuk untuk Dikelola:</label>
+            <select id="select-pupuk-view" class="form-control" style="max-width: 300px;" onchange="selectPupuk(this.value)">${opts}</select>
+            <div id="pupuk-selected-content" style="margin-top: 15px;"></div>
+        `;
+        if (window.currentSelectedPupuk) renderSelectedPupuk();
+    }
 };
 
 window.selectDivisi = (divisiName) => {
@@ -1264,32 +1271,37 @@ window.renderSelectedSupir = () => {
     }
 };
 
-window.promptAddMaster = async (type) => {
-    if (!currentUser.estate) return;
-    
-    if (type === 'pupuk') {
-        const value = prompt("Jenis Pupuk (ex: Urea):");
-        if (!value || !value.trim()) return;
-        
-        let payload = { estate: currentUser.estate, name: value.trim() };
-        try {
-            const res = await fetch(`${API_URL}/master/${type}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await res.json();
-            if (res.ok) {
-                await loadMasterData();
-            } else {
-                alert(data.error || 'Gagal menambahkan data');
-            }
-        } catch(err) { console.error(err); }
+window.selectPupuk = (pupukName) => {
+    window.currentSelectedPupuk = pupukName;
+    renderSelectedPupuk();
+};
+
+window.renderSelectedPupuk = () => {
+    const contentDiv = document.getElementById('pupuk-selected-content');
+    if (!contentDiv) return;
+    const pupukName = window.currentSelectedPupuk;
+    if (!pupukName) {
+        contentDiv.innerHTML = '';
         return;
     }
+    const p = masterData.pupuk.find(x => x.name === pupukName);
+    if(p) {
+        const safeName = p.name.replace(/['"\\n\\r]/g, ' ');
+        contentDiv.innerHTML = `
+            <div style="display:inline-flex; align-items:center; background:#f1f5f9; padding:10px 16px; border-radius:8px; font-size:0.95rem; border:1px solid #cbd5e1;">
+                <strong style="font-size:1.1rem; margin-right: 20px;">${safeName}</strong>
+                <button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.8rem; margin-right:5px;" onclick="editMaster('pupuk', ${p.id}, '${safeName}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                <button type="button" class="btn btn-logout" style="background:#ef4444; color:white; border:none; padding:4px 8px; font-size:0.8rem;" onclick="deleteMaster('pupuk', ${p.id})"><i class="fa-solid fa-trash"></i> Hapus</button>
+            </div>
+        `;
+    }
+};
 
-    const titleStr = type === 'truk' ? 'Truk' : 'Supir';
-    const placeholderStr = type === 'truk' ? 'Plat Nomor (misal: BD 1234 N)' : 'Nama Supir';
+window.promptAddMaster = async (type) => {
+    if (!currentUser.estate) return;
+
+    let titleStr = type === 'truk' ? 'Truk' : (type === 'supir' ? 'Supir' : 'Jenis Pupuk');
+    let placeholderStr = type === 'truk' ? 'Plat Nomor (misal: BD 1234 N)' : (type === 'supir' ? 'Nama Supir' : 'Jenis Pupuk (ex: Urea)');
     
     const html = `
         <div class="modal-overlay" id="modal-add-master-${type}">
@@ -1337,7 +1349,8 @@ window.addMasterSingle = async (type) => {
             document.getElementById(`modal-add-master-${type}`).remove();
             await loadMasterData();
             if (type === 'truk') selectTruk(payload.plate_number);
-            else selectSupir(payload.name);
+            else if (type === 'supir') selectSupir(payload.name);
+            else if (type === 'pupuk') selectPupuk(payload.name);
         } else {
             alert(data.error || 'Gagal menambahkan data');
         }
