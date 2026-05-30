@@ -266,6 +266,62 @@ app.post('/api/master/blok/bulk', async (req, res) => {
     }
 });
 
+app.post('/api/master/truk/bulk', async (req, res) => {
+    try {
+        const { estate, items } = req.body;
+        if (!Array.isArray(items)) return res.status(400).json({error: "Invalid payload"});
+        
+        const existing = await pool.query(`SELECT plate_number FROM master_truk WHERE estate = $1`, [estate]);
+        const existingSet = new Set(existing.rows.map(e => e.plate_number));
+        const toInsert = items.filter(b => b.trim() !== '' && !existingSet.has(b.trim()));
+        
+        if (toInsert.length === 0) return res.json({ success: true, inserted: 0 });
+        
+        let valuesStr = [];
+        let params = [];
+        let paramIndex = 1;
+        
+        toInsert.forEach(b => {
+            valuesStr.push(`($${paramIndex}, $${paramIndex+1})`);
+            params.push(estate, b.trim());
+            paramIndex += 2;
+        });
+        
+        await pool.query(`INSERT INTO master_truk (estate, plate_number) VALUES ${valuesStr.join(',')}`, params);
+        res.json({ success: true, inserted: toInsert.length });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/master/supir/bulk', async (req, res) => {
+    try {
+        const { estate, items } = req.body;
+        if (!Array.isArray(items)) return res.status(400).json({error: "Invalid payload"});
+        
+        const existing = await pool.query(`SELECT name FROM master_supir WHERE estate = $1`, [estate]);
+        const existingSet = new Set(existing.rows.map(e => e.name));
+        const toInsert = items.filter(b => b.trim() !== '' && !existingSet.has(b.trim()));
+        
+        if (toInsert.length === 0) return res.json({ success: true, inserted: 0 });
+        
+        let valuesStr = [];
+        let params = [];
+        let paramIndex = 1;
+        
+        toInsert.forEach(b => {
+            valuesStr.push(`($${paramIndex}, $${paramIndex+1})`);
+            params.push(estate, b.trim());
+            paramIndex += 2;
+        });
+        
+        await pool.query(`INSERT INTO master_supir (estate, name) VALUES ${valuesStr.join(',')}`, params);
+        res.json({ success: true, inserted: toInsert.length });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.delete('/api/master/:type/:id', async (req, res) => {
     try {
         const type = req.params.type;

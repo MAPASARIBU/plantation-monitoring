@@ -1264,17 +1264,64 @@ window.renderSelectedSupir = () => {
 window.promptAddMaster = async (type) => {
     if (!currentUser.estate) return;
     
-    let promptMsg = "";
-    if (type === 'truk') promptMsg = "Plat Nomor Truk:";
-    else if (type === 'supir') promptMsg = "Nama Supir:";
-    else if (type === 'pupuk') promptMsg = "Jenis Pupuk (ex: Urea):";
+    if (type === 'pupuk') {
+        const value = prompt("Jenis Pupuk (ex: Urea):");
+        if (!value || !value.trim()) return;
+        
+        let payload = { estate: currentUser.estate, name: value.trim() };
+        try {
+            const res = await fetch(`${API_URL}/master/${type}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (res.ok) {
+                await loadMasterData();
+            } else {
+                alert(data.error || 'Gagal menambahkan data');
+            }
+        } catch(err) { console.error(err); }
+        return;
+    }
+
+    const titleStr = type === 'truk' ? 'Truk' : 'Supir';
+    const placeholderStr = type === 'truk' ? 'Plat Nomor (misal: BD 1234 N)' : 'Nama Supir';
     
-    const value = prompt(promptMsg);
-    if (!value || !value.trim()) return;
+    const html = `
+        <div class="modal-overlay" id="modal-add-master-${type}">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Tambah Master ${titleStr}</h3>
+                    <button class="modal-close" onclick="document.getElementById('modal-add-master-${type}').remove()">&times;</button>
+                </div>
+                
+                <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.1);">
+                    <label style="font-size: 0.85rem; display:block; margin-bottom: 8px;">Opsi 1: Tambah Satu per Satu</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="m-single-${type}" class="form-control" placeholder="${placeholderStr}">
+                        <button type="button" class="btn btn-primary" style="white-space:nowrap; padding: 4px 15px;" onclick="addMasterSingle('${type}')">+ Tambah</button>
+                    </div>
+                </div>
+
+                <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.1);">
+                    <label style="font-size: 0.85rem; display:block; margin-bottom: 8px;">Opsi 2: Tambah Banyak Sekaligus (Paste dari Excel - 1 Kolom):</label>
+                    <textarea id="m-bulk-${type}" class="form-control" rows="5" placeholder="Paste daftar di sini..."></textarea>
+                    <button type="button" class="btn btn-primary" style="margin-top: 8px; font-size: 0.85rem; padding: 6px 15px;" onclick="addMasterBulk('${type}')"><i class="fa-solid fa-paste"></i> Simpan Hasil Paste Excel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.addMasterSingle = async (type) => {
+    const val = document.getElementById(`m-single-${type}`).value;
+    if(!val || !val.trim()) return;
     
     let payload = { estate: currentUser.estate };
-    if (type === 'truk') payload.plate_number = value.trim();
-    else payload.name = value.trim();
+    if (type === 'truk') payload.plate_number = val.trim();
+    else payload.name = val.trim();
     
     try {
         const res = await fetch(`${API_URL}/master/${type}`, {
@@ -1284,11 +1331,42 @@ window.promptAddMaster = async (type) => {
         });
         const data = await res.json();
         if (res.ok) {
+            document.getElementById(`modal-add-master-${type}`).remove();
+            await loadMasterData();
+            if (type === 'truk') selectTruk(payload.plate_number);
+            else selectSupir(payload.name);
+        } else {
+            alert(data.error || 'Gagal menambahkan data');
+        }
+    } catch (e) {
+        console.error(e);
+    }
+};
+
+window.addMasterBulk = async (type) => {
+    const text = document.getElementById(`m-bulk-${type}`).value;
+    if(!text || !text.trim()) return;
+    
+    const items = text.split('\\n').map(l => l.trim()).filter(l => l !== '');
+    if(items.length === 0) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/master/${type}/bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estate: currentUser.estate, items })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert(`Berhasil menambahkan ${data.inserted} data.`);
+            document.getElementById(`modal-add-master-${type}`).remove();
             await loadMasterData();
         } else {
             alert(data.error || 'Gagal menambahkan data');
         }
-    } catch(err) { console.error(err); }
+    } catch (e) {
+        console.error(e);
+    }
 };
 
 window.promptAddDivisi = async () => {
