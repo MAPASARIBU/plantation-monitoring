@@ -476,10 +476,7 @@ const views = {
                         <h3>Master Truk</h3>
                         <button type="button" class="btn btn-primary" onclick="promptAddMaster('truk')"><i class="fa-solid fa-plus"></i> Tambah Truk</button>
                     </div>
-                    <table class="data-table" style="margin-top:15px;">
-                        <thead><tr><th>Plat Nomor</th><th>Aksi</th></tr></thead>
-                        <tbody id="tbody-master-truk"></tbody>
-                    </table>
+                    <div id="container-master-truk" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;"></div>
                 </div>
                 <!-- Supir -->
                 <div class="glass-card">
@@ -487,10 +484,7 @@ const views = {
                         <h3>Master Supir</h3>
                         <button type="button" class="btn btn-primary" onclick="promptAddMaster('supir')"><i class="fa-solid fa-plus"></i> Tambah Supir</button>
                     </div>
-                    <table class="data-table" style="margin-top:15px;">
-                        <thead><tr><th>Nama Supir</th><th>Aksi</th></tr></thead>
-                        <tbody id="tbody-master-supir"></tbody>
-                    </table>
+                    <div id="container-master-supir" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;"></div>
                 </div>
                 <!-- Pupuk -->
                 <div class="glass-card">
@@ -1139,11 +1133,11 @@ window.renderMasterTables = () => {
         }
     }
     
-    const tbTruk = document.getElementById('tbody-master-truk');
-    if(tbTruk) tbTruk.innerHTML = masterData.truk.map(t => `<tr><td>${t.plate_number}</td><td style="width:120px; text-align:right;"><button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-right:5px;" onclick="editMaster('truk', ${t.id}, '${t.plate_number}')">Edit</button><button type="button" class="btn btn-logout" style="padding:2px 6px; font-size:0.7rem;" onclick="deleteMaster('truk', ${t.id})">Hapus</button></td></tr>`).join('');
-    
-    const tbSupir = document.getElementById('tbody-master-supir');
-    if(tbSupir) tbSupir.innerHTML = masterData.supir.map(s => `<tr><td>${s.name}</td><td style="width:120px; text-align:right;"><button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-right:5px;" onclick="editMaster('supir', ${s.id}, '${s.name}')">Edit</button><button type="button" class="btn btn-logout" style="padding:2px 6px; font-size:0.7rem;" onclick="deleteMaster('supir', ${s.id})">Hapus</button></td></tr>`).join('');
+    const cTruk = document.getElementById('container-master-truk');
+    if(cTruk) cTruk.innerHTML = masterData.truk.map(t => `<div style="display:inline-flex; align-items:center; background:#f1f5f9; padding:6px 12px; border-radius:20px; font-size:0.85rem; border:1px solid #cbd5e1; margin: 0 5px 5px 0;"><strong>${t.plate_number}</strong><div style="margin-left:10px; display:flex; gap:8px;"><i class="fa-solid fa-pen" title="Edit" style="color:var(--info); cursor:pointer;" onclick="editMaster('truk', ${t.id}, '${t.plate_number}')"></i><i class="fa-solid fa-trash" title="Hapus" style="color:var(--danger); cursor:pointer;" onclick="deleteMaster('truk', ${t.id})"></i></div></div>`).join('');
+
+    const cSupir = document.getElementById('container-master-supir');
+    if(cSupir) cSupir.innerHTML = masterData.supir.map(s => `<div style="display:inline-flex; align-items:center; background:#f1f5f9; padding:6px 12px; border-radius:20px; font-size:0.85rem; border:1px solid #cbd5e1; margin: 0 5px 5px 0;"><strong>${s.name}</strong><div style="margin-left:10px; display:flex; gap:8px;"><i class="fa-solid fa-pen" title="Edit" style="color:var(--info); cursor:pointer;" onclick="editMaster('supir', ${s.id}, '${s.name}')"></i><i class="fa-solid fa-trash" title="Hapus" style="color:var(--danger); cursor:pointer;" onclick="deleteMaster('supir', ${s.id})"></i></div></div>`).join('');
     
     const tbPupuk = document.getElementById('tbody-master-pupuk');
     if(tbPupuk) tbPupuk.innerHTML = masterData.pupuk.map(p => `<tr><td>${p.name}</td><td style="width:120px; text-align:right;"><button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-right:5px;" onclick="editMaster('pupuk', ${p.id}, '${p.name}')">Edit</button><button type="button" class="btn btn-logout" style="padding:2px 6px; font-size:0.7rem;" onclick="deleteMaster('pupuk', ${p.id})">Hapus</button></td></tr>`).join('');
