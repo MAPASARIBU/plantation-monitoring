@@ -29,20 +29,24 @@
                 <h3 style="font-size: 1rem; color: #1f2937; margin: 10px 0 5px; text-transform: uppercase;">PT Tolan Tiga - Region Bengkulu</h3>
             </div>
             <form id="login-form">
-                <div class="form-group">
-                    <select id="login-estate" class="form-control" required style="text-align: center; font-weight: bold;">
+                <div class="form-group" style="display: flex; gap: 10px;">
+                    <select id="login-location-type" class="form-control" style="text-align: center; font-weight: bold; flex: 1;" onchange="updateLocationList()">
+                        <option value="Estate" selected>ESTATE</option>
+                        <option value="Mill">MILL</option>
+                    </select>
+                    <select id="login-estate" class="form-control" required style="text-align: center; font-weight: bold; flex: 2;">
                         <option value="" disabled selected>LIST ESTATE</option>
                         <option>Bunga Tanjung Estate</option>
                         <option>Sungai Teramang Estate</option>
-                        <option>Air Bukik Estate</option>
-                        <option>Air Buluh Estate</option>
-                        <option>Malin Demang Estate</option>
+                        <option>Air Bikuk Estate</option>
                         <option>Batu Kuda Estate</option>
-                        <option>Sungai Jerinjing Estate</option>
+                        <option>Air Buluh Estate</option>
+                        <option>Maling Demang Estate</option>
+                        <option>Tanah Rekah Estate</option>
                         <option>Muko Muko Estate</option>
+                        <option>Sei Jerinjing Estate</option>
                         <option>Talang Petai Estate</option>
                         <option>Sungai Kiang Estate</option>
-                        <option>Tanah Rekah Estate</option>
                         <option>Air Majunto Estate</option>
                     </select>
                 </div>
@@ -135,6 +139,7 @@
                         <div class="user-info">
                             <span class="user-name">John Doe</span>
                             <span class="user-role" id="display-role">Senior Field Manager</span>
+                            <span id="display-date" style="font-size: 0.75rem; color: var(--primary-color); font-weight: 600; margin-top: 2px;">Senin, 1 Juni 2026</span>
                         </div>
                     </div>
                 </div>

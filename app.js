@@ -79,14 +79,23 @@ const login = async (username, password, estate) => {
         const result = await res.json();
         
         if (result.success) {
+            const dbUser = result.user;
+            
+            // Validasi penempatan (kecuali Admin, -, atau Semua Estate)
+            if (dbUser.role !== 'Admin' && dbUser.estate !== '-' && dbUser.estate !== 'Semua Estate (Khusus Admin)' && dbUser.estate !== estate) {
+                errorEl.innerText = `Akses ditolak! Anda hanya diizinkan masuk ke ${dbUser.estate}.`;
+                errorEl.style.display = 'block';
+                return;
+            }
+            
             errorEl.style.display = 'none';
-            currentUser = result.user;
+            currentUser = dbUser;
             if (estate) currentUser.estate = estate;
             localStorage.setItem('agrimonitor_user', JSON.stringify(currentUser));
             document.getElementById('login-form').reset();
             checkAuth();
         } else {
-            errorEl.innerText = result.message;
+            errorEl.innerText = result.error || result.message || 'Gagal login';
             errorEl.style.display = 'block';
         }
     } catch (e) {
@@ -221,8 +230,8 @@ const views = {
         </div>
     `,
     vehicle: `
-        <div class="animate-fade-in module-layout">
-            <div class="glass-card form-container">
+        <div id="vehicle-module-layout" class="animate-fade-in module-layout">
+            <div id="vehicle-form-container" class="glass-card form-container">
                 <h2>Input Pergerakan</h2>
                 <form id="form-vehicle" style="margin-top: 20px;">
                     <div class="form-group">
@@ -231,7 +240,7 @@ const views = {
                     </div>
                     <div class="form-group">
                         <label>Nama Supir</label>
-                        <select id="v-driver" class="form-control select-supir" required></select>
+                        <input type="text" id="v-driver" class="form-control" readonly style="background-color: #f1f5f9;" placeholder="Terisi otomatis dari Truk" required>
                     </div>
                     <div class="form-group">
                         <label>Ritase Ke</label>
@@ -255,14 +264,16 @@ const views = {
                 </form>
             </div>
             <div class="glass-card table-wrapper">
-                <div class="view-header">
+                <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
                     <h2>Tabel Monitoring Truk</h2>
+                    <button type="button" class="btn" style="background-color: white; color: var(--text-primary); border: 2px solid var(--danger); font-weight: bold; padding: 6px 15px;" onclick="promptHistoricalVehicle()">Historical</button>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Plate Truk</th>
+                                <th>Asal Estate</th>
                                 <th>Ritase</th>
                                 <th>Blok</th>
                                 <th>Janjang</th>
@@ -461,7 +472,7 @@ const views = {
             </div>
             <div class="master-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top:20px;">
                 <!-- Divisi & Blok Hierarchical -->
-                <div class="glass-card" style="grid-column: 1 / -1;">
+                <div class="glass-card master-estate-card" style="grid-column: 1 / -1;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h3>Master Divisi & Blok</h3>
                         <button type="button" class="btn btn-primary" onclick="promptAddDivisi()"><i class="fa-solid fa-plus"></i> Tambah Divisi Baru</button>
@@ -471,15 +482,15 @@ const views = {
                     </div>
                 </div>
                 <!-- Truk -->
-                <div class="glass-card">
+                <div class="glass-card master-estate-card">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h3>Master Truk</h3>
                         <button type="button" class="btn btn-primary" onclick="promptAddMaster('truk')"><i class="fa-solid fa-plus"></i> Tambah Truk</button>
                     </div>
-                    <div id="container-master-truk" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;"></div>
+                    <div id="container-master-truk" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; width: 100%;"></div>
                 </div>
                 <!-- Supir -->
-                <div class="glass-card">
+                <div class="glass-card master-estate-card">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h3>Master Supir</h3>
                         <button type="button" class="btn btn-primary" onclick="promptAddMaster('supir')"><i class="fa-solid fa-plus"></i> Tambah Supir</button>
@@ -487,12 +498,20 @@ const views = {
                     <div id="container-master-supir" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;"></div>
                 </div>
                 <!-- Pupuk -->
-                <div class="glass-card">
+                <div class="glass-card master-estate-card">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h3>Master Jenis Pupuk</h3>
                         <button type="button" class="btn btn-primary" onclick="promptAddMaster('pupuk')"><i class="fa-solid fa-plus"></i> Tambah Pupuk</button>
                     </div>
                     <div id="container-master-pupuk"></div>
+                </div>
+                <!-- Supply Chain -->
+                <div class="glass-card master-mill-card" id="card-master-supply-chain" style="display:none; grid-column: 1 / -1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3>Master Supply Chain</h3>
+                        <button type="button" class="btn btn-primary" onclick="saveSupplyChain()"><i class="fa-solid fa-save"></i> Simpan</button>
+                    </div>
+                    <div id="container-master-supply-chain" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; margin-top: 15px; width: 100%;"></div>
                 </div>
             </div>
         </div>
@@ -526,9 +545,9 @@ const views = {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Penempatan Estate</label>
+                        <label>Penempatan Estate / Mill</label>
                         <select id="u-estate" class="form-control" required>
-                            <option value="" disabled selected>-- Pilih Estate --</option>
+                            <option value="" disabled selected>-- Pilih Estate / Mill --</option>
                             <option>Semua Estate (Khusus Admin)</option>
                             <option>Bunga Tanjung Estate</option>
                             <option>Sungai Teramang Estate</option>
@@ -542,6 +561,8 @@ const views = {
                             <option>Sungai Kiang Estate</option>
                             <option>Tanah Rekah Estate</option>
                             <option>Air Majunto Estate</option>
+                            <option>Bunga Tanjung Mill</option>
+                            <option>Muko Muko Mill</option>
                         </select>
                     </div>
                     <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
@@ -560,8 +581,8 @@ const views = {
                                 <th>ID</th>
                                 <th>Username</th>
                                 <th>Role</th>
-                                <th>Estate</th>
-                                <th>Aksi</th>
+                                <th>ESTATE-MILL</th>
+                                <th style="width: 80px; text-align: center;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-users"></tbody>
@@ -578,17 +599,47 @@ const renderVehicleTable = () => {
     if (!tbody) return;
     tbody.innerHTML = '';
     
-    [...db.vehicles].reverse().forEach(v => {
+    const today = new Date().toISOString().split('T')[0];
+    let todaysVehicles = db.vehicles.filter(v => v.date === today);
+    
+    if (currentUser.estate.endsWith('Mill')) {
+        const allowedEstates = (masterData.supply_chain || []).map(sc => sc.estate);
+        todaysVehicles = todaysVehicles.filter(v => allowedEstates.includes(v.estate));
+    }
+    
+    const layout = document.getElementById('vehicle-module-layout');
+    const formContainer = document.getElementById('vehicle-form-container');
+    if (formContainer && layout) {
+        if (currentUser.role.includes('Security') || currentUser.role === 'Security Mill' || currentUser.role === 'Manager') {
+            formContainer.style.display = 'none';
+            layout.style.gridTemplateColumns = '1fr';
+        } else {
+            formContainer.style.display = 'block';
+            layout.style.gridTemplateColumns = '240px 1fr';
+        }
+    }
+
+    const inTransit = [];
+    const arrived = [];
+    [...todaysVehicles].reverse().forEach(v => {
+        const tArrive = v.timearrive || v.timeArrive;
+        if (!tArrive) inTransit.push(v);
+        else arrived.push(v);
+    });
+
+    const renderRow = (v) => {
         const tDepart = v.timedepart || v.timeDepart;
         const tArrive = v.timearrive || v.timeArrive;
         const duration = calculateDuration(tDepart, tArrive);
-        const actionBtn = (!tArrive && currentUser.role !== 'Senior Field Manager') ? 
+        const canClickArrive = (currentUser.role.includes('Security') || currentUser.role === 'Security Mill' || currentUser.role === 'Admin');
+        const actionBtn = (!tArrive && canClickArrive) ? 
             `<button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem;" onclick="setArrival(${v.id})">Tiba di PKS</button>` : 
             (!tArrive ? `<span class="status-badge" style="background:#f59e0b">Di Perjalanan</span>` : `<span class="status-badge status-done">Selesai</span>`);
             
-        tbody.innerHTML += `
+        return `
             <tr>
                 <td><strong>${v.plate}</strong><br><small>${v.driver}</small></td>
+                <td><strong>${getEstateCode(v.estate)}</strong></td>
                 <td>${v.ritase}</td>
                 <td>${v.block}</td>
                 <td>${v.janjang}</td>
@@ -598,7 +649,14 @@ const renderVehicleTable = () => {
                 <td>${actionBtn}</td>
             </tr>
         `;
-    });
+    };
+
+    inTransit.forEach(v => tbody.innerHTML += renderRow(v));
+
+    if (arrived.length > 0) {
+        tbody.innerHTML += `<tr><td colspan="8" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List truk sudah tiba di Mill</td></tr>`;
+        arrived.forEach(v => tbody.innerHTML += renderRow(v));
+    }
 };
 
 const renderUpkeepTable = () => {
@@ -706,7 +764,8 @@ const renderUsersTable = () => {
     if (!tbody) return;
     tbody.innerHTML = '';
     [...db.users].forEach(u => {
-        const deleteBtn = (u.username !== 'admin' && currentUser.role !== 'Senior Field Manager') ? 
+        const actionBtns = (u.username !== 'admin' && currentUser.role !== 'Senior Field Manager') ? 
+            `<button class="btn btn-primary" style="padding: 4px 8px; font-size: 0.8rem; margin-right:5px;" onclick="promptEditUser(${u.id})"><i class="fa-solid fa-pen"></i></button>` +
             `<button class="btn btn-logout" style="padding: 4px 8px; font-size: 0.8rem; color: #ef4444;" onclick="deleteUser(${u.id})"><i class="fa-solid fa-trash"></i></button>` : '-';
         tbody.innerHTML += `
             <tr>
@@ -714,10 +773,82 @@ const renderUsersTable = () => {
                 <td><strong>${u.username}</strong></td>
                 <td><span class="status-badge" style="background: rgba(0,0,0,0.1)">${u.role}</span></td>
                 <td><small>${u.estate || '-'}</small></td>
-                <td>${deleteBtn}</td>
+                <td>${actionBtns}</td>
             </tr>
         `;
     });
+};
+
+window.promptEditUser = (id) => {
+    const user = db.users.find(u => u.id === id);
+    if (!user) return;
+    
+    let estatesOptions = `<option value="Semua Estate (Khusus Admin)">Semua Estate (Khusus Admin)</option>`;
+    const allEstates = ['Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bukik Estate', 'Air Buluh Estate', 'Malin Demang Estate', 'Batu Kuda Estate', 'Sungai Jerinjing Estate', 'Muko Muko Estate', 'Talang Petai Estate', 'Sungai Kiang Estate', 'Tanah Rekah Estate', 'Air Majunto Estate', 'Bunga Tanjung Mill', 'Muko Muko Mill'];
+    allEstates.forEach(est => {
+        estatesOptions += `<option value="${est}" ${user.estate === est ? 'selected' : ''}>${est}</option>`;
+    });
+
+    const html = `
+        <div class="modal-overlay" id="modal-edit-user">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Edit User: ${user.username}</h3>
+                    <button class="modal-close" onclick="document.getElementById('modal-edit-user').remove()">&times;</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="eu-role" class="form-control">
+                        <option value="Manager" ${user.role === 'Manager' ? 'selected' : ''}>Manager</option>
+                        <option value="Askep" ${user.role === 'Askep' ? 'selected' : ''}>Askep</option>
+                        <option value="Assistant" ${user.role === 'Assistant' ? 'selected' : ''}>Assistant</option>
+                        <option value="Office Assistant (OAA)" ${user.role === 'Office Assistant (OAA)' ? 'selected' : ''}>Office Assistant (OAA)</option>
+                        <option value="Krani Divisi" ${user.role === 'Krani Divisi' ? 'selected' : ''}>Krani Divisi</option>
+                        <option value="Krani Mill" ${user.role === 'Krani Mill' ? 'selected' : ''}>Krani Mill</option>
+                        <option value="Security" ${user.role === 'Security' ? 'selected' : ''}>Security</option>
+                        <option value="Security Mill" ${user.role === 'Security Mill' ? 'selected' : ''}>Security Mill</option>
+                        <option value="Supir" ${user.role === 'Supir' ? 'selected' : ''}>Supir</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Penempatan (Estate / Mill)</label>
+                    <select id="eu-estate" class="form-control">
+                        ${estatesOptions}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Password Baru (Kosongkan jika tidak ingin diubah)</label>
+                    <input type="password" id="eu-password" class="form-control" placeholder="Password Baru">
+                </div>
+                <button type="button" class="btn btn-primary" onclick="editUser(${id})">Simpan Perubahan</button>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.editUser = async (id) => {
+    const role = document.getElementById('eu-role').value;
+    const estate = document.getElementById('eu-estate').value;
+    const password = document.getElementById('eu-password').value;
+    
+    try {
+        const res = await fetch(`${API_URL}/users/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role, estate, password })
+        });
+        if (res.ok) {
+            document.getElementById('modal-edit-user').remove();
+            await loadUsers();
+        } else {
+            const data = await res.json();
+            alert(data.error || 'Gagal mengubah user');
+        }
+    } catch (e) {
+        console.error(e);
+    }
 };
 
 window.setArrival = async (id) => {
@@ -857,7 +988,9 @@ const bindForms = () => {
             block: document.getElementById('v-block').value,
             janjang: document.getElementById('v-janjang').value,
             timeDepart: autoTimeDepart,
-            timeArrive: ""
+            timeArrive: "",
+            date: new Date().toISOString().split('T')[0],
+            estate: currentUser.estate
         };
         try {
             await fetch(`${API_URL}/vehicles`, {
@@ -1052,6 +1185,13 @@ const navigate = (viewId) => {
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
+    // Render Date
+    const elDate = document.getElementById('display-date');
+    if (elDate) {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        elDate.textContent = new Date().toLocaleDateString('id-ID', options);
+    }
+
     // 1. Check Auth
     checkAuth();
     
@@ -1060,8 +1200,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if(loginForm) {
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const username = document.getElementById('login-username').value;
-            const password = document.getElementById('login-password').value;
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value.trim();
             const estateEl = document.getElementById('login-estate');
             const estate = estateEl ? estateEl.value : null;
             login(username, password, estate);
@@ -1117,6 +1257,36 @@ window.renderMasterTables = () => {
     const estateDisplays = document.querySelectorAll('.estate-name-display');
     estateDisplays.forEach(el => el.innerText = currentUser.estate);
     
+    const isMill = currentUser.estate.endsWith('Mill');
+    document.querySelectorAll('.master-estate-card').forEach(el => el.style.display = isMill ? 'none' : 'block');
+    const scCard = document.getElementById('card-master-supply-chain');
+    if (scCard) scCard.style.display = isMill ? 'block' : 'none';
+    
+    if (isMill) {
+        const scContainer = document.getElementById('container-master-supply-chain');
+        if (scContainer) {
+            const allEstates = [
+                'Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bikuk Estate',
+                'Batu Kuda Estate', 'Air Buluh Estate', 'Maling Demang Estate',
+                'Tanah Rekah Estate', 'Muko Muko Estate', 'Sei Jerinjing Estate',
+                'Talang Petai Estate', 'Sungai Kiang Estate', 'Air Majunto Estate'
+            ];
+            const currentSC = (masterData.supply_chain || []).map(sc => sc.estate);
+            
+            let scHtml = '';
+            allEstates.forEach(est => {
+                const checked = currentSC.includes(est) ? 'checked' : '';
+                scHtml += `
+                    <div style="display:flex; align-items:center; gap:10px; background:var(--background-color); padding:10px; border-radius:8px; border:1px solid var(--border-color);">
+                        <input type="checkbox" class="sc-checkbox" value="${est}" id="sc-${est.replace(/\s+/g, '-')}" ${checked} style="width:20px; height:20px;">
+                        <label for="sc-${est.replace(/\s+/g, '-')}" style="cursor:pointer; margin:0; font-weight:bold;">${est}</label>
+                    </div>
+                `;
+            });
+            scContainer.innerHTML = scHtml;
+        }
+    }
+    
     const containerDiv = document.getElementById('container-master-divisi');
     if(containerDiv) {
         let options = `<option value="">-- Pilih Divisi --</option>`;
@@ -1143,13 +1313,18 @@ window.renderMasterTables = () => {
     const cTruk = document.getElementById('container-master-truk');
     if (cTruk) {
         let opts = `<option value="">-- Pilih Truk --</option>`;
-        masterData.truk.forEach(t => opts += `<option value="${t.plate_number}" ${window.currentSelectedTruk === t.plate_number ? 'selected' : ''}>${t.plate_number}</option>`);
+        masterData.truk.forEach(t => opts += `<option value="${t.plate_number}" ${window.currentSelectedTruk === t.plate_number ? 'selected' : ''}>${t.plate_number} (Supir: ${t.supir || '-'})</option>`);
+
         cTruk.innerHTML = `
-            <label style="font-weight:bold; display:block; margin-bottom:8px;">Pilih Truk untuk Dikelola:</label>
-            <select id="select-truk-view" class="form-control" style="max-width: 300px;" onchange="selectTruk(this.value)">${opts}</select>
-            <div id="truk-selected-content" style="margin-top: 15px;"></div>
+            <div id="truk-default-view" style="width: 100%;">
+                <label style="font-weight:bold; display:block; margin-bottom:8px;">Pilih Truk dan Supir untuk dikelola:</label>
+                <select id="select-truk-view" class="form-control" style="max-width: 300px;" onchange="selectTruk(this.value)">${opts}</select>
+                <div id="truk-selected-content" style="margin-top: 15px;"></div>
+            </div>
         `;
-        if (window.currentSelectedTruk) renderSelectedTruk();
+        if (window.currentSelectedTruk) {
+            renderSelectedTruk();
+        }
     }
 
     const cSupir = document.getElementById('container-master-supir');
@@ -1207,17 +1382,8 @@ window.renderSelectedDivisi = () => {
         </div>
         
         <h4>Daftar Blok di ${d.name}</h4>
-        <div style="margin: 15px 0; display:flex; gap:10px;">
-            <form onsubmit="addBlokToDivisi(event, '${d.name}')" style="display:flex; gap:10px;">
-                <input type="text" id="mb-name-${d.name.replace(/\s+/g, '-')}" class="form-control" placeholder="Nama Blok Baru" required style="width: 150px;">
-                <input type="number" step="0.1" id="mb-bjr-${d.name.replace(/\s+/g, '-')}" class="form-control" placeholder="BJR" required style="width: 100px;">
-                <button type="submit" class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem;"><i class="fa-solid fa-plus"></i> Blok</button>
-            </form>
-            
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="bulk-paste-${d.name.replace(/\s+/g, '-')}" class="form-control" placeholder="Paste data excel di sini (Blok\tBJR)" style="width: 250px;">
-                <button type="button" class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem;" onclick="addBlokBulk('${d.name}')"><i class="fa-solid fa-paste"></i> Paste</button>
-            </div>
+        <div style="margin: 15px 0;">
+            <button type="button" class="btn btn-primary" onclick="promptAddBlok('${safeDivName}')"><i class="fa-solid fa-plus"></i> Tambah Blok Baru</button>
         </div>
         <table class="data-table" style="font-size:0.85rem;">
             <thead><tr><th>Nama Blok</th><th>BJR (Kg)</th><th>Aksi</th></tr></thead>
@@ -1242,9 +1408,10 @@ window.renderSelectedTruk = () => {
     const t = masterData.truk.find(x => x.plate_number === trukPlate);
     if(t) {
         const safeName = t.plate_number.replace(/['"\\n\\r]/g, ' ');
+        const supirName = t.supir ? ` (Supir: ${t.supir})` : ' (Supir: -)';
         contentDiv.innerHTML = `
             <div style="display:inline-flex; align-items:center; background:#f1f5f9; padding:10px 16px; border-radius:8px; font-size:0.95rem; border:1px solid #cbd5e1;">
-                <strong style="font-size:1.1rem; margin-right: 20px;">${safeName}</strong>
+                <strong style="font-size:1.1rem; margin-right: 20px;">${safeName}${supirName}</strong>
                 <button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.8rem; margin-right:5px;" onclick="editMaster('truk', ${t.id}, '${safeName}')"><i class="fa-solid fa-pen"></i> Edit</button>
                 <button type="button" class="btn btn-logout" style="background:#ef4444; color:white; border:none; padding:4px 8px; font-size:0.8rem;" onclick="deleteMaster('truk', ${t.id})"><i class="fa-solid fa-trash"></i> Hapus</button>
             </div>
@@ -1309,7 +1476,31 @@ window.promptAddMaster = async (type) => {
 
     let titleStr = type === 'truk' ? 'Truk' : (type === 'supir' ? 'Supir' : 'Jenis Pupuk');
     let placeholderStr = type === 'truk' ? 'Plat Nomor (misal: BD 1234 N)' : (type === 'supir' ? 'Nama Supir' : 'Jenis Pupuk (ex: Urea)');
+    let bulkPlaceholder = type === 'truk' ? 'Paste daftar di sini (Plat Truk [TAB] Nama Supir)...' : 'Paste daftar di sini...';
     
+    let singleInputHtml = '';
+    if (type === 'truk') {
+        singleInputHtml = `
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <input type="text" id="m-single-${type}" class="form-control" placeholder="${placeholderStr}">
+                <input type="text" id="m-single-supir-${type}" class="form-control" placeholder="Nama Supir (Wajib)">
+                <button type="button" class="btn btn-primary" onclick="addMasterSingle('${type}')">+ Tambah Truk</button>
+            </div>
+        `;
+    } else {
+        singleInputHtml = `
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="m-single-${type}" class="form-control" placeholder="${placeholderStr}">
+                <button type="button" class="btn btn-primary" style="white-space:nowrap; padding: 4px 15px;" onclick="addMasterSingle('${type}')">+ Tambah</button>
+            </div>
+        `;
+    }
+    
+    let bulkInstruction = '';
+    if (type === 'truk') {
+        bulkInstruction = `<p style="font-size: 0.8rem; color:#64748b; margin-top:0; margin-bottom:10px;">Pastikan Anda meng-copy 2 kolom dari Excel: Kolom 1 untuk Plat Nomor, Kolom 2 untuk Nama Supir.</p>`;
+    }
+
     const html = `
         <div class="modal-overlay" id="modal-add-master-${type}">
             <div class="modal-content">
@@ -1320,15 +1511,13 @@ window.promptAddMaster = async (type) => {
                 
                 <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.1);">
                     <label style="font-size: 0.85rem; display:block; margin-bottom: 8px;">Opsi 1: Tambah Satu per Satu</label>
-                    <div style="display:flex; gap:10px;">
-                        <input type="text" id="m-single-${type}" class="form-control" placeholder="${placeholderStr}">
-                        <button type="button" class="btn btn-primary" style="white-space:nowrap; padding: 4px 15px;" onclick="addMasterSingle('${type}')">+ Tambah</button>
-                    </div>
+                    ${singleInputHtml}
                 </div>
 
                 <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.1);">
-                    <label style="font-size: 0.85rem; display:block; margin-bottom: 8px;">Opsi 2: Tambah Banyak Sekaligus (Paste dari Excel - 1 Kolom):</label>
-                    <textarea id="m-bulk-${type}" class="form-control" rows="5" placeholder="Paste daftar di sini..."></textarea>
+                    <label style="font-size: 0.85rem; display:block; margin-bottom: 8px;">Opsi 2: Tambah Banyak Sekaligus (Paste dari Excel):</label>
+                    ${bulkInstruction}
+                    <textarea id="m-bulk-${type}" class="form-control" rows="5" placeholder="${bulkPlaceholder}"></textarea>
                     <button type="button" class="btn btn-primary" style="margin-top: 8px; font-size: 0.85rem; padding: 6px 15px;" onclick="addMasterBulk('${type}')"><i class="fa-solid fa-paste"></i> Simpan Hasil Paste Excel</button>
                 </div>
             </div>
@@ -1342,7 +1531,15 @@ window.addMasterSingle = async (type) => {
     if(!val || !val.trim()) return;
     
     let payload = { estate: currentUser.estate };
-    if (type === 'truk') payload.plate_number = val.trim();
+    if (type === 'truk') {
+        const supirVal = document.getElementById(`m-single-supir-${type}`).value;
+        if (!supirVal || !supirVal.trim()) {
+            alert("Nama Supir wajib diisi untuk Truk!");
+            return;
+        }
+        payload.plate_number = val.trim();
+        payload.supir = supirVal.trim();
+    }
     else payload.name = val.trim();
     
     try {
@@ -1370,8 +1567,24 @@ window.addMasterBulk = async (type) => {
     const text = document.getElementById(`m-bulk-${type}`).value;
     if(!text || !text.trim()) return;
     
-    const items = text.split(/[\n\t,]+/).map(l => l.trim()).filter(l => l !== '');
-    if(items.length === 0) return;
+    let items;
+    if (type === 'truk') {
+        const rows = text.trim().split('\n');
+        items = rows.map(r => {
+            const cols = r.split('\t');
+            if (cols.length >= 2) {
+                return { plate_number: cols[0].trim(), supir: cols[1].trim() };
+            }
+            return null;
+        }).filter(item => item !== null && item.plate_number !== '');
+    } else {
+        items = text.split(/[\n\t,]+/).map(l => l.trim()).filter(l => l !== '');
+    }
+    
+    if(items.length === 0) {
+        alert("Tidak ada data valid yang bisa dibaca.");
+        return;
+    }
     
     try {
         const res = await fetch(`${API_URL}/master/${type}/bulk`, {
@@ -1381,14 +1594,49 @@ window.addMasterBulk = async (type) => {
         });
         const data = await res.json();
         if (res.ok) {
-            alert(`Berhasil menambahkan ${data.inserted} data.`);
             document.getElementById(`modal-add-master-${type}`).remove();
             await loadMasterData();
         } else {
-            alert(data.error || 'Gagal menambahkan data');
+            alert(data.error || 'Gagal menambahkan data bulk');
+        }
+    } catch(err) { console.error(err); }
+};
+
+
+
+window.saveSupplyChain = async () => {
+    const checkboxes = document.querySelectorAll('.sc-checkbox:checked');
+    const estates = Array.from(checkboxes).map(cb => cb.value);
+    
+    try {
+        const res = await fetch(`${API_URL}/master/supply_chain/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mill: currentUser.estate, estates })
+        });
+        if (!res.ok) alert('Gagal menyimpan supply chain');
+        else {
+            alert('Supply Chain berhasil disimpan!');
+            await loadMasterData();
         }
     } catch (e) {
         console.error(e);
+        alert('Gagal menyimpan supply chain');
+    }
+};
+
+window.toggleSupplyChain = async (estateName, isActive) => {
+    try {
+        const res = await fetch(`${API_URL}/master/supply_chain/toggle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mill: currentUser.estate, estate: estateName, active: isActive })
+        });
+        if (!res.ok) alert('Gagal mengupdate supply chain');
+        else await loadMasterData();
+    } catch (e) {
+        console.error(e);
+        alert('Gagal mengupdate supply chain');
     }
 };
 
@@ -1516,10 +1764,18 @@ window.addMaster = async (e, type) => {
     if (!currentUser.estate) { alert('User tidak memiliki estate!'); return; }
     
     let payload = { estate: currentUser.estate };
-    if (type === 'divisi') payload.name = document.getElementById('md-name').value;
-    else if (type === 'truk') payload.plate_number = document.getElementById('mt-plate').value;
-    else if (type === 'supir') payload.name = document.getElementById('ms-name').value;
-    else if (type === 'pupuk') payload.name = document.getElementById('mp-name').value;
+    const val = document.getElementById(`m-val-${type}`).value;
+    if (type === 'divisi') payload.name = val;
+    else if (type === 'supir') payload.name = val;
+    else if (type === 'pupuk') payload.name = val;
+    else if (type === 'truk') {
+        const supirVal = document.getElementById(`m-single-supir-${type}`).value;
+        if (!supirVal || !supirVal.trim()) { alert('Nama Supir wajib diisi'); return; }
+        payload.plate_number = val.toUpperCase();
+        payload.supir = supirVal.toUpperCase();
+    } else {
+        payload.name = val;
+    }
 
     try {
         const res = await fetch(`${API_URL}/master/${type}`, {
@@ -1528,7 +1784,7 @@ window.addMaster = async (e, type) => {
             body: JSON.stringify(payload)
         });
         if (res.ok) {
-            e.target.reset();
+            document.getElementById(`modal-add-master-${type}`).remove();
             await loadMasterData();
         } else {
             const data = await res.json();
@@ -1538,12 +1794,20 @@ window.addMaster = async (e, type) => {
 };
 
 window.editMaster = async (type, id, currentName) => {
-    const newName = prompt(`Masukkan nilai baru untuk ${type}:`, currentName);
-    if (newName === null || newName.trim() === '') return;
-    
     let payload = {};
-    if (type === 'truk') payload.plate_number = newName;
-    else payload.name = newName;
+    if (type === 'truk') {
+        const t = masterData.truk.find(x => x.id === id);
+        const newPlate = prompt(`Masukkan Plat Nomor baru:`, currentName);
+        if (newPlate === null || newPlate.trim() === '') return;
+        const newSupir = prompt(`Masukkan Nama Supir baru:`, t ? (t.supir || '') : '');
+        if (newSupir === null || newSupir.trim() === '') return;
+        payload.plate_number = newPlate.trim();
+        payload.supir = newSupir.trim();
+    } else {
+        const newName = prompt(`Masukkan nilai baru untuk ${type}:`, currentName);
+        if (newName === null || newName.trim() === '') return;
+        payload.name = newName.trim();
+    }
 
     try {
         const res = await fetch(`${API_URL}/master/${type}/${id}`, {
@@ -1590,8 +1854,11 @@ window.populateSelects = () => {
     elBlok.forEach(el => el.innerHTML = blokOpts);
     
     const elTruk = document.querySelectorAll('.select-truk');
-    const trukOpts = `<option value="" disabled selected>-- Pilih Truk --</option>` + masterData.truk.map(t => `<option value="${t.plate_number}">${t.plate_number}</option>`).join('');
-    elTruk.forEach(el => el.innerHTML = trukOpts);
+    const trukOpts = `<option value="" disabled selected>-- Pilih Truk --</option>` + masterData.truk.map(t => `<option value="${t.plate_number}" data-supir="${t.supir || ''}">${t.plate_number}</option>`).join('');
+    elTruk.forEach(el => {
+        el.innerHTML = trukOpts;
+        if(el.id === 'v-plate') el.setAttribute('onchange', 'onVehicleTrukChange(this)');
+    });
 
     const elPupuk = document.querySelectorAll('.select-pupuk');
     const pupukOpts = `<option value="" disabled selected>-- Pilih Pupuk --</option>` + masterData.pupuk.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
@@ -1619,4 +1886,250 @@ window.deleteMaster = async (type, id) => {
         const res = await fetch(`${API_URL}/master/${type}/${id}`, { method: 'DELETE' });
         if (res.ok) await loadMasterData();
     } catch(err) { console.error(err); }
+};
+
+window.onVehicleTrukChange = (selectEl) => {
+    if (selectEl.selectedIndex === -1) return;
+    const selectedOption = selectEl.options[selectEl.selectedIndex];
+    const supir = selectedOption.getAttribute('data-supir');
+    const driverInput = document.getElementById('v-driver');
+    if (driverInput) {
+        if (supir) {
+            driverInput.value = supir;
+            driverInput.readOnly = true;
+            driverInput.style.backgroundColor = '#f1f5f9';
+        } else {
+            driverInput.value = '';
+            driverInput.readOnly = false;
+            driverInput.style.backgroundColor = '';
+        }
+    }
+};
+
+window.promptHistoricalVehicle = () => {
+    const html = `
+        <div class="modal-overlay" id="modal-historical-vehicle">
+            <div class="modal-content" style="width: 800px; max-width: 95%;">
+                <div class="modal-header">
+                    <h3>Historical Vehicle Motion</h3>
+                    <button class="modal-close" onclick="document.getElementById('modal-historical-vehicle').remove()">&times;</button>
+                </div>
+                <div style="display:flex; gap:15px; align-items:flex-end; margin-bottom: 20px;">
+                    <div style="flex: 1;">
+                        <label style="font-size:0.85rem; font-weight:bold; display:block; margin-bottom:5px;">Dari Tanggal</label>
+                        <input type="date" id="hist-start-date" class="form-control">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-size:0.85rem; font-weight:bold; display:block; margin-bottom:5px;">Hingga Tanggal</label>
+                        <input type="date" id="hist-end-date" class="form-control">
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-primary" style="padding: 8px 20px;" onclick="loadHistoricalVehicle()">Tampilkan</button>
+                    </div>
+                </div>
+                
+                <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Plate Truk</th>
+                                <th>Asal Estate</th>
+                                <th>Ritase</th>
+                                <th>Blok</th>
+                                <th>Janjang</th>
+                                <th>Berangkat</th>
+                                <th>Tiba PKS</th>
+                                <th>Durasi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-historical-vehicle">
+                            <tr><td colspan="9" style="text-align:center;">Pilih tanggal dan klik Tampilkan.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.loadHistoricalVehicle = () => {
+    const start = document.getElementById('hist-start-date').value;
+    const end = document.getElementById('hist-end-date').value;
+    if (!start || !end) {
+        alert("Pilih Dari Tanggal dan Hingga Tanggal");
+        return;
+    }
+    
+    const tbody = document.getElementById('tbody-historical-vehicle');
+    tbody.innerHTML = '';
+    
+    let filtered = db.vehicles.filter(v => {
+        if (!v.date) return false;
+        return v.date >= start && v.date <= end;
+    });
+    
+    if (currentUser.estate.endsWith('Mill')) {
+        const allowedEstates = (masterData.supply_chain || []).map(sc => sc.estate);
+        filtered = filtered.filter(v => allowedEstates.includes(v.estate));
+    }
+    
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Tidak ada data pada rentang tanggal ini.</td></tr>';
+        return;
+    }
+    
+    [...filtered].reverse().forEach(v => {
+        const tDepart = v.timedepart || v.timeDepart;
+        const tArrive = v.timearrive || v.timeArrive;
+        const duration = calculateDuration(tDepart, tArrive);
+        
+        tbody.innerHTML += `
+            <tr>
+                <td>${v.date}</td>
+                <td><strong>${v.plate}</strong><br><small>${v.driver}</small></td>
+                <td><strong>${getEstateCode(v.estate)}</strong></td>
+                <td>${v.ritase}</td>
+                <td>${v.block}</td>
+                <td>${v.janjang}</td>
+                <td>${tDepart}</td>
+                <td>${tArrive || '-'}</td>
+                <td><strong>${duration}</strong></td>
+            </tr>
+        `;
+    });
+};
+
+window.getEstateCode = (estateName) => {
+    if (!estateName) return '-';
+    const name = estateName.toUpperCase();
+    if (name.includes('BUNGA TANJUNG')) return 'BTEE';
+    if (name.includes('SUNGAI TERAMANG')) return 'STGE';
+    if (name.includes('AIR BIKUK')) return 'ABEE';
+    if (name.includes('BATU KUDA')) return 'BKDE';
+    if (name.includes('AIR BULUH')) return 'ABEE';
+    if (name.includes('MALING DEMANG')) return 'MDEE';
+    if (name.includes('TANAH REKAH')) return 'TREE';
+    if (name.includes('MUKO MUKO')) return 'MME';
+    if (name.includes('SEI JERINJING')) return 'SJEE';
+    if (name.includes('TALANG PETAI')) return 'TPEE';
+    if (name.includes('SUNGAI KIANG')) return 'SKGE';
+    if (name.includes('AIR MAJUNTO')) return 'AMEE';
+    
+    const words = name.replace(' ESTATE', '').split(' ');
+    if (words.length === 1) return words[0].substring(0, 3) + 'E';
+};
+
+window.promptAddBlok = (divisiName) => {
+    const html = `
+        <div class="modal-overlay" id="modal-add-blok">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Tambah Blok di ${divisiName}</h3>
+                    <button class="modal-close" onclick="document.getElementById('modal-add-blok').remove()">&times;</button>
+                </div>
+                
+                <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.1);">
+                    <label style="font-size: 0.85rem; display:block; margin-bottom: 8px;">Opsi 1: Tambah Satu per Satu</label>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <input type="text" id="m-single-blok" class="form-control" placeholder="Nama Blok Baru">
+                        <input type="number" step="0.1" id="m-single-bjr" class="form-control" placeholder="BJR (kg)">
+                        <button type="button" class="btn btn-primary" onclick="addBlokSingle('${divisiName}')">+ Tambah Blok</button>
+                    </div>
+                </div>
+
+                <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.1);">
+                    <label style="font-size: 0.85rem; display:block; margin-bottom: 8px;">Opsi 2: Tambah Banyak Sekaligus (Paste dari Excel):</label>
+                    <p style="font-size: 0.8rem; color:#64748b; margin-top:0; margin-bottom:10px;">Pastikan Anda meng-copy 2 kolom dari Excel: Kolom 1 untuk Nama Blok, Kolom 2 untuk BJR.</p>
+                    <textarea id="m-bulk-blok" class="form-control" rows="5" placeholder="Paste daftar di sini (Blok [TAB] BJR)..."></textarea>
+                    <button type="button" class="btn btn-primary" style="margin-top: 8px; font-size: 0.85rem; padding: 6px 15px;" onclick="addBlokBulkFromModal('${divisiName}')"><i class="fa-solid fa-paste"></i> Simpan Hasil Paste Excel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.addBlokSingle = async (divisiName) => {
+    const nama = document.getElementById('m-single-blok').value;
+    const bjr = document.getElementById('m-single-bjr').value;
+    if(!nama || !nama.trim() || !bjr) return;
+    try {
+        const res = await fetch(`${API_URL}/master/blok`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estate: currentUser.estate, name: nama, bjr: bjr, divisi: divisiName })
+        });
+        if(res.ok) {
+            document.getElementById('modal-add-blok').remove();
+            await loadMasterData();
+        }
+    } catch(e) { console.error(e); }
+};
+
+window.addBlokBulkFromModal = async (divisiName) => {
+    const pasteData = document.getElementById('m-bulk-blok').value;
+    if(!pasteData.trim()) return;
+    
+    const rows = pasteData.trim().split('\n');
+    let bloks = [];
+    rows.forEach(r => {
+        const cols = r.split('\t');
+        if (cols.length >= 1) {
+            const bName = cols[0].trim();
+            const bBjr = cols.length >= 2 ? parseFloat(cols[1].trim().replace(',', '.')) : 0;
+            if (bName) bloks.push({ name: bName, bjr: isNaN(bBjr) ? 0 : bBjr, divisi: divisiName });
+        }
+    });
+    
+    if (bloks.length === 0) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/master/blok/bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estate: currentUser.estate, divisi: divisiName, bloks })
+        });
+        const data = await res.json();
+        if(res.ok) {
+            alert(`Berhasil menyimpan ${data.inserted || 0} blok baru dari hasil copy-paste.`);
+            document.getElementById('modal-add-blok').remove();
+            await loadMasterData();
+        } else {
+            alert(data.error || 'Gagal menambahkan data paste.');
+        }
+    } catch(e) { console.error(e); }
+};
+
+window.updateLocationList = () => {
+    const type = document.getElementById('login-location-type').value;
+    const estateSelect = document.getElementById('login-estate');
+    if (!estateSelect) return;
+    
+    estateSelect.innerHTML = '';
+    
+    if (type === 'Estate') {
+        estateSelect.innerHTML = `
+            <option value="" disabled selected>LIST ESTATE</option>
+            <option>Bunga Tanjung Estate</option>
+            <option>Sungai Teramang Estate</option>
+            <option>Air Bikuk Estate</option>
+            <option>Batu Kuda Estate</option>
+            <option>Air Buluh Estate</option>
+            <option>Maling Demang Estate</option>
+            <option>Tanah Rekah Estate</option>
+            <option>Muko Muko Estate</option>
+            <option>Sei Jerinjing Estate</option>
+            <option>Talang Petai Estate</option>
+            <option>Sungai Kiang Estate</option>
+            <option>Air Majunto Estate</option>
+        `;
+    } else if (type === 'Mill') {
+        estateSelect.innerHTML = `
+            <option value="" disabled selected>LIST MILL</option>
+            <option>Bunga Tanjung Mill</option>
+            <option>Muko Muko Mill</option>
+        `;
+    }
 };

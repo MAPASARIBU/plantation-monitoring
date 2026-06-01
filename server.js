@@ -21,10 +21,54 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 // Database Setup
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
-});
+let pool;
+
+if (process.env.DATABASE_URL) {
+    console.log("Using PostgreSQL Database (Production)");
+    const { Pool } = require('pg');
+    pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+    });
+} else {
+    console.log("Using SQLite Database (Local Development)");
+    const sqlite3 = require('sqlite3').verbose();
+    const db = new sqlite3.Database(path.join(__dirname, 'database.sqlite'));
+    
+    pool = {
+        query: (sql, params) => {
+            return new Promise((resolve, reject) => {
+                const isInsert = sql.trim().toUpperCase().startsWith('INSERT');
+                const hasReturning = sql.toUpperCase().includes('RETURNING ID');
+                
+                // Convert PostgreSQL $1, $2 to SQLite ?
+                let sqliteSql = sql.replace(/\$\d+/g, '?');
+                
+                if (isInsert || sql.trim().toUpperCase().startsWith('UPDATE') || sql.trim().toUpperCase().startsWith('DELETE') || sql.trim().toUpperCase().startsWith('CREATE') || sql.trim().toUpperCase().startsWith('ALTER')) {
+                    if (hasReturning) {
+                        sqliteSql = sqliteSql.replace(/RETURNING\s+id/i, '');
+                    }
+                    db.run(sqliteSql, params || [], function(err) {
+                        if (err) return reject(err);
+                        if (hasReturning) {
+                            resolve({ rows: [{ id: this.lastID }] });
+                        } else {
+                            resolve({ rows: [] });
+                        }
+                    });
+                } else {
+                    db.all(sqliteSql, params || [], (err, rows) => {
+                        if (err) return reject(err);
+                        resolve({ rows: rows || [] });
+                    });
+                }
+            });
+        },
+        connect: (cb) => {
+            cb(null, null, () => {});
+        }
+    };
+}
 
 // Initialize Tables & Seed Data
 async function initDB() {
@@ -40,8 +84,10 @@ async function initDB() {
         await pool.query(`CREATE TABLE IF NOT EXISTS vehicles (
             id SERIAL PRIMARY KEY,
             plate TEXT, driver TEXT, ritase INTEGER, block TEXT,
-            janjang INTEGER, timeDepart TEXT, timeArrive TEXT
+            janjang INTEGER, timeDepart TEXT, timeArrive TEXT, date TEXT, estate TEXT
         )`);
+        try { await pool.query("ALTER TABLE vehicles ADD COLUMN date TEXT"); } catch(e) {}
+        try { await pool.query("ALTER TABLE vehicles ADD COLUMN estate TEXT"); } catch(e) {}
         
         await pool.query(`CREATE TABLE IF NOT EXISTS upkeep (
             id SERIAL PRIMARY KEY,
@@ -67,9 +113,15 @@ async function initDB() {
         await pool.query(`CREATE TABLE IF NOT EXISTS master_divisi (id SERIAL PRIMARY KEY, estate TEXT, name TEXT)`);
         // Added divisi column because it's used in bulk insert checking
         await pool.query(`CREATE TABLE IF NOT EXISTS master_blok (id SERIAL PRIMARY KEY, estate TEXT, name TEXT, bjr REAL DEFAULT 0, divisi TEXT)`); 
-        await pool.query(`CREATE TABLE IF NOT EXISTS master_truk (id SERIAL PRIMARY KEY, estate TEXT, plate_number TEXT)`);
-        await pool.query(`CREATE TABLE IF NOT EXISTS master_pupuk (id SERIAL PRIMARY KEY, estate TEXT, name TEXT)`);
+        await pool.query(`CREATE TABLE IF NOT EXISTS master_truk (id SERIAL PRIMARY KEY, estate TEXT, plate_number TEXT, supir TEXT)`);
         await pool.query(`CREATE TABLE IF NOT EXISTS master_supir (id SERIAL PRIMARY KEY, estate TEXT, name TEXT)`);
+        await pool.query(`CREATE TABLE IF NOT EXISTS master_supply_chain (id SERIAL PRIMARY KEY, mill TEXT, estate TEXT)`);
+
+        try {
+            await pool.query(`ALTER TABLE master_truk ADD COLUMN supir TEXT`);
+        } catch (e) {
+            // Ignore if column already exists
+        }
 
         // Seed Users
         const userCount = await pool.query('SELECT COUNT(*) FROM users');
@@ -172,6 +224,26 @@ app.post('/api/users', async (req, res) => {
     }
 });
 
+app.put('/api/users/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const { role, estate, password } = req.body;
+        
+        let sql = 'UPDATE users SET role = $1, estate = $2 WHERE id = $3';
+        let params = [role, estate, id];
+        
+        if (password && password.trim() !== '') {
+            sql = 'UPDATE users SET role = $1, estate = $2, password = $3 WHERE id = $4';
+            params = [role, estate, password, id];
+        }
+        
+        await pool.query(sql, params);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.delete('/api/users/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
@@ -191,12 +263,18 @@ app.get('/api/master/:estate', async (req, res) => {
         const pupuk = await pool.query('SELECT * FROM master_pupuk WHERE estate = $1', [estate]);
         const supir = await pool.query('SELECT * FROM master_supir WHERE estate = $1', [estate]);
         
+        let supply_chain = { rows: [] };
+        if (estate.endsWith('Mill')) {
+            supply_chain = await pool.query('SELECT * FROM master_supply_chain WHERE mill = $1', [estate]);
+        }
+        
         res.json({
             divisi: divisi.rows,
             blok: blok.rows,
             truk: truk.rows,
             pupuk: pupuk.rows,
-            supir: supir.rows
+            supir: supir.rows,
+            supply_chain: supply_chain.rows
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -206,7 +284,7 @@ app.get('/api/master/:estate', async (req, res) => {
 app.post('/api/master/:type', async (req, res) => {
     try {
         const type = req.params.type;
-        const { estate, name, bjr, plate_number, divisi } = req.body;
+        const { estate, name, bjr, plate_number, supir, divisi } = req.body;
         let table = `master_${type}`;
         let val = type === 'truk' ? plate_number : name;
         let col = type === 'truk' ? 'plate_number' : 'name';
@@ -226,7 +304,7 @@ app.post('/api/master/:type', async (req, res) => {
         
         if (type === 'divisi') { sql = 'INSERT INTO master_divisi (estate, name) VALUES ($1,$2) RETURNING id'; params = [estate, name]; }
         else if (type === 'blok') { sql = 'INSERT INTO master_blok (estate, name, bjr, divisi) VALUES ($1,$2,$3,$4) RETURNING id'; params = [estate, name, bjr || 0, divisi || '']; }
-        else if (type === 'truk') { sql = 'INSERT INTO master_truk (estate, plate_number) VALUES ($1,$2) RETURNING id'; params = [estate, plate_number]; }
+        else if (type === 'truk') { sql = 'INSERT INTO master_truk (estate, plate_number, supir) VALUES ($1,$2,$3) RETURNING id'; params = [estate, plate_number, supir || '']; }
         else if (type === 'pupuk') { sql = 'INSERT INTO master_pupuk (estate, name) VALUES ($1,$2) RETURNING id'; params = [estate, name]; }
         else if (type === 'supir') { sql = 'INSERT INTO master_supir (estate, name) VALUES ($1,$2) RETURNING id'; params = [estate, name]; }
         else return res.status(400).json({error: 'Invalid type'});
@@ -273,7 +351,7 @@ app.post('/api/master/truk/bulk', async (req, res) => {
         
         const existing = await pool.query(`SELECT plate_number FROM master_truk WHERE estate = $1`, [estate]);
         const existingSet = new Set(existing.rows.map(e => e.plate_number));
-        const toInsert = items.filter(b => b.trim() !== '' && !existingSet.has(b.trim()));
+        const toInsert = items.filter(b => b && b.plate_number && b.plate_number.trim() !== '' && !existingSet.has(b.plate_number.trim()));
         
         if (toInsert.length === 0) return res.json({ success: true, inserted: 0 });
         
@@ -282,12 +360,12 @@ app.post('/api/master/truk/bulk', async (req, res) => {
         let paramIndex = 1;
         
         toInsert.forEach(b => {
-            valuesStr.push(`($${paramIndex}, $${paramIndex+1})`);
-            params.push(estate, b.trim());
-            paramIndex += 2;
+            valuesStr.push(`($${paramIndex}, $${paramIndex+1}, $${paramIndex+2})`);
+            params.push(estate, b.plate_number.trim(), (b.supir || '').trim());
+            paramIndex += 3;
         });
         
-        await pool.query(`INSERT INTO master_truk (estate, plate_number) VALUES ${valuesStr.join(',')}`, params);
+        await pool.query(`INSERT INTO master_truk (estate, plate_number, supir) VALUES ${valuesStr.join(',')}`, params);
         res.json({ success: true, inserted: toInsert.length });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -366,7 +444,7 @@ app.put('/api/master/:type/:id', async (req, res) => {
     try {
         const type = req.params.type;
         const id = req.params.id;
-        const { name, plate_number, bjr } = req.body;
+        const { name, plate_number, supir, bjr } = req.body;
         let table = `master_${type}`;
         
         let sql, params;
@@ -374,8 +452,8 @@ app.put('/api/master/:type/:id', async (req, res) => {
             sql = 'UPDATE master_blok SET name = $1, bjr = $2 WHERE id = $3';
             params = [name, bjr, id];
         } else if (type === 'truk') {
-            sql = `UPDATE master_truk SET plate_number = $1 WHERE id = $2`;
-            params = [plate_number, id];
+            sql = `UPDATE master_truk SET plate_number = $1, supir = $2 WHERE id = $3`;
+            params = [plate_number, supir, id];
         } else {
             sql = `UPDATE ${table} SET name = $1 WHERE id = $2`;
             params = [name, id];
@@ -384,6 +462,22 @@ app.put('/api/master/:type/:id', async (req, res) => {
         await pool.query(sql, params);
         res.json({ success: true });
     } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/master/supply_chain/save', async (req, res) => {
+    try {
+        const { mill, estates } = req.body;
+        await pool.query('BEGIN');
+        await pool.query('DELETE FROM master_supply_chain WHERE mill = $1', [mill]);
+        for (const est of estates) {
+            await pool.query('INSERT INTO master_supply_chain (mill, estate) VALUES ($1, $2)', [mill, est]);
+        }
+        await pool.query('COMMIT');
+        res.json({ success: true });
+    } catch (err) {
+        await pool.query('ROLLBACK');
         res.status(500).json({ error: err.message });
     }
 });
@@ -410,10 +504,10 @@ app.get('/api/data', async (req, res) => {
 // VEHICLES
 app.post('/api/vehicles', async (req, res) => {
     try {
-        const { plate, driver, ritase, block, janjang, timeDepart, timeArrive } = req.body;
+        const { plate, driver, ritase, block, janjang, timeDepart, timeArrive, date, estate } = req.body;
         const result = await pool.query(
-            'INSERT INTO vehicles (plate, driver, ritase, block, janjang, timeDepart, timeArrive) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id',
-            [plate, driver, ritase, block, janjang, timeDepart, timeArrive]
+            'INSERT INTO vehicles (plate, driver, ritase, block, janjang, timeDepart, timeArrive, date, estate) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id',
+            [plate, driver, ritase, block, janjang, timeDepart, timeArrive, date, estate]
         );
         res.json({ id: result.rows[0].id });
     } catch (err) {
