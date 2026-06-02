@@ -1181,6 +1181,15 @@ const navigate = (viewId) => {
         const layouts = container.querySelectorAll('.module-layout');
         layouts.forEach(l => l.style.gridTemplateColumns = '1fr');
     }
+
+    // Specific read-only logic for Vehicle Motion Monitoring (Manager, Askep, Assistant)
+    const vehicleReadOnlyRoles = ['Manager', 'Askep', 'Assistant'];
+    if (viewId === 'vehicle' && currentUser && vehicleReadOnlyRoles.includes(currentUser.role)) {
+        const forms = container.querySelectorAll('.form-container');
+        forms.forEach(f => f.style.display = 'none');
+        const layouts = container.querySelectorAll('.module-layout');
+        layouts.forEach(l => l.style.gridTemplateColumns = '1fr');
+    }
 };
 
 // Initialization
