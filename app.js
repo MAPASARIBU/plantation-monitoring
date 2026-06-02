@@ -484,18 +484,10 @@ const views = {
                 <!-- Truk -->
                 <div class="glass-card master-estate-card">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3>Master Truk</h3>
-                        <button type="button" class="btn btn-primary" onclick="promptAddMaster('truk')"><i class="fa-solid fa-plus"></i> Tambah Truk</button>
+                        <h3>Master Truk & Supir</h3>
+                        <button type="button" class="btn btn-primary" onclick="promptAddMaster('truk')"><i class="fa-solid fa-plus"></i> Tambah Truk & Supir</button>
                     </div>
                     <div id="container-master-truk" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; width: 100%;"></div>
-                </div>
-                <!-- Supir -->
-                <div class="glass-card master-estate-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3>Master Supir</h3>
-                        <button type="button" class="btn btn-primary" onclick="promptAddMaster('supir')"><i class="fa-solid fa-plus"></i> Tambah Supir</button>
-                    </div>
-                    <div id="container-master-supir" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;"></div>
                 </div>
                 <!-- Pupuk -->
                 <div class="glass-card master-estate-card">
