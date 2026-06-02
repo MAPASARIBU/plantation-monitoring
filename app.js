@@ -707,20 +707,16 @@ const renderPemupukanTable = () => {
         const pct = getProgressStr(rKg, tKg);
         let actionBtn = '-';
         if (currentUser.role !== 'Senior Field Manager') {
-            const riwayatBtn = `<button class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="viewPemupukanHistory(${p.id}, '${p.block}', '${p.plan}')"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat</button>`;
-            
             if (p.status === 'Selesai') {
                 actionBtn = `
                     <div style="display:flex; flex-direction:column; gap:3px;">
                         <span class="status-badge status-done" style="text-align:center;">Selesai</span>
-                        ${riwayatBtn}
                     </div>
                 `;
             } else {
                 actionBtn = `
                     <div style="display:flex; flex-direction:column; gap:3px;">
                         <button class="btn btn-primary" style="padding: 2px 6px; font-size: 0.7rem;" onclick="openAddRealizationModal(${p.id}, '${p.block}', '${p.plan}', '${sDate}')"><i class="fa-solid fa-plus"></i> Tambah</button>
-                        ${riwayatBtn}
                         <button class="btn btn-logout" style="padding: 2px 6px; font-size: 0.7rem; background: #ef4444; color: white; border-radius: 4px;" onclick="closePemupukan(${p.id}, '${p.block}')"><i class="fa-solid fa-check"></i> Tutup</button>
                     </div>
                 `;
@@ -730,7 +726,7 @@ const renderPemupukanTable = () => {
         tbody.innerHTML += `
             <tr>
                 <td>${sDate || '-'}</td>
-                <td><strong>${p.block}</strong></td>
+                <td><strong><a href="#" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;" onclick="viewPemupukanHistory(${p.id}, '${p.block}', '${p.plan}'); return false;">${p.block}</a></strong></td>
                 <td>${p.plan}</td>
                 <td>${tKg}</td>
                 <td>${rKg}</td>
