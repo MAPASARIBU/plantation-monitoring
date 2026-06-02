@@ -669,7 +669,7 @@ const renderUpkeepTable = () => {
         
         if (u.status === 'Selesai') {
             actionBtn = `<span class="status-badge status-done" style="margin-right: 5px;">Selesai</span>`;
-        } else {
+        } else if (currentUser && currentUser.role && currentUser.role.includes('Krani')) {
             actionBtn = `
                 <div style="display:flex; flex-direction:column; gap:5px; align-items:center;">
                     <div style="display:flex; gap:5px;">
@@ -678,6 +678,8 @@ const renderUpkeepTable = () => {
                     <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; width:100%; justify-content:center;" onclick="closeUpkeep(${u.id}, '${u.block}')"><i class="fa-solid fa-check"></i> Selesai</button>
                 </div>
             `;
+        } else {
+            actionBtn = '-';
         }
         
         return `
@@ -721,21 +723,19 @@ const renderPemupukanTable = () => {
         const sDate = p.startdate || p.startDate;
         const pct = getProgressStr(rKg, tKg);
         let actionBtn = '-';
-        if (currentUser.role !== 'Senior Field Manager') {
-            if (p.status === 'Selesai') {
-                actionBtn = `
-                    <div style="display:flex; flex-direction:column; gap:3px;">
-                        <span class="status-badge status-done" style="text-align:center;">Selesai</span>
-                    </div>
-                `;
-            } else {
-                actionBtn = `
-                    <div style="display:flex; flex-direction:column; gap:3px;">
-                        <button class="btn btn-primary" style="padding: 2px 6px; font-size: 0.7rem;" onclick="openAddRealizationModal(${p.id}, '${p.block}', '${p.plan}', '${sDate}')"><i class="fa-solid fa-plus"></i> Tambah</button>
-                        <button class="btn btn-logout" style="padding: 2px 6px; font-size: 0.7rem; background: #ef4444; color: white; border-radius: 4px;" onclick="closePemupukan(${p.id}, '${p.block}')"><i class="fa-solid fa-check"></i> Tutup</button>
-                    </div>
-                `;
-            }
+        if (p.status === 'Selesai') {
+            actionBtn = `
+                <div style="display:flex; flex-direction:column; gap:3px;">
+                    <span class="status-badge status-done" style="text-align:center;">Selesai</span>
+                </div>
+            `;
+        } else if (currentUser && currentUser.role && currentUser.role.includes('Krani')) {
+            actionBtn = `
+                <div style="display:flex; flex-direction:column; gap:3px;">
+                    <button class="btn btn-primary" style="padding: 2px 6px; font-size: 0.7rem;" onclick="openAddRealizationModal(${p.id}, '${p.block}', '${p.plan}', '${sDate}')"><i class="fa-solid fa-plus"></i> Tambah</button>
+                    <button class="btn btn-logout" style="padding: 2px 6px; font-size: 0.7rem; background: #ef4444; color: white; border-radius: 4px;" onclick="closePemupukan(${p.id}, '${p.block}')"><i class="fa-solid fa-check"></i> Tutup</button>
+                </div>
+            `;
         }
             
         return `
@@ -1227,6 +1227,16 @@ const navigate = (viewId) => {
         forms.forEach(f => f.style.display = 'none');
         const layouts = container.querySelectorAll('.module-layout');
         layouts.forEach(l => l.style.gridTemplateColumns = '1fr');
+    }
+
+    // Specific read-only logic for Upkeep and Pemupukan (Only Assistant and Askep can input rencana)
+    if ((viewId === 'upkeep' || viewId === 'pemupukan') && currentUser) {
+        if (currentUser.role !== 'Assistant' && currentUser.role !== 'Askep') {
+            const forms = container.querySelectorAll('.form-container');
+            forms.forEach(f => f.style.display = 'none');
+            const layouts = container.querySelectorAll('.module-layout');
+            layouts.forEach(l => l.style.gridTemplateColumns = '1fr');
+        }
     }
 };
 
