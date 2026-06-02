@@ -94,6 +94,12 @@ async function initDB() {
             id SERIAL PRIMARY KEY,
             block TEXT, type TEXT, target REAL, realized REAL, worker TEXT
         )`);
+        try { await pool.query("ALTER TABLE upkeep ADD COLUMN status TEXT DEFAULT 'Aktif'"); } catch(e) {}
+
+        await pool.query(`CREATE TABLE IF NOT EXISTS upkeep_history (
+            id SERIAL PRIMARY KEY,
+            upkeep_id INTEGER, dateAdded TEXT, addedHa REAL, worker TEXT
+        )`);
 
         await pool.query(`CREATE TABLE IF NOT EXISTS pemupukan (
             id SERIAL PRIMARY KEY,
@@ -529,12 +535,50 @@ app.put('/api/vehicles/:id', async (req, res) => {
 // UPKEEP
 app.post('/api/upkeep', async (req, res) => {
     try {
-        const { block, type, target, realized, worker } = req.body;
+        const { block, type, target, worker } = req.body;
         const result = await pool.query(
-            'INSERT INTO upkeep (block, type, target, realized, worker) VALUES ($1,$2,$3,$4,$5) RETURNING id',
-            [block, type, target, realized, worker]
+            'INSERT INTO upkeep (block, type, target, realized, worker, status) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
+            [block, type, target, 0, worker, 'Aktif']
         );
         res.json({ id: result.rows[0].id });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/upkeep/:id/add', async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { additionalHa, dateAdded, worker } = req.body;
+        await client.query('BEGIN');
+        await client.query('UPDATE upkeep SET realized = realized + $1 WHERE id = $2', [additionalHa, req.params.id]);
+        await client.query(
+            'INSERT INTO upkeep_history (upkeep_id, dateAdded, addedHa, worker) VALUES ($1,$2,$3,$4)',
+            [req.params.id, dateAdded, additionalHa, worker || '']
+        );
+        await client.query('COMMIT');
+        res.json({ success: true });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        res.status(500).json({ error: err.message });
+    } finally {
+        client.release();
+    }
+});
+
+app.get('/api/upkeep/:id/history', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM upkeep_history WHERE upkeep_id = $1 ORDER BY dateAdded DESC', [req.params.id]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/upkeep/:id/close', async (req, res) => {
+    try {
+        await pool.query('UPDATE upkeep SET status = $1 WHERE id = $2', ['Selesai', req.params.id]);
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

@@ -315,10 +315,6 @@ const views = {
                         <input type="number" step="0.1" id="u-target" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label>Realisasi (Ha)</label>
-                        <input type="number" step="0.1" id="u-realized" class="form-control" required>
-                    </div>
-                    <div class="form-group">
                         <label>Penanggung Jawab (Mandor)</label>
                         <input type="text" id="u-worker" class="form-control" required>
                     </div>
@@ -340,7 +336,7 @@ const views = {
                                 <th>Target (Ha)</th>
                                 <th>Realisasi (Ha)</th>
                                 <th>Progress</th>
-                                <th>Status</th>
+                                <th style="text-align:center;">Aksi / Status</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-upkeep"></tbody>
@@ -657,7 +653,24 @@ const renderUpkeepTable = () => {
     tbody.innerHTML = '';
     [...db.upkeep].reverse().forEach(u => {
         const pct = getProgressStr(u.realized, u.target);
-        const status = pct >= 100 ? '<span class="status-badge status-done">Selesai</span>' : '<span class="status-badge status-progress">In Progress</span>';
+        
+        let actionBtn = '';
+        const safeType = u.type ? u.type.replace(/['"\n\r]/g, ' ') : '';
+        const riwayatBtn = `<button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px;" onclick="viewUpkeepHistory(${u.id}, '${u.block}', '${safeType}')"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat</button>`;
+        
+        if (u.status === 'Selesai') {
+            actionBtn = `<span class="status-badge status-done" style="margin-right: 5px;">Selesai</span>` + riwayatBtn;
+        } else {
+            actionBtn = `
+                <div style="display:flex; flex-direction:column; gap:5px; align-items:center;">
+                    <div style="display:flex; gap:5px;">
+                        <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="promptAddUpkeepProgress(${u.id}, '${u.block}', '${safeType}', ${u.target}, ${u.realized})"><i class="fa-solid fa-plus"></i> Progress</button>
+                        ${riwayatBtn}
+                    </div>
+                    <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; width:100%; justify-content:center;" onclick="closeUpkeep(${u.id}, '${u.block}')"><i class="fa-solid fa-check"></i> Selesai</button>
+                </div>
+            `;
+        }
         
         tbody.innerHTML += `
             <tr>
@@ -671,7 +684,7 @@ const renderUpkeepTable = () => {
                         <small>${pct}%</small>
                     </div>
                 </td>
-                <td>${status}</td>
+                <td style="text-align:center;">${actionBtn}</td>
             </tr>
         `;
     });
@@ -1002,7 +1015,6 @@ const bindForms = () => {
             block: document.getElementById('u-block').value,
             type: document.getElementById('u-type').value,
             target: parseFloat(document.getElementById('u-target').value),
-            realized: parseFloat(document.getElementById('u-realized').value),
             worker: document.getElementById('u-worker').value
         };
         try {
@@ -2256,5 +2268,133 @@ window.updateLocationList = () => {
             <option>Bunga Tanjung Mill</option>
             <option>Muko Muko Mill</option>
         `;
+    }
+};
+
+window.promptAddUpkeepProgress = (id, block, type, target, realized) => {
+    const modalId = 'modal-upkeep-progress-' + id;
+    const existing = document.getElementById(modalId);
+    if (existing) existing.remove();
+
+    const today = new Date().toISOString().split('T')[0];
+    const sisa = Math.max(0, target - realized).toFixed(2);
+
+    const modalHTML = `
+        <div class="modal-overlay" id="${modalId}">
+            <div class="modal-content" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h3>Update Progress Upkeep</h3>
+                    <button type="button" class="modal-close" onclick="document.getElementById('${modalId}').remove()">&times;</button>
+                </div>
+                <div style="margin-bottom: 15px; font-size: 0.9rem; background: #f8fafc; padding: 10px; border-radius: 8px;">
+                    <strong>Blok:</strong> ${block}<br>
+                    <strong>Pekerjaan:</strong> ${type}<br>
+                    <strong>Sisa Target:</strong> ${sisa} Ha
+                </div>
+                <form id="form-upkeep-add-${id}" onsubmit="submitUpkeepProgress(event, ${id})">
+                    <div class="form-group">
+                        <label>Realisasi Tambahan (Ha)</label>
+                        <input type="number" step="0.1" id="upkeep-add-${id}" class="form-control" required placeholder="Contoh: 2.5" max="${sisa}">
+                    </div>
+                    <div class="form-group">
+                        <label>Tanggal Pengerjaan</label>
+                        <input type="date" id="upkeep-date-${id}" class="form-control" required value="${today}">
+                    </div>
+                    <div class="form-group">
+                        <label>Penanggung Jawab / Keterangan</label>
+                        <input type="text" id="upkeep-worker-${id}" class="form-control" placeholder="Opsional">
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+                        <button type="button" class="btn btn-logout" style="background:#64748b; color:white; border:none; padding:8px 15px; margin-right:10px;" onclick="document.getElementById('${modalId}').remove()">Batal</button>
+                        <button type="submit" class="btn btn-primary" style="padding:8px 15px;"><i class="fa-solid fa-save"></i> Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+};
+
+window.submitUpkeepProgress = async (e, id) => {
+    e.preventDefault();
+    const additionalHa = parseFloat(document.getElementById(`upkeep-add-${id}`).value);
+    const dateAdded = document.getElementById(`upkeep-date-${id}`).value;
+    const worker = document.getElementById(`upkeep-worker-${id}`).value;
+    
+    try {
+        const res = await fetch(`${API_URL}/upkeep/${id}/add`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ additionalHa, dateAdded, worker })
+        });
+        if (res.ok) {
+            document.getElementById(`modal-upkeep-progress-${id}`).remove();
+            await loadData();
+        } else {
+            alert('Gagal update progress.');
+        }
+    } catch(err) {
+        console.error(err);
+        alert('Terjadi kesalahan jaringan.');
+    }
+};
+
+window.viewUpkeepHistory = async (id, block, type) => {
+    try {
+        const res = await fetch(`${API_URL}/upkeep/${id}/history`);
+        if (res.ok) {
+            const history = await res.json();
+            const modalId = 'modal-upkeep-history-' + id;
+            const existing = document.getElementById(modalId);
+            if (existing) existing.remove();
+            
+            const rows = history.map(h => `
+                <tr>
+                    <td>${h.dateadded}</td>
+                    <td><strong>+${h.addedha} Ha</strong></td>
+                    <td><small>${h.worker || '-'}</small></td>
+                </tr>
+            `).join('');
+
+            const modalHTML = `
+                <div class="modal-overlay" id="${modalId}">
+                    <div class="modal-content" style="max-width: 500px;">
+                        <div class="modal-header">
+                            <h3>Riwayat Progress Upkeep</h3>
+                            <button type="button" class="modal-close" onclick="document.getElementById('${modalId}').remove()">&times;</button>
+                        </div>
+                        <div style="margin-bottom: 15px; font-size: 0.9rem;">
+                            <strong>Blok:</strong> ${block} | <strong>Pekerjaan:</strong> ${type}
+                        </div>
+                        <div style="max-height: 300px; overflow-y: auto;">
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Penambahan (Ha)</th>
+                                        <th>Keterangan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rows || '<tr><td colspan="3" style="text-align:center;">Belum ada riwayat.</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+    } catch(e) {
+        console.error(e);
+    }
+};
+
+window.closeUpkeep = async (id, block) => {
+    if (confirm(`Tutup target pekerjaan di Blok ${block} dan tandai Selesai?`)) {
+        try {
+            await fetch(`${API_URL}/upkeep/${id}/close`, { method: 'PUT' });
+            await loadData();
+        } catch(e) { console.error(e); }
     }
 };
