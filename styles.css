@@ -444,6 +444,27 @@ h1, h2, h3, h4, h5, h6 {
     background-color: #f8fafc;
 }
 
+/* Hover Action Button */
+.btn-delete-hover {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition-fast);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+}
+.btn-delete-hover:hover {
+    background: #dc2626;
+}
+.data-table tr:hover .btn-delete-hover {
+    opacity: 1;
+    visibility: visible;
+}
+
 /* Badges */
 .status-badge {
     padding: 4px 10px;

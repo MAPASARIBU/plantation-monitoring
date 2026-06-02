@@ -1314,7 +1314,7 @@ window.renderMasterTables = () => {
                     <td>${supirText}</td>
                     <td style="width:140px; text-align:right;">
                         <button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem; margin-right:5px;" onclick="editMaster('truk', ${t.id}, '${safePlate}')"><i class="fa-solid fa-pen"></i> Edit</button>
-                        <button type="button" class="btn btn-logout" style="background:#ef4444; color:white; border:none; padding:4px 8px; font-size:0.75rem;" onclick="deleteMaster('truk', ${t.id})"><i class="fa-solid fa-trash"></i> Hapus</button>
+                        <button type="button" class="btn btn-delete-hover" onclick="deleteMaster('truk', ${t.id})"><i class="fa-solid fa-trash"></i> Hapus</button>
                     </td>
                 </tr>
             `;
@@ -1380,7 +1380,7 @@ window.renderMasterTables = () => {
                     <td><strong>${p.name}</strong></td>
                     <td style="width:140px; text-align:right;">
                         <button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem; margin-right:5px;" onclick="editMaster('pupuk', ${p.id}, '${safeName}')"><i class="fa-solid fa-pen"></i> Edit</button>
-                        <button type="button" class="btn btn-logout" style="background:#ef4444; color:white; border:none; padding:4px 8px; font-size:0.75rem;" onclick="deleteMaster('pupuk', ${p.id})"><i class="fa-solid fa-trash"></i> Hapus</button>
+                        <button type="button" class="btn btn-delete-hover" onclick="deleteMaster('pupuk', ${p.id})"><i class="fa-solid fa-trash"></i> Hapus</button>
                     </td>
                 </tr>
             `;
@@ -1422,7 +1422,7 @@ window.renderSelectedDivisi = () => {
     if (!d) return; 
     
     const bloks = masterData.blok.filter(b => b.divisi === d.name);
-    const blokRows = bloks.map(b => `<tr><td>${b.name}</td><td>${b.bjr}</td><td style="width:120px; text-align:right;"><button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-right:5px;" onclick="editMasterBlok(${b.id}, '${b.name}', ${b.bjr})">Edit</button><button type="button" class="btn btn-logout" style="padding:2px 6px; font-size:0.7rem;" onclick="deleteMaster('blok', ${b.id})">Hapus</button></td></tr>`).join('');
+    const blokRows = bloks.map(b => `<tr><td>${b.name}</td><td>${b.bjr}</td><td style="width:120px; text-align:right;"><button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-right:5px;" onclick="editMasterBlok(${b.id}, '${b.name}', ${b.bjr})">Edit</button><button type="button" class="btn btn-delete-hover" style="padding:2px 6px; font-size:0.7rem;" onclick="deleteMaster('blok', ${b.id})">Hapus</button></td></tr>`).join('');
     
     const safeDivName = d.name.replace(/['"\\n\\r]/g, ' ');
     contentDiv.innerHTML = `
