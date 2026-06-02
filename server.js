@@ -88,6 +88,7 @@ async function initDB() {
         )`);
         try { await pool.query("ALTER TABLE vehicles ADD COLUMN date TEXT"); } catch(e) {}
         try { await pool.query("ALTER TABLE vehicles ADD COLUMN estate TEXT"); } catch(e) {}
+        try { await pool.query("ALTER TABLE users ADD COLUMN estate TEXT"); } catch(e) {}
         
         await pool.query(`CREATE TABLE IF NOT EXISTS upkeep (
             id SERIAL PRIMARY KEY,

@@ -1066,14 +1066,22 @@ const bindForms = () => {
             estate: document.getElementById('u-estate').value
         };
         try {
-            await fetch(`${API_URL}/users`, {
+            const res = await fetch(`${API_URL}/users`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+            if (!res.ok) {
+                const data = await res.json();
+                alert('Gagal menambahkan user: ' + (data.error || data.message || 'Error'));
+                return;
+            }
             formUser.reset();
             await loadUsers();
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            console.error(e); 
+            alert('Terjadi kesalahan sistem.'); 
+        }
     };
 };
 
