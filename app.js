@@ -336,6 +336,7 @@ const views = {
                         <thead>
                             <tr>
                                 <th>Blok</th>
+                                <th>Tanggal Mulai</th>
                                 <th>Pekerjaan</th>
                                 <th>Target (Ha)</th>
                                 <th>Target HK</th>
@@ -678,6 +679,7 @@ const renderUpkeepTable = () => {
         tbody.innerHTML += `
             <tr>
                 <td><strong><a href="#" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;" onclick="viewUpkeepHistory(${u.id}, '${u.block}', '${safeType}'); return false;">${u.block}</a></strong></td>
+                <td>${u.startdate || '-'}</td>
                 <td>${u.type}<br><small>${u.worker}</small></td>
                 <td>${u.target}</td>
                 <td>${u.targetworkers || 0} Orang</td>
@@ -1020,7 +1022,8 @@ const bindForms = () => {
             type: document.getElementById('u-type').value,
             target: parseFloat(document.getElementById('u-target').value),
             targetWorkers: parseInt(document.getElementById('u-workers').value) || 0,
-            worker: document.getElementById('u-worker').value
+            worker: document.getElementById('u-worker').value,
+            startDate: new Date().toISOString().split('T')[0]
         };
         try {
             await fetch(`${API_URL}/upkeep`, {

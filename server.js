@@ -96,6 +96,7 @@ async function initDB() {
         )`);
         try { await pool.query("ALTER TABLE upkeep ADD COLUMN status TEXT DEFAULT 'Aktif'"); } catch(e) {}
         try { await pool.query("ALTER TABLE upkeep ADD COLUMN targetWorkers INTEGER DEFAULT 0"); } catch(e) {}
+        try { await pool.query("ALTER TABLE upkeep ADD COLUMN startDate TEXT"); } catch(e) {}
 
         await pool.query(`CREATE TABLE IF NOT EXISTS upkeep_history (
             id SERIAL PRIMARY KEY,
@@ -537,10 +538,10 @@ app.put('/api/vehicles/:id', async (req, res) => {
 // UPKEEP
 app.post('/api/upkeep', async (req, res) => {
     try {
-        const { block, type, target, worker, targetWorkers } = req.body;
+        const { block, type, target, worker, targetWorkers, startDate } = req.body;
         const result = await pool.query(
-            'INSERT INTO upkeep (block, type, target, realized, worker, status, targetWorkers) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id',
-            [block, type, target, 0, worker, 'Aktif', targetWorkers || 0]
+            'INSERT INTO upkeep (block, type, target, realized, worker, status, targetWorkers, startDate) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id',
+            [block, type, target, 0, worker, 'Aktif', targetWorkers || 0, startDate || '']
         );
         res.json({ id: result.rows[0].id });
     } catch (err) {
