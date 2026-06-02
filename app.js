@@ -315,6 +315,10 @@ const views = {
                         <input type="number" step="0.1" id="u-target" class="form-control" required>
                     </div>
                     <div class="form-group">
+                        <label>Target HK (Orang)</label>
+                        <input type="number" id="u-workers" class="form-control" required>
+                    </div>
+                    <div class="form-group">
                         <label>Penanggung Jawab (Mandor)</label>
                         <input type="text" id="u-worker" class="form-control" required>
                     </div>
@@ -334,6 +338,7 @@ const views = {
                                 <th>Blok</th>
                                 <th>Pekerjaan</th>
                                 <th>Target (Ha)</th>
+                                <th>Target HK</th>
                                 <th>Realisasi (Ha)</th>
                                 <th>Progress</th>
                                 <th style="text-align:center;">Aksi / Status</th>
@@ -677,6 +682,7 @@ const renderUpkeepTable = () => {
                 <td><strong>${u.block}</strong></td>
                 <td>${u.type}<br><small>${u.worker}</small></td>
                 <td>${u.target}</td>
+                <td>${u.targetworkers || 0} Orang</td>
                 <td>${u.realized}</td>
                 <td>
                     <div style="display:flex; align-items:center; gap:10px;">
@@ -1015,6 +1021,7 @@ const bindForms = () => {
             block: document.getElementById('u-block').value,
             type: document.getElementById('u-type').value,
             target: parseFloat(document.getElementById('u-target').value),
+            targetWorkers: parseInt(document.getElementById('u-workers').value) || 0,
             worker: document.getElementById('u-worker').value
         };
         try {
@@ -2297,6 +2304,10 @@ window.promptAddUpkeepProgress = (id, block, type, target, realized) => {
                         <input type="number" step="0.1" id="upkeep-add-${id}" class="form-control" required placeholder="Contoh: 2.5" max="${sisa}">
                     </div>
                     <div class="form-group">
+                        <label>Jumlah Pekerja (Orang)</label>
+                        <input type="number" id="upkeep-workers-${id}" class="form-control" required placeholder="Contoh: 5">
+                    </div>
+                    <div class="form-group">
                         <label>Tanggal Pengerjaan</label>
                         <input type="date" id="upkeep-date-${id}" class="form-control" required value="${today}">
                     </div>
@@ -2320,12 +2331,13 @@ window.submitUpkeepProgress = async (e, id) => {
     const additionalHa = parseFloat(document.getElementById(`upkeep-add-${id}`).value);
     const dateAdded = document.getElementById(`upkeep-date-${id}`).value;
     const worker = document.getElementById(`upkeep-worker-${id}`).value;
+    const workers = parseInt(document.getElementById(`upkeep-workers-${id}`).value) || 0;
     
     try {
         const res = await fetch(`${API_URL}/upkeep/${id}/add`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ additionalHa, dateAdded, worker })
+            body: JSON.stringify({ additionalHa, dateAdded, worker, workers })
         });
         if (res.ok) {
             document.getElementById(`modal-upkeep-progress-${id}`).remove();
@@ -2352,6 +2364,7 @@ window.viewUpkeepHistory = async (id, block, type) => {
                 <tr>
                     <td>${h.dateadded}</td>
                     <td><strong>+${h.addedha} Ha</strong></td>
+                    <td>${h.workers || 0} Org</td>
                     <td><small>${h.worker || '-'}</small></td>
                 </tr>
             `).join('');
@@ -2372,11 +2385,12 @@ window.viewUpkeepHistory = async (id, block, type) => {
                                     <tr>
                                         <th>Tanggal</th>
                                         <th>Penambahan (Ha)</th>
+                                        <th>HK / Orang</th>
                                         <th>Keterangan</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${rows || '<tr><td colspan="3" style="text-align:center;">Belum ada riwayat.</td></tr>'}
+                                    ${rows || '<tr><td colspan="4" style="text-align:center;">Belum ada riwayat.</td></tr>'}
                                 </tbody>
                             </table>
                         </div>

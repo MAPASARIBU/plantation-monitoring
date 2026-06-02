@@ -95,11 +95,13 @@ async function initDB() {
             block TEXT, type TEXT, target REAL, realized REAL, worker TEXT
         )`);
         try { await pool.query("ALTER TABLE upkeep ADD COLUMN status TEXT DEFAULT 'Aktif'"); } catch(e) {}
+        try { await pool.query("ALTER TABLE upkeep ADD COLUMN targetWorkers INTEGER DEFAULT 0"); } catch(e) {}
 
         await pool.query(`CREATE TABLE IF NOT EXISTS upkeep_history (
             id SERIAL PRIMARY KEY,
             upkeep_id INTEGER, dateAdded TEXT, addedHa REAL, worker TEXT
         )`);
+        try { await pool.query("ALTER TABLE upkeep_history ADD COLUMN workers INTEGER DEFAULT 0"); } catch(e) {}
 
         await pool.query(`CREATE TABLE IF NOT EXISTS pemupukan (
             id SERIAL PRIMARY KEY,
@@ -535,10 +537,10 @@ app.put('/api/vehicles/:id', async (req, res) => {
 // UPKEEP
 app.post('/api/upkeep', async (req, res) => {
     try {
-        const { block, type, target, worker } = req.body;
+        const { block, type, target, worker, targetWorkers } = req.body;
         const result = await pool.query(
-            'INSERT INTO upkeep (block, type, target, realized, worker, status) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
-            [block, type, target, 0, worker, 'Aktif']
+            'INSERT INTO upkeep (block, type, target, realized, worker, status, targetWorkers) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id',
+            [block, type, target, 0, worker, 'Aktif', targetWorkers || 0]
         );
         res.json({ id: result.rows[0].id });
     } catch (err) {
@@ -549,12 +551,12 @@ app.post('/api/upkeep', async (req, res) => {
 app.put('/api/upkeep/:id/add', async (req, res) => {
     const client = await pool.connect();
     try {
-        const { additionalHa, dateAdded, worker } = req.body;
+        const { additionalHa, dateAdded, worker, workers } = req.body;
         await client.query('BEGIN');
         await client.query('UPDATE upkeep SET realized = realized + $1 WHERE id = $2', [additionalHa, req.params.id]);
         await client.query(
-            'INSERT INTO upkeep_history (upkeep_id, dateAdded, addedHa, worker) VALUES ($1,$2,$3,$4)',
-            [req.params.id, dateAdded, additionalHa, worker || '']
+            'INSERT INTO upkeep_history (upkeep_id, dateAdded, addedHa, worker, workers) VALUES ($1,$2,$3,$4,$5)',
+            [req.params.id, dateAdded, additionalHa, worker || '', workers || 0]
         );
         await client.query('COMMIT');
         res.json({ success: true });
