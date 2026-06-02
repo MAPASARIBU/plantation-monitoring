@@ -661,16 +661,14 @@ const renderUpkeepTable = () => {
         
         let actionBtn = '';
         const safeType = u.type ? u.type.replace(/['"\n\r]/g, ' ') : '';
-        const riwayatBtn = `<button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px;" onclick="viewUpkeepHistory(${u.id}, '${u.block}', '${safeType}')"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat</button>`;
         
         if (u.status === 'Selesai') {
-            actionBtn = `<span class="status-badge status-done" style="margin-right: 5px;">Selesai</span>` + riwayatBtn;
+            actionBtn = `<span class="status-badge status-done" style="margin-right: 5px;">Selesai</span>`;
         } else {
             actionBtn = `
                 <div style="display:flex; flex-direction:column; gap:5px; align-items:center;">
                     <div style="display:flex; gap:5px;">
                         <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="promptAddUpkeepProgress(${u.id}, '${u.block}', '${safeType}', ${u.target}, ${u.realized})"><i class="fa-solid fa-plus"></i> Progress</button>
-                        ${riwayatBtn}
                     </div>
                     <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; width:100%; justify-content:center;" onclick="closeUpkeep(${u.id}, '${u.block}')"><i class="fa-solid fa-check"></i> Selesai</button>
                 </div>
@@ -679,7 +677,7 @@ const renderUpkeepTable = () => {
         
         tbody.innerHTML += `
             <tr>
-                <td><strong>${u.block}</strong></td>
+                <td><strong><a href="#" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;" onclick="viewUpkeepHistory(${u.id}, '${u.block}', '${safeType}'); return false;">${u.block}</a></strong></td>
                 <td>${u.type}<br><small>${u.worker}</small></td>
                 <td>${u.target}</td>
                 <td>${u.targetworkers || 0} Orang</td>
