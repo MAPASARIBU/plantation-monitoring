@@ -1793,19 +1793,67 @@ window.addMaster = async (e, type) => {
     } catch(err) { console.error(err); }
 };
 
-window.editMaster = async (type, id, currentName) => {
-    let payload = {};
+window.editMaster = (type, id, currentName) => {
+    let modalId = `modal-edit-master-${type}-${id}`;
+    let existingModal = document.getElementById(modalId);
+    if(existingModal) existingModal.remove();
+
+    let inputHtml = '';
     if (type === 'truk') {
         const t = masterData.truk.find(x => x.id === id);
-        const newPlate = prompt(`Masukkan Plat Nomor baru:`, currentName);
-        if (newPlate === null || newPlate.trim() === '') return;
-        const newSupir = prompt(`Masukkan Nama Supir baru:`, t ? (t.supir || '') : '');
-        if (newSupir === null || newSupir.trim() === '') return;
+        const currentSupir = t ? (t.supir || '') : '';
+        inputHtml = `
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <label style="font-size: 0.85rem; display:block; font-weight:bold;">Plat Nomor Truk:</label>
+                <input type="text" id="edit-val-${type}-${id}" class="form-control" value="${currentName}">
+                <label style="font-size: 0.85rem; display:block; margin-top:10px; font-weight:bold;">Nama Supir:</label>
+                <input type="text" id="edit-supir-${type}-${id}" class="form-control" value="${currentSupir}">
+            </div>
+        `;
+    } else {
+        let labelName = type === 'divisi' ? 'Nama Divisi' : (type === 'supir' ? 'Nama Supir' : 'Jenis Pupuk');
+        inputHtml = `
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <label style="font-size: 0.85rem; display:block; font-weight:bold;">${labelName}:</label>
+                <input type="text" id="edit-val-${type}-${id}" class="form-control" value="${currentName}">
+            </div>
+        `;
+    }
+
+    let titleStr = type === 'truk' ? 'Truk' : (type === 'divisi' ? 'Divisi' : (type === 'supir' ? 'Supir' : 'Jenis Pupuk'));
+
+    const html = `
+        <div class="modal-overlay" id="${modalId}">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Edit ${titleStr}</h3>
+                    <button class="modal-close" onclick="document.getElementById('${modalId}').remove()">&times;</button>
+                </div>
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 5px; margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.1);">
+                    ${inputHtml}
+                    <div style="margin-top: 20px; text-align:right;">
+                        <button type="button" class="btn btn-logout" style="background:#64748b; color:white; border:none; padding:8px 15px; margin-right:10px;" onclick="document.getElementById('${modalId}').remove()">Batal</button>
+                        <button type="button" class="btn btn-primary" style="padding:8px 15px;" onclick="saveEditMaster('${type}', ${id})"><i class="fa-solid fa-save"></i> Simpan Perubahan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.saveEditMaster = async (type, id) => {
+    let payload = {};
+    if (type === 'truk') {
+        const newPlate = document.getElementById(`edit-val-${type}-${id}`).value;
+        const newSupir = document.getElementById(`edit-supir-${type}-${id}`).value;
+        if (!newPlate || !newPlate.trim()) { alert('Plat Nomor tidak boleh kosong!'); return; }
+        if (!newSupir || !newSupir.trim()) { alert('Nama Supir tidak boleh kosong!'); return; }
         payload.plate_number = newPlate.trim();
         payload.supir = newSupir.trim();
     } else {
-        const newName = prompt(`Masukkan nilai baru untuk ${type}:`, currentName);
-        if (newName === null || newName.trim() === '') return;
+        const newName = document.getElementById(`edit-val-${type}-${id}`).value;
+        if (!newName || !newName.trim()) { alert('Nilai tidak boleh kosong!'); return; }
         payload.name = newName.trim();
     }
 
@@ -1815,7 +1863,16 @@ window.editMaster = async (type, id, currentName) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-        if (res.ok) await loadMasterData();
+        if (res.ok) {
+            document.getElementById(`modal-edit-master-${type}-${id}`).remove();
+            await loadMasterData();
+            if (type === 'truk') selectTruk(payload.plate_number);
+            else if (type === 'supir') selectSupir(payload.name);
+            else if (type === 'pupuk') selectPupuk(payload.name);
+            else if (type === 'divisi') selectDivisi(payload.name);
+        } else {
+            alert('Gagal mengedit data');
+        }
     } catch(err) { console.error(err); }
 };
 
