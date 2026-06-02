@@ -657,7 +657,11 @@ const renderUpkeepTable = () => {
     const tbody = document.getElementById('tbody-upkeep');
     if (!tbody) return;
     tbody.innerHTML = '';
-    [...db.upkeep].reverse().forEach(u => {
+    const allUpkeep = [...db.upkeep].reverse();
+    const aktif = allUpkeep.filter(u => u.status !== 'Selesai');
+    const selesai = allUpkeep.filter(u => u.status === 'Selesai');
+    
+    const renderRow = (u) => {
         const pct = getProgressStr(u.realized, u.target);
         
         let actionBtn = '';
@@ -676,7 +680,7 @@ const renderUpkeepTable = () => {
             `;
         }
         
-        tbody.innerHTML += `
+        return `
             <tr>
                 <td><strong><a href="#" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;" onclick="viewUpkeepHistory(${u.id}, '${u.block}', '${safeType}'); return false;">${u.block}</a></strong></td>
                 <td>${u.startdate || '-'}</td>
@@ -693,14 +697,25 @@ const renderUpkeepTable = () => {
                 <td style="text-align:center;">${actionBtn}</td>
             </tr>
         `;
-    });
+    };
+
+    aktif.forEach(u => tbody.innerHTML += renderRow(u));
+
+    if (selesai.length > 0) {
+        tbody.innerHTML += `<tr><td colspan="8" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Selesai</td></tr>`;
+        selesai.forEach(u => tbody.innerHTML += renderRow(u));
+    }
 };
 
 const renderPemupukanTable = () => {
     const tbody = document.getElementById('tbody-pemupukan');
     if (!tbody) return;
     tbody.innerHTML = '';
-    [...db.pemupukan].reverse().forEach(p => {
+    const allPemupukan = [...db.pemupukan].reverse();
+    const aktif = allPemupukan.filter(p => p.status !== 'Selesai');
+    const selesai = allPemupukan.filter(p => p.status === 'Selesai');
+
+    const renderRow = (p) => {
         const tKg = p.targetkg || p.targetKg || 0;
         const rKg = p.realizedkg || p.realizedKg || 0;
         const sDate = p.startdate || p.startDate;
@@ -723,7 +738,7 @@ const renderPemupukanTable = () => {
             }
         }
             
-        tbody.innerHTML += `
+        return `
             <tr>
                 <td>${sDate || '-'}</td>
                 <td><strong><a href="#" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;" onclick="viewPemupukanHistory(${p.id}, '${p.block}', '${p.plan}'); return false;">${p.block}</a></strong></td>
@@ -736,10 +751,17 @@ const renderPemupukanTable = () => {
                         <strong>${pct}%</strong>
                     </div>
                 </td>
-                <td>${actionBtn}</td>
+                <td style="text-align:center;">${actionBtn}</td>
             </tr>
         `;
-    });
+    };
+
+    aktif.forEach(p => tbody.innerHTML += renderRow(p));
+
+    if (selesai.length > 0) {
+        tbody.innerHTML += `<tr><td colspan="7" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Selesai</td></tr>`;
+        selesai.forEach(p => tbody.innerHTML += renderRow(p));
+    }
 };
 
 const renderHarvestingTable = () => {
