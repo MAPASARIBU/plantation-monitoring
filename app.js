@@ -2361,14 +2361,46 @@ window.viewUpkeepHistory = async (id, block, type) => {
             const existing = document.getElementById(modalId);
             if (existing) existing.remove();
             
-            const rows = history.map(h => `
-                <tr>
-                    <td>${h.dateadded}</td>
-                    <td><strong>+${h.addedha} Ha</strong></td>
-                    <td>${h.workers || 0} Org</td>
-                    <td><small>${h.worker || '-'}</small></td>
-                </tr>
-            `).join('');
+            let totalHa = 0;
+            let totalHK = 0;
+
+            const rows = history.map(h => {
+                const addedHa = parseFloat(h.addedha) || 0;
+                const workers = parseInt(h.workers) || 0;
+                totalHa += addedHa;
+                totalHK += workers;
+                
+                let prestasi = 0;
+                if (workers > 0) prestasi = addedHa / workers;
+                
+                return `
+                    <tr>
+                        <td>${h.dateadded}</td>
+                        <td><strong>+${addedHa} Ha</strong></td>
+                        <td>${workers} Org</td>
+                        <td><strong>${prestasi.toFixed(2)}</strong></td>
+                        <td><small>${h.worker || '-'}</small></td>
+                    </tr>
+                `;
+            }).join('');
+
+            let totalPrestasi = 0;
+            if (totalHK > 0) totalPrestasi = totalHa / totalHK;
+            
+            let footer = '';
+            if (history.length > 0) {
+                footer = `
+                    <tfoot>
+                        <tr style="background: #f1f5f9; font-weight: bold;">
+                            <td>TOTAL</td>
+                            <td>${totalHa.toFixed(2)} Ha</td>
+                            <td>${totalHK} Org</td>
+                            <td>${totalPrestasi.toFixed(2)}</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                `;
+            }
 
             const modalHTML = `
                 <div class="modal-overlay" id="${modalId}">
@@ -2387,12 +2419,14 @@ window.viewUpkeepHistory = async (id, block, type) => {
                                         <th>Tanggal</th>
                                         <th>Penambahan (Ha)</th>
                                         <th>HK / Orang</th>
+                                        <th>Prestasi (Ha/HK)</th>
                                         <th>Keterangan</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${rows || '<tr><td colspan="4" style="text-align:center;">Belum ada riwayat.</td></tr>'}
+                                    ${rows || '<tr><td colspan="5" style="text-align:center;">Belum ada riwayat.</td></tr>'}
                                 </tbody>
+                                ${footer}
                             </table>
                         </div>
                     </div>
