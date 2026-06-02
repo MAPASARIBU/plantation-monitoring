@@ -1312,43 +1312,102 @@ window.renderMasterTables = () => {
     
     const cTruk = document.getElementById('container-master-truk');
     if (cTruk) {
-        let opts = `<option value="">-- Pilih Truk --</option>`;
-        masterData.truk.forEach(t => opts += `<option value="${t.plate_number}" ${window.currentSelectedTruk === t.plate_number ? 'selected' : ''}>${t.plate_number} (Supir: ${t.supir || '-'})</option>`);
+        let trukRows = '';
+        masterData.truk.forEach(t => {
+            const safePlate = t.plate_number.replace(/['"\\n\\r]/g, ' ');
+            const supirText = t.supir ? t.supir : '-';
+            trukRows += `
+                <tr>
+                    <td><strong>${t.plate_number}</strong></td>
+                    <td>${supirText}</td>
+                    <td style="width:140px; text-align:right;">
+                        <button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem; margin-right:5px;" onclick="editMaster('truk', ${t.id}, '${safePlate}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button type="button" class="btn btn-logout" style="background:#ef4444; color:white; border:none; padding:4px 8px; font-size:0.75rem;" onclick="deleteMaster('truk', ${t.id})"><i class="fa-solid fa-trash"></i> Hapus</button>
+                    </td>
+                </tr>
+            `;
+        });
 
         cTruk.innerHTML = `
             <div id="truk-default-view" style="width: 100%;">
-                <label style="font-weight:bold; display:block; margin-bottom:8px;">Pilih Truk dan Supir untuk dikelola:</label>
-                <select id="select-truk-view" class="form-control" style="max-width: 300px;" onchange="selectTruk(this.value)">${opts}</select>
-                <div id="truk-selected-content" style="margin-top: 15px;"></div>
+                <table class="data-table" style="font-size:0.85rem; width:100%;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;">Plat Nomor</th>
+                            <th style="text-align:left;">Nama Supir</th>
+                            <th style="text-align:right;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${trukRows || '<tr><td colspan="3" style="text-align:center;">Belum ada data truk.</td></tr>'}
+                    </tbody>
+                </table>
             </div>
         `;
-        if (window.currentSelectedTruk) {
-            renderSelectedTruk();
-        }
     }
 
     const cSupir = document.getElementById('container-master-supir');
     if (cSupir) {
-        let opts = `<option value="">-- Pilih Supir --</option>`;
-        masterData.supir.forEach(s => opts += `<option value="${s.name}" ${window.currentSelectedSupir === s.name ? 'selected' : ''}>${s.name}</option>`);
+        let supirRows = '';
+        masterData.supir.forEach(s => {
+            const safeName = s.name.replace(/['"\\n\\r]/g, ' ');
+            supirRows += `
+                <tr>
+                    <td><strong>${s.name}</strong></td>
+                    <td style="width:140px; text-align:right;">
+                        <button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem; margin-right:5px;" onclick="editMaster('supir', ${s.id}, '${safeName}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button type="button" class="btn btn-logout" style="background:#ef4444; color:white; border:none; padding:4px 8px; font-size:0.75rem;" onclick="deleteMaster('supir', ${s.id})"><i class="fa-solid fa-trash"></i> Hapus</button>
+                    </td>
+                </tr>
+            `;
+        });
         cSupir.innerHTML = `
-            <label style="font-weight:bold; display:block; margin-bottom:8px;">Pilih Supir untuk Dikelola:</label>
-            <select id="select-supir-view" class="form-control" style="max-width: 300px;" onchange="selectSupir(this.value)">${opts}</select>
-            <div id="supir-selected-content" style="margin-top: 15px;"></div>
+            <div style="width: 100%;">
+                <table class="data-table" style="font-size:0.85rem; width:100%;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;">Nama Supir</th>
+                            <th style="text-align:right;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${supirRows || '<tr><td colspan="2" style="text-align:center;">Belum ada data supir.</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
         `;
-        if (window.currentSelectedSupir) renderSelectedSupir();
     }
     
     const cPupuk = document.getElementById('container-master-pupuk');
     if (cPupuk) {
-        let opts = `<option value="">-- Pilih Pupuk --</option>`;
-        masterData.pupuk.forEach(p => opts += `<option value="${p.name}" ${window.currentSelectedPupuk === p.name ? 'selected' : ''}>${p.name}</option>`);
+        let pupukRows = '';
+        masterData.pupuk.forEach(p => {
+            const safeName = p.name.replace(/['"\\n\\r]/g, ' ');
+            pupukRows += `
+                <tr>
+                    <td><strong>${p.name}</strong></td>
+                    <td style="width:140px; text-align:right;">
+                        <button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem; margin-right:5px;" onclick="editMaster('pupuk', ${p.id}, '${safeName}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button type="button" class="btn btn-logout" style="background:#ef4444; color:white; border:none; padding:4px 8px; font-size:0.75rem;" onclick="deleteMaster('pupuk', ${p.id})"><i class="fa-solid fa-trash"></i> Hapus</button>
+                    </td>
+                </tr>
+            `;
+        });
         cPupuk.innerHTML = `
-            <label style="font-weight:bold; display:block; margin-bottom:8px; margin-top:15px;">Pilih Pupuk untuk Dikelola:</label>
-            <select id="select-pupuk-view" class="form-control" style="max-width: 300px;" onchange="selectPupuk(this.value)">${opts}</select>
-            <div id="pupuk-selected-content" style="margin-top: 15px;"></div>
+            <div style="width: 100%; margin-top:15px;">
+                <table class="data-table" style="font-size:0.85rem; width:100%;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;">Nama Pupuk</th>
+                            <th style="text-align:right;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${pupukRows || '<tr><td colspan="2" style="text-align:center;">Belum ada data pupuk.</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
         `;
-        if (window.currentSelectedPupuk) renderSelectedPupuk();
     }
 };
 
