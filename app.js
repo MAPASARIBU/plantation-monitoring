@@ -875,6 +875,60 @@ const renderHarvestingTable = () => {
         [...selesaiData].reverse().forEach(h => {
             tbodyDaily.innerHTML += renderDailyRow(h);
         });
+        
+        tbodyDaily.innerHTML += `<tr><td colspan="12" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-chart-simple" style="color: var(--primary-color);"></i> Rekap Panen per Divisi (Dari Pekerjaan Selesai)</td></tr>`;
+        
+        const rekapMap = {};
+        selesaiData.forEach(h => {
+            const key = h.date + '_' + h.divisi;
+            if(!rekapMap[key]) {
+                rekapMap[key] = {
+                    date: h.date,
+                    divisi: h.divisi,
+                    plan_jjg: 0,
+                    plan_kg: 0,
+                    plan_pemanen: 0,
+                    act_jjg: 0,
+                    act_kg: 0,
+                    act_pemanen: 0
+                };
+            }
+            rekapMap[key].plan_jjg += h.est_janjang || 0;
+            rekapMap[key].plan_kg += h.est_kg || 0;
+            rekapMap[key].plan_pemanen += h.plan_pemanen || 0;
+            rekapMap[key].act_jjg += h.realized_janjang || 0;
+            rekapMap[key].act_kg += h.realized_kg || 0;
+            rekapMap[key].act_pemanen += h.realized_pemanen || 0;
+        });
+        
+        Object.values(rekapMap).reverse().forEach(r => {
+            let dateStr = r.date;
+            if(typeof dateStr === 'string' && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
+            let formattedDate = dateStr;
+            const d = new Date(dateStr);
+            if(!isNaN(d)) {
+                const day = String(d.getDate()).padStart(2, '0');
+                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                formattedDate = `${day} ${months[d.getMonth()]}`;
+            }
+            
+            tbodyDaily.innerHTML += `
+                <tr style="background-color: #f8fafc;">
+                    <td>${formattedDate}</td>
+                    <td><strong>${r.divisi || '-'}</strong></td>
+                    <td style="color:#94a3b8;">-</td>
+                    <td style="color:#94a3b8;">-</td>
+                    <td style="color:#94a3b8;">-</td>
+                    <td><strong>${r.plan_jjg}</strong></td>
+                    <td><strong>${r.plan_kg}</strong></td>
+                    <td><strong>${r.plan_pemanen}</strong></td>
+                    <td><strong>${r.act_jjg}</strong></td>
+                    <td><strong>${r.act_pemanen}</strong></td>
+                    <td><strong>${r.act_kg}</strong></td>
+                    <td><span style="color:green;font-weight:bold;">Closed</span></td>
+                </tr>
+            `;
+        });
     }
     
     if(draftData.length === 0 && selesaiData.length === 0) {
