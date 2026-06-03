@@ -417,7 +417,7 @@ const views = {
                     </div>
                     <div class="form-group">
                         <label>Bulan Rencana</label>
-                        <input type="month" id="hm-month" class="form-control" required>
+                        <select id="hm-month" class="form-control select-month" required></select>
                     </div>
                     <div class="form-group">
                         <label>Target Panen (Kg)</label>
@@ -1210,13 +1210,18 @@ const bindForms = () => {
             target_kg: parseFloat(document.getElementById('hm-target').value)
         };
         try {
-            await fetch(`${API_URL}/harvesting/monthly`, {
+            const res = await fetch(`${API_URL}/harvesting/monthly`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            formHarvestingMonthly.reset();
-            await loadData();
+            if (res.ok) {
+                formHarvestingMonthly.reset();
+                await loadData();
+            } else {
+                const errData = await res.json();
+                alert(errData.error || "Gagal menyimpan rencana bulanan.");
+            }
         } catch (e) { console.error(e); }
     };
 
@@ -2200,6 +2205,16 @@ window.populateSelects = () => {
     const elSupir = document.querySelectorAll('.select-supir');
     const supirOpts = `<option value="" disabled selected>-- Pilih Supir --</option>` + masterData.supir.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
     elSupir.forEach(el => el.innerHTML = supirOpts);
+
+    const elMonth = document.querySelectorAll('.select-month');
+    const currentYear = new Date().getFullYear();
+    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const monthOpts = `<option value="" disabled selected>-- Pilih Bulan --</option>` + 
+        months.map((m, i) => {
+            const val = `${currentYear}-${(i+1).toString().padStart(2, '0')}`;
+            return `<option value="${val}">${m} ${currentYear}</option>`;
+        }).join('');
+    elMonth.forEach(el => el.innerHTML = monthOpts);
 
     const hBjr = document.getElementById('h-bjr');
     if(hBjr && currentUser) {

@@ -667,6 +667,12 @@ app.get('/api/harvesting/:estate', async (req, res) => {
 app.post('/api/harvesting/monthly', async (req, res) => {
     try {
         const { estate, divisi, month, target_kg } = req.body;
+        // Check if exists
+        const check = await pool.query('SELECT id FROM harvesting_monthly WHERE estate = $1 AND divisi = $2 AND month = $3', [estate, divisi, month]);
+        if (check.rows.length > 0) {
+            return res.status(400).json({ error: `Rencana bulanan untuk Divisi ${divisi} pada bulan tersebut sudah ada!` });
+        }
+
         const result = await pool.query(
             'INSERT INTO harvesting_monthly (estate, divisi, month, target_kg) VALUES ($1,$2,$3,$4) RETURNING id',
             [estate, divisi, month, target_kg]
