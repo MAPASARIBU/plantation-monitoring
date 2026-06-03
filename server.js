@@ -116,9 +116,16 @@ async function initDB() {
             pemupukan_id INTEGER, dateAdded TEXT, addedKg REAL, manpower INTEGER DEFAULT 0
         )`);
 
-        await pool.query(`CREATE TABLE IF NOT EXISTS harvesting (
+        await pool.query(`CREATE TABLE IF NOT EXISTS harvesting_monthly (
             id SERIAL PRIMARY KEY,
-            block TEXT, targetJanjang REAL, realizedJanjang REAL, bjr REAL
+            estate TEXT, divisi TEXT, month TEXT, target_kg REAL
+        )`);
+
+        await pool.query(`CREATE TABLE IF NOT EXISTS harvesting_daily (
+            id SERIAL PRIMARY KEY,
+            date TEXT, estate TEXT, divisi TEXT, block TEXT, 
+            akp REAL, est_janjang REAL, est_kg REAL, plan_pemanen INTEGER, mandor TEXT,
+            realized_janjang REAL DEFAULT 0, realized_pemanen INTEGER DEFAULT 0, realized_kg REAL DEFAULT 0, status TEXT DEFAULT 'Draft'
         )`);
 
         await pool.query(`CREATE TABLE IF NOT EXISTS master_divisi (id SERIAL PRIMARY KEY, estate TEXT, name TEXT)`);
@@ -502,13 +509,15 @@ app.get('/api/data', async (req, res) => {
         const vehicles = await pool.query('SELECT * FROM vehicles');
         const upkeep = await pool.query('SELECT * FROM upkeep');
         const pemupukan = await pool.query('SELECT * FROM pemupukan');
-        const harvesting = await pool.query('SELECT * FROM harvesting');
+        const harvesting_monthly = await pool.query('SELECT * FROM harvesting_monthly');
+        const harvesting_daily = await pool.query('SELECT * FROM harvesting_daily');
         
         res.json({
             vehicles: vehicles.rows,
             upkeep: upkeep.rows,
             pemupukan: pemupukan.rows,
-            harvesting: harvesting.rows
+            harvesting_monthly: harvesting_monthly.rows,
+            harvesting_daily: harvesting_daily.rows
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -644,14 +653,51 @@ app.put('/api/pemupukan/:id/close', async (req, res) => {
 });
 
 // HARVESTING
-app.post('/api/harvesting', async (req, res) => {
+app.get('/api/harvesting/:estate', async (req, res) => {
     try {
-        const { block, targetJanjang, realizedJanjang, bjr } = req.body;
+        const estate = req.params.estate;
+        const monthly = await pool.query('SELECT * FROM harvesting_monthly WHERE estate = $1', [estate]);
+        const daily = await pool.query('SELECT * FROM harvesting_daily WHERE estate = $1 ORDER BY date DESC', [estate]);
+        res.json({ monthly: monthly.rows, daily: daily.rows });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/harvesting/monthly', async (req, res) => {
+    try {
+        const { estate, divisi, month, target_kg } = req.body;
         const result = await pool.query(
-            'INSERT INTO harvesting (block, targetJanjang, realizedJanjang, bjr) VALUES ($1,$2,$3,$4) RETURNING id',
-            [block, targetJanjang, realizedJanjang, bjr]
+            'INSERT INTO harvesting_monthly (estate, divisi, month, target_kg) VALUES ($1,$2,$3,$4) RETURNING id',
+            [estate, divisi, month, target_kg]
         );
         res.json({ id: result.rows[0].id });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/harvesting/daily', async (req, res) => {
+    try {
+        const { date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor } = req.body;
+        const result = await pool.query(
+            'INSERT INTO harvesting_daily (date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor, realized_janjang, realized_pemanen, realized_kg, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,0,0,0,$10) RETURNING id',
+            [date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor, 'Draft']
+        );
+        res.json({ id: result.rows[0].id });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/harvesting/daily/:id/realization', async (req, res) => {
+    try {
+        const { realized_janjang, realized_pemanen, realized_kg } = req.body;
+        await pool.query(
+            'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, status = $4 WHERE id = $5',
+            [realized_janjang, realized_pemanen, realized_kg, 'Selesai', req.params.id]
+        );
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

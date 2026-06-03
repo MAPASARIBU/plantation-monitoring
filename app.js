@@ -2,7 +2,7 @@
 const API_URL = window.location.protocol === 'file:' ? 'http://localhost:3005/api' : '/api';
 
 // Data Store (Fetched from Backend)
-let db = { vehicles: [], upkeep: [], pemupukan: [], harvesting: [], users: [] };
+let db = { vehicles: [], upkeep: [], pemupukan: [], harvesting_monthly: [], harvesting_daily: [], users: [] };
 
 // Fetch data from Server
 const loadData = async () => {
@@ -13,7 +13,8 @@ const loadData = async () => {
             db.vehicles = data.vehicles;
             db.upkeep = data.upkeep;
             db.pemupukan = data.pemupukan;
-            db.harvesting = data.harvesting;
+            db.harvesting_monthly = data.harvesting_monthly || [];
+            db.harvesting_daily = data.harvesting_daily || [];
             // Re-render views if they are currently active
             if(document.getElementById('tbody-vehicle')) renderVehicleTable();
             if(document.getElementById('tbody-upkeep')) renderUpkeepTable();
@@ -407,50 +408,108 @@ const views = {
     `,
     harvesting: `
         <div class="animate-fade-in module-layout">
-            <div class="glass-card form-container">
-                <h2>Data Panen</h2>
-                <form id="form-harvesting" style="margin-top: 20px;">
+            <div class="glass-card form-container" id="harvesting-form-container">
+                <h2>Rencana Panen Bulanan</h2>
+                <form id="form-harvesting-monthly" style="margin-top: 15px; margin-bottom: 30px;">
                     <div class="form-group">
-                        <label>Pilih Divisi (Opsional)</label>
-                        <select class="form-control select-divisi" onchange="filterBlok(this.value, 'h-block')"></select>
+                        <label>Pilih Divisi</label>
+                        <select id="hm-divisi" class="form-control select-divisi" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Bulan Rencana</label>
+                        <input type="month" id="hm-month" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Panen (Kg)</label>
+                        <input type="number" id="hm-target" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                        <i class="fa-solid fa-calendar-days"></i> Simpan Rencana Bulanan
+                    </button>
+                </form>
+
+                <h2>Rencana Panen Harian</h2>
+                <form id="form-harvesting-daily" style="margin-top: 15px;">
+                    <div class="form-group">
+                        <label>Tanggal Rencana</label>
+                        <input type="date" id="hd-date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Pilih Divisi</label>
+                        <select id="hd-divisi" class="form-control select-divisi" required onchange="filterBlok(this.value, 'hd-block')"></select>
                     </div>
                     <div class="form-group">
                         <label>Blok</label>
-                        <select id="h-block" class="form-control select-blok" required onchange="onHarvestingBlockChange(this.value)"></select>
+                        <select id="hd-block" class="form-control select-blok" required onchange="calcHarvestingEstimate()"></select>
                     </div>
                     <div class="form-group">
-                        <label>Target Janjang</label>
-                        <input type="number" id="h-target" class="form-control" required>
+                        <label>Angka Kerapatan Panen (AKP %)</label>
+                        <input type="number" step="0.1" id="hd-akp" class="form-control" required oninput="calcHarvestingEstimate()">
+                    </div>
+                    <div style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                            <span>Est. Total Janjang:</span>
+                            <strong id="hd-est-janjang">0</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span>Est. Total Kg:</span>
+                            <strong id="hd-est-kg">0 Kg</strong>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label>Realisasi Janjang</label>
-                        <input type="number" id="h-realized" class="form-control" required>
+                        <label>Rencana Alokasi Pemanen</label>
+                        <input type="number" id="hd-pemanen" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label>BJR (Berat Janjang Rata-rata)</label>
-                        <input type="number" step="0.1" id="h-bjr" class="form-control" required>
+                        <label>Mandor / Pengawas</label>
+                        <input type="text" id="hd-mandor" class="form-control" required>
                     </div>
                     <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                        <i class="fa-solid fa-basket-shopping"></i> Simpan Panen
+                        <i class="fa-solid fa-clipboard-list"></i> Buat Rencana Harian
                     </button>
                 </form>
             </div>
+            
             <div class="glass-card table-wrapper">
                 <div class="view-header">
-                    <h2>Monitoring Hasil Panen</h2>
+                    <h2>Monitoring Panen Harian</h2>
+                </div>
+                <div class="table-container" style="margin-bottom: 30px;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Blok</th>
+                                <th>Mandor</th>
+                                <th>Plan (Jjg)</th>
+                                <th>Plan (Kg)</th>
+                                <th>Pemanen</th>
+                                <th>Act (Jjg)</th>
+                                <th>Act (Pemanen)</th>
+                                <th>Act (Kg)</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-harvesting-daily"></tbody>
+                    </table>
+                </div>
+
+                <div class="view-header">
+                    <h2>History & Prestasi Panen</h2>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
                         <thead>
                             <tr>
+                                <th>Tanggal</th>
                                 <th>Blok</th>
-                                <th>Target (JJg)</th>
-                                <th>Realisasi (JJg)</th>
-                                <th>Progress</th>
-                                <th>Estimasi Tonase (BJR)</th>
+                                <th>Act Kg</th>
+                                <th>Act Pemanen</th>
+                                <th>Prestasi (Kg/HK)</th>
                             </tr>
                         </thead>
-                        <tbody id="tbody-harvesting"></tbody>
+                        <tbody id="tbody-harvesting-history"></tbody>
                     </table>
                 </div>
             </div>
@@ -1001,8 +1060,70 @@ window.deleteUser = async (id) => {
     if(confirm('Yakin ingin menghapus user ini?')) {
         try {
             const res = await fetch(`${API_URL}/users/${id}`, { method: 'DELETE' });
-            if(res.ok) await loadUsers();
         } catch(e) { console.error(e); }
+    }
+};
+
+window.calcHarvestingEstimate = () => {
+    const block = document.getElementById('hd-block').value;
+    const akp = parseFloat(document.getElementById('hd-akp').value) || 0;
+    const blockData = masterData.blok.find(b => b.name === block);
+    
+    if (blockData) {
+        const estJanjang = Math.round(blockData.total_stand * (akp / 100));
+        const estKg = estJanjang * blockData.bjr;
+        
+        document.getElementById('hd-est-janjang').innerText = estJanjang;
+        document.getElementById('hd-est-kg').innerText = estKg.toFixed(2) + ' Kg';
+    } else {
+        document.getElementById('hd-est-janjang').innerText = '0';
+        document.getElementById('hd-est-kg').innerText = '0 Kg';
+    }
+};
+
+window.openAddHarvestingRealizationModal = (id, block) => {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = 'modal-harvesting-realization';
+    modal.innerHTML = `
+        <div class="modal-content animate-fade-in" style="max-width:400px;">
+            <h3>Input Realisasi Panen: ${block}</h3>
+            <div class="form-group" style="margin-top:15px;">
+                <label>Realisasi Janjang</label>
+                <input type="number" id="hr-janjang" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Realisasi Pemanen</label>
+                <input type="number" id="hr-pemanen" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Realisasi Kg (Timbangan)</label>
+                <input type="number" step="0.1" id="hr-kg" class="form-control" required>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                <button class="btn btn-logout" onclick="document.getElementById('modal-harvesting-realization').remove()" style="background:#64748b; color:white; border:none; padding:8px 16px;">Batal</button>
+                <button class="btn btn-primary" onclick="submitHarvestingRealization(${id})" style="padding:8px 16px;">Simpan</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+};
+
+window.submitHarvestingRealization = async (id) => {
+    const janjang = parseFloat(document.getElementById('hr-janjang').value) || 0;
+    const pemanen = parseInt(document.getElementById('hr-pemanen').value) || 0;
+    const kg = parseFloat(document.getElementById('hr-kg').value) || 0;
+    
+    try {
+        await fetch(`${API_URL}/harvesting/daily/${id}/realization`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ realized_janjang: janjang, realized_pemanen: pemanen, realized_kg: kg })
+        });
+        document.getElementById('modal-harvesting-realization').remove();
+        await loadData();
+    } catch (e) {
+        console.error(e);
     }
 };
 
@@ -1079,22 +1200,59 @@ const bindForms = () => {
         } catch (e) { console.error(e); }
     };
     
-    const formHarvesting = document.getElementById('form-harvesting');
-    if(formHarvesting) formHarvesting.onsubmit = async (e) => {
+    const formHarvestingMonthly = document.getElementById('form-harvesting-monthly');
+    if (formHarvestingMonthly) formHarvestingMonthly.onsubmit = async (e) => {
         e.preventDefault();
         const payload = {
-            block: document.getElementById('h-block').value,
-            targetJanjang: parseFloat(document.getElementById('h-target').value),
-            realizedJanjang: parseFloat(document.getElementById('h-realized').value),
-            bjr: parseFloat(document.getElementById('h-bjr').value)
+            estate: currentUser.estate,
+            divisi: document.getElementById('hm-divisi').value,
+            month: document.getElementById('hm-month').value,
+            target_kg: parseFloat(document.getElementById('hm-target').value)
         };
         try {
-            await fetch(`${API_URL}/harvesting`, {
+            await fetch(`${API_URL}/harvesting/monthly`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            formHarvesting.reset();
+            formHarvestingMonthly.reset();
+            await loadData();
+        } catch (e) { console.error(e); }
+    };
+
+    const formHarvestingDaily = document.getElementById('form-harvesting-daily');
+    if (formHarvestingDaily) formHarvestingDaily.onsubmit = async (e) => {
+        e.preventDefault();
+        const block = document.getElementById('hd-block').value;
+        const akp = parseFloat(document.getElementById('hd-akp').value);
+        const blockData = masterData.blok.find(b => b.name === block);
+        let estJanjang = 0, estKg = 0;
+        
+        if (blockData) {
+            estJanjang = Math.round(blockData.total_stand * (akp / 100));
+            estKg = estJanjang * blockData.bjr;
+        }
+
+        const payload = {
+            date: document.getElementById('hd-date').value,
+            estate: currentUser.estate,
+            divisi: document.getElementById('hd-divisi').value,
+            block: block,
+            akp: akp,
+            est_janjang: estJanjang,
+            est_kg: estKg,
+            plan_pemanen: parseInt(document.getElementById('hd-pemanen').value),
+            mandor: document.getElementById('hd-mandor').value
+        };
+        try {
+            await fetch(`${API_URL}/harvesting/daily`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            formHarvestingDaily.reset();
+            document.getElementById('hd-est-janjang').innerText = '0';
+            document.getElementById('hd-est-kg').innerText = '0 Kg';
             await loadData();
         } catch (e) { console.error(e); }
     };
