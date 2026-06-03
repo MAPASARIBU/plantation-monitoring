@@ -1844,10 +1844,7 @@ window.addBlokToDivisi = async (e, divisiName) => {
 };
 
 window.editMasterBlok = async (id, currentName, currentBjr) => {
-    const newName = prompt("Nama Blok baru:", currentName);
-    if (newName === null || newName.trim() === '') return;
-    
-    const newBjr = prompt("Nilai BJR (Kg) baru:", currentBjr);
+    const newBjr = prompt(`Edit nilai BJR (Kg) untuk blok ${currentName}:`, currentBjr);
     if (newBjr === null || newBjr.trim() === '') return;
     
     const parsedBjr = parseFloat(newBjr.replace(',', '.'));
@@ -1857,7 +1854,7 @@ window.editMasterBlok = async (id, currentName, currentBjr) => {
         const res = await fetch(`${API_URL}/master/blok/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: newName, bjr: parsedBjr })
+            body: JSON.stringify({ name: currentName, bjr: parsedBjr })
         });
         if (res.ok) await loadMasterData();
     } catch(err) { console.error(err); }
