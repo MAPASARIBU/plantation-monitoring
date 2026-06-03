@@ -124,9 +124,10 @@ async function initDB() {
         await pool.query(`CREATE TABLE IF NOT EXISTS harvesting_daily (
             id SERIAL PRIMARY KEY,
             date TEXT, estate TEXT, divisi TEXT, block TEXT, 
-            akp REAL, est_janjang REAL, est_kg REAL, plan_pemanen INTEGER, mandor TEXT,
+            akp REAL, est_janjang REAL, est_kg REAL, plan_pemanen INTEGER, mandor TEXT, pusingan TEXT,
             realized_janjang REAL DEFAULT 0, realized_pemanen INTEGER DEFAULT 0, realized_kg REAL DEFAULT 0, status TEXT DEFAULT 'Draft'
         )`);
+        try { await pool.query("ALTER TABLE harvesting_daily ADD COLUMN pusingan TEXT"); } catch(e) {}
 
         await pool.query(`CREATE TABLE IF NOT EXISTS master_divisi (id SERIAL PRIMARY KEY, estate TEXT, name TEXT)`);
         // Added divisi column because it's used in bulk insert checking
@@ -683,12 +684,22 @@ app.post('/api/harvesting/monthly', async (req, res) => {
     }
 });
 
+app.put('/api/harvesting/monthly/:id', async (req, res) => {
+    try {
+        const { target_kg } = req.body;
+        await pool.query('UPDATE harvesting_monthly SET target_kg = $1 WHERE id = $2', [target_kg, req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/harvesting/daily', async (req, res) => {
     try {
-        const { date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor } = req.body;
+        const { date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor, pusingan } = req.body;
         const result = await pool.query(
-            'INSERT INTO harvesting_daily (date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor, realized_janjang, realized_pemanen, realized_kg, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,0,0,0,$10) RETURNING id',
-            [date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor, 'Draft']
+            'INSERT INTO harvesting_daily (date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor, pusingan, realized_janjang, realized_pemanen, realized_kg, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,0,0,0,$11) RETURNING id',
+            [date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor, pusingan, 'Draft']
         );
         res.json({ id: result.rows[0].id });
     } catch (err) {

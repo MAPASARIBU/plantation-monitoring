@@ -413,17 +413,17 @@ const views = {
                 <form id="form-harvesting-monthly" style="margin-top: 15px; margin-bottom: 30px;">
                     <div class="form-group">
                         <label>Pilih Divisi</label>
-                        <select id="hm-divisi" class="form-control select-divisi" required></select>
+                        <select id="hm-divisi" class="form-control select-divisi" required onchange="checkMonthlyPlan()"></select>
                     </div>
                     <div class="form-group">
                         <label>Bulan Rencana</label>
-                        <select id="hm-month" class="form-control select-month" required></select>
+                        <select id="hm-month" class="form-control select-month" required onchange="checkMonthlyPlan()"></select>
                     </div>
                     <div class="form-group">
                         <label>Target Panen (Kg)</label>
                         <input type="number" id="hm-target" class="form-control" required>
                     </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                    <button type="submit" id="btn-hm-submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
                         <i class="fa-solid fa-calendar-days"></i> Simpan Rencana Bulanan
                     </button>
                 </form>
@@ -445,6 +445,10 @@ const views = {
                     <div class="form-group">
                         <label>Angka Kerapatan Panen (AKP %)</label>
                         <input type="number" step="0.1" id="hd-akp" class="form-control" required oninput="calcHarvestingEstimate()">
+                    </div>
+                    <div class="form-group">
+                        <label>Pusingan Panen</label>
+                        <input type="number" id="hd-pusingan" class="form-control" required>
                     </div>
                     <div style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 5px; margin-bottom: 15px;">
                         <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
@@ -480,6 +484,7 @@ const views = {
                             <tr>
                                 <th>Tanggal</th>
                                 <th>Blok</th>
+                                <th>Pusingan</th>
                                 <th>Mandor</th>
                                 <th>Plan (Jjg)</th>
                                 <th>Plan (Kg)</th>
@@ -1070,14 +1075,37 @@ window.calcHarvestingEstimate = () => {
     const blockData = masterData.blok.find(b => b.name === block);
     
     if (blockData) {
-        const estJanjang = Math.round(blockData.total_stand * (akp / 100));
-        const estKg = estJanjang * blockData.bjr;
+        const ts = parseFloat(blockData.total_stand) || 0;
+        const bjr = parseFloat(blockData.bjr) || 0;
+        const estJanjang = Math.round(ts * (akp / 100));
+        const estKg = estJanjang * bjr;
         
         document.getElementById('hd-est-janjang').innerText = estJanjang;
         document.getElementById('hd-est-kg').innerText = estKg.toFixed(2) + ' Kg';
     } else {
         document.getElementById('hd-est-janjang').innerText = '0';
         document.getElementById('hd-est-kg').innerText = '0 Kg';
+    }
+};
+
+let currentMonthlyPlanId = null;
+window.checkMonthlyPlan = () => {
+    const divisi = document.getElementById('hm-divisi').value;
+    const month = document.getElementById('hm-month').value;
+    const btn = document.getElementById('btn-hm-submit');
+    const targetInput = document.getElementById('hm-target');
+    
+    if(divisi && month) {
+        const existing = (db.harvesting_monthly || []).find(m => m.divisi === divisi && m.month === month);
+        if(existing) {
+            currentMonthlyPlanId = existing.id;
+            targetInput.value = existing.target_kg;
+            btn.innerHTML = '<i class="fa-solid fa-pen"></i> Update Rencana Bulanan';
+        } else {
+            currentMonthlyPlanId = null;
+            targetInput.value = '';
+            btn.innerHTML = '<i class="fa-solid fa-calendar-days"></i> Simpan Rencana Bulanan';
+        }
     }
 };
 
@@ -1210,14 +1238,27 @@ const bindForms = () => {
             target_kg: parseFloat(document.getElementById('hm-target').value)
         };
         try {
-            const res = await fetch(`${API_URL}/harvesting/monthly`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            let res;
+            if(currentMonthlyPlanId) {
+                res = await fetch(`${API_URL}/harvesting/monthly/${currentMonthlyPlanId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                res = await fetch(`${API_URL}/harvesting/monthly`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            }
+            
             if (res.ok) {
                 formHarvestingMonthly.reset();
+                currentMonthlyPlanId = null;
+                document.getElementById('btn-hm-submit').innerHTML = '<i class="fa-solid fa-calendar-days"></i> Simpan Rencana Bulanan';
                 await loadData();
+                alert("Rencana bulanan berhasil disimpan.");
             } else {
                 const errData = await res.json();
                 alert(errData.error || "Gagal menyimpan rencana bulanan.");
@@ -1234,8 +1275,10 @@ const bindForms = () => {
         let estJanjang = 0, estKg = 0;
         
         if (blockData) {
-            estJanjang = Math.round(blockData.total_stand * (akp / 100));
-            estKg = estJanjang * blockData.bjr;
+            const ts = parseFloat(blockData.total_stand) || 0;
+            const bjr = parseFloat(blockData.bjr) || 0;
+            estJanjang = Math.round(ts * (akp / 100));
+            estKg = estJanjang * bjr;
         }
 
         const payload = {
@@ -1247,7 +1290,8 @@ const bindForms = () => {
             est_janjang: estJanjang,
             est_kg: estKg,
             plan_pemanen: parseInt(document.getElementById('hd-pemanen').value),
-            mandor: document.getElementById('hd-mandor').value
+            mandor: document.getElementById('hd-mandor').value,
+            pusingan: document.getElementById('hd-pusingan').value
         };
         try {
             await fetch(`${API_URL}/harvesting/daily`, {
