@@ -844,7 +844,7 @@ const renderHarvestingTable = () => {
     
     const renderDailyRow = (h) => {
         const actionBtn = (h.status === 'Selesai' || h.status === 'Closed') ? '-' : 
-            `<button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}', ${h.est_janjang || 0}, ${h.plan_pemanen || 0}, ${h.est_kg || 0})"><i class="fa-solid fa-plus"></i> Input Realisasi</button>`;
+            `<button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}', ${h.est_janjang || 0}, ${h.plan_pemanen || 0}, ${h.est_kg || 0}, '${h.divisi}')"><i class="fa-solid fa-plus"></i> Input Realisasi</button>`;
         
         let dateStr = h.date;
         if(typeof dateStr === 'string' && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
@@ -1166,8 +1166,14 @@ window.checkMonthlyPlan = () => {
     }
 };
 
-window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg) => {
-    const blockData = masterData.blok.find(b => b.name === block);
+window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg, divisi) => {
+    let blockData;
+    if (divisi && divisi !== 'undefined') {
+        blockData = masterData.blok.find(b => b.name === block && b.divisi === divisi);
+    }
+    if (!blockData) {
+        blockData = masterData.blok.find(b => b.name === block); // fallback
+    }
     const grossArea = blockData ? blockData.gross_area : 0;
     
     const modal = document.createElement('div');
