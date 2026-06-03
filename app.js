@@ -501,24 +501,6 @@ const views = {
                         <tbody id="tbody-harvesting-daily"></tbody>
                     </table>
                 </div>
-
-                <div class="view-header">
-                    <h2>History & Prestasi Panen</h2>
-                </div>
-                <div class="table-container">
-                    <table class="data-table table-compact">
-                        <thead>
-                            <tr>
-                                <th>Tanggal</th>
-                                <th>Blok</th>
-                                <th>Act<br>Kg</th>
-                                <th>Act<br>Hvr</th>
-                                <th>Prestasi<br>(Kg/HK)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-harvesting-history"></tbody>
-                    </table>
-                </div>
             </div>
         </div>
     `,
@@ -872,7 +854,7 @@ const renderHarvestingTable = () => {
             <tr>
                 <td>${formattedDate}</td>
                 <td>${h.divisi || '-'}</td>
-                <td><strong>${h.block}</strong></td>
+                <td>${(h.status === 'Selesai' || h.status === 'Closed') ? `<a href="#" onclick="openBlockHistory('${h.block}', '${h.divisi}')" style="color:var(--primary); font-weight:bold; text-decoration:underline; cursor:pointer;" title="Lihat History">${h.block}</a>` : `<strong>${h.block}</strong>`}</td>
                 <td>${h.pusingan || '-'}</td>
                 <td>${h.mandor}</td>
                 <td>${h.est_janjang}</td>
@@ -886,21 +868,7 @@ const renderHarvestingTable = () => {
         `;
     };
 
-    const renderHistoryRow = (h) => {
-        let dateStr = h.date;
-        if(typeof dateStr === 'string' && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
-        
-        const prestasi = h.realized_pemanen > 0 ? (h.realized_kg / h.realized_pemanen).toFixed(2) : 0;
-        return `
-            <tr>
-                <td>${dateStr}</td>
-                <td><strong>${h.block}</strong></td>
-                <td>${h.realized_kg}</td>
-                <td>${h.realized_pemanen}</td>
-                <td><strong>${prestasi} Kg/HK</strong></td>
-            </tr>
-        `;
-    };
+
 
     [...draftData].reverse().forEach(h => tbodyDaily.innerHTML += renderDailyRow(h));
     
@@ -908,15 +876,11 @@ const renderHarvestingTable = () => {
         tbodyDaily.innerHTML += `<tr><td colspan="12" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Closed</td></tr>`;
         [...selesaiData].reverse().forEach(h => {
             tbodyDaily.innerHTML += renderDailyRow(h);
-            tbodyHistory.innerHTML += renderHistoryRow(h);
         });
     }
     
     if(draftData.length === 0 && selesaiData.length === 0) {
         tbodyDaily.innerHTML = `<tr><td colspan="12" style="text-align:center;">Belum ada rencana panen harian.</td></tr>`;
-    }
-    if(selesaiData.length === 0) {
-        tbodyHistory.innerHTML = `<tr><td colspan="5" style="text-align:center;">Belum ada history panen yang selesai.</td></tr>`;
     }
 };
 
@@ -1162,6 +1126,87 @@ window.calcHarvestingEstimate = () => {
         document.getElementById('hd-est-janjang').innerText = '0';
         document.getElementById('hd-est-kg').innerText = '0 Kg';
     }
+};
+
+window.openBlockHistory = (block, divisi) => {
+    const historyData = db.harvesting_daily.filter(h => h.block === block && h.divisi === divisi && (h.status === 'Selesai' || h.status === 'Closed'));
+    
+    let blockData;
+    if (divisi && divisi !== 'undefined') blockData = masterData.blok.find(b => b.name === block && b.divisi === divisi);
+    if (!blockData) blockData = masterData.blok.find(b => b.name === block);
+    const grossArea = blockData ? blockData.gross_area : 0;
+    
+    let html = `
+        <div class="modal-overlay" id="modal-history">
+            <div class="modal-content animate-fade-in" style="max-width:800px; max-height:80vh; overflow-y:auto;">
+                <div class="modal-header">
+                    <h3>History & Prestasi Panen: ${block}</h3>
+                    <button class="modal-close" onclick="document.getElementById('modal-history').remove()">&times;</button>
+                </div>
+                <table class="data-table table-compact" style="font-size:0.85rem; margin-top:15px;">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Plan<br>Hvr</th>
+                            <th>Act<br>Hvr</th>
+                            <th>Var<br>Hvr (%)</th>
+                            <th>Gross Area<br>(Ha)</th>
+                            <th>Act<br>Ha</th>
+                            <th>Var<br>Ha (%)</th>
+                            <th>Act<br>Kg</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
+    
+    if(historyData.length === 0) {
+        html += `<tr><td colspan="8" style="text-align:center;">Belum ada data historis</td></tr>`;
+    } else {
+        historyData.forEach(h => {
+            let dateStr = h.date;
+            if(typeof dateStr === 'string' && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
+            let formattedDate = dateStr;
+            const d = new Date(dateStr);
+            if(!isNaN(d)) {
+                const day = String(d.getDate()).padStart(2, '0');
+                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                formattedDate = `${day} ${months[d.getMonth()]}`;
+            }
+            
+            const planHvr = h.plan_pemanen || 0;
+            const actHvr = h.realized_pemanen || 0;
+            let varHvr = 0;
+            if (planHvr > 0) varHvr = ((actHvr - planHvr) / planHvr) * 100;
+            
+            const actHa = h.realized_ha || 0;
+            let varHa = 0;
+            if (grossArea > 0) varHa = ((actHa - grossArea) / grossArea) * 100;
+            
+            html += `
+                <tr>
+                    <td>${formattedDate}</td>
+                    <td>${planHvr}</td>
+                    <td>${actHvr}</td>
+                    <td style="color:${varHvr > 0 ? 'red' : (varHvr < 0 ? 'green' : 'black')}">${varHvr > 0 ? '+' : ''}${varHvr.toFixed(1)}%</td>
+                    <td>${grossArea}</td>
+                    <td>${actHa}</td>
+                    <td style="color:${varHa > 0 ? 'red' : (varHa < 0 ? 'green' : 'black')}">${varHa > 0 ? '+' : ''}${varHa.toFixed(1)}%</td>
+                    <td>${h.realized_kg || 0}</td>
+                </tr>
+            `;
+        });
+    }
+    
+    html += `
+                    </tbody>
+                </table>
+                <div style="text-align:right; margin-top:20px;">
+                    <button class="btn btn-primary" onclick="document.getElementById('modal-history').remove()">Tutup</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
 };
 
 let currentMonthlyPlanId = null;
