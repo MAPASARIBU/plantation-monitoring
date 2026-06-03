@@ -479,7 +479,7 @@ const views = {
                     <h2>Monitoring Panen Harian</h2>
                 </div>
                 <div class="table-container" style="margin-bottom: 30px;">
-                    <table class="data-table">
+                    <table class="data-table table-compact">
                         <thead>
                             <tr>
                                 <th>Tanggal</th>
@@ -504,7 +504,7 @@ const views = {
                     <h2>History & Prestasi Panen</h2>
                 </div>
                 <div class="table-container">
-                    <table class="data-table">
+                    <table class="data-table table-compact">
                         <thead>
                             <tr>
                                 <th>Tanggal</th>

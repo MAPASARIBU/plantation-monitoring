@@ -444,6 +444,13 @@ h1, h2, h3, h4, h5, h6 {
     background-color: #f8fafc;
 }
 
+/* Compact Table for tight spaces */
+.table-compact th, .table-compact td {
+    padding: 6px 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
 /* Hover Action Button */
 .btn-delete-hover {
     background: #ef4444;
