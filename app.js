@@ -457,7 +457,7 @@ const views = {
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span style="white-space:nowrap;">Est Ttl Kg:</span>
-                            <strong id="hd-est-kg" style="text-align:right; word-break:break-all; margin-left:10px; font-size:1rem;">0.00 Kg</strong>
+                            <strong id="hd-est-kg" style="text-align:right; word-break:break-all; margin-left:10px; font-size:1rem;">0 Kg</strong>
                         </div>
                     </div>
                     <div class="form-group">
@@ -1088,13 +1088,13 @@ window.calcHarvestingEstimate = () => {
         const bjr = parseFloat(rawBjr) || 0;
         
         const estJanjang = Math.round(ts * (akp / 100));
-        const estKg = estJanjang * bjr;
+        const estKg = Math.round(estJanjang * bjr);
         
         document.getElementById('hd-est-janjang').innerText = estJanjang;
-        document.getElementById('hd-est-kg').innerText = estKg.toFixed(2) + ' Kg';
+        document.getElementById('hd-est-kg').innerText = estKg + ' Kg';
     } else {
         document.getElementById('hd-est-janjang').innerText = '0';
-        document.getElementById('hd-est-kg').innerText = '0.00 Kg';
+        document.getElementById('hd-est-kg').innerText = '0 Kg';
     }
 };
 
@@ -2235,7 +2235,7 @@ window.filterBlok = (divisiName, targetId) => {
         const akpEl = document.getElementById('hd-akp');
         if(akpEl) akpEl.value = '';
         document.getElementById('hd-est-janjang').innerText = '0';
-        document.getElementById('hd-est-kg').innerText = '0.00 Kg';
+        document.getElementById('hd-est-kg').innerText = '0 Kg';
     }
 };
 
