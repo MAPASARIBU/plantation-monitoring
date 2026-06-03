@@ -478,12 +478,13 @@ const views = {
                 <div class="view-header" style="margin-bottom: 5px;">
                     <h2>Monitoring Panen Harian</h2>
                 </div>
+                <h4 id="monitoring-month-year" style="margin-top: 0; margin-bottom: 5px; color: var(--text-secondary); font-weight: 500;"></h4>
                 <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 15px;">* Keterangan: Hvr = Harvester</p>
                 <div class="table-container" style="margin-bottom: 30px;">
                     <table class="data-table table-compact">
                         <thead>
                             <tr>
-                                <th>Tanggal</th>
+                                <th>Date</th>
                                 <th>Div</th>
                                 <th>Blok</th>
                                 <th>Round</th>
@@ -839,6 +840,13 @@ const renderHarvestingTable = () => {
     tbodyDaily.innerHTML = '';
     tbodyHistory.innerHTML = '';
     
+    const now = new Date();
+    const fullMonths = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const titleEl = document.getElementById('monitoring-month-year');
+    if (titleEl) {
+        titleEl.textContent = \`Month : \${fullMonths[now.getMonth()]} \${now.getFullYear()}\`;
+    }
+    
     const draftData = db.harvesting_daily.filter(h => h.status !== 'Selesai' && h.status !== 'Closed');
     const selesaiData = db.harvesting_daily.filter(h => h.status === 'Selesai' || h.status === 'Closed');
     
@@ -849,10 +857,20 @@ const renderHarvestingTable = () => {
         
         let dateStr = h.date;
         if(typeof dateStr === 'string' && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
+        
+        let formattedDate = dateStr;
+        if(dateStr) {
+            const d = new Date(dateStr);
+            if(!isNaN(d)) {
+                const day = String(d.getDate()).padStart(2, '0');
+                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                formattedDate = `${day} ${months[d.getMonth()]}`;
+            }
+        }
             
         return `
             <tr>
-                <td>${dateStr}</td>
+                <td>${formattedDate}</td>
                 <td>${h.divisi || '-'}</td>
                 <td><strong>${h.block}</strong></td>
                 <td>${h.pusingan || '-'}</td>
