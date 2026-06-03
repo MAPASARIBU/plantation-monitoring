@@ -1136,7 +1136,7 @@ window.openBlockHistory = (block, divisi) => {
     
     let html = `
         <div class="modal-overlay" id="modal-history">
-            <div class="modal-content animate-fade-in" style="max-width:800px; max-height:80vh; overflow-y:auto;">
+            <div class="modal-content animate-fade-in" style="max-width:900px; max-height:80vh; overflow-y:auto;">
                 <div class="modal-header">
                     <h3>History & Prestasi Panen: ${block}</h3>
                     <button class="modal-close" onclick="document.getElementById('modal-history').remove()">&times;</button>
@@ -1152,13 +1152,15 @@ window.openBlockHistory = (block, divisi) => {
                             <th>Act<br>Ha</th>
                             <th>Var<br>Ha (%)</th>
                             <th>Act<br>Kg</th>
+                            <th>Prestasi<br>(Kg/HK)</th>
+                            <th>Kapasitas<br>(Ha/WD)</th>
                         </tr>
                     </thead>
                     <tbody>
     `;
     
     if(historyData.length === 0) {
-        html += `<tr><td colspan="8" style="text-align:center;">Belum ada data historis</td></tr>`;
+        html += `<tr><td colspan="10" style="text-align:center;">Belum ada data historis</td></tr>`;
     } else {
         historyData.forEach(h => {
             let dateStr = h.date;
@@ -1174,22 +1176,27 @@ window.openBlockHistory = (block, divisi) => {
             const planHvr = h.plan_pemanen || 0;
             const actHvr = h.realized_pemanen || 0;
             let varHvr = 0;
-            if (planHvr > 0) varHvr = ((actHvr - planHvr) / planHvr) * 100;
+            if (planHvr > 0) varHvr = (actHvr / planHvr) * 100;
             
             const actHa = h.realized_ha || 0;
             let varHa = 0;
-            if (grossArea > 0) varHa = ((actHa - grossArea) / grossArea) * 100;
+            if (grossArea > 0) varHa = (actHa / grossArea) * 100;
+            
+            const prestasiHvr = actHvr > 0 ? (h.realized_kg || 0) / actHvr : 0;
+            const kapasitasHa = actHvr > 0 ? actHa / actHvr : 0;
             
             html += `
                 <tr>
                     <td>${formattedDate}</td>
                     <td>${planHvr}</td>
                     <td>${actHvr}</td>
-                    <td style="color:${varHvr > 0 ? 'red' : (varHvr < 0 ? 'green' : 'black')}">${varHvr > 0 ? '+' : ''}${varHvr.toFixed(1)}%</td>
+                    <td style="color:${varHvr > 100 ? 'red' : (varHvr < 100 ? 'green' : 'black')}">${varHvr.toFixed(1)}%</td>
                     <td>${grossArea}</td>
                     <td>${actHa}</td>
-                    <td style="color:${varHa > 0 ? 'red' : (varHa < 0 ? 'green' : 'black')}">${varHa > 0 ? '+' : ''}${varHa.toFixed(1)}%</td>
+                    <td style="color:${varHa > 100 ? 'red' : (varHa < 100 ? 'green' : 'black')}">${varHa.toFixed(1)}%</td>
                     <td>${h.realized_kg || 0}</td>
+                    <td>${prestasiHvr.toFixed(1)}</td>
+                    <td>${kapasitasHa.toFixed(2)}</td>
                 </tr>
             `;
         });
