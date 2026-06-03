@@ -475,9 +475,10 @@ const views = {
             </div>
             
             <div class="glass-card table-wrapper">
-                <div class="view-header">
+                <div class="view-header" style="margin-bottom: 5px;">
                     <h2>Monitoring Panen Harian</h2>
                 </div>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 15px;">* Keterangan: Hvr = Harvester</p>
                 <div class="table-container" style="margin-bottom: 30px;">
                     <table class="data-table table-compact">
                         <thead>
@@ -488,9 +489,9 @@ const views = {
                                 <th>Mandor</th>
                                 <th>Plan<br>(Jjg)</th>
                                 <th>Plan<br>(Kg)</th>
-                                <th>Harvester</th>
+                                <th>Hvr</th>
                                 <th>Act<br>(Jjg)</th>
-                                <th>Act<br>(Harvester)</th>
+                                <th>Act<br>(Hvr)</th>
                                 <th>Act<br>(Kg)</th>
                                 <th>Status</th>
                                 <th>Aksi</th>
@@ -510,7 +511,7 @@ const views = {
                                 <th>Tanggal</th>
                                 <th>Blok</th>
                                 <th>Act<br>Kg</th>
-                                <th>Act<br>Harvester</th>
+                                <th>Act<br>Hvr</th>
                                 <th>Prestasi<br>(Kg/HK)</th>
                             </tr>
                         </thead>
