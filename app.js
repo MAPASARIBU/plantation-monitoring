@@ -486,12 +486,12 @@ const views = {
                                 <th>Blok</th>
                                 <th>Round</th>
                                 <th>Mandor</th>
-                                <th>Plan (Jjg)</th>
-                                <th>Plan (Kg)</th>
+                                <th>Plan<br>(Jjg)</th>
+                                <th>Plan<br>(Kg)</th>
                                 <th>Harvester</th>
-                                <th>Act (Jjg)</th>
-                                <th>Act (Harvester)</th>
-                                <th>Act (Kg)</th>
+                                <th>Act<br>(Jjg)</th>
+                                <th>Act<br>(Harvester)</th>
+                                <th>Act<br>(Kg)</th>
                                 <th>Status</th>
                                 <th>Aksi</th>
                             </tr>
@@ -509,9 +509,9 @@ const views = {
                             <tr>
                                 <th>Tanggal</th>
                                 <th>Blok</th>
-                                <th>Act Kg</th>
-                                <th>Act Harvester</th>
-                                <th>Prestasi (Kg/HK)</th>
+                                <th>Act<br>Kg</th>
+                                <th>Act<br>Harvester</th>
+                                <th>Prestasi<br>(Kg/HK)</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-harvesting-history"></tbody>
