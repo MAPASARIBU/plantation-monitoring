@@ -1289,6 +1289,8 @@ window.openDivisiHistory = (divisi) => {
                 actHa: 0,
                 actKg: 0,
                 grossArea: 0,
+                pusinganSum: 0,
+                pusinganCount: 0,
                 blocks: new Set()
             };
         }
@@ -1296,6 +1298,11 @@ window.openDivisiHistory = (divisi) => {
         dateMap[dStr].actHvr += h.realized_pemanen || 0;
         dateMap[dStr].actHa += h.realized_ha || 0;
         dateMap[dStr].actKg += h.realized_kg || 0;
+        
+        if (h.pusingan) {
+            dateMap[dStr].pusinganSum += parseInt(h.pusingan) || 0;
+            dateMap[dStr].pusinganCount++;
+        }
         
         if (!dateMap[dStr].blocks.has(h.block)) {
             dateMap[dStr].blocks.add(h.block);
@@ -1319,6 +1326,7 @@ window.openDivisiHistory = (divisi) => {
                         <tr>
                             <th>Date</th>
                             <th>Divisi</th>
+                            <th>Avg<br>Round</th>
                             <th>Plan<br>Hvr</th>
                             <th>Act<br>Hvr</th>
                             <th>Total Gross Area<br>(Ha)</th>
@@ -1334,7 +1342,7 @@ window.openDivisiHistory = (divisi) => {
     `;
     
     if(dates.length === 0) {
-        html += `<tr><td colspan="11" style="text-align:center;">Belum ada data historis divisi</td></tr>`;
+        html += `<tr><td colspan="12" style="text-align:center;">Belum ada data historis divisi</td></tr>`;
     } else {
         dates.forEach(r => {
             let formattedDate = r.date;
@@ -1353,11 +1361,13 @@ window.openDivisiHistory = (divisi) => {
             
             const prestasiHvr = r.actHvr > 0 ? r.actKg / r.actHvr : 0;
             const kapasitasHa = r.actHvr > 0 ? r.actHa / r.actHvr : 0;
+            const avgPusingan = r.pusinganCount > 0 ? (r.pusinganSum / r.pusinganCount).toFixed(1) : '-';
             
             html += `
                 <tr>
                     <td>${formattedDate}</td>
                     <td><strong>${divisi}</strong></td>
+                    <td>${avgPusingan}</td>
                     <td>${r.planHvr}</td>
                     <td>${r.actHvr}</td>
                     <td>${r.grossArea.toFixed(2)}</td>
