@@ -1136,7 +1136,7 @@ window.openBlockHistory = (block, divisi) => {
     
     let html = `
         <div class="modal-overlay" id="modal-history">
-            <div class="modal-content animate-fade-in" style="width:95vw; max-width:1400px; max-height:85vh; overflow-y:auto;">
+            <div class="modal-content animate-fade-in" style="width:95vw; max-width:1200px; max-height:85vh; overflow-y:auto;">
                 <div class="modal-header">
                     <h3>History & Prestasi Panen: ${block}</h3>
                     <button class="modal-close" onclick="document.getElementById('modal-history').remove()">&times;</button>
@@ -1145,6 +1145,8 @@ window.openBlockHistory = (block, divisi) => {
                     <thead>
                         <tr>
                             <th>Date</th>
+                            <th>Div</th>
+                            <th>Blok</th>
                             <th>Plan<br>Hvr</th>
                             <th>Act<br>Hvr</th>
                             <th>Gross Area<br>(Ha)</th>
@@ -1160,7 +1162,7 @@ window.openBlockHistory = (block, divisi) => {
     `;
     
     if(historyData.length === 0) {
-        html += `<tr><td colspan="10" style="text-align:center;">Belum ada data historis</td></tr>`;
+        html += `<tr><td colspan="12" style="text-align:center;">Belum ada data historis</td></tr>`;
     } else {
         historyData.forEach(h => {
             let dateStr = h.date;
@@ -1188,6 +1190,8 @@ window.openBlockHistory = (block, divisi) => {
             html += `
                 <tr>
                     <td>${formattedDate}</td>
+                    <td>${h.divisi || '-'}</td>
+                    <td><strong>${h.block}</strong></td>
                     <td>${planHvr}</td>
                     <td>${actHvr}</td>
                     <td>${grossArea}</td>
