@@ -844,7 +844,7 @@ const renderHarvestingTable = () => {
     
     const renderDailyRow = (h) => {
         const actionBtn = (h.status === 'Selesai' || h.status === 'Closed') ? '-' : 
-            `<button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}')"><i class="fa-solid fa-plus"></i> Input Realisasi</button>`;
+            `<button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}', ${h.est_janjang || 0}, ${h.plan_pemanen || 0}, ${h.est_kg || 0})"><i class="fa-solid fa-plus"></i> Input Realisasi</button>`;
         
         let dateStr = h.date;
         if(typeof dateStr === 'string' && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
@@ -1166,23 +1166,26 @@ window.checkMonthlyPlan = () => {
     }
 };
 
-window.openAddHarvestingRealizationModal = (id, block) => {
+window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg) => {
+    const blockData = masterData.blok.find(b => b.name === block);
+    const grossArea = blockData ? blockData.gross_area : 0;
+    
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.id = 'modal-harvesting-realization';
     modal.innerHTML = `
         <div class="modal-content animate-fade-in" style="max-width:400px;">
-            <h3>Input Realisasi Panen: ${block}</h3>
+            <h3>Input Realisasi Panen: ${block} <span style="font-size:0.9rem; color:var(--text-secondary); font-weight:normal;">(Luas: ${grossArea} Ha)</span></h3>
             <div class="form-group" style="margin-top:15px;">
-                <label>Realisasi Janjang</label>
+                <label>Realisasi Janjang <span style="color:var(--text-secondary); font-weight:normal;">(Plan: ${planJjg} Jjg)</span></label>
                 <input type="number" id="hr-janjang" class="form-control" required>
             </div>
             <div class="form-group">
-                <label>Realisasi Pemanen</label>
+                <label>Realisasi Pemanen <span style="color:var(--text-secondary); font-weight:normal;">(Plan: ${planHvr} Hvr)</span></label>
                 <input type="number" id="hr-pemanen" class="form-control" required>
             </div>
             <div class="form-group">
-                <label>Realisasi Kg (Timbangan)</label>
+                <label>Realisasi Kg (Timbangan) <span style="color:var(--text-secondary); font-weight:normal;">(Plan: ${planKg} Kg)</span></label>
                 <input type="number" step="0.1" id="hr-kg" class="form-control" required>
             </div>
             <div class="form-group">
