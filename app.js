@@ -19,7 +19,7 @@ const loadData = async () => {
             if(document.getElementById('tbody-vehicle')) renderVehicleTable();
             if(document.getElementById('tbody-upkeep')) renderUpkeepTable();
             if(document.getElementById('tbody-pemupukan')) renderPemupukanTable();
-            if(document.getElementById('tbody-harvesting')) renderHarvestingTable();
+            if(document.getElementById('tbody-harvesting-daily')) renderHarvestingTable();
         }
     } catch (error) {
         console.error("Error loading data from backend:", error);
