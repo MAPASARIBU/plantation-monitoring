@@ -128,6 +128,7 @@ async function initDB() {
             realized_janjang REAL DEFAULT 0, realized_pemanen INTEGER DEFAULT 0, realized_kg REAL DEFAULT 0, status TEXT DEFAULT 'Draft'
         )`);
         try { await pool.query("ALTER TABLE harvesting_daily ADD COLUMN pusingan TEXT"); } catch(e) {}
+        try { await pool.query("ALTER TABLE harvesting_daily ADD COLUMN realized_ha REAL DEFAULT 0"); } catch(e) {}
 
         await pool.query(`CREATE TABLE IF NOT EXISTS master_divisi (id SERIAL PRIMARY KEY, estate TEXT, name TEXT)`);
         // Added divisi column because it's used in bulk insert checking
@@ -709,10 +710,10 @@ app.post('/api/harvesting/daily', async (req, res) => {
 
 app.put('/api/harvesting/daily/:id/realization', async (req, res) => {
     try {
-        const { realized_janjang, realized_pemanen, realized_kg } = req.body;
+        const { realized_janjang, realized_pemanen, realized_kg, realized_ha } = req.body;
         await pool.query(
-            'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, status = $4 WHERE id = $5',
-            [realized_janjang, realized_pemanen, realized_kg, 'Closed', req.params.id]
+            'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, realized_ha = $4, status = $5 WHERE id = $6',
+            [realized_janjang, realized_pemanen, realized_kg, realized_ha, 'Closed', req.params.id]
         );
         res.json({ success: true });
     } catch (err) {

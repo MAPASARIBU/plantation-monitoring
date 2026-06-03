@@ -1168,7 +1168,7 @@ window.checkMonthlyPlan = () => {
 
 window.openAddHarvestingRealizationModal = (id, block) => {
     const modal = document.createElement('div');
-    modal.className = 'modal';
+    modal.className = 'modal-overlay';
     modal.id = 'modal-harvesting-realization';
     modal.innerHTML = `
         <div class="modal-content animate-fade-in" style="max-width:400px;">
@@ -1185,6 +1185,10 @@ window.openAddHarvestingRealizationModal = (id, block) => {
                 <label>Realisasi Kg (Timbangan)</label>
                 <input type="number" step="0.1" id="hr-kg" class="form-control" required>
             </div>
+            <div class="form-group">
+                <label>Realisasi Ha (Luasan Panen)</label>
+                <input type="number" step="0.01" id="hr-ha" class="form-control" required>
+            </div>
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
                 <button class="btn btn-logout" onclick="document.getElementById('modal-harvesting-realization').remove()" style="background:#64748b; color:white; border:none; padding:8px 16px;">Batal</button>
                 <button class="btn btn-primary" onclick="submitHarvestingRealization(${id})" style="padding:8px 16px;">Simpan</button>
@@ -1198,12 +1202,13 @@ window.submitHarvestingRealization = async (id) => {
     const janjang = parseFloat(document.getElementById('hr-janjang').value) || 0;
     const pemanen = parseInt(document.getElementById('hr-pemanen').value) || 0;
     const kg = parseFloat(document.getElementById('hr-kg').value) || 0;
+    const ha = parseFloat(document.getElementById('hr-ha').value) || 0;
     
     try {
         await fetch(`${API_URL}/harvesting/daily/${id}/realization`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ realized_janjang: janjang, realized_pemanen: pemanen, realized_kg: kg })
+            body: JSON.stringify({ realized_janjang: janjang, realized_pemanen: pemanen, realized_kg: kg, realized_ha: ha })
         });
         document.getElementById('modal-harvesting-realization').remove();
         await loadData();
