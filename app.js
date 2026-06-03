@@ -915,7 +915,7 @@ const renderHarvestingTable = () => {
             tbodyDaily.innerHTML += `
                 <tr style="background-color: #f8fafc;">
                     <td>${formattedDate}</td>
-                    <td><strong>${r.divisi || '-'}</strong></td>
+                    <td>${r.divisi ? `<a href="#" onclick="openDivisiHistory('${r.divisi}')" style="color:var(--primary); font-weight:bold; text-decoration:underline; cursor:pointer;" title="Lihat History Divisi">${r.divisi}</a>` : '-'}</td>
                     <td style="color:#94a3b8;">-</td>
                     <td style="color:#94a3b8;">-</td>
                     <td style="color:#94a3b8;">-</td>
@@ -1265,6 +1265,115 @@ window.openBlockHistory = (block, divisi) => {
                 </table>
                 <div style="text-align:right; margin-top:20px;">
                     <button class="btn btn-primary" onclick="document.getElementById('modal-history').remove()">Tutup</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.openDivisiHistory = (divisi) => {
+    const historyData = db.harvesting_daily.filter(h => h.divisi === divisi && (h.status === 'Selesai' || h.status === 'Closed'));
+    
+    const dateMap = {};
+    historyData.forEach(h => {
+        const dStr = typeof h.date === 'string' && h.date.includes('T') ? h.date.split('T')[0] : h.date;
+        if(!dateMap[dStr]) {
+            dateMap[dStr] = {
+                date: dStr,
+                planHvr: 0,
+                actHvr: 0,
+                actHa: 0,
+                actKg: 0,
+                grossArea: 0,
+                blocks: new Set()
+            };
+        }
+        dateMap[dStr].planHvr += h.plan_pemanen || 0;
+        dateMap[dStr].actHvr += h.realized_pemanen || 0;
+        dateMap[dStr].actHa += h.realized_ha || 0;
+        dateMap[dStr].actKg += h.realized_kg || 0;
+        
+        if (!dateMap[dStr].blocks.has(h.block)) {
+            dateMap[dStr].blocks.add(h.block);
+            let blockData = masterData.blok.find(b => b.name === h.block && b.divisi === divisi);
+            if (!blockData) blockData = masterData.blok.find(b => b.name === h.block);
+            dateMap[dStr].grossArea += (blockData ? blockData.gross_area : 0);
+        }
+    });
+
+    const dates = Object.values(dateMap).sort((a,b) => b.date.localeCompare(a.date));
+
+    let html = `
+        <div class="modal-overlay" id="modal-history-divisi">
+            <div class="modal-content animate-fade-in" style="width:95vw; max-width:1200px; max-height:85vh; overflow-y:auto;">
+                <div class="modal-header">
+                    <h3>History Prestasi Divisi: ${divisi}</h3>
+                    <button class="modal-close" onclick="document.getElementById('modal-history-divisi').remove()">&times;</button>
+                </div>
+                <table class="data-table table-compact" style="font-size:0.85rem; margin-top:15px;">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Divisi</th>
+                            <th>Plan<br>Hvr</th>
+                            <th>Act<br>Hvr</th>
+                            <th>Total Gross Area<br>(Ha)</th>
+                            <th>Act<br>Ha</th>
+                            <th>Act<br>Kg</th>
+                            <th>Prestasi<br>(Kg/HK)</th>
+                            <th>Kapasitas<br>(Ha/WD)</th>
+                            <th>Var<br>Hvr (%)</th>
+                            <th>Var<br>Ha (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
+    
+    if(dates.length === 0) {
+        html += `<tr><td colspan="11" style="text-align:center;">Belum ada data historis divisi</td></tr>`;
+    } else {
+        dates.forEach(r => {
+            let formattedDate = r.date;
+            const d = new Date(r.date);
+            if(!isNaN(d)) {
+                const day = String(d.getDate()).padStart(2, '0');
+                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                formattedDate = `${day} ${months[d.getMonth()]}`;
+            }
+            
+            let varHvr = 0;
+            if (r.planHvr > 0) varHvr = (r.actHvr / r.planHvr) * 100;
+            
+            let varHa = 0;
+            if (r.grossArea > 0) varHa = (r.actHa / r.grossArea) * 100;
+            
+            const prestasiHvr = r.actHvr > 0 ? r.actKg / r.actHvr : 0;
+            const kapasitasHa = r.actHvr > 0 ? r.actHa / r.actHvr : 0;
+            
+            html += `
+                <tr>
+                    <td>${formattedDate}</td>
+                    <td><strong>${divisi}</strong></td>
+                    <td>${r.planHvr}</td>
+                    <td>${r.actHvr}</td>
+                    <td>${r.grossArea.toFixed(2)}</td>
+                    <td>${r.actHa.toFixed(2)}</td>
+                    <td>${r.actKg}</td>
+                    <td>${prestasiHvr.toFixed(1)}</td>
+                    <td>${kapasitasHa.toFixed(2)}</td>
+                    <td style="color:${varHvr > 100 ? 'red' : (varHvr < 100 ? 'green' : 'black')}; font-weight:bold;">${varHvr.toFixed(1)}%</td>
+                    <td style="color:${varHa > 100 ? 'red' : (varHa < 100 ? 'green' : 'black')}; font-weight:bold;">${varHa.toFixed(1)}%</td>
+                </tr>
+            `;
+        });
+    }
+    
+    html += `
+                    </tbody>
+                </table>
+                <div style="text-align:right; margin-top:20px;">
+                    <button class="btn btn-primary" onclick="document.getElementById('modal-history-divisi').remove()">Tutup</button>
                 </div>
             </div>
         </div>
