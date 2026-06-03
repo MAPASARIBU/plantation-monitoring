@@ -1327,15 +1327,9 @@ const bindForms = () => {
         e.preventDefault();
         const block = document.getElementById('hd-block').value;
         const akp = parseFloat(document.getElementById('hd-akp').value);
-        const blockData = masterData.blok.find(b => b.name === block);
-        let estJanjang = 0, estKg = 0;
         
-        if (blockData) {
-            const ts = parseFloat(blockData.total_stand) || 0;
-            const bjr = parseFloat(blockData.bjr) || 0;
-            estJanjang = Math.round(ts * (akp / 100));
-            estKg = estJanjang * bjr;
-        }
+        const estJanjang = parseInt(document.getElementById('hd-est-janjang').innerText.replace(/,/g, '')) || 0;
+        const estKg = parseFloat(document.getElementById('hd-est-kg').innerText.replace(/,/g, '').replace(' Kg', '')) || 0;
 
         const payload = {
             date: document.getElementById('hd-date').value,
