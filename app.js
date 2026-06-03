@@ -450,14 +450,14 @@ const views = {
                         <label>Pusingan Panen</label>
                         <input type="number" id="hd-pusingan" class="form-control" required>
                     </div>
-                    <div style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 5px; margin-bottom: 15px;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                            <span>Est. Total Janjang:</span>
-                            <strong id="hd-est-janjang">0</strong>
+                    <div style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 0.85rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <span style="white-space:nowrap;">Est Ttl JJG:</span>
+                            <strong id="hd-est-janjang" style="text-align:right; word-break:break-all; margin-left:10px; font-size:1rem;">0</strong>
                         </div>
-                        <div style="display:flex; justify-content:space-between;">
-                            <span>Est. Total Kg:</span>
-                            <strong id="hd-est-kg">0 Kg</strong>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="white-space:nowrap;">Est Ttl Kg:</span>
+                            <strong id="hd-est-kg" style="text-align:right; word-break:break-all; margin-left:10px; font-size:1rem;">0.00 Kg</strong>
                         </div>
                     </div>
                     <div class="form-group">
