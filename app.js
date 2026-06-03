@@ -484,13 +484,13 @@ const views = {
                             <tr>
                                 <th>Tanggal</th>
                                 <th>Blok</th>
-                                <th>Pusingan</th>
+                                <th>Round</th>
                                 <th>Mandor</th>
                                 <th>Plan (Jjg)</th>
                                 <th>Plan (Kg)</th>
-                                <th>Pemanen</th>
+                                <th>Harvester</th>
                                 <th>Act (Jjg)</th>
-                                <th>Act (Pemanen)</th>
+                                <th>Act (Harvester)</th>
                                 <th>Act (Kg)</th>
                                 <th>Status</th>
                                 <th>Aksi</th>
@@ -510,7 +510,7 @@ const views = {
                                 <th>Tanggal</th>
                                 <th>Blok</th>
                                 <th>Act Kg</th>
-                                <th>Act Pemanen</th>
+                                <th>Act Harvester</th>
                                 <th>Prestasi (Kg/HK)</th>
                             </tr>
                         </thead>
@@ -838,11 +838,11 @@ const renderHarvestingTable = () => {
     tbodyDaily.innerHTML = '';
     tbodyHistory.innerHTML = '';
     
-    const draftData = db.harvesting_daily.filter(h => h.status !== 'Selesai');
-    const selesaiData = db.harvesting_daily.filter(h => h.status === 'Selesai');
+    const draftData = db.harvesting_daily.filter(h => h.status !== 'Selesai' && h.status !== 'Closed');
+    const selesaiData = db.harvesting_daily.filter(h => h.status === 'Selesai' || h.status === 'Closed');
     
     const renderDailyRow = (h) => {
-        const actionBtn = h.status === 'Selesai' ? '-' : 
+        const actionBtn = (h.status === 'Selesai' || h.status === 'Closed') ? '-' : 
             `<button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}')"><i class="fa-solid fa-plus"></i> Input Realisasi</button>`;
         
         let dateStr = h.date;
@@ -860,7 +860,7 @@ const renderHarvestingTable = () => {
                 <td>${h.realized_janjang}</td>
                 <td>${h.realized_pemanen}</td>
                 <td>${h.realized_kg}</td>
-                <td>${h.status === 'Selesai' ? '<span style="color:green;font-weight:bold;">Selesai</span>' : '<span style="color:orange;font-weight:bold;">Draft</span>'}</td>
+                <td>${(h.status === 'Selesai' || h.status === 'Closed') ? '<span style="color:green;font-weight:bold;">Closed</span>' : '<span style="color:orange;font-weight:bold;">Open</span>'}</td>
                 <td style="text-align:center;">${actionBtn}</td>
             </tr>
         `;
@@ -885,7 +885,7 @@ const renderHarvestingTable = () => {
     [...draftData].reverse().forEach(h => tbodyDaily.innerHTML += renderDailyRow(h));
     
     if (selesaiData.length > 0) {
-        tbodyDaily.innerHTML += `<tr><td colspan="12" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Selesai</td></tr>`;
+        tbodyDaily.innerHTML += `<tr><td colspan="12" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Closed</td></tr>`;
         [...selesaiData].reverse().forEach(h => {
             tbodyDaily.innerHTML += renderDailyRow(h);
             tbodyHistory.innerHTML += renderHistoryRow(h);

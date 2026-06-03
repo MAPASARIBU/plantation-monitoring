@@ -699,7 +699,7 @@ app.post('/api/harvesting/daily', async (req, res) => {
         const { date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor, pusingan } = req.body;
         const result = await pool.query(
             'INSERT INTO harvesting_daily (date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor, pusingan, realized_janjang, realized_pemanen, realized_kg, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,0,0,0,$11) RETURNING id',
-            [date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor, pusingan, 'Draft']
+            [date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor, pusingan, 'Open']
         );
         res.json({ id: result.rows[0].id });
     } catch (err) {
@@ -712,7 +712,7 @@ app.put('/api/harvesting/daily/:id/realization', async (req, res) => {
         const { realized_janjang, realized_pemanen, realized_kg } = req.body;
         await pool.query(
             'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, status = $4 WHERE id = $5',
-            [realized_janjang, realized_pemanen, realized_kg, 'Selesai', req.params.id]
+            [realized_janjang, realized_pemanen, realized_kg, 'Closed', req.params.id]
         );
         res.json({ success: true });
     } catch (err) {
