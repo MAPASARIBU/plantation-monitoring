@@ -1190,7 +1190,7 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg)
             </div>
             <div class="form-group">
                 <label>Realisasi Ha (Luasan Panen)</label>
-                <input type="number" step="0.01" id="hr-ha" class="form-control" required>
+                <input type="number" step="0.01" id="hr-ha" class="form-control" value="${grossArea}" required>
             </div>
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
                 <button class="btn btn-logout" onclick="document.getElementById('modal-harvesting-realization').remove()" style="background:#64748b; color:white; border:none; padding:8px 16px;">Batal</button>
