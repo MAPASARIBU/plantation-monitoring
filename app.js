@@ -1136,7 +1136,7 @@ window.openBlockHistory = (block, divisi) => {
     
     let html = `
         <div class="modal-overlay" id="modal-history">
-            <div class="modal-content animate-fade-in" style="max-width:900px; max-height:80vh; overflow-y:auto;">
+            <div class="modal-content animate-fade-in" style="width:95vw; max-width:1400px; max-height:85vh; overflow-y:auto;">
                 <div class="modal-header">
                     <h3>History & Prestasi Panen: ${block}</h3>
                     <button class="modal-close" onclick="document.getElementById('modal-history').remove()">&times;</button>
@@ -1145,12 +1145,12 @@ window.openBlockHistory = (block, divisi) => {
                     <thead>
                         <tr>
                             <th>Date</th>
+                            <th>Var<br>Hvr (%)</th>
+                            <th>Var<br>Ha (%)</th>
                             <th>Plan<br>Hvr</th>
                             <th>Act<br>Hvr</th>
-                            <th>Var<br>Hvr (%)</th>
                             <th>Gross Area<br>(Ha)</th>
                             <th>Act<br>Ha</th>
-                            <th>Var<br>Ha (%)</th>
                             <th>Act<br>Kg</th>
                             <th>Prestasi<br>(Kg/HK)</th>
                             <th>Kapasitas<br>(Ha/WD)</th>
@@ -1188,12 +1188,12 @@ window.openBlockHistory = (block, divisi) => {
             html += `
                 <tr>
                     <td>${formattedDate}</td>
+                    <td style="color:${varHvr > 100 ? 'red' : (varHvr < 100 ? 'green' : 'black')}; font-weight:bold;">${varHvr.toFixed(1)}%</td>
+                    <td style="color:${varHa > 100 ? 'red' : (varHa < 100 ? 'green' : 'black')}; font-weight:bold;">${varHa.toFixed(1)}%</td>
                     <td>${planHvr}</td>
                     <td>${actHvr}</td>
-                    <td style="color:${varHvr > 100 ? 'red' : (varHvr < 100 ? 'green' : 'black')}">${varHvr.toFixed(1)}%</td>
                     <td>${grossArea}</td>
                     <td>${actHa}</td>
-                    <td style="color:${varHa > 100 ? 'red' : (varHa < 100 ? 'green' : 'black')}">${varHa.toFixed(1)}%</td>
                     <td>${h.realized_kg || 0}</td>
                     <td>${prestasiHvr.toFixed(1)}</td>
                     <td>${kapasitasHa.toFixed(2)}</td>
