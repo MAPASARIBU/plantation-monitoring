@@ -669,7 +669,7 @@ const renderUpkeepTable = () => {
         
         if (u.status === 'Selesai') {
             actionBtn = `<span class="status-badge status-done" style="margin-right: 5px;">Selesai</span>`;
-        } else if (currentUser && currentUser.role && currentUser.role.includes('Krani')) {
+        } else if (currentUser && currentUser.role && (currentUser.role.includes('Krani') || currentUser.role === 'Admin')) {
             actionBtn = `
                 <div style="display:flex; flex-direction:column; gap:5px; align-items:center;">
                     <div style="display:flex; gap:5px;">
@@ -729,7 +729,7 @@ const renderPemupukanTable = () => {
                     <span class="status-badge status-done" style="text-align:center;">Selesai</span>
                 </div>
             `;
-        } else if (currentUser && currentUser.role && currentUser.role.includes('Krani')) {
+        } else if (currentUser && currentUser.role && (currentUser.role.includes('Krani') || currentUser.role === 'Admin')) {
             actionBtn = `
                 <div style="display:flex; flex-direction:column; gap:3px;">
                     <button class="btn btn-primary" style="padding: 2px 6px; font-size: 0.7rem;" onclick="openAddRealizationModal(${p.id}, '${p.block}', '${p.plan}', '${sDate}')"><i class="fa-solid fa-plus"></i> Tambah</button>
@@ -1229,9 +1229,9 @@ const navigate = (viewId) => {
         layouts.forEach(l => l.style.gridTemplateColumns = '1fr');
     }
 
-    // Specific read-only logic for Upkeep and Pemupukan (Only Assistant and Askep can input rencana)
+    // Specific read-only logic for Upkeep and Pemupukan (Only Assistant, Askep, and Admin can input rencana)
     if ((viewId === 'upkeep' || viewId === 'pemupukan') && currentUser) {
-        if (currentUser.role !== 'Assistant' && currentUser.role !== 'Askep') {
+        if (currentUser.role !== 'Assistant' && currentUser.role !== 'Askep' && currentUser.role !== 'Admin') {
             const forms = container.querySelectorAll('.form-container');
             forms.forEach(f => f.style.display = 'none');
             const layouts = container.querySelectorAll('.module-layout');
