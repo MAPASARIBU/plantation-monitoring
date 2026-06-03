@@ -1071,12 +1071,22 @@ window.deleteUser = async (id) => {
 
 window.calcHarvestingEstimate = () => {
     const block = document.getElementById('hd-block').value;
+    const divisi = document.getElementById('hd-divisi').value;
     const akp = parseFloat(document.getElementById('hd-akp').value) || 0;
-    const blockData = masterData.blok.find(b => b.name === block);
+    
+    // Pastikan match nama blok dan divisinya
+    const blockData = masterData.blok.find(b => b.name === block && b.divisi === divisi);
     
     if (blockData) {
-        const ts = parseFloat(blockData.total_stand) || 0;
-        const bjr = parseFloat(blockData.bjr) || 0;
+        // Hapus koma atau titik jika formatnya ribuan sebelum di-parse
+        let rawTs = blockData.total_stand;
+        if(typeof rawTs === 'string') rawTs = rawTs.replace(/,/g, '');
+        const ts = parseFloat(rawTs) || 0;
+        
+        let rawBjr = blockData.bjr;
+        if(typeof rawBjr === 'string') rawBjr = rawBjr.replace(/,/g, '');
+        const bjr = parseFloat(rawBjr) || 0;
+        
         const estJanjang = Math.round(ts * (akp / 100));
         const estKg = estJanjang * bjr;
         
@@ -1084,7 +1094,7 @@ window.calcHarvestingEstimate = () => {
         document.getElementById('hd-est-kg').innerText = estKg.toFixed(2) + ' Kg';
     } else {
         document.getElementById('hd-est-janjang').innerText = '0';
-        document.getElementById('hd-est-kg').innerText = '0 Kg';
+        document.getElementById('hd-est-kg').innerText = '0.00 Kg';
     }
 };
 
@@ -2221,6 +2231,11 @@ window.filterBlok = (divisiName, targetId) => {
     
     if (targetId === 'h-block') {
         onHarvestingBlockChange('');
+    } else if (targetId === 'hd-block') {
+        const akpEl = document.getElementById('hd-akp');
+        if(akpEl) akpEl.value = '';
+        document.getElementById('hd-est-janjang').innerText = '0';
+        document.getElementById('hd-est-kg').innerText = '0.00 Kg';
     }
 };
 
