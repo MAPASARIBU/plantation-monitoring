@@ -474,29 +474,12 @@ const views = {
                 </form>
             </div>
             
-            <div class="glass-card table-wrapper" style="margin-bottom: 30px;">
-                <div class="view-header" style="margin-bottom: 5px;">
-                    <h2>Monitoring Realisasi Bulanan</h2>
-                </div>
-                <h4 id="monitoring-monthly-title" style="margin-top: 0; margin-bottom: 15px; color: var(--text-secondary); font-weight: 500;"></h4>
-                <div class="table-container">
-                    <table class="data-table table-compact">
-                        <thead>
-                            <tr>
-                                <th>Divisi</th>
-                                <th>Target Bulanan (Kg)</th>
-                                <th>Realisasi (Kg)</th>
-                                <th>% Pencapaian</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-harvesting-monthly"></tbody>
-                    </table>
-                </div>
-            </div>
-            
             <div class="glass-card table-wrapper">
                 <div class="view-header" style="margin-bottom: 5px;">
-                    <h2>Monitoring Panen Harian</h2>
+                    <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                        <h2>Monitoring Panen Harian</h2>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="openMonthlyRealization()"><i class="fa-solid fa-chart-pie"></i> Monitoring Realisasi Bulanan</button>
+                    </div>
                 </div>
                 <h4 id="monitoring-month-year" style="margin-top: 0; margin-bottom: 5px; color: var(--text-secondary); font-weight: 500;"></h4>
                 <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 15px;">* Keterangan: Hvr = Harvester</p>
@@ -845,44 +828,6 @@ const renderHarvestingTable = () => {
     const titleEl = document.getElementById('monitoring-month-year');
     if (titleEl) {
         titleEl.textContent = `Month : ${fullMonths[now.getMonth()]} ${now.getFullYear()}`;
-    }
-    
-    const tbodyMonthly = document.getElementById('tbody-harvesting-monthly');
-    if (tbodyMonthly) {
-        tbodyMonthly.innerHTML = '';
-        const titleElMonthly = document.getElementById('monitoring-monthly-title');
-        if (titleElMonthly) {
-            titleElMonthly.textContent = `Month : ${fullMonths[now.getMonth()]} ${now.getFullYear()}`;
-        }
-        
-        const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}`;
-        const masterDivisiList = masterData.divisi || [];
-        
-        if (masterDivisiList.length === 0) {
-            tbodyMonthly.innerHTML = `<tr><td colspan="4" style="text-align:center;">Belum ada master divisi</td></tr>`;
-        } else {
-            masterDivisiList.forEach(div => {
-                const planRecord = (db.harvesting_monthly || []).find(m => m.divisi === div.name && m.month === currentMonthStr);
-                const targetKg = planRecord ? (planRecord.target_kg || 0) : 0;
-                
-                const divRealisasi = (db.harvesting_daily || []).filter(h => 
-                    h.divisi === div.name && 
-                    (h.status === 'Selesai' || h.status === 'Closed') &&
-                    h.date && h.date.startsWith(currentMonthStr)
-                ).reduce((sum, h) => sum + (h.realized_kg || 0), 0);
-                
-                const percent = targetKg > 0 ? (divRealisasi / targetKg) * 100 : 0;
-                
-                tbodyMonthly.innerHTML += `
-                    <tr>
-                        <td><strong>${div.name}</strong></td>
-                        <td>${targetKg}</td>
-                        <td>${divRealisasi}</td>
-                        <td style="color:${percent >= 100 ? 'green' : (percent > 0 ? 'orange' : 'black')}; font-weight:bold;">${percent.toFixed(1)}%</td>
-                    </tr>
-                `;
-            });
-        }
     }
     
     const draftData = db.harvesting_daily.filter(h => h.status !== 'Selesai' && h.status !== 'Closed');
@@ -1432,6 +1377,71 @@ window.openDivisiHistory = (divisi) => {
                 </table>
                 <div style="text-align:right; margin-top:20px;">
                     <button class="btn btn-primary" onclick="document.getElementById('modal-history-divisi').remove()">Tutup</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.openMonthlyRealization = () => {
+    const now = new Date();
+    const fullMonths = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}`;
+    const displayMonthStr = `${fullMonths[now.getMonth()]} ${now.getFullYear()}`;
+    const masterDivisiList = masterData.divisi || [];
+    
+    let html = `
+        <div class="modal-overlay" id="modal-monthly-realization">
+            <div class="modal-content animate-fade-in" style="width:90vw; max-width:800px; max-height:85vh; overflow-y:auto;">
+                <div class="modal-header" style="margin-bottom: 5px;">
+                    <h3>Monitoring Realisasi Bulanan</h3>
+                    <button class="modal-close" onclick="document.getElementById('modal-monthly-realization').remove()">&times;</button>
+                </div>
+                <h4 style="margin-top: 0; margin-bottom: 15px; color: var(--text-secondary); font-weight: 500;">Month : ${displayMonthStr}</h4>
+                <table class="data-table table-compact" style="font-size:0.9rem; margin-top:15px;">
+                    <thead>
+                        <tr>
+                            <th>Divisi</th>
+                            <th>Target Bulanan (Kg)</th>
+                            <th>Realisasi (Kg)</th>
+                            <th>% Pencapaian</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
+    
+    if (masterDivisiList.length === 0) {
+        html += `<tr><td colspan="4" style="text-align:center;">Belum ada master divisi</td></tr>`;
+    } else {
+        masterDivisiList.forEach(div => {
+            const planRecord = (db.harvesting_monthly || []).find(m => m.divisi === div.name && m.month === currentMonthStr);
+            const targetKg = planRecord ? (planRecord.target_kg || 0) : 0;
+            
+            const divRealisasi = (db.harvesting_daily || []).filter(h => 
+                h.divisi === div.name && 
+                (h.status === 'Selesai' || h.status === 'Closed') &&
+                h.date && h.date.startsWith(currentMonthStr)
+            ).reduce((sum, h) => sum + (h.realized_kg || 0), 0);
+            
+            const percent = targetKg > 0 ? (divRealisasi / targetKg) * 100 : 0;
+            
+            html += `
+                <tr>
+                    <td><strong>${div.name}</strong></td>
+                    <td>${targetKg}</td>
+                    <td>${divRealisasi}</td>
+                    <td style="color:${percent >= 100 ? 'green' : (percent > 0 ? 'orange' : 'black')}; font-weight:bold;">${percent.toFixed(1)}%</td>
+                </tr>
+            `;
+        });
+    }
+    
+    html += `
+                    </tbody>
+                </table>
+                <div style="text-align:right; margin-top:20px;">
+                    <button class="btn btn-primary" onclick="document.getElementById('modal-monthly-realization').remove()">Tutup</button>
                 </div>
             </div>
         </div>
