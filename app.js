@@ -844,7 +844,7 @@ const renderHarvestingTable = () => {
     const fullMonths = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const titleEl = document.getElementById('monitoring-month-year');
     if (titleEl) {
-        titleEl.textContent = \`Month : \${fullMonths[now.getMonth()]} \${now.getFullYear()}\`;
+        titleEl.textContent = `Month : ${fullMonths[now.getMonth()]} ${now.getFullYear()}`;
     }
     
     const draftData = db.harvesting_daily.filter(h => h.status !== 'Selesai' && h.status !== 'Closed');
