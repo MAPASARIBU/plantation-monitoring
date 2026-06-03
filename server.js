@@ -123,7 +123,10 @@ async function initDB() {
 
         await pool.query(`CREATE TABLE IF NOT EXISTS master_divisi (id SERIAL PRIMARY KEY, estate TEXT, name TEXT)`);
         // Added divisi column because it's used in bulk insert checking
-        await pool.query(`CREATE TABLE IF NOT EXISTS master_blok (id SERIAL PRIMARY KEY, estate TEXT, name TEXT, bjr REAL DEFAULT 0, divisi TEXT)`); 
+        await pool.query(`CREATE TABLE IF NOT EXISTS master_blok (id SERIAL PRIMARY KEY, estate TEXT, name TEXT, bjr REAL DEFAULT 0, divisi TEXT, gross_area REAL DEFAULT 0, sph REAL DEFAULT 0, total_stand REAL DEFAULT 0)`);
+        try { await pool.query("ALTER TABLE master_blok ADD COLUMN gross_area REAL DEFAULT 0"); } catch(e) {}
+        try { await pool.query("ALTER TABLE master_blok ADD COLUMN sph REAL DEFAULT 0"); } catch(e) {}
+        try { await pool.query("ALTER TABLE master_blok ADD COLUMN total_stand REAL DEFAULT 0"); } catch(e) {}
         await pool.query(`CREATE TABLE IF NOT EXISTS master_truk (id SERIAL PRIMARY KEY, estate TEXT, plate_number TEXT, supir TEXT)`);
         await pool.query(`CREATE TABLE IF NOT EXISTS master_supir (id SERIAL PRIMARY KEY, estate TEXT, name TEXT)`);
         await pool.query(`CREATE TABLE IF NOT EXISTS master_supply_chain (id SERIAL PRIMARY KEY, mill TEXT, estate TEXT)`);
@@ -314,7 +317,7 @@ app.post('/api/master/:type', async (req, res) => {
         let params = [];
         
         if (type === 'divisi') { sql = 'INSERT INTO master_divisi (estate, name) VALUES ($1,$2) RETURNING id'; params = [estate, name]; }
-        else if (type === 'blok') { sql = 'INSERT INTO master_blok (estate, name, bjr, divisi) VALUES ($1,$2,$3,$4) RETURNING id'; params = [estate, name, bjr || 0, divisi || '']; }
+        else if (type === 'blok') { sql = 'INSERT INTO master_blok (estate, name, bjr, divisi, gross_area, sph, total_stand) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id'; params = [estate, name, bjr || 0, divisi || '', req.body.gross_area || 0, req.body.sph || 0, req.body.total_stand || 0]; }
         else if (type === 'truk') { sql = 'INSERT INTO master_truk (estate, plate_number, supir) VALUES ($1,$2,$3) RETURNING id'; params = [estate, plate_number, supir || '']; }
         else if (type === 'pupuk') { sql = 'INSERT INTO master_pupuk (estate, name) VALUES ($1,$2) RETURNING id'; params = [estate, name]; }
         else if (type === 'supir') { sql = 'INSERT INTO master_supir (estate, name) VALUES ($1,$2) RETURNING id'; params = [estate, name]; }
@@ -343,12 +346,12 @@ app.post('/api/master/blok/bulk', async (req, res) => {
         let paramIndex = 1;
         
         toInsert.forEach(b => {
-            valuesStr.push(`($${paramIndex}, $${paramIndex+1}, $${paramIndex+2}, $${paramIndex+3})`);
-            params.push(estate, b.name, b.bjr || 0, divisi);
-            paramIndex += 4;
+            valuesStr.push(`($${paramIndex}, $${paramIndex+1}, $${paramIndex+2}, $${paramIndex+3}, $${paramIndex+4}, $${paramIndex+5}, $${paramIndex+6})`);
+            params.push(estate, b.name, b.bjr || 0, divisi, b.gross_area || 0, b.sph || 0, b.total_stand || 0);
+            paramIndex += 7;
         });
         
-        await pool.query(`INSERT INTO master_blok (estate, name, bjr, divisi) VALUES ${valuesStr.join(',')}`, params);
+        await pool.query(`INSERT INTO master_blok (estate, name, bjr, divisi, gross_area, sph, total_stand) VALUES ${valuesStr.join(',')}`, params);
         res.json({ success: true, inserted: toInsert.length });
     } catch (err) {
         res.status(500).json({ error: err.message });

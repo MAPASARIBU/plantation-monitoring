@@ -1492,7 +1492,7 @@ window.renderSelectedDivisi = () => {
     if (!d) return; 
     
     const bloks = masterData.blok.filter(b => b.divisi === d.name);
-    const blokRows = bloks.map(b => `<tr><td>${b.name}</td><td>${b.bjr}</td><td style="width:120px; text-align:right;"><button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-right:5px;" onclick="editMasterBlok(${b.id}, '${b.name}', ${b.bjr})">Edit</button><button type="button" class="btn btn-delete-hover" style="padding:2px 6px; font-size:0.7rem;" onclick="deleteMaster('blok', ${b.id})">Hapus</button></td></tr>`).join('');
+    const blokRows = bloks.map(b => `<tr><td>${b.name}</td><td>${b.gross_area || 0}</td><td>${b.sph || 0}</td><td>${b.total_stand || 0}</td><td>${b.bjr}</td><td style="width:120px; text-align:right;"><button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-right:5px;" onclick="editMasterBlok(${b.id}, '${b.name}', ${b.bjr})">Edit BJR</button><button type="button" class="btn btn-delete-hover" style="padding:2px 6px; font-size:0.7rem;" onclick="deleteMaster('blok', ${b.id})">Hapus</button></td></tr>`).join('');
     
     const safeDivName = d.name.replace(/['"\\n\\r]/g, ' ');
     contentDiv.innerHTML = `
@@ -1507,8 +1507,8 @@ window.renderSelectedDivisi = () => {
             <button type="button" class="btn btn-primary" onclick="promptAddBlok('${safeDivName}')"><i class="fa-solid fa-plus"></i> Tambah Blok Baru</button>
         </div>
         <table class="data-table" style="font-size:0.85rem;">
-            <thead><tr><th>Nama Blok</th><th>BJR (Kg)</th><th>Aksi</th></tr></thead>
-            <tbody>${blokRows || '<tr><td colspan="3" style="text-align:center;">Belum ada blok di divisi ini.</td></tr>'}</tbody>
+            <thead><tr><th>Nama Blok</th><th>Gross Area (Ha)</th><th>SPH</th><th>Total Stand</th><th>BJR (Kg)</th><th>Aksi</th></tr></thead>
+            <tbody>${blokRows || '<tr><td colspan="6" style="text-align:center;">Belum ada blok di divisi ini.</td></tr>'}</tbody>
         </table>
     `;
 };
@@ -2211,6 +2211,9 @@ window.promptAddBlok = (divisiName) => {
                     <label style="font-size: 0.85rem; display:block; margin-bottom: 8px;">Opsi 1: Tambah Satu per Satu</label>
                     <div style="display:flex; flex-direction:column; gap:10px;">
                         <input type="text" id="m-single-blok" class="form-control" placeholder="Nama Blok Baru">
+                        <input type="number" step="0.01" id="m-single-gross" class="form-control" placeholder="Gross Area (Ha)">
+                        <input type="number" step="0.01" id="m-single-sph" class="form-control" placeholder="SPH">
+                        <input type="number" step="0.01" id="m-single-total" class="form-control" placeholder="Total Stand">
                         <input type="number" step="0.1" id="m-single-bjr" class="form-control" placeholder="BJR (kg)">
                         <button type="button" class="btn btn-primary" onclick="addBlokSingle('${divisiName}')">+ Tambah Blok</button>
                     </div>
@@ -2218,8 +2221,8 @@ window.promptAddBlok = (divisiName) => {
 
                 <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.1);">
                     <label style="font-size: 0.85rem; display:block; margin-bottom: 8px;">Opsi 2: Tambah Banyak Sekaligus (Paste dari Excel):</label>
-                    <p style="font-size: 0.8rem; color:#64748b; margin-top:0; margin-bottom:10px;">Pastikan Anda meng-copy 2 kolom dari Excel: Kolom 1 untuk Nama Blok, Kolom 2 untuk BJR.</p>
-                    <textarea id="m-bulk-blok" class="form-control" rows="5" placeholder="Paste daftar di sini (Blok [TAB] BJR)..."></textarea>
+                    <p style="font-size: 0.8rem; color:#64748b; margin-top:0; margin-bottom:10px;">Pastikan Anda meng-copy 5 kolom dari Excel secara berurutan: Blok, Gross Area(Ha), SPH, Total Stand, BJR.</p>
+                    <textarea id="m-bulk-blok" class="form-control" rows="5" placeholder="Paste daftar di sini (Blok [TAB] Gross [TAB] SPH [TAB] Total [TAB] BJR)..."></textarea>
                     <button type="button" class="btn btn-primary" style="margin-top: 8px; font-size: 0.85rem; padding: 6px 15px;" onclick="addBlokBulkFromModal('${divisiName}')"><i class="fa-solid fa-paste"></i> Simpan Hasil Paste Excel</button>
                 </div>
             </div>
@@ -2230,13 +2233,16 @@ window.promptAddBlok = (divisiName) => {
 
 window.addBlokSingle = async (divisiName) => {
     const nama = document.getElementById('m-single-blok').value;
+    const gross_area = document.getElementById('m-single-gross').value;
+    const sph = document.getElementById('m-single-sph').value;
+    const total_stand = document.getElementById('m-single-total').value;
     const bjr = document.getElementById('m-single-bjr').value;
     if(!nama || !nama.trim() || !bjr) return;
     try {
         const res = await fetch(`${API_URL}/master/blok`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ estate: currentUser.estate, name: nama, bjr: bjr, divisi: divisiName })
+            body: JSON.stringify({ estate: currentUser.estate, name: nama, bjr: bjr, divisi: divisiName, gross_area, sph, total_stand })
         });
         if(res.ok) {
             document.getElementById('modal-add-blok').remove();
@@ -2255,8 +2261,19 @@ window.addBlokBulkFromModal = async (divisiName) => {
         const cols = r.split('\t');
         if (cols.length >= 1) {
             const bName = cols[0].trim();
-            const bBjr = cols.length >= 2 ? parseFloat(cols[1].trim().replace(',', '.')) : 0;
-            if (bName) bloks.push({ name: bName, bjr: isNaN(bBjr) ? 0 : bBjr, divisi: divisiName });
+            const bGross = cols.length >= 2 ? parseFloat(cols[1].trim().replace(',', '.')) : 0;
+            const bSph = cols.length >= 3 ? parseFloat(cols[2].trim().replace(',', '.')) : 0;
+            const bTotal = cols.length >= 4 ? parseFloat(cols[3].trim().replace(',', '.')) : 0;
+            const bBjr = cols.length >= 5 ? parseFloat(cols[4].trim().replace(',', '.')) : 0;
+            
+            if (bName) bloks.push({ 
+                name: bName, 
+                gross_area: isNaN(bGross) ? 0 : bGross,
+                sph: isNaN(bSph) ? 0 : bSph,
+                total_stand: isNaN(bTotal) ? 0 : bTotal,
+                bjr: isNaN(bBjr) ? 0 : bBjr, 
+                divisi: divisiName 
+            });
         }
     });
     
