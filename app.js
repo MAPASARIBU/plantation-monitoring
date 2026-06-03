@@ -831,27 +831,73 @@ const renderPemupukanTable = () => {
 };
 
 const renderHarvestingTable = () => {
-    const tbody = document.getElementById('tbody-harvesting');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    [...db.harvesting].reverse().forEach(h => {
-        const pct = getProgressStr(h.realizedJanjang, h.targetJanjang);
-        const tonase = (h.realizedJanjang * h.bjr) / 1000;
-        tbody.innerHTML += `
+    const tbodyDaily = document.getElementById('tbody-harvesting-daily');
+    const tbodyHistory = document.getElementById('tbody-harvesting-history');
+    if (!tbodyDaily || !tbodyHistory) return;
+    
+    tbodyDaily.innerHTML = '';
+    tbodyHistory.innerHTML = '';
+    
+    const draftData = db.harvesting_daily.filter(h => h.status !== 'Selesai');
+    const selesaiData = db.harvesting_daily.filter(h => h.status === 'Selesai');
+    
+    const renderDailyRow = (h) => {
+        const actionBtn = h.status === 'Selesai' ? '-' : 
+            `<button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}')"><i class="fa-solid fa-plus"></i> Input Realisasi</button>`;
+        
+        let dateStr = h.date;
+        if(typeof dateStr === 'string' && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
+            
+        return `
             <tr>
+                <td>${dateStr}</td>
                 <td><strong>${h.block}</strong></td>
-                <td>${h.targetJanjang}</td>
-                <td>${h.realizedJanjang}</td>
-                <td>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <div class="progress-wrapper" style="width: 100px; margin:0;"><div class="progress-fill" style="width: ${pct}%; background-color: var(--secondary-color)"></div></div>
-                        <small>${pct}%</small>
-                    </div>
-                </td>
-                <td>${tonase.toFixed(2)} Ton</td>
+                <td>${h.pusingan || '-'}</td>
+                <td>${h.mandor}</td>
+                <td>${h.est_janjang}</td>
+                <td>${h.est_kg}</td>
+                <td>${h.plan_pemanen}</td>
+                <td>${h.realized_janjang}</td>
+                <td>${h.realized_pemanen}</td>
+                <td>${h.realized_kg}</td>
+                <td>${h.status === 'Selesai' ? '<span style="color:green;font-weight:bold;">Selesai</span>' : '<span style="color:orange;font-weight:bold;">Draft</span>'}</td>
+                <td style="text-align:center;">${actionBtn}</td>
             </tr>
         `;
-    });
+    };
+
+    const renderHistoryRow = (h) => {
+        let dateStr = h.date;
+        if(typeof dateStr === 'string' && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
+        
+        const prestasi = h.realized_pemanen > 0 ? (h.realized_kg / h.realized_pemanen).toFixed(2) : 0;
+        return `
+            <tr>
+                <td>${dateStr}</td>
+                <td><strong>${h.block}</strong></td>
+                <td>${h.realized_kg}</td>
+                <td>${h.realized_pemanen}</td>
+                <td><strong>${prestasi} Kg/HK</strong></td>
+            </tr>
+        `;
+    };
+
+    [...draftData].reverse().forEach(h => tbodyDaily.innerHTML += renderDailyRow(h));
+    
+    if (selesaiData.length > 0) {
+        tbodyDaily.innerHTML += `<tr><td colspan="12" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Selesai</td></tr>`;
+        [...selesaiData].reverse().forEach(h => {
+            tbodyDaily.innerHTML += renderDailyRow(h);
+            tbodyHistory.innerHTML += renderHistoryRow(h);
+        });
+    }
+    
+    if(draftData.length === 0 && selesaiData.length === 0) {
+        tbodyDaily.innerHTML = `<tr><td colspan="12" style="text-align:center;">Belum ada rencana panen harian.</td></tr>`;
+    }
+    if(selesaiData.length === 0) {
+        tbodyHistory.innerHTML = `<tr><td colspan="5" style="text-align:center;">Belum ada history panen yang selesai.</td></tr>`;
+    }
 };
 
 const renderUsersTable = () => {
