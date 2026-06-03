@@ -816,11 +816,9 @@ const renderPemupukanTable = () => {
 
 const renderHarvestingTable = () => {
     const tbodyDaily = document.getElementById('tbody-harvesting-daily');
-    const tbodyHistory = document.getElementById('tbody-harvesting-history');
-    if (!tbodyDaily || !tbodyHistory) return;
+    if (!tbodyDaily) return;
     
     tbodyDaily.innerHTML = '';
-    tbodyHistory.innerHTML = '';
     
     const now = new Date();
     const fullMonths = ['January','February','March','April','May','June','July','August','September','October','November','December'];
