@@ -88,6 +88,7 @@ async function initDB() {
         )`);
         try { await pool.query("ALTER TABLE vehicles ADD COLUMN date TEXT"); } catch(e) {}
         try { await pool.query("ALTER TABLE vehicles ADD COLUMN estate TEXT"); } catch(e) {}
+        try { await pool.query("ALTER TABLE vehicles ADD COLUMN divisi TEXT"); } catch(e) {}
         try { await pool.query("ALTER TABLE users ADD COLUMN estate TEXT"); } catch(e) {}
         
         await pool.query(`CREATE TABLE IF NOT EXISTS upkeep (
@@ -514,10 +515,10 @@ app.get('/api/data', async (req, res) => {
 // VEHICLES
 app.post('/api/vehicles', async (req, res) => {
     try {
-        const { plate, driver, ritase, block, janjang, timeDepart, timeArrive, date, estate } = req.body;
+        const { plate, driver, ritase, block, janjang, timeDepart, timeArrive, date, estate, divisi } = req.body;
         const result = await pool.query(
-            'INSERT INTO vehicles (plate, driver, ritase, block, janjang, timeDepart, timeArrive, date, estate) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id',
-            [plate, driver, ritase, block, janjang, timeDepart, timeArrive, date, estate]
+            'INSERT INTO vehicles (plate, driver, ritase, block, janjang, timeDepart, timeArrive, date, estate, divisi) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id',
+            [plate, driver, ritase, block, janjang, timeDepart, timeArrive, date, estate, divisi]
         );
         res.json({ id: result.rows[0].id });
     } catch (err) {

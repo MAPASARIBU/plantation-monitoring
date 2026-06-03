@@ -274,6 +274,7 @@ const views = {
                             <tr>
                                 <th>Plate Truk</th>
                                 <th>Asal Estate</th>
+                                <th>Divisi</th>
                                 <th>Ritase</th>
                                 <th>Blok</th>
                                 <th>Janjang</th>
@@ -634,6 +635,7 @@ const renderVehicleTable = () => {
             <tr>
                 <td><strong>${v.plate}</strong><br><small>${v.driver}</small></td>
                 <td><strong>${getEstateCode(v.estate)}</strong></td>
+                <td>${v.divisi || '-'}</td>
                 <td>${v.ritase}</td>
                 <td>${v.block}</td>
                 <td>${v.janjang}</td>
@@ -1010,16 +1012,19 @@ const bindForms = () => {
         e.preventDefault();
         const now = new Date();
         const autoTimeDepart = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        const selectedBlock = document.getElementById('v-block').value;
+        const blockData = masterData.blok.find(b => b.name === selectedBlock);
         const payload = {
             plate: document.getElementById('v-plate').value,
             driver: document.getElementById('v-driver').value,
             ritase: document.getElementById('v-ritase').value,
-            block: document.getElementById('v-block').value,
+            block: selectedBlock,
             janjang: document.getElementById('v-janjang').value,
             timeDepart: autoTimeDepart,
             timeArrive: "",
             date: new Date().toISOString().split('T')[0],
-            estate: currentUser.estate
+            estate: currentUser.estate,
+            divisi: blockData ? blockData.divisi : '-'
         };
         try {
             await fetch(`${API_URL}/vehicles`, {
@@ -2108,6 +2113,7 @@ window.promptHistoricalVehicle = () => {
                                 <th>Tanggal</th>
                                 <th>Plate Truk</th>
                                 <th>Asal Estate</th>
+                                <th>Divisi</th>
                                 <th>Ritase</th>
                                 <th>Blok</th>
                                 <th>Janjang</th>
@@ -2163,6 +2169,7 @@ window.loadHistoricalVehicle = () => {
                 <td>${v.date}</td>
                 <td><strong>${v.plate}</strong><br><small>${v.driver}</small></td>
                 <td><strong>${getEstateCode(v.estate)}</strong></td>
+                <td>${v.divisi || '-'}</td>
                 <td>${v.ritase}</td>
                 <td>${v.block}</td>
                 <td>${v.janjang}</td>
