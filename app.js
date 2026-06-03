@@ -484,6 +484,7 @@ const views = {
                         <thead>
                             <tr>
                                 <th>Tanggal</th>
+                                <th>Div</th>
                                 <th>Blok</th>
                                 <th>Round</th>
                                 <th>Mandor</th>
@@ -494,7 +495,6 @@ const views = {
                                 <th>Act<br>(Hvr)</th>
                                 <th>Act<br>(Kg)</th>
                                 <th>Status</th>
-                                <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-harvesting-daily"></tbody>
@@ -843,8 +843,9 @@ const renderHarvestingTable = () => {
     const selesaiData = db.harvesting_daily.filter(h => h.status === 'Selesai' || h.status === 'Closed');
     
     const renderDailyRow = (h) => {
-        const actionBtn = (h.status === 'Selesai' || h.status === 'Closed') ? '-' : 
-            `<button type="button" class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}', ${h.est_janjang || 0}, ${h.plan_pemanen || 0}, ${h.est_kg || 0}, '${h.divisi}')"><i class="fa-solid fa-pen"></i> Update</button>`;
+        const statusEl = (h.status === 'Selesai' || h.status === 'Closed') ? 
+            '<span style="color:green;font-weight:bold;">Closed</span>' : 
+            `<button type="button" class="btn btn-primary" style="padding:2px 8px; font-size:0.8rem; background-color:orange; border:none; border-radius:15px; font-weight:bold;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}', ${h.est_janjang || 0}, ${h.plan_pemanen || 0}, ${h.est_kg || 0}, '${h.divisi}')">Open</button>`;
         
         let dateStr = h.date;
         if(typeof dateStr === 'string' && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
@@ -852,6 +853,7 @@ const renderHarvestingTable = () => {
         return `
             <tr>
                 <td>${dateStr}</td>
+                <td>${h.divisi || '-'}</td>
                 <td><strong>${h.block}</strong></td>
                 <td>${h.pusingan || '-'}</td>
                 <td>${h.mandor}</td>
@@ -861,8 +863,7 @@ const renderHarvestingTable = () => {
                 <td>${h.realized_janjang}</td>
                 <td>${h.realized_pemanen}</td>
                 <td>${h.realized_kg}</td>
-                <td>${(h.status === 'Selesai' || h.status === 'Closed') ? '<span style="color:green;font-weight:bold;">Closed</span>' : '<span style="color:orange;font-weight:bold;">Open</span>'}</td>
-                <td style="text-align:center;">${actionBtn}</td>
+                <td>${statusEl}</td>
             </tr>
         `;
     };
