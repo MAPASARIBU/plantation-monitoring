@@ -575,7 +575,7 @@ const views = {
                             <input type="date" id="historical-date" class="form-control">
                             <button class="btn btn-primary" onclick="loadHistoricalChartData()">OK</button>
                         </div>
-                        <div style="height: 400px; width: 100%;">
+                        <div style="height: 300px; width: 100%;">
                             <canvas id="historicalChartCanvas"></canvas>
                         </div>
                     </div>
