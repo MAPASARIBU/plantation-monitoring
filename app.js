@@ -209,7 +209,9 @@ const views = {
                     <div class="view-header">
                         <h2>Grafik Tonase TBS / Jam</h2>
                     </div>
-                    <canvas id="tonaseChart" height="100"></canvas>
+                    <div style="height: 8cm; width: 100%;">
+                        <canvas id="tonaseChart"></canvas>
+                    </div>
                 </div>
                 <div class="glass-card">
                     <div class="view-header">
