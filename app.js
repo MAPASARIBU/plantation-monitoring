@@ -3858,8 +3858,7 @@ window.loadTonaseChartData = async () => {
     if (!mill || !mill.endsWith('Mill')) {
         mill = 'Bunga Tanjung Mill'; // default fallback for Admin
     }
-    const dateObj = document.getElementById('t-date');
-    const date = dateObj && dateObj.value ? dateObj.value : new Date().toISOString().split('T')[0];
+    const date = new Date().toISOString().split('T')[0];
     
     try {
         const res = await fetch(`${API_URL}/tonase/${mill}/${date}`);
