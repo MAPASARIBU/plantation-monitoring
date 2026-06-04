@@ -975,8 +975,18 @@ const renderHarvestingTable = () => {
         titleEl.textContent = `Month : ${fullMonths[now.getMonth()]} ${now.getFullYear()}`;
     }
     
-    const draftData = db.harvesting_daily.filter(h => h.status !== 'Selesai' && h.status !== 'Closed');
-    const selesaiData = db.harvesting_daily.filter(h => h.status === 'Selesai' || h.status === 'Closed');
+    const sortFn = (a, b) => {
+        const dateA = new Date(a.date).getTime() || 0;
+        const dateB = new Date(b.date).getTime() || 0;
+        if (dateA !== dateB) return dateA - dateB;
+        
+        const divA = a.divisi || '';
+        const divB = b.divisi || '';
+        return divA.localeCompare(divB);
+    };
+
+    const draftData = db.harvesting_daily.filter(h => h.status !== 'Selesai' && h.status !== 'Closed').sort(sortFn);
+    const selesaiData = db.harvesting_daily.filter(h => h.status === 'Selesai' || h.status === 'Closed').sort(sortFn);
     
     const renderDailyRow = (h) => {
         let statusEl = '<span style="color:green;font-weight:bold;">Closed</span>';
@@ -1022,11 +1032,11 @@ const renderHarvestingTable = () => {
 
 
 
-    [...draftData].reverse().forEach(h => tbodyDaily.innerHTML += renderDailyRow(h));
+    draftData.forEach(h => tbodyDaily.innerHTML += renderDailyRow(h));
     
     if (selesaiData.length > 0) {
         tbodyDaily.innerHTML += `<tr><td colspan="12" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Closed</td></tr>`;
-        [...selesaiData].reverse().forEach(h => {
+        selesaiData.forEach(h => {
             tbodyDaily.innerHTML += renderDailyRow(h);
         });
         
