@@ -552,13 +552,33 @@ const views = {
                         <button class="btn btn-tonase-action" style="display:none; margin-right: 10px; background-color: #f7a01d; color: white;" onclick="openTonaseModal('realization')">
                             <i class="fa-solid fa-plus"></i> Input Realisasi
                         </button>
-                        <button class="btn btn-primary" onclick="loadTonaseChartData()">
-                            <i class="fa-solid fa-rotate-right"></i> Refresh
+                        <button class="btn btn-primary" onclick="openHistoricalModal()">
+                            <i class="fa-solid fa-clock-rotate-left"></i> Historical
                         </button>
                     </div>
                 </div>
                 <div style="height: 400px; width: 100%; margin-top: 20px;">
                     <canvas id="tonaseBigChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Modal Historical -->
+            <div class="modal-overlay" id="historical-modal" style="display:none; z-index: 1000;">
+                <div class="modal-content" style="max-width: 95%; width: 1000px; max-height: 90vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h2>Historical Tonase</h2>
+                        <button type="button" class="modal-close" onclick="document.getElementById('historical-modal').style.display = 'none'">&times;</button>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
+                            <label>Pilih Tanggal:</label>
+                            <input type="date" id="historical-date" class="form-control">
+                            <button class="btn btn-primary" onclick="loadHistoricalChartData()">OK</button>
+                        </div>
+                        <div style="height: 400px; width: 100%;">
+                            <canvas id="historicalChartCanvas"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -3632,6 +3652,79 @@ window.viewUpkeepHistory = async (id, block, type) => {
             `;
             document.body.insertAdjacentHTML('beforeend', modalHTML);
         }
+    } catch(e) {
+        console.error(e);
+    }
+};
+
+let historicalChartInstance = null;
+
+window.openHistoricalModal = () => {
+    document.getElementById('historical-modal').style.display = 'flex';
+    document.getElementById('historical-date').value = window.getLocalDate();
+    loadHistoricalChartData();
+};
+
+window.loadHistoricalChartData = async () => {
+    let mill = currentUser.estate;
+    if (!mill || !mill.endsWith('Mill')) {
+        mill = 'Bunga Tanjung Mill';
+    }
+    const date = document.getElementById('historical-date').value;
+    if (!date) {
+        alert('Pilih tanggal terlebih dahulu');
+        return;
+    }
+    
+    try {
+        const res = await fetch(`${API_URL}/tonase/${mill}/${date}`);
+        const tonaseData = await res.json();
+        
+        const labels = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
+        const targets = new Array(labels.length).fill(0);
+        const realized = new Array(labels.length).fill(0);
+        
+        tonaseData.forEach(item => {
+            const idx = labels.indexOf(item.time_hour);
+            if (idx !== -1) {
+                targets[idx] += parseFloat(item.target_kg) || 0;
+                realized[idx] += parseFloat(item.realized_kg) || 0;
+            }
+        });
+        
+        const ctx = document.getElementById('historicalChartCanvas');
+        if (!ctx) return;
+        
+        if (historicalChartInstance) {
+            historicalChartInstance.destroy();
+        }
+        
+        historicalChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Realisasi Tonase Masuk (Ton)',
+                    data: realized.map(v => v / 1000),
+                    backgroundColor: '#f7a01d',
+                    borderRadius: 4
+                }, {
+                    label: 'Target Tonase (Ton)',
+                    data: targets.map(v => v / 1000),
+                    backgroundColor: 'rgba(203, 213, 225, 0.5)',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: true, text: `Komparasi Target vs Realisasi Tonase Per Jam (${date})` }
+                },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+        
     } catch(e) {
         console.error(e);
     }
