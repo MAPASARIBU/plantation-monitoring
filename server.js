@@ -744,13 +744,13 @@ app.get('/api/tonase/:mill/:date', async (req, res) => {
 
 app.post('/api/tonase/plan', async (req, res) => {
     try {
-        const { date, mill, time_hour, items } = req.body;
-        for (let item of items) {
-            const check = await pool.query('SELECT id FROM tonase_hourly WHERE date=$1 AND mill=$2 AND estate=$3 AND time_hour=$4', [date, mill, item.estate, time_hour]);
+        const { date, mill, entries } = req.body;
+        for (let item of entries) {
+            const check = await pool.query('SELECT id FROM tonase_hourly WHERE date=$1 AND mill=$2 AND estate=$3 AND time_hour=$4', [date, mill, item.estate, item.time_hour]);
             if (check.rows.length > 0) {
                 await pool.query('UPDATE tonase_hourly SET target_kg=$1 WHERE id=$2', [item.target_kg || 0, check.rows[0].id]);
             } else {
-                await pool.query('INSERT INTO tonase_hourly (date, mill, estate, time_hour, target_kg) VALUES ($1,$2,$3,$4,$5)', [date, mill, item.estate, time_hour, item.target_kg || 0]);
+                await pool.query('INSERT INTO tonase_hourly (date, mill, estate, time_hour, target_kg) VALUES ($1,$2,$3,$4,$5)', [date, mill, item.estate, item.time_hour, item.target_kg || 0]);
             }
         }
         res.json({ success: true });
@@ -761,13 +761,13 @@ app.post('/api/tonase/plan', async (req, res) => {
 
 app.post('/api/tonase/realization', async (req, res) => {
     try {
-        const { date, mill, time_hour, items } = req.body;
-        for (let item of items) {
-            const check = await pool.query('SELECT id FROM tonase_hourly WHERE date=$1 AND mill=$2 AND estate=$3 AND time_hour=$4', [date, mill, item.estate, time_hour]);
+        const { date, mill, entries } = req.body;
+        for (let item of entries) {
+            const check = await pool.query('SELECT id FROM tonase_hourly WHERE date=$1 AND mill=$2 AND estate=$3 AND time_hour=$4', [date, mill, item.estate, item.time_hour]);
             if (check.rows.length > 0) {
                 await pool.query('UPDATE tonase_hourly SET realized_kg=$1 WHERE id=$2', [item.realized_kg || 0, check.rows[0].id]);
             } else {
-                await pool.query('INSERT INTO tonase_hourly (date, mill, estate, time_hour, realized_kg) VALUES ($1,$2,$3,$4,$5)', [date, mill, item.estate, time_hour, item.realized_kg || 0]);
+                await pool.query('INSERT INTO tonase_hourly (date, mill, estate, time_hour, realized_kg) VALUES ($1,$2,$3,$4,$5)', [date, mill, item.estate, item.time_hour, item.realized_kg || 0]);
             }
         }
         res.json({ success: true });

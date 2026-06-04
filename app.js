@@ -525,41 +525,14 @@ const views = {
                 </div>
                 
                 <form id="form-tonase" style="margin-top: 15px;" onsubmit="event.preventDefault(); saveTonaseData();">
-                    <div class="form-group" style="display:flex; gap: 10px;">
-                        <div style="flex:1;">
-                            <label>Tanggal</label>
-                            <input type="date" id="t-date" class="form-control" required onchange="loadTonaseInputData()">
-                        </div>
-                        <div style="flex:1;">
-                            <label>Jam</label>
-                            <select id="t-hour" class="form-control" required onchange="loadTonaseInputData()">
-                                <option value="" disabled selected>-- Pilih Jam --</option>
-                                <option>06:00</option>
-                                <option>07:00</option>
-                                <option>08:00</option>
-                                <option>09:00</option>
-                                <option>10:00</option>
-                                <option>11:00</option>
-                                <option>12:00</option>
-                                <option>13:00</option>
-                                <option>14:00</option>
-                                <option>15:00</option>
-                                <option>16:00</option>
-                                <option>17:00</option>
-                                <option>18:00</option>
-                                <option>19:00</option>
-                                <option>20:00</option>
-                                <option>21:00</option>
-                                <option>22:00</option>
-                                <option>23:00</option>
-                                <option>24:00</option>
-                            </select>
-                        </div>
+                    <div class="form-group" style="max-width: 300px;">
+                        <label>Tanggal</label>
+                        <input type="date" id="t-date" class="form-control" required onchange="loadTonaseInputData()">
                     </div>
                     
-                    <div id="tonase-estate-list" style="margin-top: 15px; max-height: 300px; overflow-y: auto;">
+                    <div id="tonase-estate-list" style="margin-top: 15px; overflow-x: auto;">
                         <!-- Injected JS -->
-                        <div style="text-align:center; padding: 20px; color:#64748b;">Pilih Jam terlebih dahulu untuk memunculkan daftar supply chain.</div>
+                        <div style="text-align:center; padding: 20px; color:#64748b;">Pilih Tanggal terlebih dahulu untuk memunculkan daftar.</div>
                     </div>
                     
                     <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 15px;">
@@ -3192,17 +3165,16 @@ window.setTonaseMode = (mode) => {
     
     document.getElementById('t-btn-label').innerText = mode === 'plan' ? 'Simpan Plan (Target)' : 'Simpan Realisasi';
     
-    if (document.getElementById('t-hour').value) {
+    if (document.getElementById('t-date') && document.getElementById('t-date').value) {
         loadTonaseInputData();
     }
 };
 
 window.loadTonaseInputData = async () => {
     const date = document.getElementById('t-date').value;
-    const hour = document.getElementById('t-hour').value;
     const container = document.getElementById('tonase-estate-list');
     
-    if (!date || !hour) return;
+    if (!date) return;
     
     container.innerHTML = '<div style="text-align:center; padding: 20px;">Memuat data...</div>';
     
@@ -3223,28 +3195,31 @@ window.loadTonaseInputData = async () => {
         const tonaseRes = await fetch(`${API_URL}/tonase/${mill}/${date}`);
         const tonaseData = await tonaseRes.json();
         
+        const hours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
+        
         let html = `
-            <table class="data-table">
+            <table class="data-table" style="min-width: 600px;">
                 <thead>
                     <tr>
-                        <th>Estate (Supply Chain)</th>
-                        <th>${window.tonaseMode === 'plan' ? 'Target (Kg)' : 'Realisasi (Kg)'}</th>
-                    </tr>
-                </thead>
-                <tbody>
+                        <th style="min-width: 80px; position: sticky; left: 0; background: var(--background-color);">HOUR</th>
         `;
-        
         supplyChain.forEach(est => {
-            const existing = tonaseData.find(t => t.estate === est && t.time_hour === hour);
-            const val = existing ? (window.tonaseMode === 'plan' ? existing.target_kg : existing.realized_kg) : '';
-            html += `
-                <tr>
-                    <td>${est}</td>
-                    <td>
-                        <input type="number" class="form-control tonase-input" data-estate="${est}" value="${val}" min="0" placeholder="0">
+            html += `<th>${est}</th>`;
+        });
+        html += `</tr></thead><tbody>`;
+        
+        hours.forEach(hour => {
+            html += `<tr><td style="font-weight:bold; position: sticky; left: 0; background: #fff;">${hour}</td>`;
+            supplyChain.forEach(est => {
+                const existing = tonaseData.find(t => t.estate === est && t.time_hour === hour);
+                const val = existing ? (window.tonaseMode === 'plan' ? existing.target_kg : existing.realized_kg) : '';
+                html += `
+                    <td style="padding: 2px;">
+                        <input type="number" class="form-control tonase-input" data-estate="${est}" data-hour="${hour}" value="${val}" min="0" placeholder="" style="min-width: 70px; padding: 5px;">
                     </td>
-                </tr>
-            `;
+                `;
+            });
+            html += `</tr>`;
         });
         
         html += `</tbody></table>`;
@@ -3258,28 +3233,35 @@ window.loadTonaseInputData = async () => {
 
 window.saveTonaseData = async () => {
     const date = document.getElementById('t-date').value;
-    const hour = document.getElementById('t-hour').value;
     let mill = currentUser.estate;
     if (!mill || !mill.endsWith('Mill')) {
         mill = 'Bunga Tanjung Mill';
     }
     
-    if (!date || !hour) {
-        alert("Pilih Tanggal dan Jam terlebih dahulu.");
+    if (!date) {
+        alert("Pilih Tanggal terlebih dahulu.");
         return;
     }
     
     const inputs = document.querySelectorAll('.tonase-input');
-    const items = [];
+    const entries = [];
     inputs.forEach(input => {
-        const val = parseFloat(input.value) || 0;
-        const est = input.getAttribute('data-estate');
-        if (window.tonaseMode === 'plan') {
-            items.push({ estate: est, target_kg: val });
-        } else {
-            items.push({ estate: est, realized_kg: val });
+        const val = parseFloat(input.value);
+        if (!isNaN(val)) {
+            const est = input.getAttribute('data-estate');
+            const hour = input.getAttribute('data-hour');
+            if (window.tonaseMode === 'plan') {
+                entries.push({ time_hour: hour, estate: est, target_kg: val });
+            } else {
+                entries.push({ time_hour: hour, estate: est, realized_kg: val });
+            }
         }
     });
+    
+    if (entries.length === 0) {
+        alert("Belum ada data yang diisi.");
+        return;
+    }
     
     const endpoint = window.tonaseMode === 'plan' ? 'plan' : 'realization';
     
@@ -3287,7 +3269,7 @@ window.saveTonaseData = async () => {
         const res = await fetch(`${API_URL}/tonase/${endpoint}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date, mill, time_hour: hour, items })
+            body: JSON.stringify({ date, mill, entries })
         });
         const data = await res.json();
         if (data.success) {
