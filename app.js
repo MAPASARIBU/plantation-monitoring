@@ -1742,37 +1742,38 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
             ${ritaseListHtml}
             
             <p style="margin-top: 5px; font-weight: bold; font-size: 0.95rem;">Masukkan Tambahan (Ritase Baru):</p>
-            <div class="form-group" style="margin-top:10px;">
-                <label>Pilih Truk (Wajib)</label>
-                <select id="hr-truck" class="form-control" required>
-                    <option value="" disabled selected>-- Pilih Truk Dialokasikan --</option>
-                    ${allocatedTrucksOptions}
-                </select>
-                ${allocatedTrucks.size === 0 ? '<small style="color:#ef4444; font-size:0.8rem;">*Tidak ada truk dialokasikan di divisi ini.</small>' : ''}
-            </div>
-            <div class="form-group">
-                <label>Tambahan Janjang (Opsional untuk Brondolan)</label>
-                <input type="number" id="hr-janjang" class="form-control" placeholder="0">
-            </div>
-            <div class="form-group">
-                <label>Tambahan HK Pemanen</label>
-                <input type="number" id="hr-pemanen" class="form-control" placeholder="0" ${isPemanenLocked ? 'disabled style="background:#e2e8f0; cursor:not-allowed;" title="HK Pemanen sudah diinput sebelumnya"' : 'required'}>
-                ${isPemanenLocked ? '<small style="color:#ef4444; font-size:0.8rem; display:block; margin-top:4px;">*HK Pemanen sudah dilock karena cukup 1 kali input.</small>' : ''}
-            </div>
-            <div class="form-group">
-                <label>Tambahan Kg (Timbangan)</label>
-                <input type="number" step="0.1" id="hr-kg" class="form-control" placeholder="0" required>
-            </div>
-            <div class="form-group">
-                <label>Tambahan Ha (Luasan Panen)</label>
-                <input type="number" step="0.01" id="hr-ha" class="form-control" placeholder="0" required>
-            </div>
-            <div class="form-group" style="margin-top: 15px;">
-                <label>Status Blok</label>
-                <select id="hr-status" class="form-control">
-                    <option value="In Progress">Masih Berlanjut (In Progress)</option>
-                    <option value="Closed">Tutup Blok (Selesai)</option>
-                </select>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                <div class="form-group" style="grid-column: 1 / -1; margin-bottom: 0;">
+                    <label>Pilih Truk (Wajib)</label>
+                    <select id="hr-truck" class="form-control" required>
+                        <option value="" disabled selected>-- Pilih Truk Dialokasikan --</option>
+                        ${allocatedTrucksOptions}
+                    </select>
+                    ${allocatedTrucks.size === 0 ? '<small style="color:#ef4444; font-size:0.8rem;">*Tidak ada truk dialokasikan di divisi ini.</small>' : ''}
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label title="Opsional untuk Brondolan">Tambahan Janjang</label>
+                    <input type="number" id="hr-janjang" class="form-control" placeholder="0">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Tambahan Kg</label>
+                    <input type="number" step="0.1" id="hr-kg" class="form-control" placeholder="0" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>HK Pemanen</label>
+                    <input type="number" id="hr-pemanen" class="form-control" placeholder="0" ${isPemanenLocked ? 'disabled style="background:#e2e8f0; cursor:not-allowed;" title="HK Pemanen sudah dilock karena cukup 1 kali input."' : 'required'}>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Luasan (Ha)</label>
+                    <input type="number" step="0.01" id="hr-ha" class="form-control" placeholder="0" required>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1; margin-bottom: 0;">
+                    <label>Status Blok</label>
+                    <select id="hr-status" class="form-control">
+                        <option value="In Progress">Masih Berlanjut (In Progress)</option>
+                        <option value="Closed">Tutup Blok (Selesai)</option>
+                    </select>
+                </div>
             </div>
             
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
