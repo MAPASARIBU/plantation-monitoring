@@ -3708,7 +3708,11 @@ window.loadTonaseInputData = async () => {
                         <th style="min-width: 80px; position: sticky; left: 0; top: 0; background: var(--background-color); z-index: 11;">HOUR</th>
         `;
         supplyChain.forEach(est => {
-            html += `<th style="position: sticky; top: 0; background: var(--background-color); z-index: 10;">${est}</th>`;
+            let thText = est.toUpperCase();
+            if (thText === 'SMALLHOLDER') {
+                thText = 'SMALL<br>HOLDER';
+            }
+            html += `<th style="position: sticky; top: 0; background: var(--background-color); z-index: 10; min-width: 80px;">${thText}</th>`;
         });
         html += `</tr></thead><tbody>`;
         
