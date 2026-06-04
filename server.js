@@ -472,8 +472,9 @@ app.put('/api/master/:type/:id', async (req, res) => {
         
         let sql, params;
         if (type === 'blok') {
-            sql = 'UPDATE master_blok SET name = $1, bjr = $2 WHERE id = $3';
-            params = [name, bjr, id];
+            const { name, bjr, gross_area, sph, total_stand } = req.body;
+            sql = 'UPDATE master_blok SET name = $1, bjr = $2, gross_area = $3, sph = $4, total_stand = $5 WHERE id = $6';
+            params = [name, bjr || 0, gross_area || 0, sph || 0, total_stand || 0, id];
         } else if (type === 'truk') {
             sql = `UPDATE master_truk SET plate_number = $1, supir = $2 WHERE id = $3`;
             params = [plate_number, supir, id];

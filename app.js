@@ -132,11 +132,17 @@ const applyRBAC = () => {
         showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'users', 'master']);
     } else if (role === 'Senior Field Manager' || role === 'Estate Manager' || role === 'Manager' || role === 'Asisten Kepala' || role === 'Division Manager' || role === 'Assistant') {
         showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting']);
+    } else if (role === 'Manager Mill') {
+        showViews(['dashboard', 'vehicle', 'tonase', 'master']);
     } else if (role === 'Askep' || role === 'Office Assistant (OAA)') {
         showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'master']);
-    } else if (role === 'Mandor' || role === 'Krani Divisi' || role === 'Krani Mill') {
+    } else if (role === 'Office Assistant Mill') {
+        showViews(['dashboard', 'vehicle', 'tonase', 'master']);
+    } else if (role === 'Mandor' || role === 'Krani Divisi') {
         showViews(['vehicle', 'pemupukan', 'upkeep', 'harvesting']);
-    } else if (role === 'Supir' || role === 'Security') {
+    } else if (role === 'Krani Mill') {
+        showViews(['vehicle', 'tonase', 'master']);
+    } else if (role === 'Supir' || role === 'Security' || role === 'Security Mill') {
         showViews(['vehicle']);
     }
 };
@@ -580,9 +586,12 @@ const views = {
                         <select id="u-role" class="form-control" required>
                             <option>Senior Field Manager</option>
                             <option>Manager</option>
+                            <option>Manager Mill</option>
                             <option>Askep</option>
                             <option>Office Assistant (OAA)</option>
+                            <option>Office Assistant Mill</option>
                             <option>Assistant</option>
+                            <option>Mandor</option>
                             <option>Krani Divisi</option>
                             <option>Krani Mill</option>
                             <option>Supir</option>
@@ -981,9 +990,12 @@ window.promptEditUser = (id) => {
                     <label>Role</label>
                     <select id="eu-role" class="form-control">
                         <option value="Manager" ${user.role === 'Manager' ? 'selected' : ''}>Manager</option>
+                        <option value="Manager Mill" ${user.role === 'Manager Mill' ? 'selected' : ''}>Manager Mill</option>
                         <option value="Askep" ${user.role === 'Askep' ? 'selected' : ''}>Askep</option>
                         <option value="Assistant" ${user.role === 'Assistant' ? 'selected' : ''}>Assistant</option>
                         <option value="Office Assistant (OAA)" ${user.role === 'Office Assistant (OAA)' ? 'selected' : ''}>Office Assistant (OAA)</option>
+                        <option value="Office Assistant Mill" ${user.role === 'Office Assistant Mill' ? 'selected' : ''}>Office Assistant Mill</option>
+                        <option value="Mandor" ${user.role === 'Mandor' ? 'selected' : ''}>Mandor</option>
                         <option value="Krani Divisi" ${user.role === 'Krani Divisi' ? 'selected' : ''}>Krani Divisi</option>
                         <option value="Krani Mill" ${user.role === 'Krani Mill' ? 'selected' : ''}>Krani Mill</option>
                         <option value="Security" ${user.role === 'Security' ? 'selected' : ''}>Security</option>

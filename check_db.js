@@ -1,0 +1,1 @@
+const { Pool } = require('pg'); const pool = new Pool({ connectionString: 'postgresql://postgres:password@localhost:5432/plantation_db' }); async function run() { try { const res = await pool.query("SELECT * FROM master_blok WHERE name = '24D01'"); console.log(res.rows); } catch(e) { console.error(e); } pool.end(); } run();
