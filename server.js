@@ -720,6 +720,16 @@ app.post('/api/harvesting/daily', async (req, res) => {
     }
 });
 
+app.delete('/api/harvesting/daily/:id', async (req, res) => {
+    try {
+        await pool.query('DELETE FROM harvesting_daily WHERE id = $1', [req.params.id]);
+        pushUpdate('harvesting_daily');
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.put('/api/harvesting/daily/:id/realization', async (req, res) => {
     try {
         const { realized_janjang, realized_pemanen, realized_kg, realized_ha, status, ritase_list } = req.body;

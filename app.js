@@ -961,17 +961,27 @@ const renderPemupukanTable = () => {
         selesai.forEach(p => tbody.innerHTML += renderRow(p));
     }
 };
-window.deleteHarvestingDaily = (id) => {
+window.deleteHarvestingDaily = async (id) => {
     if(confirm('Apakah Anda yakin ingin menghapus data rencana harian ini?')) {
-        db.harvesting_daily = db.harvesting_daily.filter(h => h.id !== id);
-        saveDb();
-        renderHarvestingTable();
-        
-        const toast = document.getElementById('toast');
-        if (toast) {
-            toast.textContent = "Rencana harian berhasil dihapus!";
-            toast.className = "toast show success";
-            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        try {
+            const res = await fetch(`${API_URL}/harvesting/daily/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                // The websocket / poll will update the UI, but we can optimistically update
+                db.harvesting_daily = db.harvesting_daily.filter(h => h.id !== id);
+                renderHarvestingTable();
+                
+                const toast = document.getElementById('toast');
+                if (toast) {
+                    toast.textContent = "Rencana harian berhasil dihapus!";
+                    toast.className = "toast show success";
+                    setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+                }
+            } else {
+                alert('Gagal menghapus data harian.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Terjadi kesalahan saat menghapus data.');
         }
     }
 };
