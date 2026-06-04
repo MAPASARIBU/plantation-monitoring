@@ -480,10 +480,10 @@ const views = {
                     </div>
                     <div class="form-group">
                         <label>Alokasi Truk Divisi</label>
-                        <select multiple id="hd-trucks" class="form-control select-truk" style="height: 90px;">
-                            <!-- populated by populateSelects -->
-                        </select>
-                        <small style="color:var(--text-secondary); font-size:0.8rem;">Tahan tombol Ctrl (Windows) atau Cmd (Mac) untuk memilih lebih dari 1 truk.</small>
+                        <button type="button" class="btn btn-primary" style="background:#f8fafc; color:#0f172a; border:1px solid #cbd5e1; width:100%; text-align:left; display:flex; justify-content:space-between; align-items:center;" onclick="openTruckSelectionModal()">
+                            <span id="btn-truck-text">-- Pilih Truk --</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
                     </div>
                     <div class="form-group">
                         <label>Mandor / Pengawas</label>
@@ -1624,6 +1624,59 @@ window.checkMonthlyPlan = () => {
     }
 };
 
+window.selectedDailyTrucks = [];
+
+window.openTruckSelectionModal = () => {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'modal-truck-selection';
+    
+    let checkboxesHtml = masterData.truk.map(t => {
+        const isChecked = window.selectedDailyTrucks.includes(t.plate_number) ? 'checked' : '';
+        return `
+            <label style="display:flex; align-items:center; gap:10px; margin-bottom:8px; padding:8px; background:#f1f5f9; border-radius:5px; cursor:pointer;">
+                <input type="checkbox" class="truck-checkbox" value="${t.plate_number}" ${isChecked} style="width:18px; height:18px;">
+                <span style="font-size:0.95rem;">${t.plate_number} ${t.supir ? `(${t.supir})` : ''}</span>
+            </label>
+        `;
+    }).join('');
+    
+    if (masterData.truk.length === 0) {
+        checkboxesHtml = '<p style="color:#ef4444; font-size:0.9rem;">Tidak ada data truk di Master Data untuk estate ini.</p>';
+    }
+
+    modal.innerHTML = `
+        <div class="modal-content animate-fade-in" style="max-width:400px; max-height:80vh; display:flex; flex-direction:column;">
+            <h3>Pilih Alokasi Truk</h3>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:15px;">Pilih truk yang akan dialokasikan untuk divisi ini pada tanggal tersebut.</p>
+            
+            <div style="flex:1; overflow-y:auto; margin-bottom:15px; max-height: 400px;">
+                ${checkboxesHtml}
+            </div>
+            
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn btn-logout" onclick="document.getElementById('modal-truck-selection').remove()" style="background:#64748b; color:white; border:none; padding:8px 16px;">Batal</button>
+                <button class="btn btn-primary" onclick="saveTruckSelection()" style="padding:8px 16px;">Simpan Pilihan</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+};
+
+window.saveTruckSelection = () => {
+    const checkboxes = document.querySelectorAll('.truck-checkbox:checked');
+    window.selectedDailyTrucks = Array.from(checkboxes).map(cb => cb.value);
+    
+    const btnText = document.getElementById('btn-truck-text');
+    if (window.selectedDailyTrucks.length === 0) {
+        btnText.innerText = '-- Pilih Truk --';
+    } else {
+        btnText.innerText = `${window.selectedDailyTrucks.length} Truk Dipilih`;
+    }
+    
+    document.getElementById('modal-truck-selection').remove();
+};
+
 window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg, divisi) => {
     let blockData;
     if (divisi && divisi !== 'undefined') {
@@ -1929,8 +1982,7 @@ const bindForms = () => {
         const estJanjang = parseInt(document.getElementById('hd-est-janjang').innerText.replace(/,/g, '')) || 0;
         const estKg = parseFloat(document.getElementById('hd-est-kg').innerText.replace(/,/g, '').replace(' Kg', '')) || 0;
         
-        const hdTrucksEl = document.getElementById('hd-trucks');
-        const allocatedTrucks = hdTrucksEl ? Array.from(hdTrucksEl.selectedOptions).map(opt => opt.value) : [];
+        const allocatedTrucks = window.selectedDailyTrucks || [];
 
         const payload = {
             date: document.getElementById('hd-date').value,
@@ -1954,6 +2006,8 @@ const bindForms = () => {
             formHarvestingDaily.reset();
             document.getElementById('hd-est-janjang').innerText = '0';
             document.getElementById('hd-est-kg').innerText = '0 Kg';
+            window.selectedDailyTrucks = [];
+            document.getElementById('btn-truck-text').innerText = '-- Pilih Truk --';
             await loadData();
         } catch (e) { console.error(e); }
     };
