@@ -542,7 +542,44 @@ const views = {
     tonase: `
         <div class="animate-fade-in module-layout" id="tonase-layout" style="grid-template-columns: 1fr;">
             
+            <!-- Table Monitoring -->
             <div class="glass-card table-wrapper">
+                <div class="view-header">
+                    <h2>Tabel Monitoring FFB Received</h2>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="date" id="monitor-tonase-date" class="form-control" onchange="renderTonaseMonitorTable()">
+                        <select id="monitor-tonase-hour" class="form-control" onchange="renderTonaseMonitorTable()">
+                            <option value="06:00">06:00</option>
+                            <option value="07:00">07:00</option>
+                            <option value="08:00">08:00</option>
+                            <option value="09:00">09:00</option>
+                            <option value="10:00">10:00</option>
+                            <option value="11:00">11:00</option>
+                            <option value="12:00">12:00</option>
+                            <option value="13:00">13:00</option>
+                            <option value="14:00">14:00</option>
+                            <option value="15:00">15:00</option>
+                            <option value="16:00">16:00</option>
+                            <option value="17:00">17:00</option>
+                            <option value="18:00">18:00</option>
+                            <option value="19:00">19:00</option>
+                            <option value="20:00">20:00</option>
+                            <option value="21:00">21:00</option>
+                            <option value="22:00">22:00</option>
+                            <option value="23:00">23:00</option>
+                            <option value="24:00">24:00</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="renderTonaseMonitorTable()">
+                            <i class="fa-solid fa-rotate-right"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                <div id="tonase-monitor-table-container" style="overflow-x: auto; margin-top: 20px;">
+                    <div style="text-align:center; padding: 20px; color:#64748b;">Memuat tabel...</div>
+                </div>
+            </div>
+            
+            <div class="glass-card table-wrapper" style="margin-top: 20px;">
                 <div class="view-header">
                     <h2>Tonase TBS Masuk PKS per Jam</h2>
                     <div>
@@ -658,42 +695,7 @@ const views = {
                 </div>
             </div>
 
-            <!-- Table Monitoring -->
-            <div class="glass-card table-wrapper" style="margin-top: 20px;">
-                <div class="view-header">
-                    <h2>Tabel Monitoring FFB Received</h2>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="date" id="monitor-tonase-date" class="form-control" onchange="renderTonaseMonitorTable()">
-                        <select id="monitor-tonase-hour" class="form-control" onchange="renderTonaseMonitorTable()">
-                            <option value="06:00">06:00</option>
-                            <option value="07:00">07:00</option>
-                            <option value="08:00">08:00</option>
-                            <option value="09:00">09:00</option>
-                            <option value="10:00">10:00</option>
-                            <option value="11:00">11:00</option>
-                            <option value="12:00">12:00</option>
-                            <option value="13:00">13:00</option>
-                            <option value="14:00">14:00</option>
-                            <option value="15:00">15:00</option>
-                            <option value="16:00">16:00</option>
-                            <option value="17:00">17:00</option>
-                            <option value="18:00">18:00</option>
-                            <option value="19:00">19:00</option>
-                            <option value="20:00">20:00</option>
-                            <option value="21:00">21:00</option>
-                            <option value="22:00">22:00</option>
-                            <option value="23:00">23:00</option>
-                            <option value="24:00">24:00</option>
-                        </select>
-                        <button class="btn btn-primary" onclick="renderTonaseMonitorTable()">
-                            <i class="fa-solid fa-rotate-right"></i> Refresh
-                        </button>
-                    </div>
-                </div>
-                <div id="tonase-monitor-table-container" style="overflow-x: auto; margin-top: 20px;">
-                    <div style="text-align:center; padding: 20px; color:#64748b;">Memuat tabel...</div>
-                </div>
-            </div>
+            
             
             <!-- Prime Time Chart -->
             <div class="glass-card table-wrapper" style="margin-top: 20px;">
