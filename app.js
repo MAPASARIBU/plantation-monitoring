@@ -1633,6 +1633,7 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
     const currKg = h.realized_kg || 0;
     const currHa = h.realized_ha || 0;
     const isClosed = h.status === 'Closed';
+    const isPemanenLocked = currPemanen > 0;
     
     if (isClosed) {
         alert("Blok ini sudah ditutup (Closed) dan tidak dapat ditambah lagi.");
@@ -1661,7 +1662,8 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
             </div>
             <div class="form-group">
                 <label>Tambahan HK Pemanen</label>
-                <input type="number" id="hr-pemanen" class="form-control" placeholder="0" required>
+                <input type="number" id="hr-pemanen" class="form-control" placeholder="0" ${isPemanenLocked ? 'disabled style="background:#e2e8f0; cursor:not-allowed;" title="HK Pemanen sudah diinput sebelumnya"' : 'required'}>
+                ${isPemanenLocked ? '<small style="color:#ef4444; font-size:0.8rem; display:block; margin-top:4px;">*HK Pemanen sudah dilock karena cukup 1 kali input.</small>' : ''}
             </div>
             <div class="form-group">
                 <label>Tambahan Kg (Timbangan)</label>
@@ -1697,10 +1699,23 @@ window.submitHarvestingRealization = async (id) => {
     
     // Get current values
     const h = (db.harvesting_daily || []).find(x => x.id == id) || {};
+    
+    let blockData;
+    if (h.divisi && h.divisi !== 'undefined') {
+        blockData = masterData.blok.find(b => b.name === h.block && b.divisi === h.divisi);
+    }
+    if (!blockData) blockData = masterData.blok.find(b => b.name === h.block);
+    const grossArea = blockData ? blockData.gross_area : 0;
+    
     const totalJanjang = (h.realized_janjang || 0) + addJanjang;
     const totalPemanen = (h.realized_pemanen || 0) + addPemanen;
     const totalKg = (h.realized_kg || 0) + addKg;
     const totalHa = (h.realized_ha || 0) + addHa;
+    
+    if (grossArea > 0 && totalHa > grossArea) {
+        alert(`Error: Total akumulasi Luasan Panen (${totalHa.toFixed(2)} Ha) tidak boleh melebihi Luas Blok (${grossArea} Ha). Sisa maksimal yang bisa diinput adalah ${(grossArea - (h.realized_ha || 0)).toFixed(2)} Ha.`);
+        return;
+    }
     
     try {
         const res = await fetch(`${API_URL}/harvesting/daily/${id}/realization`, {
