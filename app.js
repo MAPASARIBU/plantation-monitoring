@@ -1348,7 +1348,6 @@ window.openBlockHistory = (block, divisi) => {
                             <th>Date</th>
                             <th>Div</th>
                             <th>Blok</th>
-                            <th>Truk<br>Pengangkut</th>
                             <th>Plan<br>Hvr</th>
                             <th>Act<br>Hvr</th>
                             <th>Gross Area<br>(Ha)</th>
@@ -1364,7 +1363,7 @@ window.openBlockHistory = (block, divisi) => {
     `;
     
     if(historyData.length === 0) {
-        html += `<tr><td colspan="13" style="text-align:center;">Belum ada data historis</td></tr>`;
+        html += `<tr><td colspan="12" style="text-align:center;">Belum ada data historis</td></tr>`;
     } else {
         historyData.forEach(h => {
             let dateStr = h.date;
@@ -1395,14 +1394,16 @@ window.openBlockHistory = (block, divisi) => {
                 const tSet = new Set(rl.map(r => r.truck).filter(Boolean));
                 trucksArr = Array.from(tSet);
             } catch(e) {}
-            const trucksStr = trucksArr.length > 0 ? trucksArr.join('<br>') : '-';
+            const trucksStr = trucksArr.length > 0 ? `Truk: ${trucksArr.join(', ')}` : 'Belum ada truk';
             
             html += `
                 <tr>
                     <td>${formattedDate}</td>
                     <td>${h.divisi || '-'}</td>
-                    <td><strong>${h.block}</strong></td>
-                    <td style="white-space:nowrap; font-size:0.8rem;">${trucksStr}</td>
+                    <td>
+                        <strong>${h.block}</strong>
+                        <div style="font-size:0.75rem; color:#64748b; margin-top:4px; max-width: 150px; white-space: normal;">${trucksStr}</div>
+                    </td>
                     <td>${planHvr}</td>
                     <td>${actHvr}</td>
                     <td>${grossArea}</td>
