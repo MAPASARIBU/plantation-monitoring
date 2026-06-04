@@ -1844,28 +1844,59 @@ const bindForms = () => {
 };
 
 // Charts
-const initDashboardChart = () => {
+let dashboardTonaseChartInstance = null;
+
+const initDashboardChart = async () => {
     const ctx = document.getElementById('tonaseChart');
     if(!ctx) return;
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00'],
-            datasets: [{
-                label: 'Tonase Masuk (T)',
-                data: [15, 25, 30, 20, 10, 45],
-                borderColor: '#0d8b4e',
-                backgroundColor: 'rgba(13, 139, 78, 0.1)',
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true } }
+    
+    try {
+        let mill = currentUser.estate;
+        if (!mill || !mill.endsWith('Mill')) {
+            mill = 'Bunga Tanjung Mill';
         }
-    });
+        // Use today's date
+        const dateObj = new Date();
+        const date = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
+        
+        const res = await fetch(`${API_URL}/tonase/${mill}/${date}`);
+        const data = await res.json();
+        
+        const hours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
+        const actualData = new Array(hours.length).fill(0);
+        
+        data.forEach(item => {
+            const hIdx = hours.indexOf(item.time_hour);
+            if (hIdx !== -1) {
+                actualData[hIdx] += parseFloat(item.realized_kg) || 0;
+            }
+        });
+        
+        if (dashboardTonaseChartInstance) dashboardTonaseChartInstance.destroy();
+        
+        dashboardTonaseChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: hours,
+                datasets: [{
+                    label: 'Tonase Masuk (Kg)',
+                    data: actualData,
+                    borderColor: '#0d8b4e',
+                    backgroundColor: 'rgba(13, 139, 78, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    } catch (e) {
+        console.error("Error loading dashboard tonase chart", e);
+    }
 };
 
 const initBigTonaseChart = () => {
