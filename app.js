@@ -638,12 +638,32 @@ const views = {
                 </div>
             </div>
             
+            <!-- Modal Historical Tonase Monitor -->
+            <div class="modal-overlay" id="historical-tonase-monitor-modal" style="display:none; z-index: 1000;">
+                <div class="modal-content" style="max-width: 95%; width: 1000px; max-height: 90vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h2>Historical Tabel Monitoring FFB</h2>
+                        <button type="button" class="modal-close" onclick="document.getElementById('historical-tonase-monitor-modal').style.display = 'none'">&times;</button>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
+                            <label>Pilih Tanggal:</label>
+                            <input type="date" id="historical-monitor-date" class="form-control">
+                            <button class="btn btn-primary" onclick="renderTonaseMonitorTable(true)">OK</button>
+                        </div>
+                        <div id="historical-tonase-monitor-container" style="overflow-x: auto;">
+                            <div style="text-align:center; padding: 20px; color:#64748b;">Pilih Tanggal untuk memunculkan tabel.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Table Monitoring -->
             <div class="glass-card table-wrapper" style="margin-top: 20px;">
                 <div class="view-header">
                     <h2>Tabel Monitoring FFB Received</h2>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="date" id="monitor-tonase-date" class="form-control" onchange="renderTonaseMonitorTable()" disabled>
+                        <input type="date" id="monitor-tonase-date" class="form-control" onchange="renderTonaseMonitorTable()">
                         <select id="monitor-tonase-hour" class="form-control" onchange="renderTonaseMonitorTable()">
                             <option value="06:00">06:00</option>
                             <option value="07:00">07:00</option>
@@ -671,7 +691,7 @@ const views = {
                     </div>
                 </div>
                 <div id="tonase-monitor-table-container" style="overflow-x: auto; margin-top: 20px;">
-                    <div style="text-align:center; padding: 20px; color:#64748b;">Pilih Tanggal terlebih dahulu untuk memunculkan tabel.</div>
+                    <div style="text-align:center; padding: 20px; color:#64748b;">Memuat tabel...</div>
                 </div>
             </div>
             
@@ -4016,17 +4036,31 @@ window.loadTonaseChartData = async () => {
     }
 };
 
-window.renderTonaseMonitorTable = async () => {
-    const container = document.getElementById('tonase-monitor-table-container');
-    const dateInput = document.getElementById('monitor-tonase-date');
-    const hourInput = document.getElementById('monitor-tonase-hour');
+window.renderTonaseMonitorTable = async (isHistorical = false) => {
+    let container, date, hour;
     
-    if (!dateInput || !hourInput || !container) return;
+    if (isHistorical === true) {
+        container = document.getElementById('historical-tonase-monitor-container');
+        date = document.getElementById('historical-monitor-date').value;
+        if (!date) {
+            alert('Pilih tanggal terlebih dahulu');
+            return;
+        }
+        hour = null; // No hour for historical recap
+    } else {
+        container = document.getElementById('tonase-monitor-table-container');
+        const dateInput = document.getElementById('monitor-tonase-date');
+        const hourInput = document.getElementById('monitor-tonase-hour');
+        if (!dateInput || !hourInput) return;
+        
+        if (!dateInput.value) {
+            dateInput.value = window.getLocalDate();
+        }
+        date = dateInput.value;
+        hour = hourInput.value;
+    }
     
-    const today = window.getLocalDate();
-    dateInput.value = today;
-    const date = today;
-    const hour = hourInput.value;
+    if (!container) return;
     
     container.innerHTML = '<div style="text-align:center; padding: 20px;">Memuat data monitoring...</div>';
     
@@ -4052,7 +4086,7 @@ window.renderTonaseMonitorTable = async () => {
         }
         
         const hours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
-        const hourIdx = hours.indexOf(hour);
+        const hourIdx = hour ? hours.indexOf(hour) : -1;
         
         let html = `
             <table class="data-table" style="min-width: 800px; text-align: center;">
@@ -4079,27 +4113,34 @@ window.renderTonaseMonitorTable = async () => {
         supplyChain.forEach(est => {
             const dataEst = tonaseData.filter(t => t.estate === est);
             
-            // Actual per jam
-            const actJamRow = dataEst.find(t => t.time_hour === hour);
-            const actJam = actJamRow ? ((parseFloat(actJamRow.realized_kg) || 0) / 1000) : 0;
+            let actJam = 0, planJam = 0, actAkumulasi = 0, todayPlan = 0;
             
-            // Actual akumulasi (from 06:00 up to selected hour)
-            let actAkumulasi = 0;
-            for (let i = 0; i <= hourIdx; i++) {
-                const r = dataEst.find(t => t.time_hour === hours[i]);
-                if (r) actAkumulasi += ((parseFloat(r.realized_kg) || 0) / 1000);
+            if (isHistorical) {
+                // Actual akumulasi for the whole day
+                dataEst.forEach(t => actAkumulasi += ((parseFloat(t.realized_kg) || 0) / 1000));
+                
+                // Today plan for the whole day
+                dataEst.forEach(t => todayPlan += ((parseFloat(t.target_kg) || 0) / 1000));
+            } else {
+                // Actual per jam
+                const actJamRow = dataEst.find(t => t.time_hour === hour);
+                actJam = actJamRow ? ((parseFloat(actJamRow.realized_kg) || 0) / 1000) : 0;
+                
+                // Actual akumulasi (from 06:00 up to selected hour)
+                for (let i = 0; i <= hourIdx; i++) {
+                    const r = dataEst.find(t => t.time_hour === hours[i]);
+                    if (r) actAkumulasi += ((parseFloat(r.realized_kg) || 0) / 1000);
+                }
+                
+                // Plan per jam
+                const planJamRow = dataEst.find(t => t.time_hour === hour);
+                planJam = planJamRow ? ((parseFloat(planJamRow.target_kg) || 0) / 1000) : 0;
+                
+                // Today plan (all hours)
+                dataEst.forEach(t => todayPlan += ((parseFloat(t.target_kg) || 0) / 1000));
             }
             
-            // Plan per jam
-            const planJamRow = dataEst.find(t => t.time_hour === hour);
-            const planJam = planJamRow ? ((parseFloat(planJamRow.target_kg) || 0) / 1000) : 0;
-            
-            // Today plan (all hours)
-            let todayPlan = 0;
-            dataEst.forEach(t => todayPlan += ((parseFloat(t.target_kg) || 0) / 1000));
-            
-            // Percentages
-            const pctActVsPlanJam = planJam > 0 ? (actJam / planJam * 100) : (actJam > 0 ? Infinity : 0);
+            const pctActVsPlanJam = (!isHistorical && planJam > 0) ? (actJam / planJam * 100) : ((!isHistorical && actJam > 0) ? Infinity : 0);
             const pctActVsTodayPlan = todayPlan > 0 ? (actAkumulasi / todayPlan * 100) : (actAkumulasi > 0 ? Infinity : 0);
             
             // Add to totals
@@ -4108,41 +4149,72 @@ window.renderTonaseMonitorTable = async () => {
             totalPlanJam += planJam;
             totalTodayPlan += todayPlan;
             
-            html += `
-                <tr>
-                    <td style="position: sticky; left: 0; background-color: #f1f5f9; font-weight: bold;">${est}</td>
-                    <td>${actJam > 0 ? actJam.toLocaleString('id-ID') : '-'}</td>
-                    <td>-</td>
-                    <td style="background-color: #fffacd;">${actAkumulasi > 0 ? actAkumulasi.toLocaleString('id-ID') : '-'}</td>
-                    <td style="background-color: #e0f7fa;">${planJam > 0 ? planJam.toLocaleString('id-ID') : '-'}</td>
-                    <td style="background-color: ${pctActVsPlanJam >= 100 ? '#90ee90' : (pctActVsPlanJam === 0 ? '#90ee90' : '#ffcccb')}; color: ${pctActVsPlanJam >= 100 ? '#000' : (pctActVsPlanJam === 0 ? '#000' : 'red')}; font-weight: bold;">
-                        ${pctActVsPlanJam === Infinity ? '∞' : pctActVsPlanJam.toFixed(2) + '%'}
-                    </td>
-                    <td style="background-color: #e0f7fa;">${todayPlan > 0 ? todayPlan.toLocaleString('id-ID') : '-'}</td>
-                    <td style="background-color: #fffacd;">${pctActVsTodayPlan === Infinity ? '∞' : pctActVsTodayPlan.toFixed(2) + '%'}</td>
-                </tr>
-            `;
+            if (isHistorical) {
+                html += `
+                    <tr>
+                        <td style="position: sticky; left: 0; background-color: #f1f5f9; font-weight: bold;">${est}</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td style="background-color: #fffacd;">${actAkumulasi > 0 ? actAkumulasi.toLocaleString('id-ID') : '-'}</td>
+                        <td style="background-color: #e0f7fa;">-</td>
+                        <td style="background-color: #f1f5f9; font-weight: bold;">-</td>
+                        <td style="background-color: #e0f7fa;">${todayPlan > 0 ? todayPlan.toLocaleString('id-ID') : '-'}</td>
+                        <td style="background-color: #fffacd;">${pctActVsTodayPlan === Infinity ? '∞' : pctActVsTodayPlan.toFixed(2) + '%'}</td>
+                    </tr>
+                `;
+            } else {
+                html += `
+                    <tr>
+                        <td style="position: sticky; left: 0; background-color: #f1f5f9; font-weight: bold;">${est}</td>
+                        <td>${actJam > 0 ? actJam.toLocaleString('id-ID') : '-'}</td>
+                        <td>-</td>
+                        <td style="background-color: #fffacd;">${actAkumulasi > 0 ? actAkumulasi.toLocaleString('id-ID') : '-'}</td>
+                        <td style="background-color: #e0f7fa;">${planJam > 0 ? planJam.toLocaleString('id-ID') : '-'}</td>
+                        <td style="background-color: ${pctActVsPlanJam >= 100 ? '#90ee90' : (pctActVsPlanJam === 0 ? '#90ee90' : '#ffcccb')}; color: ${pctActVsPlanJam >= 100 ? '#000' : (pctActVsPlanJam === 0 ? '#000' : 'red')}; font-weight: bold;">
+                            ${pctActVsPlanJam === Infinity ? '∞' : pctActVsPlanJam.toFixed(2) + '%'}
+                        </td>
+                        <td style="background-color: #e0f7fa;">${todayPlan > 0 ? todayPlan.toLocaleString('id-ID') : '-'}</td>
+                        <td style="background-color: #fffacd;">${pctActVsTodayPlan === Infinity ? '∞' : pctActVsTodayPlan.toFixed(2) + '%'}</td>
+                    </tr>
+                `;
+            }
         });
         
         // Total row
-        const totalPctActVsPlanJam = totalPlanJam > 0 ? (totalActJam / totalPlanJam * 100) : (totalActJam > 0 ? Infinity : 0);
+        const totalPctActVsPlanJam = (!isHistorical && totalPlanJam > 0) ? (totalActJam / totalPlanJam * 100) : ((!isHistorical && totalActJam > 0) ? Infinity : 0);
         const totalPctActVsTodayPlan = totalTodayPlan > 0 ? (totalActAkumulasi / totalTodayPlan * 100) : (totalActAkumulasi > 0 ? Infinity : 0);
         
-        html += `
-                <tr style="font-weight: bold; background-color: #f8cbad;">
-                    <td style="position: sticky; left: 0; background-color: #f8cbad;">TOTAL FFB</td>
-                    <td>${totalActJam.toLocaleString('id-ID')}</td>
-                    <td>-</td>
-                    <td style="background-color: #ffe600;">${totalActAkumulasi.toLocaleString('id-ID')}</td>
-                    <td style="background-color: #87ceeb;">${totalPlanJam.toLocaleString('id-ID')}</td>
-                    <td style="background-color: ${totalPctActVsPlanJam >= 100 ? '#90ee90' : (totalPctActVsPlanJam === 0 ? '#90ee90' : '#ff0000')}; color: ${totalPctActVsPlanJam >= 100 ? '#000' : (totalPctActVsPlanJam === 0 ? '#000' : '#fff')};">
-                        ${totalPctActVsPlanJam === Infinity ? '∞' : totalPctActVsPlanJam.toFixed(2) + '%'}
-                    </td>
-                    <td style="background-color: #87ceeb;">${totalTodayPlan.toLocaleString('id-ID')}</td>
-                    <td style="background-color: #ffe600;">${totalPctActVsTodayPlan === Infinity ? '∞' : totalPctActVsTodayPlan.toFixed(2) + '%'}</td>
-                </tr>
-            </tbody></table>
-        `;
+        if (isHistorical) {
+            html += `
+                    <tr style="font-weight: bold; background-color: #f8cbad;">
+                        <td style="position: sticky; left: 0; background-color: #f8cbad;">TOTAL FFB</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td style="background-color: #ffe600;">${totalActAkumulasi.toLocaleString('id-ID')}</td>
+                        <td style="background-color: #87ceeb;">-</td>
+                        <td style="background-color: #f8cbad;">-</td>
+                        <td style="background-color: #87ceeb;">${totalTodayPlan.toLocaleString('id-ID')}</td>
+                        <td style="background-color: #ffe600;">${totalPctActVsTodayPlan === Infinity ? '∞' : totalPctActVsTodayPlan.toFixed(2) + '%'}</td>
+                    </tr>
+                </tbody></table>
+            `;
+        } else {
+            html += `
+                    <tr style="font-weight: bold; background-color: #f8cbad;">
+                        <td style="position: sticky; left: 0; background-color: #f8cbad;">TOTAL FFB</td>
+                        <td>${totalActJam.toLocaleString('id-ID')}</td>
+                        <td>-</td>
+                        <td style="background-color: #ffe600;">${totalActAkumulasi.toLocaleString('id-ID')}</td>
+                        <td style="background-color: #87ceeb;">${totalPlanJam.toLocaleString('id-ID')}</td>
+                        <td style="background-color: ${totalPctActVsPlanJam >= 100 ? '#90ee90' : (totalPctActVsPlanJam === 0 ? '#90ee90' : '#ff0000')}; color: ${totalPctActVsPlanJam >= 100 ? '#000' : (totalPctActVsPlanJam === 0 ? '#000' : '#fff')};">
+                            ${totalPctActVsPlanJam === Infinity ? '∞' : totalPctActVsPlanJam.toFixed(2) + '%'}
+                        </td>
+                        <td style="background-color: #87ceeb;">${totalTodayPlan.toLocaleString('id-ID')}</td>
+                        <td style="background-color: #ffe600;">${totalPctActVsTodayPlan === Infinity ? '∞' : totalPctActVsTodayPlan.toFixed(2) + '%'}</td>
+                    </tr>
+                </tbody></table>
+            `;
+        }
         
         container.innerHTML = html;
         
