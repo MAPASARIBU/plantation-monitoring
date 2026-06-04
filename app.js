@@ -3214,10 +3214,10 @@ window.loadTonaseInputData = async () => {
             <table class="data-table" style="min-width: 600px;">
                 <thead>
                     <tr>
-                        <th style="min-width: 80px; position: sticky; left: 0; background: var(--background-color);">HOUR</th>
+                        <th style="min-width: 80px; position: sticky; left: 0; top: 0; background: var(--background-color); z-index: 11;">HOUR</th>
         `;
         supplyChain.forEach(est => {
-            html += `<th>${est}</th>`;
+            html += `<th style="position: sticky; top: 0; background: var(--background-color); z-index: 10;">${est}</th>`;
         });
         html += `</tr></thead><tbody>`;
         
