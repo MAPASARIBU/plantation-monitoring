@@ -1,7 +1,5 @@
 // API Base URL
 const API_URL = window.location.protocol === 'file:' ? 'http://localhost:3005/api' : '/api';
-let currentUser = null;
-let db = {}; // Will hold fetched data
 
 window.getLocalDate = () => {
     const d = new Date();
