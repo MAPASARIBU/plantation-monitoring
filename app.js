@@ -520,8 +520,11 @@ const views = {
                 <div class="view-header">
                     <h2>Tonase TBS Masuk PKS per Jam</h2>
                     <div>
-                        <button class="btn btn-primary" id="btn-open-tonase-modal" style="display:none; margin-right: 10px;" onclick="document.getElementById('tonase-modal').style.display='flex'">
-                            <i class="fa-solid fa-plus"></i> Input Tonase
+                        <button class="btn btn-primary btn-tonase-action" style="display:none; margin-right: 10px;" onclick="openTonaseModal('plan')">
+                            <i class="fa-solid fa-plus"></i> Input Plan
+                        </button>
+                        <button class="btn btn-tonase-action" style="display:none; margin-right: 10px; background-color: #f7a01d; color: white;" onclick="openTonaseModal('realization')">
+                            <i class="fa-solid fa-plus"></i> Input Realisasi
                         </button>
                         <button class="btn btn-primary" onclick="loadTonaseChartData()">
                             <i class="fa-solid fa-rotate-right"></i> Refresh
@@ -537,19 +540,41 @@ const views = {
             <div class="modal-overlay" id="tonase-modal" style="display:none; z-index: 1000;">
                 <div class="modal-content" style="max-width: 95%; width: 1200px; max-height: 90vh; overflow-y: auto;">
                     <div class="modal-header">
-                        <h2 id="tonase-form-title">Input Target & Realisasi Tonase</h2>
+                        <h2 id="tonase-form-title">Input Tonase</h2>
                         <button type="button" class="modal-close" onclick="document.getElementById('tonase-modal').style.display = 'none'">&times;</button>
                     </div>
                     
-                    <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <button class="btn btn-primary" style="flex:1;" onclick="setTonaseMode('plan')" id="btn-t-plan">Input Plan (Target)</button>
-                        <button class="btn" style="flex:1; background-color:#e2e8f0; color:#333;" onclick="setTonaseMode('realization')" id="btn-t-realization">Input Realisasi</button>
-                    </div>
-                    
                     <form id="form-tonase" style="margin-top: 15px;" onsubmit="event.preventDefault(); saveTonaseData();">
-                        <div class="form-group" style="max-width: 300px;">
-                            <label>Tanggal</label>
-                            <input type="date" id="t-date" class="form-control" required onchange="loadTonaseInputData()">
+                        <div class="form-group" style="display: flex; gap: 15px; max-width: 400px;">
+                            <div style="flex:1;">
+                                <label>Tanggal</label>
+                                <input type="date" id="t-date" class="form-control" required onchange="loadTonaseInputData()">
+                            </div>
+                            <div style="flex:1;" id="container-t-hour">
+                                <label>Jam</label>
+                                <select id="t-hour" class="form-control" onchange="loadTonaseInputData()">
+                                    <option value="" disabled selected>-- Pilih Jam --</option>
+                                    <option>06:00</option>
+                                    <option>07:00</option>
+                                    <option>08:00</option>
+                                    <option>09:00</option>
+                                    <option>10:00</option>
+                                    <option>11:00</option>
+                                    <option>12:00</option>
+                                    <option>13:00</option>
+                                    <option>14:00</option>
+                                    <option>15:00</option>
+                                    <option>16:00</option>
+                                    <option>17:00</option>
+                                    <option>18:00</option>
+                                    <option>19:00</option>
+                                    <option>20:00</option>
+                                    <option>21:00</option>
+                                    <option>22:00</option>
+                                    <option>23:00</option>
+                                    <option>24:00</option>
+                                </select>
+                            </div>
                         </div>
                         
                         <div id="tonase-estate-list" style="margin-top: 15px; overflow-x: auto; max-height: 50vh; overflow-y: auto;">
@@ -560,7 +585,7 @@ const views = {
                         <div style="margin-top: 20px; text-align: right;">
                             <button type="button" class="btn" style="background-color: #e2e8f0; color: #333; margin-right: 10px;" onclick="document.getElementById('tonase-modal').style.display='none'">Batal</button>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fa-solid fa-save"></i> <span id="t-btn-label">Simpan Plan</span>
+                                <i class="fa-solid fa-save"></i> <span id="t-btn-label">Simpan</span>
                             </button>
                         </div>
                     </form>
@@ -1857,13 +1882,12 @@ const navigate = (viewId) => {
     if(viewId === 'harvesting') { renderHarvestingTable(); bindForms(); }
     if(viewId === 'tonase') {
         if (currentUser.role === 'Krani Mill' || currentUser.role === 'Manager Mill' || currentUser.role === 'Admin' || currentUser.role === 'Office Assistant Mill') {
-            document.getElementById('btn-open-tonase-modal').style.display = 'inline-block';
+            document.querySelectorAll('.btn-tonase-action').forEach(b => b.style.display = 'inline-block');
             if (!document.getElementById('t-date').value) {
                 document.getElementById('t-date').value = new Date().toISOString().split('T')[0];
             }
-            setTonaseMode('plan');
         } else {
-            document.getElementById('btn-open-tonase-modal').style.display = 'none';
+            document.querySelectorAll('.btn-tonase-action').forEach(b => b.style.display = 'none');
         }
         loadTonaseChartData();
     }
@@ -3168,26 +3192,38 @@ window.closeUpkeep = async (id, block) => {
 // --- TONASE MONITORING LOGIC ---
 window.tonaseMode = 'plan'; 
 
-window.setTonaseMode = (mode) => {
+window.openTonaseModal = (mode) => {
     window.tonaseMode = mode;
-    document.getElementById('btn-t-plan').style.backgroundColor = mode === 'plan' ? 'var(--primary)' : '#e2e8f0';
-    document.getElementById('btn-t-plan').style.color = mode === 'plan' ? '#fff' : '#333';
+    document.getElementById('tonase-modal').style.display = 'flex';
     
-    document.getElementById('btn-t-realization').style.backgroundColor = mode === 'realization' ? 'var(--primary)' : '#e2e8f0';
-    document.getElementById('btn-t-realization').style.color = mode === 'realization' ? '#fff' : '#333';
-    
-    document.getElementById('t-btn-label').innerText = mode === 'plan' ? 'Simpan Plan (Target)' : 'Simpan Realisasi';
-    
-    if (document.getElementById('t-date') && document.getElementById('t-date').value) {
-        loadTonaseInputData();
+    if (mode === 'plan') {
+        document.getElementById('tonase-form-title').innerText = 'Input Target (Plan) Tonase';
+        document.getElementById('container-t-hour').style.display = 'none';
+        document.getElementById('t-btn-label').innerText = 'Simpan Plan (Target)';
+    } else {
+        document.getElementById('tonase-form-title').innerText = 'Input Realisasi Tonase';
+        document.getElementById('container-t-hour').style.display = 'block';
+        document.getElementById('t-btn-label').innerText = 'Simpan Realisasi';
     }
+    
+    if (!document.getElementById('t-date').value) {
+        document.getElementById('t-date').value = new Date().toISOString().split('T')[0];
+    }
+    
+    loadTonaseInputData();
 };
 
 window.loadTonaseInputData = async () => {
     const date = document.getElementById('t-date').value;
+    const hourSelect = document.getElementById('t-hour').value;
     const container = document.getElementById('tonase-estate-list');
     
     if (!date) return;
+    
+    if (window.tonaseMode === 'realization' && !hourSelect) {
+        container.innerHTML = '<div style="text-align:center; padding: 20px; color:#64748b;">Pilih Jam terlebih dahulu untuk menginput realisasi.</div>';
+        return;
+    }
     
     container.innerHTML = '<div style="text-align:center; padding: 20px;">Memuat data...</div>';
     
@@ -3208,7 +3244,9 @@ window.loadTonaseInputData = async () => {
         const tonaseRes = await fetch(`${API_URL}/tonase/${mill}/${date}`);
         const tonaseData = await tonaseRes.json();
         
-        const hours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
+        const hours = window.tonaseMode === 'plan' 
+            ? ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00']
+            : [hourSelect];
         
         let html = `
             <table class="data-table" style="min-width: 600px;">
