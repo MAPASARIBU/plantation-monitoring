@@ -961,6 +961,20 @@ const renderPemupukanTable = () => {
         selesai.forEach(p => tbody.innerHTML += renderRow(p));
     }
 };
+window.deleteHarvestingDaily = (id) => {
+    if(confirm('Apakah Anda yakin ingin menghapus data rencana harian ini?')) {
+        db.harvesting_daily = db.harvesting_daily.filter(h => h.id !== id);
+        saveDb();
+        renderHarvestingTable();
+        
+        const toast = document.getElementById('toast');
+        if (toast) {
+            toast.textContent = "Rencana harian berhasil dihapus!";
+            toast.className = "toast show success";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+    }
+};
 
 const renderHarvestingTable = () => {
     const tbodyDaily = document.getElementById('tbody-harvesting-daily');
@@ -998,6 +1012,12 @@ const renderHarvestingTable = () => {
                 statusEl = '<span style="color:gray; font-weight:bold;">In Progress</span>';
             }
         }
+        
+        let deleteBtn = '';
+        if (currentUser && (currentUser.role === 'Manager' || currentUser.role === 'Admin')) {
+            deleteBtn = `<button type="button" class="btn-delete-hover" style="margin-left:5px; font-weight:bold; vertical-align:middle; padding:2px 8px;" onclick="deleteHarvestingDaily(${h.id})">Del</button>`;
+        }
+        statusEl = `<div style="display:flex; align-items:center;">${statusEl}${deleteBtn}</div>`;
         
         let dateStr = h.date;
         if(typeof dateStr === 'string' && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
