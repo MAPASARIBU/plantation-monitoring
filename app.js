@@ -1157,7 +1157,7 @@ window.promptEditUser = (id) => {
     if (!user) return;
     
     let estatesOptions = `<option value="Semua Estate (Khusus Admin)">Semua Estate (Khusus Admin)</option>`;
-    const allEstates = ['Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bukik Estate', 'Air Buluh Estate', 'Malin Demang Estate', 'Batu Kuda Estate', 'Sungai Jerinjing Estate', 'Muko Muko Estate', 'Talang Petai Estate', 'Sungai Kiang Estate', 'Tanah Rekah Estate', 'Air Majunto Estate', 'Smallholder', 'Bunga Tanjung Mill', 'Muko Muko Mill'];
+    const allEstates = ['Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bukik Estate', 'Air Buluh Estate', 'Malin Demang Estate', 'Batu Kuda Estate', 'Sungai Jerinjing Estate', 'Muko Muko Estate', 'Talang Petai Estate', 'Sungai Kiang Estate', 'Tanah Rekah Estate', 'Air Majunto Estate', 'Small Holder', 'Bunga Tanjung Mill', 'Muko Muko Mill'];
     allEstates.forEach(est => {
         estatesOptions += `<option value="${est}" ${user.estate === est ? 'selected' : ''}>${est}</option>`;
     });
@@ -2459,7 +2459,7 @@ window.renderMasterTables = () => {
                 'Batu Kuda Estate', 'Air Buluh Estate', 'Maling Demang Estate',
                 'Tanah Rekah Estate', 'Muko Muko Estate', 'Sei Jerinjing Estate',
                 'Talang Petai Estate', 'Sungai Kiang Estate', 'Air Majunto Estate',
-                'Smallholder'
+                'Small Holder'
             ];
             const currentSC = (masterData.supply_chain || []).map(sc => sc.estate);
             
@@ -3336,7 +3336,7 @@ window.getEstateCode = (estateName) => {
     if (name.includes('TALANG PETAI')) return 'TPEE';
     if (name.includes('SUNGAI KIANG')) return 'SKGE';
     if (name.includes('AIR MAJUNTO')) return 'AMEE';
-    if (name.includes('SMALLHOLDER')) return 'PHK3';
+    if (name.includes('SMALL HOLDER')) return 'PHK3';
     
     const words = name.replace(' ESTATE', '').split(' ');
     if (words.length === 1) return words[0].substring(0, 3) + 'E';
@@ -3709,9 +3709,6 @@ window.loadTonaseInputData = async () => {
         `;
         supplyChain.forEach(est => {
             let thText = est.toUpperCase();
-            if (thText === 'SMALLHOLDER') {
-                thText = 'SMALL<br>HOLDER';
-            }
             html += `<th style="position: sticky; top: 0; background: var(--background-color); z-index: 10; min-width: 80px;">${thText}</th>`;
         });
         html += `</tr></thead><tbody>`;
