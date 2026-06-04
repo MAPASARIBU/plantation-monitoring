@@ -516,38 +516,54 @@ const views = {
     tonase: `
         <div class="animate-fade-in module-layout" id="tonase-layout" style="grid-template-columns: 1fr;">
             
-            <div class="glass-card form-container" id="tonase-form-container" style="display:none; margin-bottom: 20px;">
-                <h2 id="tonase-form-title">Input Target & Realisasi Tonase</h2>
-                
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button class="btn btn-primary" style="flex:1;" onclick="setTonaseMode('plan')" id="btn-t-plan">Input Plan (Target)</button>
-                    <button class="btn" style="flex:1; background-color:#e2e8f0; color:#333;" onclick="setTonaseMode('realization')" id="btn-t-realization">Input Realisasi</button>
-                </div>
-                
-                <form id="form-tonase" style="margin-top: 15px;" onsubmit="event.preventDefault(); saveTonaseData();">
-                    <div class="form-group" style="max-width: 300px;">
-                        <label>Tanggal</label>
-                        <input type="date" id="t-date" class="form-control" required onchange="loadTonaseInputData()">
-                    </div>
-                    
-                    <div id="tonase-estate-list" style="margin-top: 15px; overflow-x: auto;">
-                        <!-- Injected JS -->
-                        <div style="text-align:center; padding: 20px; color:#64748b;">Pilih Tanggal terlebih dahulu untuk memunculkan daftar.</div>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 15px;">
-                        <i class="fa-solid fa-save"></i> <span id="t-btn-label">Simpan Plan</span>
-                    </button>
-                </form>
-            </div>
-
             <div class="glass-card table-wrapper">
                 <div class="view-header">
                     <h2>Tonase TBS Masuk PKS per Jam</h2>
-                    <button class="btn btn-primary" onclick="loadTonaseChartData()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                    <div>
+                        <button class="btn btn-primary" id="btn-open-tonase-modal" style="display:none; margin-right: 10px;" onclick="document.getElementById('tonase-modal').style.display='flex'">
+                            <i class="fa-solid fa-plus"></i> Input Tonase
+                        </button>
+                        <button class="btn btn-primary" onclick="loadTonaseChartData()">
+                            <i class="fa-solid fa-rotate-right"></i> Refresh
+                        </button>
+                    </div>
                 </div>
                 <div style="height: 400px; width: 100%; margin-top: 20px;">
                     <canvas id="tonaseBigChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Modal Tonase -->
+            <div class="modal-overlay" id="tonase-modal" style="display:none; z-index: 1000;">
+                <div class="modal-content" style="max-width: 95%; width: 1200px; max-height: 90vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h2 id="tonase-form-title">Input Target & Realisasi Tonase</h2>
+                        <button type="button" class="modal-close" onclick="document.getElementById('tonase-modal').style.display = 'none'">&times;</button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn btn-primary" style="flex:1;" onclick="setTonaseMode('plan')" id="btn-t-plan">Input Plan (Target)</button>
+                        <button class="btn" style="flex:1; background-color:#e2e8f0; color:#333;" onclick="setTonaseMode('realization')" id="btn-t-realization">Input Realisasi</button>
+                    </div>
+                    
+                    <form id="form-tonase" style="margin-top: 15px;" onsubmit="event.preventDefault(); saveTonaseData();">
+                        <div class="form-group" style="max-width: 300px;">
+                            <label>Tanggal</label>
+                            <input type="date" id="t-date" class="form-control" required onchange="loadTonaseInputData()">
+                        </div>
+                        
+                        <div id="tonase-estate-list" style="margin-top: 15px; overflow-x: auto; max-height: 50vh; overflow-y: auto;">
+                            <!-- Injected JS -->
+                            <div style="text-align:center; padding: 20px; color:#64748b;">Pilih Tanggal terlebih dahulu untuk memunculkan daftar.</div>
+                        </div>
+                        
+                        <div style="margin-top: 20px; text-align: right;">
+                            <button type="button" class="btn" style="background-color: #e2e8f0; color: #333; margin-right: 10px;" onclick="document.getElementById('tonase-modal').style.display='none'">Batal</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa-solid fa-save"></i> <span id="t-btn-label">Simpan Plan</span>
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -1840,17 +1856,14 @@ const navigate = (viewId) => {
     if(viewId === 'pemupukan') { renderPemupukanTable(); bindForms(); }
     if(viewId === 'harvesting') { renderHarvestingTable(); bindForms(); }
     if(viewId === 'tonase') {
-        const layout = document.getElementById('tonase-layout');
         if (currentUser.role === 'Krani Mill' || currentUser.role === 'Manager Mill' || currentUser.role === 'Admin' || currentUser.role === 'Office Assistant Mill') {
-            document.getElementById('tonase-form-container').style.display = 'block';
-            layout.style.gridTemplateColumns = '350px 1fr';
+            document.getElementById('btn-open-tonase-modal').style.display = 'inline-block';
             if (!document.getElementById('t-date').value) {
                 document.getElementById('t-date').value = new Date().toISOString().split('T')[0];
             }
             setTonaseMode('plan');
         } else {
-            document.getElementById('tonase-form-container').style.display = 'none';
-            layout.style.gridTemplateColumns = '1fr';
+            document.getElementById('btn-open-tonase-modal').style.display = 'none';
         }
         loadTonaseChartData();
     }
