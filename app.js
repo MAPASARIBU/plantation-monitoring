@@ -1703,16 +1703,21 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
     });
     const allocatedTrucksOptions = Array.from(allocatedTrucks).map(t => `<option value="${t}">${t}</option>`).join('');
 
-    let ritaseListHtml = '';
+    let ritaseListInnerHtml = '';
     try {
         const rList = JSON.parse(h.ritase_list || '[]');
         if(rList.length > 0) {
-            ritaseListHtml = `<div style="background:#e0f2fe; padding:8px; border-radius:5px; margin-bottom:15px; font-size:0.85rem;">
-                <strong style="color:#0369a1;">Truk Terdahulu Hari Ini:</strong>
-                <ul style="margin:5px 0 0 20px; padding:0; color:#0c4a6e;">
-                    ${rList.map(r => `<li>Truk <b>${r.truck}</b>: ${r.janjang || 0} Jjg / ${r.kg || 0} Kg</li>`).join('')}
+            ritaseListInnerHtml = `
+                <strong style="color:#0369a1; display:block; margin-bottom:5px;">Truk Terdahulu Hari Ini:</strong>
+                <ul style="margin:0 0 0 20px; padding:0; color:#0c4a6e; font-size:0.85rem;">
+                    ${rList.map(r => `<li><b>${r.truck}</b>: ${r.janjang || 0} Jjg / ${r.kg || 0} Kg</li>`).join('')}
                 </ul>
-            </div>`;
+            `;
+        } else {
+            ritaseListInnerHtml = `
+                <strong style="color:#0369a1; display:block; margin-bottom:5px;">Truk Terdahulu Hari Ini:</strong>
+                <p style="margin:0; color:#0c4a6e; font-size:0.85rem; font-style:italic;">Belum ada ritase.</p>
+            `;
         }
     } catch(e){}
     
@@ -1728,18 +1733,23 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
     modal.className = 'modal-overlay';
     modal.id = 'modal-harvesting-realization';
     modal.innerHTML = `
-        <div class="modal-content animate-fade-in" style="max-width:450px;">
+        <div class="modal-content animate-fade-in" style="max-width:550px;">
             <h3>Input Ritase Panen: ${block} <span style="font-size:0.9rem; color:var(--text-secondary); font-weight:normal;">(Luas: ${grossArea} Ha)</span></h3>
             
-            <div style="background: #f1f5f9; padding: 10px; border-radius: 6px; margin-top: 15px; font-size: 0.9rem; margin-bottom: 15px;">
-                <strong>Total Terkumpul (Saat Ini):</strong><br>
-                Janjang: ${currJanjang} / ${planJjg}<br>
-                Kg: ${currKg} / ${planKg}<br>
-                HK (Pemanen): ${currPemanen} / ${planHvr}<br>
-                Luasan: ${currHa} / ${grossArea} Ha
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; margin-bottom: 15px;">
+                <div style="background: #f1f5f9; border-left: 4px solid #94a3b8; padding: 10px; border-radius: 4px; font-size: 0.85rem;">
+                    <strong style="color:#334155;">Total Terkumpul (Saat Ini):</strong>
+                    <div style="margin-top:5px; line-height:1.4;">
+                        Janjang: ${currJanjang} / ${planJjg}<br>
+                        Kg: ${currKg} / ${planKg}<br>
+                        HK (Pemanen): ${currPemanen} / ${planHvr}<br>
+                        Luasan: ${currHa} / ${grossArea} Ha
+                    </div>
+                </div>
+                <div style="background: #e0f2fe; border-left: 4px solid #38bdf8; padding: 10px; border-radius: 4px;">
+                    ${ritaseListInnerHtml}
+                </div>
             </div>
-            
-            ${ritaseListHtml}
             
             <p style="margin-top: 5px; font-weight: bold; font-size: 0.95rem;">Masukkan Tambahan (Ritase Baru):</p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
