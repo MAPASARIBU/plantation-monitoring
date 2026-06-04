@@ -3373,10 +3373,14 @@ window.loadTonaseInputData = async () => {
             html += `<tr><td style="font-weight:bold; position: sticky; left: 0; background: #fff;">${hour}</td>`;
             supplyChain.forEach(est => {
                 const existing = tonaseData.find(t => t.estate === est && t.time_hour === hour);
-                const val = existing ? (window.tonaseMode === 'plan' ? existing.target_kg : existing.realized_kg) : '';
+                let val = '';
+                if (existing) {
+                    let rawVal = window.tonaseMode === 'plan' ? existing.target_kg : existing.realized_kg;
+                    val = parseFloat((parseFloat(rawVal) / 1000).toFixed(2));
+                }
                 html += `
                     <td style="padding: 2px;">
-                        <input type="number" class="form-control tonase-input" data-estate="${est}" data-hour="${hour}" value="${val}" min="0" placeholder="" style="min-width: 70px; padding: 5px;">
+                        <input type="number" step="0.01" class="form-control tonase-input" data-estate="${est}" data-hour="${hour}" value="${val}" min="0" placeholder="" style="min-width: 70px; padding: 5px;">
                     </td>
                 `;
             });
@@ -3409,6 +3413,7 @@ window.saveTonaseData = async () => {
     inputs.forEach(input => {
         let val = parseFloat(input.value);
         if (isNaN(val)) val = 0;
+        else val = Math.round(val * 1000); // Convert Ton to Kg
         
         const est = input.getAttribute('data-estate');
         const hour = input.getAttribute('data-hour');
@@ -3501,13 +3506,13 @@ window.loadTonaseChartData = async () => {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Realisasi Tonase Masuk (Kg)',
-                    data: realized,
+                    label: 'Realisasi Tonase Masuk (Ton)',
+                    data: realized.map(v => v / 1000),
                     backgroundColor: '#f7a01d',
                     borderRadius: 4
                 }, {
-                    label: 'Target Tonase (Kg)',
-                    data: targets,
+                    label: 'Target Tonase (Ton)',
+                    data: targets.map(v => v / 1000),
                     backgroundColor: 'rgba(203, 213, 225, 0.5)',
                     borderRadius: 4
                 }]
@@ -3577,11 +3582,11 @@ window.renderTonaseMonitorTable = async () => {
                 <thead style="background-color: #333; color: white;">
                     <tr>
                         <th rowspan="2" style="position: sticky; left: 0; background-color: #000; color: #fff; z-index: 10;">ESTATE</th>
-                        <th colspan="2" style="background-color: #000; color: #fff;">FFB RECEIVED (Kg)</th>
-                        <th rowspan="2" style="background-color: #ffe600; color: #000;">ACTUAL AKUMULASI</th>
-                        <th rowspan="2" style="background-color: #87ceeb; color: #000;">PLAN / JAM (Kg)</th>
+                        <th colspan="2" style="background-color: #000; color: #fff;">FFB RECEIVED (Ton)</th>
+                        <th rowspan="2" style="background-color: #ffe600; color: #000;">ACTUAL AKUMULASI (Ton)</th>
+                        <th rowspan="2" style="background-color: #87ceeb; color: #000;">PLAN / JAM (Ton)</th>
                         <th rowspan="2" style="background-color: #90ee90; color: #000;">% ACT VS PLAN PER JAM</th>
-                        <th rowspan="2" style="background-color: #87ceeb; color: #000;">TODAY PLAN</th>
+                        <th rowspan="2" style="background-color: #87ceeb; color: #000;">TODAY PLAN (Ton)</th>
                         <th rowspan="2" style="background-color: #ffe600; color: #000;">% REALISASI VS TODAY PLAN</th>
                     </tr>
                     <tr>
@@ -3599,22 +3604,22 @@ window.renderTonaseMonitorTable = async () => {
             
             // Actual per jam
             const actJamRow = dataEst.find(t => t.time_hour === hour);
-            const actJam = actJamRow ? (parseFloat(actJamRow.realized_kg) || 0) : 0;
+            const actJam = actJamRow ? ((parseFloat(actJamRow.realized_kg) || 0) / 1000) : 0;
             
             // Actual akumulasi (from 06:00 up to selected hour)
             let actAkumulasi = 0;
             for (let i = 0; i <= hourIdx; i++) {
                 const r = dataEst.find(t => t.time_hour === hours[i]);
-                if (r) actAkumulasi += (parseFloat(r.realized_kg) || 0);
+                if (r) actAkumulasi += ((parseFloat(r.realized_kg) || 0) / 1000);
             }
             
             // Plan per jam
             const planJamRow = dataEst.find(t => t.time_hour === hour);
-            const planJam = planJamRow ? (parseFloat(planJamRow.target_kg) || 0) : 0;
+            const planJam = planJamRow ? ((parseFloat(planJamRow.target_kg) || 0) / 1000) : 0;
             
             // Today plan (all hours)
             let todayPlan = 0;
-            dataEst.forEach(t => todayPlan += (parseFloat(t.target_kg) || 0));
+            dataEst.forEach(t => todayPlan += ((parseFloat(t.target_kg) || 0) / 1000));
             
             // Percentages
             const pctActVsPlanJam = planJam > 0 ? (actJam / planJam * 100) : (actJam > 0 ? Infinity : 0);
