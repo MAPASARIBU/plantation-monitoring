@@ -497,8 +497,9 @@ const views = {
                     </button>
                 </form>
             </div>
-            
-            <div class="glass-card table-wrapper">
+        </div>
+        
+        <div class="glass-card table-wrapper">
                 <div class="view-header" style="margin-bottom: 5px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
                         <h2>Monitoring Panen Harian</h2>
