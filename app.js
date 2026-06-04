@@ -618,7 +618,7 @@ const views = {
                 <div class="view-header">
                     <h2>Tabel Monitoring FFB Received</h2>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="date" id="monitor-tonase-date" class="form-control" onchange="renderTonaseMonitorTable()">
+                        <input type="date" id="monitor-tonase-date" class="form-control" onchange="renderTonaseMonitorTable()" disabled>
                         <select id="monitor-tonase-hour" class="form-control" onchange="renderTonaseMonitorTable()">
                             <option value="06:00">06:00</option>
                             <option value="07:00">07:00</option>
@@ -3926,12 +3926,9 @@ window.renderTonaseMonitorTable = async () => {
     
     if (!dateInput || !hourInput || !container) return;
     
-    if (!dateInput.value) {
-        const chartDate = document.getElementById('t-date');
-        dateInput.value = chartDate && chartDate.value ? chartDate.value : new Date().toISOString().split('T')[0];
-    }
-    
-    const date = dateInput.value;
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.value = today;
+    const date = today;
     const hour = hourInput.value;
     
     container.innerHTML = '<div style="text-align:center; padding: 20px;">Memuat data monitoring...</div>';
