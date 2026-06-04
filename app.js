@@ -544,34 +544,44 @@ const views = {
             
             <!-- Table Monitoring -->
             <div class="glass-card table-wrapper">
-                <div class="view-header">
-                    <h2>Tabel Monitoring FFB Received</h2>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="date" id="monitor-tonase-date" class="form-control" onchange="renderTonaseMonitorTable()">
-                        <select id="monitor-tonase-hour" class="form-control" onchange="renderTonaseMonitorTable()">
-                            <option value="06:00">06:00</option>
-                            <option value="07:00">07:00</option>
-                            <option value="08:00">08:00</option>
-                            <option value="09:00">09:00</option>
-                            <option value="10:00">10:00</option>
-                            <option value="11:00">11:00</option>
-                            <option value="12:00">12:00</option>
-                            <option value="13:00">13:00</option>
-                            <option value="14:00">14:00</option>
-                            <option value="15:00">15:00</option>
-                            <option value="16:00">16:00</option>
-                            <option value="17:00">17:00</option>
-                            <option value="18:00">18:00</option>
-                            <option value="19:00">19:00</option>
-                            <option value="20:00">20:00</option>
-                            <option value="21:00">21:00</option>
-                            <option value="22:00">22:00</option>
-                            <option value="23:00">23:00</option>
-                            <option value="24:00">24:00</option>
-                        </select>
-                        <button class="btn btn-primary" onclick="renderTonaseMonitorTable()">
-                            <i class="fa-solid fa-rotate-right"></i> Refresh
-                        </button>
+                <div class="view-header" style="align-items: flex-start;">
+                    <h2 style="margin-top: 10px;">Tabel Monitoring FFB Received</h2>
+                    <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-primary btn-tonase-action" style="display:none;" onclick="openTonaseModal('plan')">
+                                <i class="fa-solid fa-plus"></i> Input Plan
+                            </button>
+                            <button class="btn btn-tonase-action" style="display:none; background-color: #f7a01d; color: white;" onclick="openTonaseModal('realization')">
+                                <i class="fa-solid fa-plus"></i> Input Realisasi
+                            </button>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="date" id="monitor-tonase-date" class="form-control" onchange="renderTonaseMonitorTable()">
+                            <select id="monitor-tonase-hour" class="form-control" onchange="renderTonaseMonitorTable()">
+                                <option value="06:00">06:00</option>
+                                <option value="07:00">07:00</option>
+                                <option value="08:00">08:00</option>
+                                <option value="09:00">09:00</option>
+                                <option value="10:00">10:00</option>
+                                <option value="11:00">11:00</option>
+                                <option value="12:00">12:00</option>
+                                <option value="13:00">13:00</option>
+                                <option value="14:00">14:00</option>
+                                <option value="15:00">15:00</option>
+                                <option value="16:00">16:00</option>
+                                <option value="17:00">17:00</option>
+                                <option value="18:00">18:00</option>
+                                <option value="19:00">19:00</option>
+                                <option value="20:00">20:00</option>
+                                <option value="21:00">21:00</option>
+                                <option value="22:00">22:00</option>
+                                <option value="23:00">23:00</option>
+                                <option value="24:00">24:00</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="renderTonaseMonitorTable()">
+                                <i class="fa-solid fa-rotate-right"></i> Refresh
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div id="tonase-monitor-table-container" style="overflow-x: auto; margin-top: 20px;">
@@ -583,12 +593,6 @@ const views = {
                 <div class="view-header">
                     <h2>Tonase TBS Masuk PKS per Jam</h2>
                     <div>
-                        <button class="btn btn-primary btn-tonase-action" style="display:none; margin-right: 10px;" onclick="openTonaseModal('plan')">
-                            <i class="fa-solid fa-plus"></i> Input Plan
-                        </button>
-                        <button class="btn btn-tonase-action" style="display:none; margin-right: 10px; background-color: #f7a01d; color: white;" onclick="openTonaseModal('realization')">
-                            <i class="fa-solid fa-plus"></i> Input Realisasi
-                        </button>
                         <button class="btn btn-primary" onclick="openHistoricalModal()">
                             <i class="fa-solid fa-clock-rotate-left"></i> Historical
                         </button>
