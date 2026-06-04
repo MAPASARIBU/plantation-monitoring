@@ -152,7 +152,7 @@ const applyRBAC = () => {
     } else if (role === 'Mandor' || role === 'Krani Divisi') {
         showViews(['vehicle', 'pemupukan', 'upkeep', 'harvesting']);
     } else if (role === 'Krani Mill') {
-        showViews(['vehicle', 'tonase']);
+        showViews(['tonase']);
     } else if (role === 'Supir') {
         showViews(['vehicle', 'harvesting']);
     } else if (role === 'Security' || role === 'Security Mill') {
