@@ -720,10 +720,11 @@ app.post('/api/harvesting/daily', async (req, res) => {
 
 app.put('/api/harvesting/daily/:id/realization', async (req, res) => {
     try {
-        const { realized_janjang, realized_pemanen, realized_kg, realized_ha } = req.body;
+        const { realized_janjang, realized_pemanen, realized_kg, realized_ha, status } = req.body;
+        const newStatus = status || 'Closed';
         await pool.query(
             'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, realized_ha = $4, status = $5 WHERE id = $6',
-            [realized_janjang, realized_pemanen, realized_kg, realized_ha, 'Closed', req.params.id]
+            [realized_janjang, realized_pemanen, realized_kg, realized_ha, newStatus, req.params.id]
         );
         res.json({ success: true });
     } catch (err) {

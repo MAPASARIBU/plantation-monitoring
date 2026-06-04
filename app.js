@@ -1627,31 +1627,61 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
     }
     const grossArea = blockData ? blockData.gross_area : 0;
     
+    const h = (db.harvesting_daily || []).find(x => x.id === id) || {};
+    const currJanjang = h.realized_janjang || 0;
+    const currPemanen = h.realized_pemanen || 0;
+    const currKg = h.realized_kg || 0;
+    const currHa = h.realized_ha || 0;
+    const isClosed = h.status === 'Closed';
+    
+    if (isClosed) {
+        alert("Blok ini sudah ditutup (Closed) dan tidak dapat ditambah lagi.");
+        return;
+    }
+    
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.id = 'modal-harvesting-realization';
     modal.innerHTML = `
-        <div class="modal-content animate-fade-in" style="max-width:400px;">
-            <h3>Input Realisasi Panen: ${block} <span style="font-size:0.9rem; color:var(--text-secondary); font-weight:normal;">(Luas: ${grossArea} Ha)</span></h3>
-            <div class="form-group" style="margin-top:15px;">
-                <label>Realisasi Janjang <span style="color:var(--text-secondary); font-weight:normal;">(Plan: ${planJjg} Jjg)</span></label>
-                <input type="number" id="hr-janjang" class="form-control" required>
+        <div class="modal-content animate-fade-in" style="max-width:450px;">
+            <h3>Input Ritase Panen: ${block} <span style="font-size:0.9rem; color:var(--text-secondary); font-weight:normal;">(Luas: ${grossArea} Ha)</span></h3>
+            
+            <div style="background: #f1f5f9; padding: 10px; border-radius: 6px; margin-top: 15px; font-size: 0.9rem;">
+                <strong>Total Terkumpul (Saat Ini):</strong><br>
+                Janjang: ${currJanjang} / ${planJjg}<br>
+                Kg: ${currKg} / ${planKg}<br>
+                HK (Pemanen): ${currPemanen} / ${planHvr}<br>
+                Luasan: ${currHa} / ${grossArea} Ha
+            </div>
+            
+            <p style="margin-top: 15px; font-weight: bold; font-size: 0.95rem;">Masukkan Tambahan (Ritase Baru):</p>
+            <div class="form-group" style="margin-top:10px;">
+                <label>Tambahan Janjang</label>
+                <input type="number" id="hr-janjang" class="form-control" placeholder="0" required>
             </div>
             <div class="form-group">
-                <label>Realisasi Pemanen <span style="color:var(--text-secondary); font-weight:normal;">(Plan: ${planHvr} Hvr)</span></label>
-                <input type="number" id="hr-pemanen" class="form-control" required>
+                <label>Tambahan HK Pemanen</label>
+                <input type="number" id="hr-pemanen" class="form-control" placeholder="0" required>
             </div>
             <div class="form-group">
-                <label>Realisasi Kg (Timbangan) <span style="color:var(--text-secondary); font-weight:normal;">(Plan: ${planKg} Kg)</span></label>
-                <input type="number" step="0.1" id="hr-kg" class="form-control" required>
+                <label>Tambahan Kg (Timbangan)</label>
+                <input type="number" step="0.1" id="hr-kg" class="form-control" placeholder="0" required>
             </div>
             <div class="form-group">
-                <label>Realisasi Ha (Luasan Panen)</label>
-                <input type="number" step="0.01" id="hr-ha" class="form-control" value="${grossArea}" required>
+                <label>Tambahan Ha (Luasan Panen)</label>
+                <input type="number" step="0.01" id="hr-ha" class="form-control" placeholder="0" required>
             </div>
+            <div class="form-group" style="margin-top: 15px;">
+                <label>Status Blok</label>
+                <select id="hr-status" class="form-control">
+                    <option value="In Progress">Masih Berlanjut (In Progress)</option>
+                    <option value="Closed">Tutup Blok (Selesai)</option>
+                </select>
+            </div>
+            
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
                 <button class="btn btn-logout" onclick="document.getElementById('modal-harvesting-realization').remove()" style="background:#64748b; color:white; border:none; padding:8px 16px;">Batal</button>
-                <button class="btn btn-primary" onclick="submitHarvestingRealization(${id})" style="padding:8px 16px;">Simpan</button>
+                <button class="btn btn-primary" onclick="submitHarvestingRealization(${id})" style="padding:8px 16px;">Simpan Tambahan</button>
             </div>
         </div>
     `;
@@ -1659,16 +1689,30 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
 };
 
 window.submitHarvestingRealization = async (id) => {
-    const janjang = parseFloat(document.getElementById('hr-janjang').value) || 0;
-    const pemanen = parseInt(document.getElementById('hr-pemanen').value) || 0;
-    const kg = parseFloat(document.getElementById('hr-kg').value) || 0;
-    const ha = parseFloat(document.getElementById('hr-ha').value) || 0;
+    const addJanjang = parseFloat(document.getElementById('hr-janjang').value) || 0;
+    const addPemanen = parseInt(document.getElementById('hr-pemanen').value) || 0;
+    const addKg = parseFloat(document.getElementById('hr-kg').value) || 0;
+    const addHa = parseFloat(document.getElementById('hr-ha').value) || 0;
+    const status = document.getElementById('hr-status').value;
+    
+    // Get current values
+    const h = (db.harvesting_daily || []).find(x => x.id === id) || {};
+    const totalJanjang = (h.realized_janjang || 0) + addJanjang;
+    const totalPemanen = (h.realized_pemanen || 0) + addPemanen;
+    const totalKg = (h.realized_kg || 0) + addKg;
+    const totalHa = (h.realized_ha || 0) + addHa;
     
     try {
         await fetch(`${API_URL}/harvesting/daily/${id}/realization`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ realized_janjang: janjang, realized_pemanen: pemanen, realized_kg: kg, realized_ha: ha })
+            body: JSON.stringify({ 
+                realized_janjang: totalJanjang, 
+                realized_pemanen: totalPemanen, 
+                realized_kg: totalKg, 
+                realized_ha: totalHa,
+                status: status 
+            })
         });
         document.getElementById('modal-harvesting-realization').remove();
         await loadData();
