@@ -3664,6 +3664,27 @@ window.openTonaseModal = (mode) => {
     
     loadTonaseInputData();
 };
+window.calculateTonaseTotals = () => {
+    const container = document.getElementById('tonase-estate-list');
+    if (!container) return;
+    
+    const inputs = Array.from(container.querySelectorAll('.tonase-input'));
+    const totals = {};
+    
+    inputs.forEach(input => {
+        const est = input.getAttribute('data-estate');
+        const val = parseFloat(input.value) || 0;
+        totals[est] = (totals[est] || 0) + val;
+    });
+    
+    Object.keys(totals).forEach(est => {
+        const cleanEstClass = est.replace(/[^a-zA-Z0-9]/g, '-');
+        const totalEl = document.getElementById(`tonase-total-${cleanEstClass}`);
+        if (totalEl) {
+            totalEl.innerText = parseFloat(totals[est].toFixed(2));
+        }
+    });
+};
 
 window.loadTonaseInputData = async () => {
     const date = document.getElementById('t-date').value;
@@ -3730,9 +3751,27 @@ window.loadTonaseInputData = async () => {
             });
             html += `</tr>`;
         });
+        html += `</tbody>`;
         
-        html += `</tbody></table>`;
+        html += `<tfoot style="background-color: #f1f5f9; position: sticky; bottom: 0; z-index: 10;">
+            <tr>
+                <td style="font-weight:bold; position: sticky; left: 0; background-color: #f1f5f9; padding: 8px;">TOTAL</td>
+        `;
+        supplyChain.forEach(est => {
+            const cleanEstClass = est.replace(/[^a-zA-Z0-9]/g, '-');
+            html += `<td style="font-weight:bold; padding: 8px; text-align:center; color: var(--primary-color);" id="tonase-total-${cleanEstClass}">0</td>`;
+        });
+        html += `</tr></tfoot>`;
+        
+        html += `</table>`;
         container.innerHTML = html;
+        
+        calculateTonaseTotals();
+        
+        const inputs = container.querySelectorAll('.tonase-input');
+        inputs.forEach(input => {
+            input.addEventListener('input', calculateTonaseTotals);
+        });
         
     } catch (e) {
         console.error(e);
