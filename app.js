@@ -629,6 +629,16 @@ const views = {
                 </div>
             </div>
             
+            <!-- Prime Time Chart -->
+            <div class="glass-card table-wrapper" style="margin-top: 20px;">
+                <div class="view-header">
+                    <h2>Prime Time Monitoring</h2>
+                </div>
+                <div style="height: 400px; width: 100%; margin-top: 20px;">
+                    <canvas id="primeTimeChart"></canvas>
+                </div>
+            </div>
+            
         </div>
     `,
     master: `
@@ -3596,5 +3606,156 @@ window.renderTonaseMonitorTable = async () => {
     } catch(e) {
         console.error(e);
         container.innerHTML = '<div style="text-align:center; padding: 20px; color:red;">Gagal memuat tabel monitoring.</div>';
+    }
+    
+    if (typeof window.loadPrimeTimeChart === 'function') {
+        window.loadPrimeTimeChart();
+    }
+};
+
+let primeTimeChartInstance = null;
+
+window.loadPrimeTimeChart = async () => {
+    const dateInput = document.getElementById('monitor-tonase-date');
+    if (!dateInput || !dateInput.value) return;
+    
+    const dateStr = dateInput.value;
+    const month = dateStr.substring(0, 7); // YYYY-MM
+    
+    try {
+        let mill = currentUser.estate;
+        if (!mill || !mill.endsWith('Mill')) {
+            mill = 'Bunga Tanjung Mill';
+        }
+        
+        const res = await fetch(`${API_URL}/tonase/${mill}/month/${month}`);
+        const data = await res.json();
+        
+        // Group data by date
+        const dailyData = {};
+        
+        // Determine number of days in the month
+        const year = parseInt(month.split('-')[0]);
+        const m = parseInt(month.split('-')[1]);
+        const daysInMonth = new Date(year, m, 0).getDate();
+        
+        // Initialize all days
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dStr = `${month}-${i.toString().padStart(2, '0')}`;
+            dailyData[dStr] = { prime: 0, middle: 0, last: 0, total: 0 };
+        }
+        
+        // Categorize each record
+        // Prime: 06:00 to 12:00
+        // Middle: >12:00 to 18:00
+        // Last: >18:00 to 24:00 (or 00:00)
+        
+        const primeHours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00'];
+        const middleHours = ['13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+        const lastHours = ['19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
+        
+        data.forEach(item => {
+            const d = item.date.split('T')[0];
+            if (!dailyData[d]) dailyData[d] = { prime: 0, middle: 0, last: 0, total: 0 };
+            
+            const kg = parseFloat(item.realized_kg) || 0;
+            if (kg > 0) {
+                if (primeHours.includes(item.time_hour)) {
+                    dailyData[d].prime += kg;
+                } else if (middleHours.includes(item.time_hour)) {
+                    dailyData[d].middle += kg;
+                } else if (lastHours.includes(item.time_hour)) {
+                    dailyData[d].last += kg;
+                }
+                dailyData[d].total += kg;
+            }
+        });
+        
+        const labels = [];
+        const primePct = [];
+        const middlePct = [];
+        const lastPct = [];
+        
+        // Prepare chart arrays
+        for (let i = 1; i <= daysInMonth; i++) {
+            labels.push(i.toString());
+            const dStr = `${month}-${i.toString().padStart(2, '0')}`;
+            const dayRecord = dailyData[dStr];
+            
+            if (dayRecord.total > 0) {
+                primePct.push( (dayRecord.prime / dayRecord.total) * 100 );
+                middlePct.push( (dayRecord.middle / dayRecord.total) * 100 );
+                lastPct.push( (dayRecord.last / dayRecord.total) * 100 );
+            } else {
+                primePct.push(0);
+                middlePct.push(0);
+                lastPct.push(0);
+            }
+        }
+        
+        const ctx = document.getElementById('primeTimeChart');
+        if (!ctx) return;
+        
+        if (primeTimeChartInstance) {
+            primeTimeChartInstance.destroy();
+        }
+        
+        primeTimeChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Prime Time (06:00 - 12:00)',
+                        data: primePct,
+                        backgroundColor: '#1d4ed8', // Blue
+                    },
+                    {
+                        label: 'Middle Time (13:00 - 18:00)',
+                        data: middlePct,
+                        backgroundColor: '#22c55e', // Green
+                    },
+                    {
+                        label: 'Last Time (19:00 - 24:00)',
+                        data: lastPct,
+                        backgroundColor: '#eab308', // Yellow
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + '%';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        title: { display: true, text: 'TANGGAL' }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        max: 100,
+                        title: { display: true, text: 'PERSENTASE (%)' },
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+    } catch(e) {
+        console.error('Error loading prime time chart:', e);
     }
 };

@@ -742,6 +742,18 @@ app.get('/api/tonase/:mill/:date', async (req, res) => {
     }
 });
 
+// TONASE MONTHLY
+app.get('/api/tonase/:mill/month/:month', async (req, res) => {
+    try {
+        const { mill, month } = req.params;
+        // month format: YYYY-MM
+        const result = await pool.query("SELECT * FROM tonase_hourly WHERE mill = $1 AND date LIKE $2 || '%'", [mill, month]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/tonase/plan', async (req, res) => {
     try {
         const { date, mill, entries } = req.body;
