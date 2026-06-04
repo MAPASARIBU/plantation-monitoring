@@ -423,12 +423,13 @@ const views = {
     harvesting: `
         <div class="animate-fade-in module-layout">
             <div class="glass-card form-container" id="harvesting-form-container">
-                <h2>Rencana Panen Bulanan</h2>
-                <form id="form-harvesting-monthly" style="margin-top: 15px; margin-bottom: 30px;">
-                    <div class="form-group">
-                        <label>Pilih Divisi</label>
-                        <select id="hm-divisi" class="form-control select-divisi" required onchange="checkMonthlyPlan()"></select>
-                    </div>
+                <div id="container-monthly-plan">
+                    <h2>Rencana Panen Bulanan</h2>
+                    <form id="form-harvesting-monthly" style="margin-top: 15px; margin-bottom: 30px;">
+                        <div class="form-group">
+                            <label>Pilih Divisi</label>
+                            <select id="hm-divisi" class="form-control select-divisi" required onchange="checkMonthlyPlan()"></select>
+                        </div>
                     <div class="form-group">
                         <label>Bulan Rencana</label>
                         <select id="hm-month" class="form-control select-month" required onchange="checkMonthlyPlan()"></select>
@@ -437,15 +438,17 @@ const views = {
                         <label>Target Panen (Kg)</label>
                         <input type="number" id="hm-target" class="form-control" required>
                     </div>
-                    <button type="submit" id="btn-hm-submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                        <i class="fa-solid fa-calendar-days"></i> Simpan Rencana Bulanan
-                    </button>
-                </form>
+                        <button type="submit" id="btn-hm-submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                            <i class="fa-solid fa-calendar-days"></i> Simpan Rencana Bulanan
+                        </button>
+                    </form>
+                </div>
 
-                <h2>Rencana Panen Harian</h2>
-                <form id="form-harvesting-daily" style="margin-top: 15px;">
-                    <div class="form-group">
-                        <label>Tanggal Rencana</label>
+                <div id="container-daily-plan">
+                    <h2>Rencana Panen Harian</h2>
+                    <form id="form-harvesting-daily" style="margin-top: 15px;">
+                        <div class="form-group">
+                            <label>Tanggal Rencana</label>
                         <input type="date" id="hd-date" class="form-control" required>
                     </div>
                     <div class="form-group">
@@ -975,9 +978,15 @@ const renderHarvestingTable = () => {
     const selesaiData = db.harvesting_daily.filter(h => h.status === 'Selesai' || h.status === 'Closed');
     
     const renderDailyRow = (h) => {
-        const statusEl = (h.status === 'Selesai' || h.status === 'Closed') ? 
-            '<span style="color:green;font-weight:bold;">Closed</span>' : 
-            `<button type="button" class="btn btn-primary" style="padding:2px 8px; font-size:0.8rem; background-color:orange; border:none; border-radius:15px; font-weight:bold;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}', ${h.est_janjang || 0}, ${h.plan_pemanen || 0}, ${h.est_kg || 0}, '${h.divisi}')">Update</button>`;
+        let statusEl = '<span style="color:green;font-weight:bold;">Closed</span>';
+        if (h.status !== 'Selesai' && h.status !== 'Closed') {
+            const canUpdateRoles = ['Askep', 'Assistant', 'Mandor', 'Krani Divisi', 'Krani Mill', 'Supir', 'Admin'];
+            if (currentUser && canUpdateRoles.includes(currentUser.role)) {
+                statusEl = `<button type="button" class="btn btn-primary" style="padding:2px 8px; font-size:0.8rem; background-color:orange; border:none; border-radius:15px; font-weight:bold;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}', ${h.est_janjang || 0}, ${h.plan_pemanen || 0}, ${h.est_kg || 0}, '${h.divisi}')">Update</button>`;
+            } else {
+                statusEl = '<span style="color:gray; font-weight:bold;">In Progress</span>';
+            }
+        }
         
         let dateStr = h.date;
         if(typeof dateStr === 'string' && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
@@ -1626,10 +1635,14 @@ window.checkMonthlyPlan = () => {
         if(existing) {
             currentMonthlyPlanId = existing.id;
             targetInput.value = existing.target_kg;
-            btn.innerHTML = '<i class="fa-solid fa-pen"></i> Update Rencana Bulanan';
+            targetInput.disabled = true;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-lock"></i> Terkunci (Sudah Diinput)';
         } else {
             currentMonthlyPlanId = null;
             targetInput.value = '';
+            targetInput.disabled = false;
+            btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-calendar-days"></i> Simpan Rencana Bulanan';
         }
     }
@@ -2288,6 +2301,26 @@ const navigate = (viewId) => {
     // Specific read-only logic for Upkeep and Pemupukan (Only Assistant, Askep, and Admin can input rencana)
     if ((viewId === 'upkeep' || viewId === 'pemupukan') && currentUser) {
         if (currentUser.role !== 'Assistant' && currentUser.role !== 'Askep' && currentUser.role !== 'Admin') {
+            const forms = container.querySelectorAll('.form-container');
+            forms.forEach(f => f.style.display = 'none');
+            const layouts = container.querySelectorAll('.module-layout');
+            layouts.forEach(l => l.style.gridTemplateColumns = '1fr');
+        }
+    }
+
+    // Harvesting specific read-only logic
+    if (viewId === 'harvesting' && currentUser) {
+        const role = currentUser.role;
+        const canInputMonthly = ['Assistant', 'Askep', 'Admin'].includes(role);
+        const canInputDaily = ['Mandor', 'Assistant', 'Askep', 'Admin'].includes(role);
+
+        const containerMonthly = document.getElementById('container-monthly-plan');
+        if (containerMonthly) containerMonthly.style.display = canInputMonthly ? 'block' : 'none';
+        
+        const containerDaily = document.getElementById('container-daily-plan');
+        if (containerDaily) containerDaily.style.display = canInputDaily ? 'block' : 'none';
+
+        if (!canInputMonthly && !canInputDaily) {
             const forms = container.querySelectorAll('.form-container');
             forms.forEach(f => f.style.display = 'none');
             const layouts = container.querySelectorAll('.module-layout');
