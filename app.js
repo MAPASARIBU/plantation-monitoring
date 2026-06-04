@@ -1,6 +1,12 @@
 // API Base URL
 const API_URL = window.location.protocol === 'file:' ? 'http://localhost:3005/api' : '/api';
 
+// Disable DataLabels globally so it only shows where explicitly enabled
+if (typeof ChartDataLabels !== 'undefined') {
+    Chart.register(ChartDataLabels);
+    Chart.defaults.plugins.datalabels.display = false;
+}
+
 // Data Store (Fetched from Backend)
 let db = { vehicles: [], upkeep: [], pemupukan: [], harvesting_monthly: [], harvesting_daily: [], users: [] };
 
@@ -1887,11 +1893,29 @@ const initDashboardChart = async () => {
                     tension: 0.4
                 }]
             },
+            plugins: [ChartDataLabels],
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
+                plugins: { 
+                    legend: { display: false },
+                    datalabels: {
+                        display: true,
+                        align: 'end',
+                        anchor: 'end',
+                        color: '#0d8b4e',
+                        font: { weight: 'bold' },
+                        formatter: function(value) {
+                            return value > 0 ? value : '';
+                        }
+                    }
+                },
+                scales: { 
+                    y: { 
+                        beginAtZero: true,
+                        grace: '10%' // Add space above points for labels
+                    } 
+                }
             }
         });
     } catch (e) {
