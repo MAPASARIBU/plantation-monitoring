@@ -1627,7 +1627,7 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
     }
     const grossArea = blockData ? blockData.gross_area : 0;
     
-    const h = (db.harvesting_daily || []).find(x => x.id === id) || {};
+    const h = (db.harvesting_daily || []).find(x => x.id == id) || {};
     const currJanjang = h.realized_janjang || 0;
     const currPemanen = h.realized_pemanen || 0;
     const currKg = h.realized_kg || 0;
@@ -1696,14 +1696,14 @@ window.submitHarvestingRealization = async (id) => {
     const status = document.getElementById('hr-status').value;
     
     // Get current values
-    const h = (db.harvesting_daily || []).find(x => x.id === id) || {};
+    const h = (db.harvesting_daily || []).find(x => x.id == id) || {};
     const totalJanjang = (h.realized_janjang || 0) + addJanjang;
     const totalPemanen = (h.realized_pemanen || 0) + addPemanen;
     const totalKg = (h.realized_kg || 0) + addKg;
     const totalHa = (h.realized_ha || 0) + addHa;
     
     try {
-        await fetch(`${API_URL}/harvesting/daily/${id}/realization`, {
+        const res = await fetch(`${API_URL}/harvesting/daily/${id}/realization`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -1714,10 +1714,20 @@ window.submitHarvestingRealization = async (id) => {
                 status: status 
             })
         });
-        document.getElementById('modal-harvesting-realization').remove();
+        
+        if (!res.ok) {
+            const errData = await res.json();
+            alert("Error: " + (errData.error || "Gagal menyimpan realisasi"));
+            return;
+        }
+        
+        const modalEl = document.getElementById('modal-harvesting-realization');
+        if(modalEl) modalEl.remove();
+        
         await loadData();
     } catch (e) {
         console.error(e);
+        alert("Terjadi kesalahan jaringan atau server.");
     }
 };
 
