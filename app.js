@@ -1874,7 +1874,7 @@ const initDashboardChart = async () => {
         data.forEach(item => {
             const hIdx = hours.indexOf(item.time_hour);
             if (hIdx !== -1) {
-                actualData[hIdx] += parseFloat(item.realized_kg) || 0;
+                actualData[hIdx] += (parseFloat(item.realized_kg) || 0) / 1000;
             }
         });
         
@@ -1885,7 +1885,7 @@ const initDashboardChart = async () => {
             data: {
                 labels: hours,
                 datasets: [{
-                    label: 'Tonase Masuk (Kg)',
+                    label: 'Tonase Masuk (Ton)',
                     data: actualData,
                     borderColor: '#0d8b4e',
                     backgroundColor: 'rgba(13, 139, 78, 0.1)',
@@ -1906,13 +1906,17 @@ const initDashboardChart = async () => {
                         color: '#0d8b4e',
                         font: { weight: 'bold' },
                         formatter: function(value) {
-                            return value > 0 ? value : '';
+                            return value > 0 ? value.toFixed(1) : '';
                         }
                     }
                 },
                 scales: { 
                     y: { 
                         beginAtZero: true,
+                        max: 200,
+                        ticks: {
+                            stepSize: 20
+                        },
                         grace: '10%' // Add space above points for labels
                     } 
                 }
