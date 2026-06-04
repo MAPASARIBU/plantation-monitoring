@@ -3243,6 +3243,7 @@ window.loadTonaseInputData = async () => {
         
         const tonaseRes = await fetch(`${API_URL}/tonase/${mill}/${date}`);
         const tonaseData = await tonaseRes.json();
+        window.tonaseDataCache = tonaseData;
         
         const hours = window.tonaseMode === 'plan' 
             ? ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00']
@@ -3314,6 +3315,23 @@ window.saveTonaseData = async () => {
         return;
     }
     
+    // Check if data already exists to prompt for revision
+    let hasExisting = false;
+    if (window.tonaseDataCache && window.tonaseDataCache.length > 0) {
+        if (window.tonaseMode === 'plan') {
+            hasExisting = window.tonaseDataCache.some(t => t.target_kg !== null && t.target_kg !== undefined);
+        } else {
+            const hourSelect = document.getElementById('t-hour').value;
+            hasExisting = window.tonaseDataCache.some(t => t.time_hour === hourSelect && t.realized_kg !== null && t.realized_kg !== undefined);
+        }
+    }
+    
+    if (hasExisting) {
+        if (!confirm('Data untuk tanggal / jam ini sudah pernah diinput sebelumnya. Apakah Anda yakin ingin merevisi / menimpa data yang lama dengan input terbaru?')) {
+            return;
+        }
+    }
+    
     const endpoint = window.tonaseMode === 'plan' ? 'plan' : 'realization';
     
     try {
@@ -3325,6 +3343,7 @@ window.saveTonaseData = async () => {
         const data = await res.json();
         if (data.success) {
             alert('Data berhasil disimpan!');
+            document.getElementById('tonase-modal').style.display = 'none';
             loadTonaseChartData();
         } else {
             alert('Gagal menyimpan data.');
