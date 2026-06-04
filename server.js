@@ -139,6 +139,15 @@ async function initDB() {
         await pool.query(`CREATE TABLE IF NOT EXISTS master_truk (id SERIAL PRIMARY KEY, estate TEXT, plate_number TEXT, supir TEXT)`);
         await pool.query(`CREATE TABLE IF NOT EXISTS master_supir (id SERIAL PRIMARY KEY, estate TEXT, name TEXT)`);
         await pool.query(`CREATE TABLE IF NOT EXISTS master_supply_chain (id SERIAL PRIMARY KEY, mill TEXT, estate TEXT)`);
+        await pool.query(`CREATE TABLE IF NOT EXISTS tonase_hourly (
+            id SERIAL PRIMARY KEY,
+            date TEXT,
+            mill TEXT,
+            estate TEXT,
+            time_hour TEXT,
+            target_kg REAL DEFAULT 0,
+            realized_kg REAL DEFAULT 0
+        )`);
 
         try {
             await pool.query(`ALTER TABLE master_truk ADD COLUMN supir TEXT`);
@@ -716,6 +725,51 @@ app.put('/api/harvesting/daily/:id/realization', async (req, res) => {
             'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, realized_ha = $4, status = $5 WHERE id = $6',
             [realized_janjang, realized_pemanen, realized_kg, realized_ha, 'Closed', req.params.id]
         );
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// TONASE HOURLY
+app.get('/api/tonase/:mill/:date', async (req, res) => {
+    try {
+        const { mill, date } = req.params;
+        const result = await pool.query('SELECT * FROM tonase_hourly WHERE mill = $1 AND date = $2', [mill, date]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/tonase/plan', async (req, res) => {
+    try {
+        const { date, mill, time_hour, items } = req.body;
+        for (let item of items) {
+            const check = await pool.query('SELECT id FROM tonase_hourly WHERE date=$1 AND mill=$2 AND estate=$3 AND time_hour=$4', [date, mill, item.estate, time_hour]);
+            if (check.rows.length > 0) {
+                await pool.query('UPDATE tonase_hourly SET target_kg=$1 WHERE id=$2', [item.target_kg || 0, check.rows[0].id]);
+            } else {
+                await pool.query('INSERT INTO tonase_hourly (date, mill, estate, time_hour, target_kg) VALUES ($1,$2,$3,$4,$5)', [date, mill, item.estate, time_hour, item.target_kg || 0]);
+            }
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/tonase/realization', async (req, res) => {
+    try {
+        const { date, mill, time_hour, items } = req.body;
+        for (let item of items) {
+            const check = await pool.query('SELECT id FROM tonase_hourly WHERE date=$1 AND mill=$2 AND estate=$3 AND time_hour=$4', [date, mill, item.estate, time_hour]);
+            if (check.rows.length > 0) {
+                await pool.query('UPDATE tonase_hourly SET realized_kg=$1 WHERE id=$2', [item.realized_kg || 0, check.rows[0].id]);
+            } else {
+                await pool.query('INSERT INTO tonase_hourly (date, mill, estate, time_hour, realized_kg) VALUES ($1,$2,$3,$4,$5)', [date, mill, item.estate, time_hour, item.realized_kg || 0]);
+            }
+        }
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });

@@ -514,13 +514,68 @@ const views = {
         </div>
     `,
     tonase: `
-        <div class="animate-fade-in glass-card">
-            <div class="view-header">
-                <h2>Tonase TBS Masuk PKS per Jam</h2>
-                <button class="btn btn-primary"><i class="fa-solid fa-print"></i> Cetak Laporan</button>
+        <div class="animate-fade-in module-layout" id="tonase-layout" style="grid-template-columns: 1fr;">
+            
+            <div class="glass-card form-container" id="tonase-form-container" style="display:none; margin-bottom: 20px;">
+                <h2 id="tonase-form-title">Input Target & Realisasi Tonase</h2>
+                
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button class="btn btn-primary" style="flex:1;" onclick="setTonaseMode('plan')" id="btn-t-plan">Input Plan (Target)</button>
+                    <button class="btn" style="flex:1; background-color:#e2e8f0; color:#333;" onclick="setTonaseMode('realization')" id="btn-t-realization">Input Realisasi</button>
+                </div>
+                
+                <form id="form-tonase" style="margin-top: 15px;" onsubmit="event.preventDefault(); saveTonaseData();">
+                    <div class="form-group" style="display:flex; gap: 10px;">
+                        <div style="flex:1;">
+                            <label>Tanggal</label>
+                            <input type="date" id="t-date" class="form-control" required onchange="loadTonaseInputData()">
+                        </div>
+                        <div style="flex:1;">
+                            <label>Jam</label>
+                            <select id="t-hour" class="form-control" required onchange="loadTonaseInputData()">
+                                <option value="" disabled selected>-- Pilih Jam --</option>
+                                <option>06:00</option>
+                                <option>07:00</option>
+                                <option>08:00</option>
+                                <option>09:00</option>
+                                <option>10:00</option>
+                                <option>11:00</option>
+                                <option>12:00</option>
+                                <option>13:00</option>
+                                <option>14:00</option>
+                                <option>15:00</option>
+                                <option>16:00</option>
+                                <option>17:00</option>
+                                <option>18:00</option>
+                                <option>19:00</option>
+                                <option>20:00</option>
+                                <option>21:00</option>
+                                <option>22:00</option>
+                                <option>23:00</option>
+                                <option>24:00</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="tonase-estate-list" style="margin-top: 15px; max-height: 300px; overflow-y: auto;">
+                        <!-- Injected JS -->
+                        <div style="text-align:center; padding: 20px; color:#64748b;">Pilih Jam terlebih dahulu untuk memunculkan daftar supply chain.</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 15px;">
+                        <i class="fa-solid fa-save"></i> <span id="t-btn-label">Simpan Plan</span>
+                    </button>
+                </form>
             </div>
-            <div style="height: 400px; width: 100%; margin-top: 20px;">
-                <canvas id="tonaseBigChart"></canvas>
+
+            <div class="glass-card table-wrapper">
+                <div class="view-header">
+                    <h2>Tonase TBS Masuk PKS per Jam</h2>
+                    <button class="btn btn-primary" onclick="loadTonaseChartData()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                </div>
+                <div style="height: 400px; width: 100%; margin-top: 20px;">
+                    <canvas id="tonaseBigChart"></canvas>
+                </div>
             </div>
         </div>
     `,
@@ -1811,7 +1866,21 @@ const navigate = (viewId) => {
     if(viewId === 'upkeep') { renderUpkeepTable(); bindForms(); }
     if(viewId === 'pemupukan') { renderPemupukanTable(); bindForms(); }
     if(viewId === 'harvesting') { renderHarvestingTable(); bindForms(); }
-    if(viewId === 'tonase') initBigTonaseChart();
+    if(viewId === 'tonase') {
+        const layout = document.getElementById('tonase-layout');
+        if (currentUser.role === 'Krani Mill' || currentUser.role === 'Manager Mill' || currentUser.role === 'Admin' || currentUser.role === 'Office Assistant Mill') {
+            document.getElementById('tonase-form-container').style.display = 'block';
+            layout.style.gridTemplateColumns = '350px 1fr';
+            if (!document.getElementById('t-date').value) {
+                document.getElementById('t-date').value = new Date().toISOString().split('T')[0];
+            }
+            setTonaseMode('plan');
+        } else {
+            document.getElementById('tonase-form-container').style.display = 'none';
+            layout.style.gridTemplateColumns = '1fr';
+        }
+        loadTonaseChartData();
+    }
     if(viewId === 'users') { renderUsersTable(); bindForms(); }
     if(viewId === 'master') { renderMasterTables(); }
     
@@ -3107,5 +3176,192 @@ window.closeUpkeep = async (id, block) => {
             await fetch(`${API_URL}/upkeep/${id}/close`, { method: 'PUT' });
             await loadData();
         } catch(e) { console.error(e); }
+    }
+};
+
+// --- TONASE MONITORING LOGIC ---
+window.tonaseMode = 'plan'; 
+
+window.setTonaseMode = (mode) => {
+    window.tonaseMode = mode;
+    document.getElementById('btn-t-plan').style.backgroundColor = mode === 'plan' ? 'var(--primary)' : '#e2e8f0';
+    document.getElementById('btn-t-plan').style.color = mode === 'plan' ? '#fff' : '#333';
+    
+    document.getElementById('btn-t-realization').style.backgroundColor = mode === 'realization' ? 'var(--primary)' : '#e2e8f0';
+    document.getElementById('btn-t-realization').style.color = mode === 'realization' ? '#fff' : '#333';
+    
+    document.getElementById('t-btn-label').innerText = mode === 'plan' ? 'Simpan Plan (Target)' : 'Simpan Realisasi';
+    
+    if (document.getElementById('t-hour').value) {
+        loadTonaseInputData();
+    }
+};
+
+window.loadTonaseInputData = async () => {
+    const date = document.getElementById('t-date').value;
+    const hour = document.getElementById('t-hour').value;
+    const container = document.getElementById('tonase-estate-list');
+    
+    if (!date || !hour) return;
+    
+    container.innerHTML = '<div style="text-align:center; padding: 20px;">Memuat data...</div>';
+    
+    try {
+        let mill = currentUser.estate;
+        if (!mill || !mill.endsWith('Mill')) {
+            mill = 'Bunga Tanjung Mill';
+        }
+        const masterRes = await fetch(`${API_URL}/master/${mill}`);
+        const masterData = await masterRes.json();
+        const supplyChain = masterData.supply_chain.map(s => s.estate);
+        
+        if (supplyChain.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding: 20px; color:red;">Belum ada supply chain yang diatur untuk Mill ini di Master Data.</div>';
+            return;
+        }
+        
+        const tonaseRes = await fetch(`${API_URL}/tonase/${mill}/${date}`);
+        const tonaseData = await tonaseRes.json();
+        
+        let html = `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Estate (Supply Chain)</th>
+                        <th>${window.tonaseMode === 'plan' ? 'Target (Kg)' : 'Realisasi (Kg)'}</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        supplyChain.forEach(est => {
+            const existing = tonaseData.find(t => t.estate === est && t.time_hour === hour);
+            const val = existing ? (window.tonaseMode === 'plan' ? existing.target_kg : existing.realized_kg) : '';
+            html += `
+                <tr>
+                    <td>${est}</td>
+                    <td>
+                        <input type="number" class="form-control tonase-input" data-estate="${est}" value="${val}" min="0" placeholder="0">
+                    </td>
+                </tr>
+            `;
+        });
+        
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+        
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = '<div style="text-align:center; padding: 20px; color:red;">Gagal memuat data.</div>';
+    }
+};
+
+window.saveTonaseData = async () => {
+    const date = document.getElementById('t-date').value;
+    const hour = document.getElementById('t-hour').value;
+    let mill = currentUser.estate;
+    if (!mill || !mill.endsWith('Mill')) {
+        mill = 'Bunga Tanjung Mill';
+    }
+    
+    if (!date || !hour) {
+        alert("Pilih Tanggal dan Jam terlebih dahulu.");
+        return;
+    }
+    
+    const inputs = document.querySelectorAll('.tonase-input');
+    const items = [];
+    inputs.forEach(input => {
+        const val = parseFloat(input.value) || 0;
+        const est = input.getAttribute('data-estate');
+        if (window.tonaseMode === 'plan') {
+            items.push({ estate: est, target_kg: val });
+        } else {
+            items.push({ estate: est, realized_kg: val });
+        }
+    });
+    
+    const endpoint = window.tonaseMode === 'plan' ? 'plan' : 'realization';
+    
+    try {
+        const res = await fetch(`${API_URL}/tonase/${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date, mill, time_hour: hour, items })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert('Data berhasil disimpan!');
+            loadTonaseChartData();
+        } else {
+            alert('Gagal menyimpan data.');
+        }
+    } catch(e) {
+        console.error(e);
+        alert('Terjadi kesalahan jaringan.');
+    }
+};
+
+let tonaseChartInstance = null;
+
+window.loadTonaseChartData = async () => {
+    let mill = currentUser.estate;
+    if (!mill || !mill.endsWith('Mill')) {
+        mill = 'Bunga Tanjung Mill'; // default fallback for Admin
+    }
+    const dateObj = document.getElementById('t-date');
+    const date = dateObj && dateObj.value ? dateObj.value : new Date().toISOString().split('T')[0];
+    
+    try {
+        const res = await fetch(`${API_URL}/tonase/${mill}/${date}`);
+        const tonaseData = await res.json();
+        
+        const labels = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
+        const targets = new Array(labels.length).fill(0);
+        const realized = new Array(labels.length).fill(0);
+        
+        tonaseData.forEach(item => {
+            const idx = labels.indexOf(item.time_hour);
+            if (idx !== -1) {
+                targets[idx] += parseFloat(item.target_kg) || 0;
+                realized[idx] += parseFloat(item.realized_kg) || 0;
+            }
+        });
+        
+        const ctx = document.getElementById('tonaseBigChart');
+        if (!ctx) return;
+        
+        if (tonaseChartInstance) {
+            tonaseChartInstance.destroy();
+        }
+        
+        tonaseChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Realisasi Tonase Masuk (Kg)',
+                    data: realized,
+                    backgroundColor: '#f7a01d',
+                    borderRadius: 4
+                }, {
+                    label: 'Target Tonase (Kg)',
+                    data: targets,
+                    backgroundColor: 'rgba(203, 213, 225, 0.5)',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: true, text: `Komparasi Target vs Realisasi Tonase Per Jam (${date})` }
+                },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+        
+    } catch(e) {
+        console.error(e);
     }
 };
