@@ -479,6 +479,13 @@ const views = {
                         <input type="number" id="hd-pemanen" class="form-control" required>
                     </div>
                     <div class="form-group">
+                        <label>Alokasi Truk Divisi</label>
+                        <select multiple id="hd-trucks" class="form-control select-truk" style="height: 90px;">
+                            <!-- populated by populateSelects -->
+                        </select>
+                        <small style="color:var(--text-secondary); font-size:0.8rem;">Tahan tombol Ctrl (Windows) atau Cmd (Mac) untuk memilih lebih dari 1 truk.</small>
+                    </div>
+                    <div class="form-group">
                         <label>Mandor / Pengawas</label>
                         <input type="text" id="hd-mandor" class="form-control" required>
                     </div>
@@ -1632,6 +1639,30 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
     const currPemanen = h.realized_pemanen || 0;
     const currKg = h.realized_kg || 0;
     const currHa = h.realized_ha || 0;
+    // Gather allocated trucks for this Divisi and Date
+    const allocatedTrucks = new Set();
+    const sameDivisiDateRows = db.harvesting_daily.filter(x => x.date === h.date && x.divisi === h.divisi && x.allocated_trucks);
+    sameDivisiDateRows.forEach(row => {
+        try {
+            const arr = JSON.parse(row.allocated_trucks);
+            if(Array.isArray(arr)) arr.forEach(t => allocatedTrucks.add(t));
+        } catch(e){}
+    });
+    const allocatedTrucksOptions = Array.from(allocatedTrucks).map(t => `<option value="${t}">${t}</option>`).join('');
+
+    let ritaseListHtml = '';
+    try {
+        const rList = JSON.parse(h.ritase_list || '[]');
+        if(rList.length > 0) {
+            ritaseListHtml = `<div style="background:#e0f2fe; padding:8px; border-radius:5px; margin-bottom:15px; font-size:0.85rem;">
+                <strong style="color:#0369a1;">Truk Terdahulu Hari Ini:</strong>
+                <ul style="margin:5px 0 0 20px; padding:0; color:#0c4a6e;">
+                    ${rList.map(r => `<li>Truk <b>${r.truck}</b>: ${r.janjang || 0} Jjg / ${r.kg || 0} Kg</li>`).join('')}
+                </ul>
+            </div>`;
+        }
+    } catch(e){}
+    
     const isClosed = h.status === 'Closed';
     const isPemanenLocked = currPemanen > 0;
     
@@ -1647,7 +1678,7 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
         <div class="modal-content animate-fade-in" style="max-width:450px;">
             <h3>Input Ritase Panen: ${block} <span style="font-size:0.9rem; color:var(--text-secondary); font-weight:normal;">(Luas: ${grossArea} Ha)</span></h3>
             
-            <div style="background: #f1f5f9; padding: 10px; border-radius: 6px; margin-top: 15px; font-size: 0.9rem;">
+            <div style="background: #f1f5f9; padding: 10px; border-radius: 6px; margin-top: 15px; font-size: 0.9rem; margin-bottom: 15px;">
                 <strong>Total Terkumpul (Saat Ini):</strong><br>
                 Janjang: ${currJanjang} / ${planJjg}<br>
                 Kg: ${currKg} / ${planKg}<br>
@@ -1655,10 +1686,20 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
                 Luasan: ${currHa} / ${grossArea} Ha
             </div>
             
-            <p style="margin-top: 15px; font-weight: bold; font-size: 0.95rem;">Masukkan Tambahan (Ritase Baru):</p>
+            ${ritaseListHtml}
+            
+            <p style="margin-top: 5px; font-weight: bold; font-size: 0.95rem;">Masukkan Tambahan (Ritase Baru):</p>
             <div class="form-group" style="margin-top:10px;">
-                <label>Tambahan Janjang</label>
-                <input type="number" id="hr-janjang" class="form-control" placeholder="0" required>
+                <label>Pilih Truk (Wajib)</label>
+                <select id="hr-truck" class="form-control" required>
+                    <option value="" disabled selected>-- Pilih Truk Dialokasikan --</option>
+                    ${allocatedTrucksOptions}
+                </select>
+                ${allocatedTrucks.size === 0 ? '<small style="color:#ef4444; font-size:0.8rem;">*Tidak ada truk dialokasikan di divisi ini.</small>' : ''}
+            </div>
+            <div class="form-group">
+                <label>Tambahan Janjang (Opsional untuk Brondolan)</label>
+                <input type="number" id="hr-janjang" class="form-control" placeholder="0">
             </div>
             <div class="form-group">
                 <label>Tambahan HK Pemanen</label>
@@ -1691,11 +1732,21 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
 };
 
 window.submitHarvestingRealization = async (id) => {
+    const truck = document.getElementById('hr-truck').value;
+    if (!truck) {
+        alert("Pilih truk pengangkut terlebih dahulu!");
+        return;
+    }
     const addJanjang = parseFloat(document.getElementById('hr-janjang').value) || 0;
     const addPemanen = parseInt(document.getElementById('hr-pemanen').value) || 0;
     const addKg = parseFloat(document.getElementById('hr-kg').value) || 0;
     const addHa = parseFloat(document.getElementById('hr-ha').value) || 0;
     const status = document.getElementById('hr-status').value;
+    
+    if (addJanjang === 0 && addKg === 0 && addPemanen === 0 && addHa === 0) {
+        alert("Inputan tambahan masih kosong. Silakan isi setidaknya satu nilai (Kg, HK Pemanen, atau Luasan).");
+        return;
+    }
     
     // Get current values
     const h = (db.harvesting_daily || []).find(x => x.id == id) || {};
@@ -1717,6 +1768,17 @@ window.submitHarvestingRealization = async (id) => {
         return;
     }
     
+    let ritaseList = [];
+    try { ritaseList = JSON.parse(h.ritase_list || '[]'); } catch(e){}
+    if (addJanjang > 0 || addKg > 0) {
+        ritaseList.push({
+            truck: truck,
+            janjang: addJanjang,
+            kg: addKg,
+            timestamp: new Date().toISOString()
+        });
+    }
+    
     try {
         const res = await fetch(`${API_URL}/harvesting/daily/${id}/realization`, {
             method: 'PUT',
@@ -1726,7 +1788,8 @@ window.submitHarvestingRealization = async (id) => {
                 realized_pemanen: totalPemanen, 
                 realized_kg: totalKg, 
                 realized_ha: totalHa,
-                status: status 
+                status: status,
+                ritase_list: JSON.stringify(ritaseList)
             })
         });
         
@@ -1865,6 +1928,9 @@ const bindForms = () => {
         
         const estJanjang = parseInt(document.getElementById('hd-est-janjang').innerText.replace(/,/g, '')) || 0;
         const estKg = parseFloat(document.getElementById('hd-est-kg').innerText.replace(/,/g, '').replace(' Kg', '')) || 0;
+        
+        const hdTrucksEl = document.getElementById('hd-trucks');
+        const allocatedTrucks = hdTrucksEl ? Array.from(hdTrucksEl.selectedOptions).map(opt => opt.value) : [];
 
         const payload = {
             date: document.getElementById('hd-date').value,
@@ -1876,7 +1942,8 @@ const bindForms = () => {
             est_kg: estKg,
             plan_pemanen: parseInt(document.getElementById('hd-pemanen').value),
             mandor: document.getElementById('hd-mandor').value,
-            pusingan: document.getElementById('hd-pusingan').value
+            pusingan: document.getElementById('hd-pusingan').value,
+            allocated_trucks: JSON.stringify(allocatedTrucks)
         };
         try {
             await fetch(`${API_URL}/harvesting/daily`, {

@@ -129,6 +129,8 @@ async function initDB() {
         )`);
         try { await pool.query("ALTER TABLE harvesting_daily ADD COLUMN pusingan TEXT"); } catch(e) {}
         try { await pool.query("ALTER TABLE harvesting_daily ADD COLUMN realized_ha REAL DEFAULT 0"); } catch(e) {}
+        try { await pool.query("ALTER TABLE harvesting_daily ADD COLUMN allocated_trucks TEXT DEFAULT '[]'"); } catch(e) {}
+        try { await pool.query("ALTER TABLE harvesting_daily ADD COLUMN ritase_list TEXT DEFAULT '[]'"); } catch(e) {}
 
         await pool.query(`CREATE TABLE IF NOT EXISTS master_divisi (id SERIAL PRIMARY KEY, estate TEXT, name TEXT)`);
         // Added divisi column because it's used in bulk insert checking
@@ -707,10 +709,10 @@ app.put('/api/harvesting/monthly/:id', async (req, res) => {
 
 app.post('/api/harvesting/daily', async (req, res) => {
     try {
-        const { date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor, pusingan } = req.body;
+        const { date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor, pusingan, allocated_trucks } = req.body;
         const result = await pool.query(
-            'INSERT INTO harvesting_daily (date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor, pusingan, realized_janjang, realized_pemanen, realized_kg, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,0,0,0,$11) RETURNING id',
-            [date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor, pusingan, 'Open']
+            'INSERT INTO harvesting_daily (date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor, pusingan, realized_janjang, realized_pemanen, realized_kg, status, allocated_trucks) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,0,0,0,$11,$12) RETURNING id',
+            [date, estate, divisi, block, akp, est_janjang, est_kg, plan_pemanen, mandor, pusingan, 'Open', allocated_trucks || '[]']
         );
         res.json({ id: result.rows[0].id });
     } catch (err) {
@@ -720,11 +722,11 @@ app.post('/api/harvesting/daily', async (req, res) => {
 
 app.put('/api/harvesting/daily/:id/realization', async (req, res) => {
     try {
-        const { realized_janjang, realized_pemanen, realized_kg, realized_ha, status } = req.body;
+        const { realized_janjang, realized_pemanen, realized_kg, realized_ha, status, ritase_list } = req.body;
         const newStatus = status || 'Closed';
         await pool.query(
-            'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, realized_ha = $4, status = $5 WHERE id = $6',
-            [realized_janjang, realized_pemanen, realized_kg, realized_ha, newStatus, req.params.id]
+            'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, realized_ha = $4, status = $5, ritase_list = COALESCE($6, ritase_list) WHERE id = $7',
+            [realized_janjang, realized_pemanen, realized_kg, realized_ha, newStatus, ritase_list, req.params.id]
         );
         res.json({ success: true });
     } catch (err) {
