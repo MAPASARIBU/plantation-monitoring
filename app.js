@@ -591,6 +591,44 @@ const views = {
                     </form>
                 </div>
             </div>
+            
+            <!-- Table Monitoring -->
+            <div class="glass-card table-wrapper" style="margin-top: 20px;">
+                <div class="view-header">
+                    <h2>Tabel Monitoring FFB Received</h2>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="date" id="monitor-tonase-date" class="form-control" onchange="renderTonaseMonitorTable()">
+                        <select id="monitor-tonase-hour" class="form-control" onchange="renderTonaseMonitorTable()">
+                            <option value="06:00">06:00</option>
+                            <option value="07:00">07:00</option>
+                            <option value="08:00">08:00</option>
+                            <option value="09:00">09:00</option>
+                            <option value="10:00">10:00</option>
+                            <option value="11:00">11:00</option>
+                            <option value="12:00">12:00</option>
+                            <option value="13:00">13:00</option>
+                            <option value="14:00">14:00</option>
+                            <option value="15:00">15:00</option>
+                            <option value="16:00">16:00</option>
+                            <option value="17:00">17:00</option>
+                            <option value="18:00">18:00</option>
+                            <option value="19:00">19:00</option>
+                            <option value="20:00">20:00</option>
+                            <option value="21:00">21:00</option>
+                            <option value="22:00">22:00</option>
+                            <option value="23:00">23:00</option>
+                            <option value="24:00">24:00</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="renderTonaseMonitorTable()">
+                            <i class="fa-solid fa-rotate-right"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                <div id="tonase-monitor-table-container" style="overflow-x: auto; margin-top: 20px;">
+                    <div style="text-align:center; padding: 20px; color:#64748b;">Pilih Tanggal terlebih dahulu untuk memunculkan tabel.</div>
+                </div>
+            </div>
+            
         </div>
     `,
     master: `
@@ -3415,5 +3453,148 @@ window.loadTonaseChartData = async () => {
         
     } catch(e) {
         console.error(e);
+    }
+    
+    if (typeof window.renderTonaseMonitorTable === 'function') {
+        window.renderTonaseMonitorTable();
+    }
+};
+
+window.renderTonaseMonitorTable = async () => {
+    const container = document.getElementById('tonase-monitor-table-container');
+    const dateInput = document.getElementById('monitor-tonase-date');
+    const hourInput = document.getElementById('monitor-tonase-hour');
+    
+    if (!dateInput || !hourInput || !container) return;
+    
+    if (!dateInput.value) {
+        const chartDate = document.getElementById('t-date');
+        dateInput.value = chartDate && chartDate.value ? chartDate.value : new Date().toISOString().split('T')[0];
+    }
+    
+    const date = dateInput.value;
+    const hour = hourInput.value;
+    
+    container.innerHTML = '<div style="text-align:center; padding: 20px;">Memuat data monitoring...</div>';
+    
+    try {
+        let mill = currentUser.estate;
+        if (!mill || !mill.endsWith('Mill')) {
+            mill = 'Bunga Tanjung Mill';
+        }
+        
+        const [masterRes, tonaseRes] = await Promise.all([
+            fetch(`${API_URL}/master/${mill}`),
+            fetch(`${API_URL}/tonase/${mill}/${date}`)
+        ]);
+        
+        const masterData = await masterRes.json();
+        const tonaseData = await tonaseRes.json();
+        
+        const supplyChain = masterData.supply_chain.map(s => s.estate);
+        
+        if (supplyChain.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding: 20px; color:red;">Belum ada supply chain.</div>';
+            return;
+        }
+        
+        const hours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
+        const hourIdx = hours.indexOf(hour);
+        
+        let html = `
+            <table class="data-table" style="min-width: 800px; text-align: center;">
+                <thead style="background-color: #333; color: white;">
+                    <tr>
+                        <th rowspan="2" style="position: sticky; left: 0; background-color: #000; color: #fff; z-index: 10;">ESTATE</th>
+                        <th colspan="2" style="background-color: #000; color: #fff;">FFB RECEIVED (Kg)</th>
+                        <th rowspan="2" style="background-color: #ffe600; color: #000;">ACTUAL AKUMULASI</th>
+                        <th rowspan="2" style="background-color: #87ceeb; color: #000;">PLAN / JAM (Kg)</th>
+                        <th rowspan="2" style="background-color: #90ee90; color: #000;">% ACT VS PLAN PER JAM</th>
+                        <th rowspan="2" style="background-color: #87ceeb; color: #000;">TODAY PLAN</th>
+                        <th rowspan="2" style="background-color: #ffe600; color: #000;">% REALISASI VS TODAY PLAN</th>
+                    </tr>
+                    <tr>
+                        <th style="background-color: #000; color: #fff;">ACTUAL PER JAM</th>
+                        <th style="background-color: #000; color: #fff;">ACTUAL TRIP</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        let totalActJam = 0, totalActAkumulasi = 0, totalPlanJam = 0, totalTodayPlan = 0;
+        
+        supplyChain.forEach(est => {
+            const dataEst = tonaseData.filter(t => t.estate === est);
+            
+            // Actual per jam
+            const actJamRow = dataEst.find(t => t.time_hour === hour);
+            const actJam = actJamRow ? (parseFloat(actJamRow.realized_kg) || 0) : 0;
+            
+            // Actual akumulasi (from 06:00 up to selected hour)
+            let actAkumulasi = 0;
+            for (let i = 0; i <= hourIdx; i++) {
+                const r = dataEst.find(t => t.time_hour === hours[i]);
+                if (r) actAkumulasi += (parseFloat(r.realized_kg) || 0);
+            }
+            
+            // Plan per jam
+            const planJamRow = dataEst.find(t => t.time_hour === hour);
+            const planJam = planJamRow ? (parseFloat(planJamRow.target_kg) || 0) : 0;
+            
+            // Today plan (all hours)
+            let todayPlan = 0;
+            dataEst.forEach(t => todayPlan += (parseFloat(t.target_kg) || 0));
+            
+            // Percentages
+            const pctActVsPlanJam = planJam > 0 ? (actJam / planJam * 100) : (actJam > 0 ? Infinity : 0);
+            const pctActVsTodayPlan = todayPlan > 0 ? (actAkumulasi / todayPlan * 100) : (actAkumulasi > 0 ? Infinity : 0);
+            
+            // Add to totals
+            totalActJam += actJam;
+            totalActAkumulasi += actAkumulasi;
+            totalPlanJam += planJam;
+            totalTodayPlan += todayPlan;
+            
+            html += \`
+                <tr>
+                    <td style="position: sticky; left: 0; background-color: #f1f5f9; font-weight: bold;">\${est}</td>
+                    <td>\${actJam > 0 ? actJam.toLocaleString('id-ID') : '-'}</td>
+                    <td>-</td>
+                    <td style="background-color: #fffacd;">\${actAkumulasi > 0 ? actAkumulasi.toLocaleString('id-ID') : '-'}</td>
+                    <td style="background-color: #e0f7fa;">\${planJam > 0 ? planJam.toLocaleString('id-ID') : '-'}</td>
+                    <td style="background-color: \${pctActVsPlanJam >= 100 ? '#90ee90' : (pctActVsPlanJam === 0 ? '#90ee90' : '#ffcccb')}; color: \${pctActVsPlanJam >= 100 ? '#000' : (pctActVsPlanJam === 0 ? '#000' : 'red')}; font-weight: bold;">
+                        \${pctActVsPlanJam === Infinity ? '∞' : pctActVsPlanJam.toFixed(2) + '%'}
+                    </td>
+                    <td style="background-color: #e0f7fa;">\${todayPlan > 0 ? todayPlan.toLocaleString('id-ID') : '-'}</td>
+                    <td style="background-color: #fffacd;">\${pctActVsTodayPlan === Infinity ? '∞' : pctActVsTodayPlan.toFixed(2) + '%'}</td>
+                </tr>
+            \`;
+        });
+        
+        // Total row
+        const totalPctActVsPlanJam = totalPlanJam > 0 ? (totalActJam / totalPlanJam * 100) : (totalActJam > 0 ? Infinity : 0);
+        const totalPctActVsTodayPlan = totalTodayPlan > 0 ? (totalActAkumulasi / totalTodayPlan * 100) : (totalActAkumulasi > 0 ? Infinity : 0);
+        
+        html += \`
+                <tr style="font-weight: bold; background-color: #f8cbad;">
+                    <td style="position: sticky; left: 0; background-color: #f8cbad;">TOTAL FFB</td>
+                    <td>\${totalActJam.toLocaleString('id-ID')}</td>
+                    <td>-</td>
+                    <td style="background-color: #ffe600;">\${totalActAkumulasi.toLocaleString('id-ID')}</td>
+                    <td style="background-color: #87ceeb;">\${totalPlanJam.toLocaleString('id-ID')}</td>
+                    <td style="background-color: \${totalPctActVsPlanJam >= 100 ? '#90ee90' : (totalPctActVsPlanJam === 0 ? '#90ee90' : '#ff0000')}; color: \${totalPctActVsPlanJam >= 100 ? '#000' : (totalPctActVsPlanJam === 0 ? '#000' : '#fff')};">
+                        \${totalPctActVsPlanJam === Infinity ? '∞' : totalPctActVsPlanJam.toFixed(2) + '%'}
+                    </td>
+                    <td style="background-color: #87ceeb;">\${totalTodayPlan.toLocaleString('id-ID')}</td>
+                    <td style="background-color: #ffe600;">\${totalPctActVsTodayPlan === Infinity ? '∞' : totalPctActVsTodayPlan.toFixed(2) + '%'}</td>
+                </tr>
+            </tbody></table>
+        \`;
+        
+        container.innerHTML = html;
+        
+    } catch(e) {
+        console.error(e);
+        container.innerHTML = '<div style="text-align:center; padding: 20px; color:red;">Gagal memuat tabel monitoring.</div>';
     }
 };
