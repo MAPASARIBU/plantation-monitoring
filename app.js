@@ -3555,41 +3555,41 @@ window.renderTonaseMonitorTable = async () => {
             totalPlanJam += planJam;
             totalTodayPlan += todayPlan;
             
-            html += \`
+            html += `
                 <tr>
-                    <td style="position: sticky; left: 0; background-color: #f1f5f9; font-weight: bold;">\${est}</td>
-                    <td>\${actJam > 0 ? actJam.toLocaleString('id-ID') : '-'}</td>
+                    <td style="position: sticky; left: 0; background-color: #f1f5f9; font-weight: bold;">${est}</td>
+                    <td>${actJam > 0 ? actJam.toLocaleString('id-ID') : '-'}</td>
                     <td>-</td>
-                    <td style="background-color: #fffacd;">\${actAkumulasi > 0 ? actAkumulasi.toLocaleString('id-ID') : '-'}</td>
-                    <td style="background-color: #e0f7fa;">\${planJam > 0 ? planJam.toLocaleString('id-ID') : '-'}</td>
-                    <td style="background-color: \${pctActVsPlanJam >= 100 ? '#90ee90' : (pctActVsPlanJam === 0 ? '#90ee90' : '#ffcccb')}; color: \${pctActVsPlanJam >= 100 ? '#000' : (pctActVsPlanJam === 0 ? '#000' : 'red')}; font-weight: bold;">
-                        \${pctActVsPlanJam === Infinity ? '∞' : pctActVsPlanJam.toFixed(2) + '%'}
+                    <td style="background-color: #fffacd;">${actAkumulasi > 0 ? actAkumulasi.toLocaleString('id-ID') : '-'}</td>
+                    <td style="background-color: #e0f7fa;">${planJam > 0 ? planJam.toLocaleString('id-ID') : '-'}</td>
+                    <td style="background-color: ${pctActVsPlanJam >= 100 ? '#90ee90' : (pctActVsPlanJam === 0 ? '#90ee90' : '#ffcccb')}; color: ${pctActVsPlanJam >= 100 ? '#000' : (pctActVsPlanJam === 0 ? '#000' : 'red')}; font-weight: bold;">
+                        ${pctActVsPlanJam === Infinity ? '∞' : pctActVsPlanJam.toFixed(2) + '%'}
                     </td>
-                    <td style="background-color: #e0f7fa;">\${todayPlan > 0 ? todayPlan.toLocaleString('id-ID') : '-'}</td>
-                    <td style="background-color: #fffacd;">\${pctActVsTodayPlan === Infinity ? '∞' : pctActVsTodayPlan.toFixed(2) + '%'}</td>
+                    <td style="background-color: #e0f7fa;">${todayPlan > 0 ? todayPlan.toLocaleString('id-ID') : '-'}</td>
+                    <td style="background-color: #fffacd;">${pctActVsTodayPlan === Infinity ? '∞' : pctActVsTodayPlan.toFixed(2) + '%'}</td>
                 </tr>
-            \`;
+            `;
         });
         
         // Total row
         const totalPctActVsPlanJam = totalPlanJam > 0 ? (totalActJam / totalPlanJam * 100) : (totalActJam > 0 ? Infinity : 0);
         const totalPctActVsTodayPlan = totalTodayPlan > 0 ? (totalActAkumulasi / totalTodayPlan * 100) : (totalActAkumulasi > 0 ? Infinity : 0);
         
-        html += \`
+        html += `
                 <tr style="font-weight: bold; background-color: #f8cbad;">
                     <td style="position: sticky; left: 0; background-color: #f8cbad;">TOTAL FFB</td>
-                    <td>\${totalActJam.toLocaleString('id-ID')}</td>
+                    <td>${totalActJam.toLocaleString('id-ID')}</td>
                     <td>-</td>
-                    <td style="background-color: #ffe600;">\${totalActAkumulasi.toLocaleString('id-ID')}</td>
-                    <td style="background-color: #87ceeb;">\${totalPlanJam.toLocaleString('id-ID')}</td>
-                    <td style="background-color: \${totalPctActVsPlanJam >= 100 ? '#90ee90' : (totalPctActVsPlanJam === 0 ? '#90ee90' : '#ff0000')}; color: \${totalPctActVsPlanJam >= 100 ? '#000' : (totalPctActVsPlanJam === 0 ? '#000' : '#fff')};">
-                        \${totalPctActVsPlanJam === Infinity ? '∞' : totalPctActVsPlanJam.toFixed(2) + '%'}
+                    <td style="background-color: #ffe600;">${totalActAkumulasi.toLocaleString('id-ID')}</td>
+                    <td style="background-color: #87ceeb;">${totalPlanJam.toLocaleString('id-ID')}</td>
+                    <td style="background-color: ${totalPctActVsPlanJam >= 100 ? '#90ee90' : (totalPctActVsPlanJam === 0 ? '#90ee90' : '#ff0000')}; color: ${totalPctActVsPlanJam >= 100 ? '#000' : (totalPctActVsPlanJam === 0 ? '#000' : '#fff')};">
+                        ${totalPctActVsPlanJam === Infinity ? '∞' : totalPctActVsPlanJam.toFixed(2) + '%'}
                     </td>
-                    <td style="background-color: #87ceeb;">\${totalTodayPlan.toLocaleString('id-ID')}</td>
-                    <td style="background-color: #ffe600;">\${totalPctActVsTodayPlan === Infinity ? '∞' : totalPctActVsTodayPlan.toFixed(2) + '%'}</td>
+                    <td style="background-color: #87ceeb;">${totalTodayPlan.toLocaleString('id-ID')}</td>
+                    <td style="background-color: #ffe600;">${totalPctActVsTodayPlan === Infinity ? '∞' : totalPctActVsTodayPlan.toFixed(2) + '%'}</td>
                 </tr>
             </tbody></table>
-        \`;
+        `;
         
         container.innerHTML = html;
         
