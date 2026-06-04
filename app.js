@@ -3246,15 +3246,15 @@ window.saveTonaseData = async () => {
     const inputs = document.querySelectorAll('.tonase-input');
     const entries = [];
     inputs.forEach(input => {
-        const val = parseFloat(input.value);
-        if (!isNaN(val)) {
-            const est = input.getAttribute('data-estate');
-            const hour = input.getAttribute('data-hour');
-            if (window.tonaseMode === 'plan') {
-                entries.push({ time_hour: hour, estate: est, target_kg: val });
-            } else {
-                entries.push({ time_hour: hour, estate: est, realized_kg: val });
-            }
+        let val = parseFloat(input.value);
+        if (isNaN(val)) val = 0;
+        
+        const est = input.getAttribute('data-estate');
+        const hour = input.getAttribute('data-hour');
+        if (window.tonaseMode === 'plan') {
+            entries.push({ time_hour: hour, estate: est, target_kg: val });
+        } else {
+            entries.push({ time_hour: hour, estate: est, realized_kg: val });
         }
     });
     
