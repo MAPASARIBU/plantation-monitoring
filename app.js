@@ -192,7 +192,7 @@ const views = {
                     <div class="stat-icon blue"><i class="fa-solid fa-scale-balanced"></i></div>
                     <div class="stat-details">
                         <h3>Tonase Hari Ini</h3>
-                        <p>145 T</p>
+                        <p id="dashboard-tonase-today-value">0 T</p>
                     </div>
                 </div>
                 <div class="glass-card stat-card">
@@ -1868,17 +1868,31 @@ const initDashboardChart = async () => {
         const date = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
         
         const res = await fetch(`${API_URL}/tonase/${mill}/${date}`);
-        const data = await res.json();
+        let resData = await res.json();
+        
+        // Filter by estate if user is not a Mill
+        const isMill = currentUser.estate && currentUser.estate.endsWith('Mill');
+        if (!isMill && currentUser.estate) {
+            resData = resData.filter(item => item.estate === currentUser.estate);
+        }
         
         const hours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
         const actualData = new Array(hours.length).fill(0);
+        let totalTonase = 0;
         
-        data.forEach(item => {
+        resData.forEach(item => {
             const hIdx = hours.indexOf(item.time_hour);
+            const val = (parseFloat(item.realized_kg) || 0) / 1000;
             if (hIdx !== -1) {
-                actualData[hIdx] += (parseFloat(item.realized_kg) || 0) / 1000;
+                actualData[hIdx] += val;
             }
+            totalTonase += val;
         });
+        
+        const tonaseEl = document.getElementById('dashboard-tonase-today-value');
+        if (tonaseEl) {
+            tonaseEl.innerText = totalTonase.toFixed(1) + ' T';
+        }
         
         if (dashboardTonaseChartInstance) dashboardTonaseChartInstance.destroy();
         
