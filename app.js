@@ -970,7 +970,7 @@ const renderHarvestingTable = () => {
     const renderDailyRow = (h) => {
         const statusEl = (h.status === 'Selesai' || h.status === 'Closed') ? 
             '<span style="color:green;font-weight:bold;">Closed</span>' : 
-            `<button type="button" class="btn btn-primary" style="padding:2px 8px; font-size:0.8rem; background-color:orange; border:none; border-radius:15px; font-weight:bold;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}', ${h.est_janjang || 0}, ${h.plan_pemanen || 0}, ${h.est_kg || 0}, '${h.divisi}')">Open</button>`;
+            `<button type="button" class="btn btn-primary" style="padding:2px 8px; font-size:0.8rem; background-color:orange; border:none; border-radius:15px; font-weight:bold;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}', ${h.est_janjang || 0}, ${h.plan_pemanen || 0}, ${h.est_kg || 0}, '${h.divisi}')">Update</button>`;
         
         let dateStr = h.date;
         if(typeof dateStr === 'string' && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
