@@ -1,5 +1,12 @@
 // API Base URL
 const API_URL = window.location.protocol === 'file:' ? 'http://localhost:3005/api' : '/api';
+let currentUser = null;
+let db = {}; // Will hold fetched data
+
+window.getLocalDate = () => {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+};
 
 // Disable DataLabels globally so it only shows where explicitly enabled
 if (typeof ChartDataLabels !== 'undefined') {
@@ -792,7 +799,7 @@ const renderVehicleTable = () => {
     if (!tbody) return;
     tbody.innerHTML = '';
     
-    const today = new Date().toISOString().split('T')[0];
+    const today = window.getLocalDate();
     let todaysVehicles = db.vehicles.filter(v => v.date === today);
     
     if (currentUser.estate.endsWith('Mill')) {
@@ -1246,7 +1253,7 @@ window.setArrival = async (id) => {
 };
 
 window.openAddRealizationModal = (id, block, plan, startDate) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = window.getLocalDate();
     const html = `
         <div class="modal-overlay" id="modal-add">
             <div class="modal-content">
@@ -1995,7 +2002,7 @@ const bindForms = () => {
             janjang: document.getElementById('v-janjang').value,
             timeDepart: autoTimeDepart,
             timeArrive: "",
-            date: new Date().toISOString().split('T')[0],
+            date: window.getLocalDate(),
             estate: currentUser.estate,
             divisi: blockData ? blockData.divisi : '-'
         };
@@ -2019,7 +2026,7 @@ const bindForms = () => {
             target: parseFloat(document.getElementById('u-target').value),
             targetWorkers: parseInt(document.getElementById('u-workers').value) || 0,
             worker: document.getElementById('u-worker').value,
-            startDate: new Date().toISOString().split('T')[0]
+            startDate: window.getLocalDate()
         };
         try {
             await fetch(`${API_URL}/upkeep`, {
@@ -2314,7 +2321,7 @@ const navigate = (viewId) => {
         if (currentUser.role === 'Krani Mill' || currentUser.role === 'Manager Mill' || currentUser.role === 'Admin' || currentUser.role === 'Office Assistant Mill') {
             document.querySelectorAll('.btn-tonase-action').forEach(b => b.style.display = 'inline-block');
             if (!document.getElementById('t-date').value) {
-                document.getElementById('t-date').value = new Date().toISOString().split('T')[0];
+                document.getElementById('t-date').value = window.getLocalDate();
             }
         } else {
             document.querySelectorAll('.btn-tonase-action').forEach(b => b.style.display = 'none');
@@ -3477,7 +3484,7 @@ window.promptAddUpkeepProgress = (id, block, type, target, realized) => {
     const existing = document.getElementById(modalId);
     if (existing) existing.remove();
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = window.getLocalDate();
     const sisa = Math.max(0, target - realized).toFixed(2);
 
     const modalHTML = `
@@ -3659,7 +3666,7 @@ window.openTonaseModal = (mode) => {
     }
     
     if (!document.getElementById('t-date').value) {
-        document.getElementById('t-date').value = new Date().toISOString().split('T')[0];
+        document.getElementById('t-date').value = window.getLocalDate();
     }
     
     loadTonaseInputData();
@@ -3858,7 +3865,7 @@ window.loadTonaseChartData = async () => {
     if (!mill || !mill.endsWith('Mill')) {
         mill = 'Bunga Tanjung Mill'; // default fallback for Admin
     }
-    const date = new Date().toISOString().split('T')[0];
+    const date = window.getLocalDate();
     
     try {
         const res = await fetch(`${API_URL}/tonase/${mill}/${date}`);
@@ -3925,7 +3932,7 @@ window.renderTonaseMonitorTable = async () => {
     
     if (!dateInput || !hourInput || !container) return;
     
-    const today = new Date().toISOString().split('T')[0];
+    const today = window.getLocalDate();
     dateInput.value = today;
     const date = today;
     const hour = hourInput.value;
