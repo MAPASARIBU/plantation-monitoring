@@ -1157,7 +1157,7 @@ window.promptEditUser = (id) => {
     if (!user) return;
     
     let estatesOptions = `<option value="Semua Estate (Khusus Admin)">Semua Estate (Khusus Admin)</option>`;
-    const allEstates = ['Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bukik Estate', 'Air Buluh Estate', 'Malin Demang Estate', 'Batu Kuda Estate', 'Sungai Jerinjing Estate', 'Muko Muko Estate', 'Talang Petai Estate', 'Sungai Kiang Estate', 'Tanah Rekah Estate', 'Air Majunto Estate', 'Bunga Tanjung Mill', 'Muko Muko Mill'];
+    const allEstates = ['Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bukik Estate', 'Air Buluh Estate', 'Malin Demang Estate', 'Batu Kuda Estate', 'Sungai Jerinjing Estate', 'Muko Muko Estate', 'Talang Petai Estate', 'Sungai Kiang Estate', 'Tanah Rekah Estate', 'Air Majunto Estate', 'Smallholder', 'Bunga Tanjung Mill', 'Muko Muko Mill'];
     allEstates.forEach(est => {
         estatesOptions += `<option value="${est}" ${user.estate === est ? 'selected' : ''}>${est}</option>`;
     });
@@ -2458,7 +2458,8 @@ window.renderMasterTables = () => {
                 'Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bikuk Estate',
                 'Batu Kuda Estate', 'Air Buluh Estate', 'Maling Demang Estate',
                 'Tanah Rekah Estate', 'Muko Muko Estate', 'Sei Jerinjing Estate',
-                'Talang Petai Estate', 'Sungai Kiang Estate', 'Air Majunto Estate'
+                'Talang Petai Estate', 'Sungai Kiang Estate', 'Air Majunto Estate',
+                'Smallholder'
             ];
             const currentSC = (masterData.supply_chain || []).map(sc => sc.estate);
             
@@ -3335,6 +3336,7 @@ window.getEstateCode = (estateName) => {
     if (name.includes('TALANG PETAI')) return 'TPEE';
     if (name.includes('SUNGAI KIANG')) return 'SKGE';
     if (name.includes('AIR MAJUNTO')) return 'AMEE';
+    if (name.includes('SMALLHOLDER')) return 'PHK3';
     
     const words = name.replace(' ESTATE', '').split(' ');
     if (words.length === 1) return words[0].substring(0, 3) + 'E';
