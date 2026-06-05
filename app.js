@@ -459,6 +459,16 @@ const views = {
                             <label>Dosis (Kg / Pokok)</label>
                             <input type="number" step="0.1" id="p-dosis" class="form-control" placeholder="Contoh: 1.5" required>
                         </div>
+                        <div class="form-group" style="display:flex; gap: 10px;">
+                            <div style="flex:1;">
+                                <label>Target Area (Ha)</label>
+                                <input type="number" step="any" id="p-target-ha" class="form-control" readonly style="background-color: #f1f5f9; cursor: not-allowed;" placeholder="Otomatis" required>
+                            </div>
+                            <div style="flex:1;">
+                                <label>Target Pekerja</label>
+                                <input type="number" id="p-target-workers" class="form-control" placeholder="Jml Orang" required>
+                            </div>
+                        </div>
                         <div class="form-group">
                             <label>Target Total (Kg)</label>
                             <input type="number" step="any" id="p-target" class="form-control" readonly style="background-color: #f1f5f9; cursor: not-allowed;" placeholder="Dihitung otomatis" required>
@@ -466,6 +476,58 @@ const views = {
                         <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
                             <i class="fa-solid fa-plus"></i> Buat Rencana
                         </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div id="modal-pemupukan-realization" class="modal-overlay" style="display:none;">
+                <div class="modal-content animate-fade-in" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3 id="pr-title">Update Realisasi Pemupukan</h3>
+                        <button type="button" class="modal-close" onclick="document.getElementById('modal-pemupukan-realization').style.display='none';">&times;</button>
+                    </div>
+                    <form id="form-pemupukan-realization" style="margin-top: 15px;">
+                        <input type="hidden" id="pr-id">
+                        
+                        <div style="display:flex; gap:15px; margin-bottom:15px;">
+                            <div style="flex:1; background: #e0f2fe; padding:15px; border-radius:8px; border-left: 4px solid #3b82f6;">
+                                <h4 style="margin:0 0 10px 0; color:#1e3a8a; font-size:0.95rem;">Plan / Target:</h4>
+                                <div style="font-size:0.85rem; color:#1e40af; line-height:1.5;">
+                                    <div style="display:flex; justify-content:space-between;"><span>Pupuk:</span> <strong id="pr-plan-kg">0 Kg</strong></div>
+                                    <div style="display:flex; justify-content:space-between;"><span>Area:</span> <strong id="pr-plan-ha">0 Ha</strong></div>
+                                    <div style="display:flex; justify-content:space-between;"><span>Pekerja:</span> <strong id="pr-plan-workers">0 Orang</strong></div>
+                                </div>
+                            </div>
+                            <div style="flex:1; background: #f1f5f9; padding:15px; border-radius:8px; border-left: 4px solid #94a3b8;">
+                                <h4 style="margin:0 0 10px 0; color:#334155; font-size:0.95rem;">Realisasi Sebelumnya:</h4>
+                                <div style="font-size:0.85rem; color:#475569; line-height:1.5;">
+                                    <div style="display:flex; justify-content:space-between;"><span>Pupuk:</span> <strong id="pr-real-kg">0 Kg</strong></div>
+                                    <div style="display:flex; justify-content:space-between;"><span>Area:</span> <strong id="pr-real-ha">0 Ha</strong></div>
+                                    <div style="display:flex; justify-content:space-between;"><span>Pekerja:</span> <strong id="pr-real-workers">0 Orang</strong></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <label style="font-weight:600; margin-bottom:10px; display:block; font-size:0.95rem;">Masukkan Input Realisasi (Sekali Input):</label>
+                        <div class="form-group">
+                            <label>Realisasi Pupuk (Kg)</label>
+                            <input type="number" step="any" id="pr-input-kg" class="form-control" placeholder="Total Kg" required>
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <div class="form-group" style="flex:1;">
+                                <label>Realisasi Area (Ha)</label>
+                                <input type="number" step="any" id="pr-input-ha" class="form-control" placeholder="Total Ha" required>
+                            </div>
+                            <div class="form-group" style="flex:1;">
+                                <label>Realisasi Pekerja</label>
+                                <input type="number" id="pr-input-workers" class="form-control" placeholder="Total Orang" required>
+                            </div>
+                        </div>
+                        
+                        <div style="display:flex; gap:10px; margin-top:10px;">
+                            <button type="button" class="btn btn-secondary" style="flex:1; justify-content:center; background:#64748b; color:white; border:none;" onclick="document.getElementById('modal-pemupukan-realization').style.display='none';">Batal</button>
+                            <button type="submit" class="btn btn-primary" style="flex:1; justify-content:center;">Simpan Realisasi</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -479,11 +541,12 @@ const views = {
                         <thead>
                             <tr>
                                 <th>Mulai</th>
+                                <th>DIV</th>
                                 <th>Blok</th>
                                 <th>Pupuk</th>
-                                <th>Target (Kg)</th>
-                                <th>Realisasi (Kg)</th>
-                                <th>Progress</th>
+                                <th>Target<br><small>(Kg | Ha | Orang)</small></th>
+                                <th>Realisasi<br><small>(Kg | Ha | Orang)</small></th>
+                                <th>Progress<br><small>(Kg)</small></th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -1126,8 +1189,17 @@ const renderPemupukanTable = () => {
     const renderRow = (p) => {
         const tKg = p.targetkg || p.targetKg || 0;
         const rKg = p.realizedkg || p.realizedKg || 0;
+        const tHa = p.targetha || p.targetHa || 0;
+        const rHa = p.realizedha || p.realizedHa || 0;
+        const tWorkers = p.targetworkers || p.targetWorkers || 0;
+        const rWorkers = p.realizedworkers || p.realizedWorkers || 0;
         const sDate = p.startdate || p.startDate;
         const pct = getProgressStr(rKg, tKg);
+        
+        // Find divisi from master blok
+        const bData = masterData.blok.find(x => x.name === p.block);
+        const divisi = bData ? bData.divisi : '-';
+
         let actionBtn = '-';
         if (p.status === 'Selesai') {
             actionBtn = `
@@ -1135,10 +1207,10 @@ const renderPemupukanTable = () => {
                     <span class="status-badge status-done" style="text-align:center;">Selesai</span>
                 </div>
             `;
-        } else if (currentUser && currentUser.role && (currentUser.role.includes('Krani') || currentUser.role === 'Admin')) {
+        } else {
             actionBtn = `
                 <div style="display:flex; flex-direction:column; gap:3px;">
-                    <button class="btn btn-primary" style="padding: 2px 6px; font-size: 0.7rem;" onclick="openAddRealizationModal(${p.id}, '${p.block}', '${p.plan}', '${sDate}')"><i class="fa-solid fa-plus"></i> Tambah</button>
+                    <button class="btn btn-primary" style="padding: 2px 6px; font-size: 0.7rem; background:#3b82f6; border:none;" onclick="openPemupukanRealizationModal(${p.id}, '${p.block}', '${p.plan}', ${tKg}, ${rKg}, ${tHa}, ${rHa}, ${tWorkers}, ${rWorkers})"><i class="fa-solid fa-pen-to-square"></i> Update</button>
                     <button class="btn btn-logout" style="padding: 2px 6px; font-size: 0.7rem; background: #ef4444; color: white; border-radius: 4px;" onclick="closePemupukan(${p.id}, '${p.block}')"><i class="fa-solid fa-check"></i> Tutup</button>
                 </div>
             `;
@@ -1147,10 +1219,23 @@ const renderPemupukanTable = () => {
         return `
             <tr>
                 <td>${sDate || '-'}</td>
+                <td><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px;">${divisi}</span></td>
                 <td><strong><a href="#" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;" onclick="viewPemupukanHistory(${p.id}, '${p.block}', '${p.plan}'); return false;">${p.block}</a></strong></td>
                 <td>${p.plan}</td>
-                <td>${tKg}</td>
-                <td>${rKg}</td>
+                <td>
+                    <div style="display:flex; flex-direction:column; gap:2px; font-size:0.8rem;">
+                        <span><strong>Kg:</strong> ${tKg}</span>
+                        <span><strong>Ha:</strong> ${tHa}</span>
+                        <span><strong>Orang:</strong> ${tWorkers}</span>
+                    </div>
+                </td>
+                <td>
+                    <div style="display:flex; flex-direction:column; gap:2px; font-size:0.8rem;">
+                        <span><strong>Kg:</strong> ${rKg}</span>
+                        <span><strong>Ha:</strong> ${rHa}</span>
+                        <span><strong>Orang:</strong> ${rWorkers}</span>
+                    </div>
+                </td>
                 <td>
                     <div style="display:flex; align-items:center; gap:10px;">
                         <div class="progress-wrapper" style="width: 100px; margin:0;"><div class="progress-fill" style="width: ${pct}%"></div></div>
@@ -1165,9 +1250,31 @@ const renderPemupukanTable = () => {
     aktif.forEach(p => tbody.innerHTML += renderRow(p));
 
     if (selesai.length > 0) {
-        tbody.innerHTML += `<tr><td colspan="7" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Selesai</td></tr>`;
+        tbody.innerHTML += `<tr><td colspan="8" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Selesai</td></tr>`;
         selesai.forEach(p => tbody.innerHTML += renderRow(p));
     }
+};
+
+window.openPemupukanRealizationModal = (id, block, plan, tKg, rKg, tHa, rHa, tWorkers, rWorkers) => {
+    document.getElementById('pr-id').value = id;
+    document.getElementById('pr-title').innerText = `Update Realisasi: ${block} (${plan})`;
+    
+    // Set Target Display
+    document.getElementById('pr-plan-kg').innerText = `${tKg} Kg`;
+    document.getElementById('pr-plan-ha').innerText = `${tHa} Ha`;
+    document.getElementById('pr-plan-workers').innerText = `${tWorkers} Orang`;
+    
+    // Set Current Realization Display
+    document.getElementById('pr-real-kg').innerText = `${rKg} Kg`;
+    document.getElementById('pr-real-ha').innerText = `${rHa} Ha`;
+    document.getElementById('pr-real-workers').innerText = `${rWorkers} Orang`;
+    
+    // Clear Inputs
+    document.getElementById('pr-input-kg').value = '';
+    document.getElementById('pr-input-ha').value = '';
+    document.getElementById('pr-input-workers').value = '';
+    
+    document.getElementById('modal-pemupukan-realization').style.display = 'flex';
 };
 window.deleteHarvestingDaily = async (id) => {
     if(confirm('Apakah Anda yakin ingin menghapus data rencana harian ini?')) {
@@ -2297,7 +2404,9 @@ const bindForms = () => {
             startDate: document.getElementById('p-start').value,
             block: document.getElementById('p-block').value,
             plan: document.getElementById('p-plan').value,
-            targetKg: parseFloat(document.getElementById('p-target').value),
+            targetKg: parseFloat(document.getElementById('p-target').value) || 0,
+            targetHa: parseFloat(document.getElementById('p-target-ha').value) || 0,
+            targetWorkers: parseInt(document.getElementById('p-target-workers').value) || 0,
             estate: currentUser.estate
         };
         try {
@@ -2322,8 +2431,10 @@ const bindForms = () => {
         if (!pDosis || !pBlock || !pTarget) return;
         const dosis = parseFloat(pDosis.value) || 0;
         const blockName = pBlock.value;
+        const pTargetHa = document.getElementById('p-target-ha');
         if (!blockName || dosis <= 0) {
             pTarget.value = '';
+            if (pTargetHa) pTargetHa.value = '';
             return;
         }
         
@@ -2338,13 +2449,37 @@ const bindForms = () => {
             }
             const target = (dosis * totalStand).toFixed(1);
             pTarget.value = target;
+            if (pTargetHa) pTargetHa.value = selectedOption.getAttribute('data-gross') || 0;
         } else {
             pTarget.value = '';
+            if (pTargetHa) pTargetHa.value = '';
         }
     };
     
     if (pDosis) pDosis.addEventListener('input', calculatePemupukanTarget);
     if (pBlock) pBlock.addEventListener('change', calculatePemupukanTarget);
+
+    const formPemupukanRealization = document.getElementById('form-pemupukan-realization');
+    if(formPemupukanRealization) formPemupukanRealization.onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('pr-id').value;
+        const payload = {
+            realizedKg: parseFloat(document.getElementById('pr-input-kg').value) || 0,
+            realizedHa: parseFloat(document.getElementById('pr-input-ha').value) || 0,
+            realizedWorkers: parseInt(document.getElementById('pr-input-workers').value) || 0
+        };
+        try {
+            await fetch(`${API_URL}/pemupukan/${id}/add`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            formPemupukanRealization.reset();
+            const modal = document.getElementById('modal-pemupukan-realization');
+            if (modal) modal.style.display = 'none';
+            await loadData();
+        } catch (e) { console.error(e); }
+    };
     
     const formHarvestingMonthly = document.getElementById('form-harvesting-monthly');
     if (formHarvestingMonthly) formHarvestingMonthly.onsubmit = async (e) => {

@@ -110,9 +110,17 @@ async function initDB() {
             id SERIAL PRIMARY KEY,
             startDate TEXT,
             block TEXT, plan TEXT, targetKg REAL, realizedKg REAL, status TEXT DEFAULT 'Aktif',
-            estate TEXT DEFAULT 'Bunga Tanjung Estate'
+            estate TEXT DEFAULT 'Bunga Tanjung Estate',
+            targetHa REAL DEFAULT 0,
+            targetWorkers INTEGER DEFAULT 0,
+            realizedHa REAL DEFAULT 0,
+            realizedWorkers INTEGER DEFAULT 0
         )`);
         try { await pool.query("ALTER TABLE pemupukan ADD COLUMN estate TEXT DEFAULT 'Bunga Tanjung Estate'"); } catch(e) {}
+        try { await pool.query("ALTER TABLE pemupukan ADD COLUMN targetHa REAL DEFAULT 0"); } catch(e) {}
+        try { await pool.query("ALTER TABLE pemupukan ADD COLUMN targetWorkers INTEGER DEFAULT 0"); } catch(e) {}
+        try { await pool.query("ALTER TABLE pemupukan ADD COLUMN realizedHa REAL DEFAULT 0"); } catch(e) {}
+        try { await pool.query("ALTER TABLE pemupukan ADD COLUMN realizedWorkers INTEGER DEFAULT 0"); } catch(e) {}
 
         await pool.query(`CREATE TABLE IF NOT EXISTS pemupukan_history (
             id SERIAL PRIMARY KEY,
@@ -620,10 +628,10 @@ app.put('/api/upkeep/:id/close', async (req, res) => {
 // PEMUPUKAN
 app.post('/api/pemupukan', async (req, res) => {
     try {
-        const { startDate, block, plan, targetKg, estate } = req.body;
+        const { startDate, block, plan, targetKg, estate, targetHa, targetWorkers } = req.body;
         const result = await pool.query(
-            'INSERT INTO pemupukan (startDate, block, plan, targetKg, realizedKg, status, estate) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id',
-            [startDate, block, plan, targetKg, 0, 'Aktif', estate || 'Bunga Tanjung Estate']
+            'INSERT INTO pemupukan (startDate, block, plan, targetKg, realizedKg, status, estate, targetHa, targetWorkers, realizedHa, realizedWorkers) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id',
+            [startDate, block, plan, targetKg, 0, 'Aktif', estate || 'Bunga Tanjung Estate', targetHa || 0, targetWorkers || 0, 0, 0]
         );
         res.json({ id: result.rows[0].id });
     } catch (err) {
@@ -634,13 +642,10 @@ app.post('/api/pemupukan', async (req, res) => {
 app.put('/api/pemupukan/:id/add', async (req, res) => {
     const client = await pool.connect();
     try {
-        const { additionalKg, dateAdded, manpower } = req.body;
+        const { realizedKg, realizedHa, realizedWorkers } = req.body;
         await client.query('BEGIN');
-        await client.query('UPDATE pemupukan SET realizedKg = realizedKg + $1 WHERE id = $2', [additionalKg, req.params.id]);
-        await client.query(
-            'INSERT INTO pemupukan_history (pemupukan_id, dateAdded, addedKg, manpower) VALUES ($1,$2,$3,$4)',
-            [req.params.id, dateAdded, additionalKg, manpower || 0]
-        );
+        // Because it's a one-time daily plan, we OVERWRITE the realization instead of adding
+        await client.query('UPDATE pemupukan SET realizedKg = $1, realizedHa = $2, realizedWorkers = $3, status = $4 WHERE id = $5', [realizedKg || 0, realizedHa || 0, realizedWorkers || 0, 'Selesai', req.params.id]);
         await client.query('COMMIT');
         res.json({ success: true });
     } catch (err) {
