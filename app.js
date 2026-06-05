@@ -185,7 +185,7 @@ const views = {
                     <div class="stat-icon green"><i class="fa-solid fa-truck"></i></div>
                     <div class="stat-details">
                         <h3>Truk Aktif</h3>
-                        <p>12 <span style="font-size: 0.8rem; font-weight: normal; color: var(--success);"><i class="fa-solid fa-arrow-up"></i> 2</span></p>
+                        <p id="dashboard-truk-aktif-value">0</p>
                     </div>
                 </div>
                 <div class="glass-card stat-card">
@@ -2303,6 +2303,26 @@ const initDashboardChart = async () => {
         const tonaseEl = document.getElementById('dashboard-tonase-today-value');
         if (tonaseEl) {
             tonaseEl.innerText = totalTonase.toFixed(1) + ' T';
+        }
+        
+        // Calculate Active Trucks
+        const trukEl = document.getElementById('dashboard-truk-aktif-value');
+        if (trukEl && db.vehicles) {
+            let activeTrucks = 0;
+            const isMillUser = currentUser && currentUser.estate && currentUser.estate.endsWith('Mill');
+            const allowedEstates = isMillUser ? (masterData.supply_chain || []).map(sc => sc.estate) : [];
+            
+            db.vehicles.forEach(v => {
+                const tArrive = v.timearrive || v.timeArrive;
+                if (!tArrive || tArrive.trim() === '') { // It's active
+                    if (isMillUser) {
+                        if (allowedEstates.includes(v.estate)) activeTrucks++;
+                    } else {
+                        if (v.estate === currentUser.estate) activeTrucks++;
+                    }
+                }
+            });
+            trukEl.innerText = activeTrucks;
         }
         
         if (dashboardTonaseChartInstance) dashboardTonaseChartInstance.destroy();
