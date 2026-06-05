@@ -461,7 +461,7 @@ const views = {
                         </div>
                         <div class="form-group">
                             <label>Target Total (Kg)</label>
-                            <input type="number" id="p-target" class="form-control" readonly style="background-color: #f1f5f9; cursor: not-allowed;" placeholder="Dihitung otomatis" required>
+                            <input type="number" step="any" id="p-target" class="form-control" readonly style="background-color: #f1f5f9; cursor: not-allowed;" placeholder="Dihitung otomatis" required>
                         </div>
                         <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
                             <i class="fa-solid fa-plus"></i> Buat Rencana
