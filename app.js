@@ -926,9 +926,11 @@ const renderVehicleTable = () => {
     const today = window.getLocalDate();
     let todaysVehicles = db.vehicles.filter(v => v.date === today);
     
-    if (currentUser.estate.endsWith('Mill')) {
+    if (currentUser.estate && currentUser.estate.endsWith('Mill')) {
         const allowedEstates = (masterData.supply_chain || []).map(sc => sc.estate);
         todaysVehicles = todaysVehicles.filter(v => allowedEstates.includes(v.estate));
+    } else if (currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+        todaysVehicles = todaysVehicles.filter(v => v.estate === currentUser.estate);
     }
     
     const layout = document.getElementById('vehicle-module-layout');
@@ -3518,9 +3520,11 @@ window.loadHistoricalVehicle = () => {
         return v.date >= start && v.date <= end;
     });
     
-    if (currentUser.estate.endsWith('Mill')) {
+    if (currentUser.estate && currentUser.estate.endsWith('Mill')) {
         const allowedEstates = (masterData.supply_chain || []).map(sc => sc.estate);
         filtered = filtered.filter(v => allowedEstates.includes(v.estate));
+    } else if (currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+        filtered = filtered.filter(v => v.estate === currentUser.estate);
     }
     
     if (filtered.length === 0) {
