@@ -2507,7 +2507,7 @@ window.renderMasterTables = () => {
         if (scContainer) {
             const allEstates = [
                 'Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bikuk Estate',
-                'Batu Kuda Estate', 'Air Buluh Estate', 'Maling Demang Estate',
+                'Batu Kuda Estate', 'Air Buluh Estate', 'Malin Deman Estate',
                 'Tanah Rekah Estate', 'Muko Muko Estate', 'Sei Jerinjing Estate',
                 'Talang Petai Estate', 'Sungai Kiang Estate', 'Air Majunto Estate',
                 'Small Holder'
@@ -3506,7 +3506,7 @@ window.updateLocationList = () => {
             <option>Air Bikuk Estate</option>
             <option>Batu Kuda Estate</option>
             <option>Air Buluh Estate</option>
-            <option>Maling Demang Estate</option>
+            <option>Malin Deman Estate</option>
             <option>Tanah Rekah Estate</option>
             <option>Muko Muko Estate</option>
             <option>Sei Jerinjing Estate</option>
