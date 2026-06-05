@@ -295,8 +295,8 @@ const views = {
         </div>
     `,
     vehicle: `
-        <div id="vehicle-module-layout" class="animate-fade-in module-layout">
-            <div id="vehicle-form-container" class="glass-card form-container">
+        <div id="vehicle-module-layout" class="animate-fade-in" style="padding-top: 10px;">
+            <div id="modal-vehicle-input" class="modal-overlay" style="display:none;"><div class="modal-content animate-fade-in"><div class="modal-header"><h3>Input Pergerakan</h3><button type="button" class="modal-close" onclick="document.getElementById('modal-vehicle-input').style.display='none';">&times;</button></div>
                 <h2>Input Pergerakan</h2>
                 <form id="form-vehicle" style="margin-top: 20px;">
                     <div class="form-group">
@@ -331,7 +331,7 @@ const views = {
             <div class="glass-card table-wrapper">
                 <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
                     <h2>Tabel Monitoring Truk</h2>
-                    <button type="button" class="btn" style="background-color: white; color: var(--text-primary); border: 2px solid var(--danger); font-weight: bold; padding: 6px 15px;" onclick="promptHistoricalVehicle()">Historical</button>
+                    <button type="button" class="btn" style="background-color: white; color: var(--text-primary); border: 2px solid var(--danger); font-weight: bold; padding: 6px 15px;" onclick="promptHistoricalVehicle()">Historical</button></div>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
@@ -2171,6 +2171,8 @@ const bindForms = () => {
                 body: JSON.stringify(payload)
             });
             formVehicle.reset();
+            const modal = document.getElementById('modal-vehicle-input');
+            if (modal) modal.style.display = 'none';
             await loadData();
         } catch (e) { console.error(e); }
     };
@@ -2194,6 +2196,8 @@ const bindForms = () => {
                 body: JSON.stringify(payload)
             });
             formUpkeep.reset();
+            const modal = document.getElementById('modal-upkeep-input');
+            if (modal) modal.style.display = 'none';
             await loadData();
         } catch (e) { console.error(e); }
     };
@@ -2215,6 +2219,8 @@ const bindForms = () => {
                 body: JSON.stringify(payload)
             });
             formPemupukan.reset();
+            const modal = document.getElementById('modal-pemupukan-input');
+            if (modal) modal.style.display = 'none';
             await loadData();
         } catch (e) { console.error(e); }
     };
@@ -2246,6 +2252,8 @@ const bindForms = () => {
             
             if (res.ok) {
                 formHarvestingMonthly.reset();
+            const modal = document.getElementById('modal-harvesting-monthly-input');
+            if (modal) modal.style.display = 'none';
                 currentMonthlyPlanId = null;
                 document.getElementById('btn-hm-submit').innerHTML = '<i class="fa-solid fa-calendar-days"></i> Simpan Rencana Bulanan';
                 await loadData();
@@ -2288,6 +2296,8 @@ const bindForms = () => {
                 body: JSON.stringify(payload)
             });
             formHarvestingDaily.reset();
+            const modal = document.getElementById('modal-harvesting-daily-input');
+            if (modal) modal.style.display = 'none';
             document.getElementById('hd-est-janjang').innerText = '0';
             document.getElementById('hd-est-kg').innerText = '0 Kg';
             window.selectedDailyTrucks = [];
@@ -2323,6 +2333,8 @@ const bindForms = () => {
                 return;
             }
             formUser.reset();
+            const modal = document.getElementById('modal-user-input');
+            if (modal) modal.style.display = 'none';
             await loadUsers();
         } catch (e) { 
             console.error(e); 
