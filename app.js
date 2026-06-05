@@ -472,6 +472,7 @@ const views = {
                         <div class="form-group">
                             <label>Target Total (Kg)</label>
                             <input type="number" step="any" id="p-target" class="form-control" readonly style="background-color: #f1f5f9; cursor: not-allowed;" placeholder="Dihitung otomatis" required>
+                            <div id="p-estimate" style="margin-top: 8px; font-size: 0.85rem; color: #10b981; font-weight: 600; display: none;"></div>
                         </div>
                         <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
                             <i class="fa-solid fa-plus"></i> Buat Rencana
@@ -2432,9 +2433,25 @@ const bindForms = () => {
         const dosis = parseFloat(pDosis.value) || 0;
         const blockName = pBlock.value;
         const pTargetHa = document.getElementById('p-target-ha');
+        const pTargetWorkers = document.getElementById('p-target-workers');
+        const pEstimate = document.getElementById('p-estimate');
+
+        const updateEstimate = (targetVal) => {
+            if (!pEstimate || !pTargetWorkers) return;
+            const workers = parseInt(pTargetWorkers.value) || 0;
+            if (workers > 0 && targetVal > 0) {
+                const est = (targetVal / workers).toFixed(1);
+                pEstimate.innerHTML = `<i class="fa-solid fa-chart-line"></i> Estimasi Prestasi: ${est} Kg / Orang`;
+                pEstimate.style.display = 'block';
+            } else {
+                pEstimate.style.display = 'none';
+            }
+        };
+
         if (!blockName || dosis <= 0) {
             pTarget.value = '';
             if (pTargetHa) pTargetHa.value = '';
+            if (pEstimate) pEstimate.style.display = 'none';
             return;
         }
         
@@ -2450,14 +2467,18 @@ const bindForms = () => {
             const target = (dosis * totalStand).toFixed(1);
             pTarget.value = target;
             if (pTargetHa) pTargetHa.value = selectedOption.getAttribute('data-gross') || 0;
+            updateEstimate(parseFloat(target));
         } else {
             pTarget.value = '';
             if (pTargetHa) pTargetHa.value = '';
+            if (pEstimate) pEstimate.style.display = 'none';
         }
     };
     
     if (pDosis) pDosis.addEventListener('input', calculatePemupukanTarget);
     if (pBlock) pBlock.addEventListener('change', calculatePemupukanTarget);
+    const pTargetWorkersEl = document.getElementById('p-target-workers');
+    if (pTargetWorkersEl) pTargetWorkersEl.addEventListener('input', calculatePemupukanTarget);
 
     const formPemupukanRealization = document.getElementById('form-pemupukan-realization');
     if(formPemupukanRealization) formPemupukanRealization.onsubmit = async (e) => {
