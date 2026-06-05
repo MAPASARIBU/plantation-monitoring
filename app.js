@@ -1445,8 +1445,8 @@ window.calcHarvestingEstimate = () => {
         const estJanjang = Math.round(ts * (akp / 100));
         const estKg = Math.round(estJanjang * bjr);
         
-        document.getElementById('hd-est-janjang').innerText = estJanjang;
-        document.getElementById('hd-est-kg').innerText = estKg + ' Kg';
+        document.getElementById('hd-est-janjang').innerText = estJanjang.toLocaleString('id-ID');
+        document.getElementById('hd-est-kg').innerText = estKg.toLocaleString('id-ID') + ' Kg';
     } else {
         document.getElementById('hd-est-janjang').innerText = '0';
         document.getElementById('hd-est-kg').innerText = '0 Kg';
@@ -2178,8 +2178,8 @@ const bindForms = () => {
         const block = document.getElementById('hd-block').value;
         const akp = parseFloat(document.getElementById('hd-akp').value);
         
-        const estJanjang = parseInt(document.getElementById('hd-est-janjang').innerText.replace(/,/g, '')) || 0;
-        const estKg = parseFloat(document.getElementById('hd-est-kg').innerText.replace(/,/g, '').replace(' Kg', '')) || 0;
+        const estJanjang = parseInt(document.getElementById('hd-est-janjang').innerText.replace(/,/g, '').replace(/\./g, '')) || 0;
+        const estKg = parseFloat(document.getElementById('hd-est-kg').innerText.replace(/,/g, '').replace(/\./g, '').replace(' Kg', '')) || 0;
         
         const allocatedTrucks = window.selectedDailyTrucks || [];
 
