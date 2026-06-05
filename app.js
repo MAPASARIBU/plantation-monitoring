@@ -161,6 +161,9 @@ window.changeActiveEstate = (estate) => {
     if (currentUser) {
         currentUser.estate = estate;
         localStorage.setItem('agrimonitor_user', JSON.stringify(currentUser));
+        const activeNav = document.querySelector('.nav-item.active');
+        const currentViewId = activeNav ? activeNav.getAttribute('data-view') : 'dashboard';
+        navigate(currentViewId);
         loadData();
     }
 };
