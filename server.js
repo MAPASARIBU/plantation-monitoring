@@ -674,6 +674,22 @@ app.put('/api/pemupukan/:id/close', async (req, res) => {
     }
 });
 
+app.delete('/api/pemupukan/:id', async (req, res) => {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        await client.query('DELETE FROM pemupukan_history WHERE pemupukan_id = $1', [req.params.id]);
+        await client.query('DELETE FROM pemupukan WHERE id = $1', [req.params.id]);
+        await client.query('COMMIT');
+        res.json({ success: true });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        res.status(500).json({ error: err.message });
+    } finally {
+        client.release();
+    }
+});
+
 // HARVESTING
 app.get('/api/harvesting/:estate', async (req, res) => {
     try {
