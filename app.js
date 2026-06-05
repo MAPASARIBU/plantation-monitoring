@@ -632,10 +632,17 @@ const views = {
                     </div>
                     
                     <form id="form-tonase" style="margin-top: 15px;" onsubmit="event.preventDefault(); saveTonaseData();">
-                        <div class="form-group" style="display: flex; gap: 15px; max-width: 400px;">
+                        <div class="form-group" style="display: flex; gap: 15px; max-width: 600px; margin-bottom: 15px;">
                             <div style="flex:1;">
                                 <label>Tanggal</label>
                                 <input type="date" id="t-date" class="form-control" required onchange="loadTonaseInputData()">
+                            </div>
+                            <div style="flex:1;" id="container-plan-mode" style="display:none;">
+                                <label>Mode Input (Plan)</label>
+                                <select id="t-plan-mode" class="form-control" onchange="loadTonaseInputData()">
+                                    <option value="single">Opsi 1 (Manual 1 per 1 Jam)</option>
+                                    <option value="grid">Opsi 2 (19 Baris + Copy-Paste)</option>
+                                </select>
                             </div>
                             <div style="flex:1;" id="container-t-hour">
                                 <label>Jam</label>
@@ -3774,10 +3781,13 @@ window.openTonaseModal = (mode) => {
     
     if (mode === 'plan') {
         document.getElementById('tonase-form-title').innerText = 'Input Target (Plan) Tonase';
-        document.getElementById('container-t-hour').style.display = 'none';
+        if (document.getElementById('container-plan-mode')) document.getElementById('container-plan-mode').style.display = 'block';
+        const planMode = document.getElementById('t-plan-mode') ? document.getElementById('t-plan-mode').value : 'single';
+        document.getElementById('container-t-hour').style.display = planMode === 'grid' ? 'none' : 'block';
         document.getElementById('t-btn-label').innerText = 'Simpan Plan (Target)';
     } else {
         document.getElementById('tonase-form-title').innerText = 'Input Realisasi Tonase';
+        if (document.getElementById('container-plan-mode')) document.getElementById('container-plan-mode').style.display = 'none';
         document.getElementById('container-t-hour').style.display = 'block';
         document.getElementById('t-btn-label').innerText = 'Simpan Realisasi';
     }
@@ -3891,7 +3901,16 @@ window.loadTonaseInputData = async () => {
         const tonaseData = await tonaseRes.json();
         window.tonaseDataCache = tonaseData;
         
-        const hours = window.tonaseMode === 'plan' 
+        let planMode = 'single';
+        if (document.getElementById('t-plan-mode')) {
+            planMode = document.getElementById('t-plan-mode').value;
+        }
+
+        if (window.tonaseMode === 'plan') {
+            document.getElementById('container-t-hour').style.display = planMode === 'grid' ? 'none' : 'block';
+        }
+
+        const hours = (window.tonaseMode === 'plan' && planMode === 'grid')
             ? ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00']
             : [hourSelect];
         
@@ -3899,11 +3918,11 @@ window.loadTonaseInputData = async () => {
             <table class="data-table" style="min-width: 600px;">
                 <thead>
                     <tr>
-                        <th style="min-width: 80px; position: sticky; left: 0; top: 0; background: var(--background-color); z-index: 11;">HOUR</th>
+                        <th style="min-width: 80px; position: sticky; left: 0; top: 0; background: #ffffff; z-index: 11; border-bottom: 2px solid #ddd; padding: 10px;">HOUR</th>
         `;
         supplyChain.forEach(est => {
             let thText = est.toUpperCase();
-            html += `<th style="position: sticky; top: 0; background: var(--background-color); z-index: 10; min-width: 80px;">${thText}</th>`;
+            html += `<th style="position: sticky; top: 0; background: #ffffff; z-index: 10; min-width: 80px; border-bottom: 2px solid #ddd; padding: 10px;">${thText}</th>`;
         });
         html += `</tr></thead><tbody>`;
         
