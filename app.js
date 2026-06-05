@@ -1298,11 +1298,16 @@ window.deletePemupukan = async (id) => {
                     setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
                 }
             } else {
-                alert('Gagal menghapus data.');
+                let errMsg = 'Gagal menghapus data.';
+                try {
+                    const errData = await res.json();
+                    errMsg += ' Error: ' + errData.error;
+                } catch(e) {}
+                alert(errMsg);
             }
         } catch (e) {
             console.error(e);
-            alert('Terjadi kesalahan koneksi.');
+            alert('Terjadi kesalahan koneksi: ' + e.message);
         }
     }
 };
