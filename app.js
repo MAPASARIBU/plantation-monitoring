@@ -224,28 +224,8 @@ const views = {
                     <div class="view-header">
                         <h2>Progress Panen Hari Ini</h2>
                     </div>
-                    <div style="margin-top: 20px;">
-                        <div style="margin-bottom: 15px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                <span>Divisi 1</span>
-                                <strong>85%</strong>
-                            </div>
-                            <div class="progress-wrapper"><div class="progress-fill" style="width: 85%"></div></div>
-                        </div>
-                        <div style="margin-bottom: 15px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                <span>Divisi 2</span>
-                                <strong>60%</strong>
-                            </div>
-                            <div class="progress-wrapper"><div class="progress-fill" style="width: 60%; background-color: var(--warning)"></div></div>
-                        </div>
-                        <div style="margin-bottom: 15px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                <span>Divisi 3</span>
-                                <strong>40%</strong>
-                            </div>
-                            <div class="progress-wrapper"><div class="progress-fill" style="width: 40%; background-color: var(--danger)"></div></div>
-                        </div>
+                    <div id="dashboard-progress-panen-container" style="margin-top: 20px;">
+                        <p style="color:var(--text-secondary); text-align:center;">Loading...</p>
                     </div>
                 </div>
             </div>
@@ -2268,15 +2248,57 @@ const initDashboardChart = async () => {
         const hours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
         const actualData = new Array(hours.length).fill(0);
         let totalTonase = 0;
+        let estateProgress = {};
         
         resData.forEach(item => {
             const hIdx = hours.indexOf(item.time_hour);
             const val = (parseFloat(item.realized_kg) || 0) / 1000;
+            const targetVal = (parseFloat(item.target_kg) || 0) / 1000;
+            
             if (hIdx !== -1) {
                 actualData[hIdx] += val;
             }
             totalTonase += val;
+            
+            const est = item.estate || 'Unknown Estate';
+            if (!estateProgress[est]) estateProgress[est] = { target: 0, realized: 0 };
+            estateProgress[est].realized += val;
+            estateProgress[est].target += targetVal;
         });
+        
+        const progressContainer = document.getElementById('dashboard-progress-panen-container');
+        if (progressContainer) {
+            let progressHtml = '';
+            const estates = Object.keys(estateProgress);
+            if (estates.length === 0) {
+                progressHtml = '<p style="color:var(--text-secondary); text-align:center;">Belum ada data progress hari ini</p>';
+            } else {
+                estates.forEach(est => {
+                    const data = estateProgress[est];
+                    let pct = 0;
+                    if (data.target > 0) pct = Math.round((data.realized / data.target) * 100);
+                    else if (data.realized > 0) pct = 100;
+                    if (pct > 100) pct = 100;
+                    
+                    let bgColor = '';
+                    if (pct < 50) bgColor = 'background-color: var(--danger);';
+                    else if (pct < 80) bgColor = 'background-color: var(--warning);';
+                    
+                    progressHtml += `
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                <span>${est}</span>
+                                <strong>${pct}%</strong>
+                            </div>
+                            <div class="progress-wrapper" title="Realized: ${data.realized.toFixed(1)} T / Target: ${data.target.toFixed(1)} T">
+                                <div class="progress-fill" style="width: ${pct}%; ${bgColor}"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            progressContainer.innerHTML = progressHtml;
+        }
         
         const tonaseEl = document.getElementById('dashboard-tonase-today-value');
         if (tonaseEl) {
