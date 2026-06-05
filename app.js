@@ -165,6 +165,27 @@ window.changeActiveEstate = (estate) => {
     }
 };
 
+window.toggleEstateUI = (roleId, dropdownId, containerId, labelId) => {
+    const roleEl = document.getElementById(roleId);
+    const dropdownEl = document.getElementById(dropdownId);
+    const containerEl = document.getElementById(containerId);
+    const labelEl = document.getElementById(labelId);
+    if (!roleEl || !dropdownEl || !containerEl || !labelEl) return;
+    
+    const multiRoles = ['Admin', 'Senior Field Manager', 'Manager', 'Manager Mill'];
+    if (multiRoles.includes(roleEl.value)) {
+        dropdownEl.style.display = 'none';
+        dropdownEl.removeAttribute('required');
+        containerEl.style.display = 'flex';
+        labelEl.innerText = 'Penempatan Estate / Mill (Bisa Pilih Banyak)';
+    } else {
+        dropdownEl.style.display = 'block';
+        dropdownEl.setAttribute('required', 'required');
+        containerEl.style.display = 'none';
+        labelEl.innerText = 'Penempatan Estate / Mill';
+    }
+};
+
 const applyRBAC = () => {
     if (!currentUser) return;
     const role = currentUser.role;
@@ -812,7 +833,7 @@ const views = {
                     </div>
                     <div class="form-group">
                         <label>Role</label>
-                        <select id="u-role" class="form-control" required>
+                        <select id="u-role" class="form-control" required onchange="window.toggleEstateUI('u-role', 'u-estate-dropdown', 'u-estate-container', 'u-estate-label')">
                             <option>Senior Field Manager</option>
                             <option>Manager</option>
                             <option>Manager Mill</option>
@@ -829,7 +850,26 @@ const views = {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Penempatan Estate / Mill (Bisa Pilih Banyak)</label>
+                        <label id="u-estate-label">Penempatan Estate / Mill (Bisa Pilih Banyak)</label>
+                        <select id="u-estate-dropdown" class="form-control" style="display: none;">
+                            <option value="" disabled selected>-- Pilih Estate / Mill --</option>
+                            <option>Semua Estate (Khusus Admin)</option>
+                            <option>Bunga Tanjung Estate</option>
+                            <option>Sungai Teramang Estate</option>
+                            <option>Air Bukik Estate</option>
+                            <option>Air Buluh Estate</option>
+                            <option>Malin Demang Estate</option>
+                            <option>Batu Kuda Estate</option>
+                            <option>Sungai Jerinjing Estate</option>
+                            <option>Muko Muko Estate</option>
+                            <option>Talang Petai Estate</option>
+                            <option>Sungai Kiang Estate</option>
+                            <option>Tanah Rekah Estate</option>
+                            <option>Air Majunto Estate</option>
+                            <option>Small Holder</option>
+                            <option>Bunga Tanjung Mill</option>
+                            <option>Muko Muko Mill</option>
+                        </select>
                         <div id="u-estate-container" class="form-control" style="height: 150px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-color);">
                             <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Semua Estate (Khusus Admin)"> Semua Estate (Khusus Admin)</label>
                             <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Bunga Tanjung Estate"> Bunga Tanjung Estate</label>
@@ -1255,7 +1295,9 @@ window.promptEditUser = (id) => {
     const userEstates = user.estate ? user.estate.split(',').map(e => e.trim()) : [];
     let estatesOptions = `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="eu_estate" value="Semua Estate (Khusus Admin)" ${userEstates.includes('Semua Estate (Khusus Admin)') ? 'checked' : ''}> Semua Estate (Khusus Admin)</label>`;
     const allEstates = ['Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bukik Estate', 'Air Buluh Estate', 'Malin Demang Estate', 'Batu Kuda Estate', 'Sungai Jerinjing Estate', 'Muko Muko Estate', 'Talang Petai Estate', 'Sungai Kiang Estate', 'Tanah Rekah Estate', 'Air Majunto Estate', 'Small Holder', 'Bunga Tanjung Mill', 'Muko Muko Mill'];
+    let dropdownOptions = '';
     allEstates.forEach(est => {
+        dropdownOptions += `<option value="${est}" ${user.estate === est ? 'selected' : ''}>${est}</option>`;
         estatesOptions += `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="eu_estate" value="${est}" ${userEstates.includes(est) ? 'checked' : ''}> ${est}</label>`;
     });
 
@@ -1269,7 +1311,7 @@ window.promptEditUser = (id) => {
                 
                 <div class="form-group">
                     <label>Role</label>
-                    <select id="eu-role" class="form-control">
+                    <select id="eu-role" class="form-control" onchange="window.toggleEstateUI('eu-role', 'eu-estate-dropdown', 'eu-estate-container', 'eu-estate-label')">
                         <option value="Manager" ${user.role === 'Manager' ? 'selected' : ''}>Manager</option>
                         <option value="Manager Mill" ${user.role === 'Manager Mill' ? 'selected' : ''}>Manager Mill</option>
                         <option value="Askep" ${user.role === 'Askep' ? 'selected' : ''}>Askep</option>
@@ -1285,7 +1327,11 @@ window.promptEditUser = (id) => {
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Penempatan (Estate / Mill) - Bisa Pilih Banyak</label>
+                    <label id="eu-estate-label">Penempatan (Estate / Mill) - Bisa Pilih Banyak</label>
+                    <select id="eu-estate-dropdown" class="form-control" style="display: none;">
+                        <option value="Semua Estate (Khusus Admin)" ${user.estate === 'Semua Estate (Khusus Admin)' ? 'selected' : ''}>Semua Estate (Khusus Admin)</option>
+                        ${dropdownOptions}
+                    </select>
                     <div id="eu-estate-container" class="form-control" style="height: 150px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-color);">
                         ${estatesOptions}
                     </div>
@@ -1299,11 +1345,17 @@ window.promptEditUser = (id) => {
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', html);
+    setTimeout(() => {
+        window.toggleEstateUI('eu-role', 'eu-estate-dropdown', 'eu-estate-container', 'eu-estate-label');
+    }, 10);
 };
 
 window.editUser = async (id) => {
     const role = document.getElementById('eu-role').value;
-    const estate = Array.from(document.querySelectorAll('input[name="eu_estate"]:checked')).map(cb => cb.value).join(', ');
+    const multiRoles = ['Admin', 'Senior Field Manager', 'Manager', 'Manager Mill'];
+    const estate = multiRoles.includes(role) 
+        ? Array.from(document.querySelectorAll('input[name="eu_estate"]:checked')).map(cb => cb.value).join(', ')
+        : document.getElementById('eu-estate-dropdown').value;
     const password = document.getElementById('eu-password').value;
     
     try {
@@ -2237,11 +2289,17 @@ const bindForms = () => {
     const formUser = document.getElementById('form-user');
     if(formUser) formUser.onsubmit = async (e) => {
         e.preventDefault();
+        const role = document.getElementById('u-role').value;
+        const multiRoles = ['Admin', 'Senior Field Manager', 'Manager', 'Manager Mill'];
+        const estate = multiRoles.includes(role)
+            ? Array.from(document.querySelectorAll('input[name="u_estate"]:checked')).map(cb => cb.value).join(', ')
+            : document.getElementById('u-estate-dropdown').value;
+            
         const payload = {
             username: document.getElementById('u-username').value,
             password: document.getElementById('u-password').value,
-            role: document.getElementById('u-role').value,
-            estate: Array.from(document.querySelectorAll('input[name="u_estate"]:checked')).map(cb => cb.value).join(', ')
+            role: role,
+            estate: estate
         };
         try {
             const res = await fetch(`${API_URL}/users`, {
@@ -2488,7 +2546,11 @@ const navigate = (viewId) => {
         }
         loadTonaseChartData();
     }
-    if(viewId === 'users') { renderUsersTable(); bindForms(); }
+    if(viewId === 'users') { 
+        renderUsersTable(); 
+        bindForms(); 
+        window.toggleEstateUI('u-role', 'u-estate-dropdown', 'u-estate-container', 'u-estate-label');
+    }
     if(viewId === 'master') { renderMasterTables(); }
     
     // Read-only logic for Senior Field Manager
