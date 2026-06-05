@@ -1223,7 +1223,7 @@ const renderPemupukanTable = () => {
             <tr>
                 <td>${sDate || '-'}</td>
                 <td><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px;">${divisi}</span></td>
-                <td><strong><a href="#" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;" onclick="viewPemupukanHistory(${p.id}, '${p.block}', '${p.plan}'); return false;">${p.block}</a></strong></td>
+                <td><strong><a href="#" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;" onclick="viewPemupukanSummary('${p.block}', '${p.plan}', ${tKg}, ${tHa}, ${tWorkers}, ${rKg}, ${rHa}, ${rWorkers}); return false;">${p.block}</a></strong></td>
                 <td>${p.plan}</td>
                 <td>
                     <div style="display:flex; flex-direction:column; gap:2px; font-size:0.8rem;">
@@ -1675,39 +1675,59 @@ window.submitRealization = async (id, startDate) => {
     } catch(e) { console.error(e); }
 };
 
-window.viewPemupukanHistory = async (id, block, plan) => {
-    try {
-        const res = await fetch(`${API_URL}/pemupukan/${id}/history`);
-        const data = await res.json();
-        
-        let rows = '';
-        if(data.length === 0) {
-            rows = '<tr><td colspan="3" style="text-align:center;">Belum ada riwayat</td></tr>';
-        } else {
-            data.forEach(h => {
-                const dAdded = h.dateadded || h.dateAdded;
-                const aKg = h.addedkg || h.addedKg;
-                const prestasi = (h.manpower && h.manpower > 0) ? (aKg / h.manpower).toFixed(1) + ' Kg/HK' : '-';
-                rows += `<tr><td>${dAdded}</td><td><strong>+ ${aKg} Kg</strong></td><td>${h.manpower || 0} Org <br><small style="color:gray;">${prestasi}</small></td></tr>`;
-            });
-        }
-        
-        const html = `
-            <div class="modal-overlay" id="modal-history">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3>Riwayat Blok ${block} <span style="font-size:0.8rem; font-weight:normal;">(${plan})</span></h3>
-                        <button class="modal-close" onclick="document.getElementById('modal-history').remove()">&times;</button>
+window.viewPemupukanSummary = (block, plan, tKg, tHa, tWorkers, rKg, rHa, rWorkers) => {
+    const pKgHk = rWorkers > 0 ? (rKg / rWorkers).toFixed(1) : 0;
+    const pHaHk = rWorkers > 0 ? (rHa / rWorkers).toFixed(2) : 0;
+    const pKgHa = rHa > 0 ? (rKg / rHa).toFixed(1) : 0;
+
+    const html = `
+        <div class="modal-overlay" id="modal-summary">
+            <div class="modal-content animate-fade-in" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3>Summary Pemupukan: ${block}</h3>
+                    <button class="modal-close" onclick="document.getElementById('modal-summary').remove()">&times;</button>
+                </div>
+                <div style="margin-top: 15px;">
+                    <div style="display:flex; gap:15px; margin-bottom:15px;">
+                        <div style="flex:1; background: #e0f2fe; padding:15px; border-radius:8px; border-left: 4px solid #3b82f6;">
+                            <h4 style="margin:0 0 10px 0; color:#1e3a8a; font-size:0.95rem;">Plan / Target</h4>
+                            <div style="font-size:0.85rem; color:#1e40af; line-height:1.5;">
+                                <div style="display:flex; justify-content:space-between;"><span>Pupuk (${plan}):</span> <strong>${tKg} Kg</strong></div>
+                                <div style="display:flex; justify-content:space-between;"><span>Area:</span> <strong>${tHa} Ha</strong></div>
+                                <div style="display:flex; justify-content:space-between;"><span>Pekerja:</span> <strong>${tWorkers} HK</strong></div>
+                            </div>
+                        </div>
+                        <div style="flex:1; background: #dcfce7; padding:15px; border-radius:8px; border-left: 4px solid #10b981;">
+                            <h4 style="margin:0 0 10px 0; color:#166534; font-size:0.95rem;">Realisasi</h4>
+                            <div style="font-size:0.85rem; color:#15803d; line-height:1.5;">
+                                <div style="display:flex; justify-content:space-between;"><span>Pupuk:</span> <strong>${rKg} Kg</strong></div>
+                                <div style="display:flex; justify-content:space-between;"><span>Area:</span> <strong>${rHa} Ha</strong></div>
+                                <div style="display:flex; justify-content:space-between;"><span>Pekerja:</span> <strong>${rWorkers} HK</strong></div>
+                            </div>
+                        </div>
                     </div>
-                    <table class="history-table">
-                        <thead><tr><th>Tanggal</th><th>Penambahan</th><th>Manpower (Prestasi)</th></tr></thead>
-                        <tbody>${rows}</tbody>
-                    </table>
+                    <div style="background: #f8fafc; padding:15px; border-radius:8px; border: 1px solid #e2e8f0;">
+                        <h4 style="margin:0 0 10px 0; color:#334155; font-size:0.95rem; text-align:center;">Prestasi Pekerja & Dosis Aktual</h4>
+                        <div style="display:flex; justify-content:space-around; text-align:center; margin-top:15px;">
+                            <div>
+                                <div style="font-size:1.2rem; font-weight:bold; color:#0f172a;">${pKgHk}</div>
+                                <div style="font-size:0.75rem; color:#64748b; text-transform:uppercase;">Kg / HK</div>
+                            </div>
+                            <div>
+                                <div style="font-size:1.2rem; font-weight:bold; color:#0f172a;">${pHaHk}</div>
+                                <div style="font-size:0.75rem; color:#64748b; text-transform:uppercase;">Ha / HK</div>
+                            </div>
+                            <div>
+                                <div style="font-size:1.2rem; font-weight:bold; color:#0f172a;">${pKgHa}</div>
+                                <div style="font-size:0.75rem; color:#64748b; text-transform:uppercase;">Kg / Ha</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', html);
-    } catch(e) { console.error(e); }
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
 };
 
 window.closePemupukan = async (id, block) => {
