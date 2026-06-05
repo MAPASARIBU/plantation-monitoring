@@ -1212,7 +1212,6 @@ const renderPemupukanTable = () => {
             actionBtn = `
                 <div style="display:flex; flex-direction:column; gap:3px;">
                     <button class="btn btn-primary" style="padding: 2px 6px; font-size: 0.7rem; background:#3b82f6; border:none;" onclick="openPemupukanRealizationModal(${p.id}, '${p.block}', '${p.plan}', ${tKg}, ${rKg}, ${tHa}, ${rHa}, ${tWorkers}, ${rWorkers})"><i class="fa-solid fa-pen-to-square"></i> Update</button>
-                    <button class="btn btn-logout" style="padding: 2px 6px; font-size: 0.7rem; background: #ef4444; color: white; border-radius: 4px;" onclick="closePemupukan(${p.id}, '${p.block}')"><i class="fa-solid fa-check"></i> Tutup</button>
                 </div>
             `;
         }
