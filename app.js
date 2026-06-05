@@ -1289,8 +1289,7 @@ window.deletePemupukan = async (id) => {
         try {
             const res = await fetch(`${API_URL}/pemupukan/${id}`, { method: 'DELETE' });
             if (res.ok) {
-                db.pemupukan = db.pemupukan.filter(p => p.id !== id);
-                renderPemupukanTable();
+                await loadData();
                 
                 const toast = document.getElementById('toast');
                 if (toast) {
@@ -1313,9 +1312,7 @@ window.deleteHarvestingDaily = async (id) => {
         try {
             const res = await fetch(`${API_URL}/harvesting/daily/${id}`, { method: 'DELETE' });
             if (res.ok) {
-                // The websocket / poll will update the UI, but we can optimistically update
-                db.harvesting_daily = db.harvesting_daily.filter(h => h.id !== id);
-                renderHarvestingTable();
+                await loadData();
                 
                 const toast = document.getElementById('toast');
                 if (toast) {
