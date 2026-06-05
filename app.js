@@ -2327,13 +2327,13 @@ const bindForms = () => {
             return;
         }
         
-        // Find the selected block from masterData
-        const blockData = (masterData.blok || []).find(b => b.name === blockName);
-        if (blockData) {
-            let totalStand = parseFloat(blockData.total_stand) || 0;
+        // Get data safely from the selected option itself to prevent duplicate name mismatch
+        const selectedOption = pBlock.options[pBlock.selectedIndex];
+        if (selectedOption) {
+            let totalStand = parseFloat(selectedOption.getAttribute('data-totalstand')) || 0;
             if (totalStand === 0) {
-                const sph = parseFloat(blockData.sph) || 0;
-                const grossArea = parseFloat(blockData.gross_area) || 0;
+                const sph = parseFloat(selectedOption.getAttribute('data-sph')) || 0;
+                const grossArea = parseFloat(selectedOption.getAttribute('data-gross')) || 0;
                 totalStand = sph * grossArea;
             }
             const target = (dosis * totalStand).toFixed(1);
@@ -3509,7 +3509,7 @@ window.filterBlok = (divisiName, targetId) => {
     }
     
     const blokOpts = `<option value="" disabled selected>-- Pilih Blok --</option>` + 
-        filteredBloks.map(b => `<option value="${b.name}" data-bjr="${b.bjr}">${b.name}</option>`).join('');
+        filteredBloks.map(b => `<option value="${b.name}" data-bjr="${b.bjr}" data-totalstand="${b.total_stand}" data-sph="${b.sph}" data-gross="${b.gross_area}">${b.name}</option>`).join('');
     elBlok.innerHTML = blokOpts;
     
     if (targetId === 'h-block') {
@@ -3530,7 +3530,7 @@ window.populateSelects = () => {
 
     const elBlok = document.querySelectorAll('.select-blok');
     const blokOpts = `<option value="" disabled selected>-- Pilih Blok --</option>` + 
-        masterData.blok.map(b => `<option value="${b.name}" data-bjr="${b.bjr}">${b.name}</option>`).join('');
+        masterData.blok.map(b => `<option value="${b.name}" data-bjr="${b.bjr}" data-totalstand="${b.total_stand}" data-sph="${b.sph}" data-gross="${b.gross_area}">${b.name}</option>`).join('');
     elBlok.forEach(el => el.innerHTML = blokOpts);
     
     const elTruk = document.querySelectorAll('.select-truk');
