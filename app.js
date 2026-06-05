@@ -469,10 +469,14 @@ const views = {
                                 <input type="number" id="p-target-workers" class="form-control" placeholder="Jml Orang" required>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Target Total (Kg)</label>
-                            <input type="number" step="any" id="p-target" class="form-control" readonly style="background-color: #f1f5f9; cursor: not-allowed;" placeholder="Dihitung otomatis" required>
-                            <div id="p-estimate" style="margin-top: 8px; font-size: 0.85rem; color: #10b981; font-weight: 600; display: none;"></div>
+                        <div class="form-group" style="display:flex; gap: 15px; align-items: flex-start;">
+                            <div style="flex:1;">
+                                <label>Target Total (Kg)</label>
+                                <input type="number" step="any" id="p-target" class="form-control" readonly style="background-color: #f1f5f9; cursor: not-allowed;" placeholder="Dihitung otomatis" required>
+                            </div>
+                            <div style="flex:1; padding-top: 25px;">
+                                <div id="p-estimate" style="font-size: 0.85rem; color: #10b981; font-weight: 600; display: none; line-height: 1.5;"></div>
+                            </div>
                         </div>
                         <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
                             <i class="fa-solid fa-plus"></i> Buat Rencana
@@ -2469,12 +2473,13 @@ const bindForms = () => {
         const pTargetWorkers = document.getElementById('p-target-workers');
         const pEstimate = document.getElementById('p-estimate');
 
-        const updateEstimate = (targetVal) => {
+        const updateEstimate = (targetVal, targetHaVal) => {
             if (!pEstimate || !pTargetWorkers) return;
             const workers = parseInt(pTargetWorkers.value) || 0;
             if (workers > 0 && targetVal > 0) {
-                const est = (targetVal / workers).toFixed(1);
-                pEstimate.innerHTML = `<i class="fa-solid fa-chart-line"></i> Estimasi Prestasi: ${est} Kg / Orang`;
+                const estKg = (targetVal / workers).toFixed(1);
+                const estHa = targetHaVal > 0 ? (targetHaVal / workers).toFixed(2) : 0;
+                pEstimate.innerHTML = `<i class="fa-solid fa-chart-line"></i> Prestasi: ${estKg} Kg / Org<br><i class="fa-solid fa-chart-area"></i> Prestasi: ${estHa} Ha / Org`;
                 pEstimate.style.display = 'block';
             } else {
                 pEstimate.style.display = 'none';
@@ -2499,8 +2504,9 @@ const bindForms = () => {
             }
             const target = (dosis * totalStand).toFixed(1);
             pTarget.value = target;
-            if (pTargetHa) pTargetHa.value = selectedOption.getAttribute('data-gross') || 0;
-            updateEstimate(parseFloat(target));
+            const targetHaVal = parseFloat(selectedOption.getAttribute('data-gross')) || 0;
+            if (pTargetHa) pTargetHa.value = targetHaVal;
+            updateEstimate(parseFloat(target), targetHaVal);
         } else {
             pTarget.value = '';
             if (pTargetHa) pTargetHa.value = '';
