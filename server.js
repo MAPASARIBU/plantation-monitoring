@@ -98,6 +98,7 @@ async function initDB() {
         try { await pool.query("ALTER TABLE upkeep ADD COLUMN status TEXT DEFAULT 'Aktif'"); } catch(e) {}
         try { await pool.query("ALTER TABLE upkeep ADD COLUMN targetWorkers INTEGER DEFAULT 0"); } catch(e) {}
         try { await pool.query("ALTER TABLE upkeep ADD COLUMN startDate TEXT"); } catch(e) {}
+        try { await pool.query("ALTER TABLE upkeep ADD COLUMN estate TEXT DEFAULT 'Bunga Tanjung Estate'"); } catch(e) {}
 
         await pool.query(`CREATE TABLE IF NOT EXISTS upkeep_history (
             id SERIAL PRIMARY KEY,
@@ -108,8 +109,10 @@ async function initDB() {
         await pool.query(`CREATE TABLE IF NOT EXISTS pemupukan (
             id SERIAL PRIMARY KEY,
             startDate TEXT,
-            block TEXT, plan TEXT, targetKg REAL, realizedKg REAL, status TEXT DEFAULT 'Aktif'
+            block TEXT, plan TEXT, targetKg REAL, realizedKg REAL, status TEXT DEFAULT 'Aktif',
+            estate TEXT DEFAULT 'Bunga Tanjung Estate'
         )`);
+        try { await pool.query("ALTER TABLE pemupukan ADD COLUMN estate TEXT DEFAULT 'Bunga Tanjung Estate'"); } catch(e) {}
 
         await pool.query(`CREATE TABLE IF NOT EXISTS pemupukan_history (
             id SERIAL PRIMARY KEY,
@@ -565,10 +568,10 @@ app.put('/api/vehicles/:id', async (req, res) => {
 // UPKEEP
 app.post('/api/upkeep', async (req, res) => {
     try {
-        const { block, type, target, worker, targetWorkers, startDate } = req.body;
+        const { block, type, target, worker, targetWorkers, startDate, estate } = req.body;
         const result = await pool.query(
-            'INSERT INTO upkeep (block, type, target, realized, worker, status, targetWorkers, startDate) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id',
-            [block, type, target, 0, worker, 'Aktif', targetWorkers || 0, startDate || '']
+            'INSERT INTO upkeep (block, type, target, realized, worker, status, targetWorkers, startDate, estate) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id',
+            [block, type, target, 0, worker, 'Aktif', targetWorkers || 0, startDate || '', estate || 'Bunga Tanjung Estate']
         );
         res.json({ id: result.rows[0].id });
     } catch (err) {
@@ -617,10 +620,10 @@ app.put('/api/upkeep/:id/close', async (req, res) => {
 // PEMUPUKAN
 app.post('/api/pemupukan', async (req, res) => {
     try {
-        const { startDate, block, plan, targetKg } = req.body;
+        const { startDate, block, plan, targetKg, estate } = req.body;
         const result = await pool.query(
-            'INSERT INTO pemupukan (startDate, block, plan, targetKg, realizedKg, status) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
-            [startDate, block, plan, targetKg, 0, 'Aktif']
+            'INSERT INTO pemupukan (startDate, block, plan, targetKg, realizedKg, status, estate) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id',
+            [startDate, block, plan, targetKg, 0, 'Aktif', estate || 'Bunga Tanjung Estate']
         );
         res.json({ id: result.rows[0].id });
     } catch (err) {

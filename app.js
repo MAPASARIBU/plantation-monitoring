@@ -990,7 +990,10 @@ const renderUpkeepTable = () => {
     const tbody = document.getElementById('tbody-upkeep');
     if (!tbody) return;
     tbody.innerHTML = '';
-    const allUpkeep = [...db.upkeep].reverse();
+    let allUpkeep = [...db.upkeep].reverse();
+    if (currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+        allUpkeep = allUpkeep.filter(u => !u.estate || u.estate === currentUser.estate);
+    }
     const aktif = allUpkeep.filter(u => u.status !== 'Selesai');
     const selesai = allUpkeep.filter(u => u.status === 'Selesai');
     
@@ -1046,7 +1049,10 @@ const renderPemupukanTable = () => {
     const tbody = document.getElementById('tbody-pemupukan');
     if (!tbody) return;
     tbody.innerHTML = '';
-    const allPemupukan = [...db.pemupukan].reverse();
+    let allPemupukan = [...db.pemupukan].reverse();
+    if (currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+        allPemupukan = allPemupukan.filter(p => !p.estate || p.estate === currentUser.estate);
+    }
     const aktif = allPemupukan.filter(p => p.status !== 'Selesai');
     const selesai = allPemupukan.filter(p => p.status === 'Selesai');
 
@@ -2178,7 +2184,8 @@ const bindForms = () => {
             target: parseFloat(document.getElementById('u-target').value),
             targetWorkers: parseInt(document.getElementById('u-workers').value) || 0,
             worker: document.getElementById('u-worker').value,
-            startDate: window.getLocalDate()
+            startDate: window.getLocalDate(),
+            estate: currentUser.estate
         };
         try {
             await fetch(`${API_URL}/upkeep`, {
@@ -2198,7 +2205,8 @@ const bindForms = () => {
             startDate: document.getElementById('p-start').value,
             block: document.getElementById('p-block').value,
             plan: document.getElementById('p-plan').value,
-            targetKg: parseFloat(document.getElementById('p-target').value)
+            targetKg: parseFloat(document.getElementById('p-target').value),
+            estate: currentUser.estate
         };
         try {
             await fetch(`${API_URL}/pemupukan`, {
