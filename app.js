@@ -852,7 +852,7 @@ const renderVehicleTable = () => {
     const layout = document.getElementById('vehicle-module-layout');
     const formContainer = document.getElementById('vehicle-form-container');
     if (formContainer && layout) {
-        if (currentUser.role.includes('Security') || currentUser.role === 'Security Mill' || currentUser.role === 'Manager') {
+        if (currentUser.role.includes('Security') || currentUser.role === 'Security Mill' || currentUser.role === 'Manager' || currentUser.role === 'Manager Mill') {
             formContainer.style.display = 'none';
             layout.style.gridTemplateColumns = '1fr';
         } else {
