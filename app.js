@@ -1202,16 +1202,23 @@ const renderPemupukanTable = () => {
         const divisi = bData ? bData.divisi : '-';
 
         let actionBtn = '-';
+        let hapusBtn = '';
+        if (currentUser && currentUser.role && (currentUser.role.includes('Manager') || currentUser.role === 'Admin')) {
+            hapusBtn = `<button class="btn btn-logout btn-hapus-hover" style="padding: 2px 6px; font-size: 0.7rem; background: #dc2626; color: white; border-radius: 4px; border:none; margin-top:3px; width: 100%;" onclick="deletePemupukan(${p.id})"><i class="fa-solid fa-trash"></i> Hapus</button>`;
+        }
+
         if (p.status === 'Selesai') {
             actionBtn = `
-                <div style="display:flex; flex-direction:column; gap:3px;">
-                    <span class="status-badge status-done" style="text-align:center;">Selesai</span>
+                <div class="action-group-hover" style="display:flex; flex-direction:column; gap:3px; align-items: center; min-height: 40px; justify-content: center;">
+                    <span class="status-badge status-done" style="text-align:center; width: 100%; box-sizing: border-box;">Selesai</span>
+                    ${hapusBtn}
                 </div>
             `;
         } else {
             actionBtn = `
-                <div style="display:flex; flex-direction:column; gap:3px;">
-                    <button class="btn btn-primary" style="padding: 2px 6px; font-size: 0.7rem; background:#3b82f6; border:none;" onclick="openPemupukanRealizationModal(${p.id}, '${p.block}', '${p.plan}', ${tKg}, ${rKg}, ${tHa}, ${rHa}, ${tWorkers}, ${rWorkers})"><i class="fa-solid fa-pen-to-square"></i> Update</button>
+                <div class="action-group-hover" style="display:flex; flex-direction:column; gap:3px; min-height: 40px; justify-content: center;">
+                    <button class="btn btn-primary" style="padding: 2px 6px; font-size: 0.7rem; background:#3b82f6; border:none; width: 100%;" onclick="openPemupukanRealizationModal(${p.id}, '${p.block}', '${p.plan}', ${tKg}, ${rKg}, ${tHa}, ${rHa}, ${tWorkers}, ${rWorkers})"><i class="fa-solid fa-pen-to-square"></i> Update</button>
+                    ${hapusBtn}
                 </div>
             `;
         }
@@ -1276,6 +1283,31 @@ window.openPemupukanRealizationModal = (id, block, plan, tKg, rKg, tHa, rHa, tWo
     
     document.getElementById('modal-pemupukan-realization').style.display = 'flex';
 };
+
+window.deletePemupukan = async (id) => {
+    if(confirm('Apakah Anda yakin ingin menghapus data rencana pemupukan ini? Seluruh data realisasi yang terikat juga akan terhapus.')) {
+        try {
+            const res = await fetch(`${API_URL}/pemupukan/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                db.pemupukan = db.pemupukan.filter(p => p.id !== id);
+                renderPemupukanTable();
+                
+                const toast = document.getElementById('toast');
+                if (toast) {
+                    toast.textContent = "Rencana pemupukan berhasil dihapus!";
+                    toast.className = "toast show success";
+                    setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+                }
+            } else {
+                alert('Gagal menghapus data.');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Terjadi kesalahan koneksi.');
+        }
+    }
+};
+
 window.deleteHarvestingDaily = async (id) => {
     if(confirm('Apakah Anda yakin ingin menghapus data rencana harian ini?')) {
         try {
