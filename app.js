@@ -614,6 +614,10 @@ const views = {
                         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
                             <label>Pilih Tanggal:</label>
                             <input type="date" id="historical-date" class="form-control">
+                            <label>Estate:</label>
+                            <select id="historical-estate" class="form-control" onchange="loadHistoricalChartData()">
+                                <option value="ALL">All Estate (Gabungan)</option>
+                            </select>
                             <button class="btn btn-primary" onclick="loadHistoricalChartData()">OK</button>
                         </div>
                         <div style="height: 300px; width: 100%;">
@@ -3693,9 +3697,28 @@ window.viewUpkeepHistory = async (id, block, type) => {
 
 let historicalChartInstance = null;
 
-window.openHistoricalModal = () => {
+window.openHistoricalModal = async () => {
     document.getElementById('historical-modal').style.display = 'flex';
     document.getElementById('historical-date').value = window.getLocalDate();
+    
+    // Populate estate dropdown
+    let mill = currentUser.estate;
+    if (!mill || !mill.endsWith('Mill')) {
+        mill = 'Bunga Tanjung Mill';
+    }
+    try {
+        const masterRes = await fetch(`${API_URL}/master/${mill}`);
+        const masterData = await masterRes.json();
+        const sel = document.getElementById('historical-estate');
+        sel.innerHTML = '<option value="ALL">All Estate (Gabungan)</option>';
+        masterData.supply_chain.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.estate;
+            opt.innerText = s.estate;
+            sel.appendChild(opt);
+        });
+    } catch(e) { console.error(e); }
+    
     loadHistoricalChartData();
 };
 
@@ -3718,7 +3741,11 @@ window.loadHistoricalChartData = async () => {
         const targets = new Array(labels.length).fill(0);
         const realized = new Array(labels.length).fill(0);
         
+        const selectedEstate = document.getElementById('historical-estate').value;
+        
         tonaseData.forEach(item => {
+            if (selectedEstate !== 'ALL' && item.estate !== selectedEstate) return;
+            
             const idx = labels.indexOf(item.time_hour);
             if (idx !== -1) {
                 targets[idx] += parseFloat(item.target_kg) || 0;
@@ -3753,7 +3780,7 @@ window.loadHistoricalChartData = async () => {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    title: { display: true, text: `Komparasi Target vs Realisasi Tonase Per Jam (${date})` }
+                    title: { display: true, text: `Komparasi Target vs Realisasi Tonase Per Jam (${date}) - ${selectedEstate === 'ALL' ? 'All Estate' : selectedEstate}` }
                 },
                 scales: { y: { beginAtZero: true } }
             }
