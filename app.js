@@ -328,10 +328,14 @@ const views = {
                     </button>
                 </form>
             </div>
-            <div class="glass-card table-wrapper">
+        </div>
+            <div class="glass-card table-wrapper" style="width: 100%;">
                 <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
                     <h2>Tabel Monitoring Truk</h2>
-                    <button type="button" class="btn" style="background-color: white; color: var(--text-primary); border: 2px solid var(--danger); font-weight: bold; padding: 6px 15px;" onclick="promptHistoricalVehicle()">Historical</button></div>
+                    <div style="display:flex; gap: 10px;">
+                        <button type="button" class="btn btn-primary" id="btn-input-vehicle" onclick="document.getElementById('modal-vehicle-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Input Pergerakan</button>
+                        <button type="button" class="btn" style="background-color: white; color: var(--text-primary); border: 2px solid var(--danger); font-weight: bold; padding: 6px 15px;" onclick="promptHistoricalVehicle()">Historical</button>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
@@ -356,46 +360,52 @@ const views = {
         </div>
     `,
     upkeep: `
-        <div class="animate-fade-in module-layout">
-            <div class="glass-card form-container">
-                <h2>Input Upkeep</h2>
-                <form id="form-upkeep" style="margin-top: 20px;">
-                    <div class="form-group">
-                        <label>Pilih Divisi (Opsional)</label>
-                        <select class="form-control select-divisi" onchange="filterBlok(this.value, 'u-block')"></select>
+        <div class="animate-fade-in" style="padding-top: 10px;">
+            <div id="modal-upkeep-input" class="modal-overlay" style="display:none;">
+                <div class="modal-content animate-fade-in">
+                    <div class="modal-header">
+                        <h3>Input Upkeep</h3>
+                        <button type="button" class="modal-close" onclick="document.getElementById('modal-upkeep-input').style.display='none';">&times;</button>
                     </div>
-                    <div class="form-group">
-                        <label>Blok</label>
-                        <select id="u-block" class="form-control select-blok" required></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Jenis Pekerjaan</label>
-                        <select id="u-type" class="form-control">
-                            <option>Pruning</option>
-                            <option>Weeding</option>
-                            <option>Spraying</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Target (Ha)</label>
-                        <input type="number" step="0.1" id="u-target" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Target HK (Orang)</label>
-                        <input type="number" id="u-workers" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Penanggung Jawab (Mandor)</label>
-                        <input type="text" id="u-worker" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                        <i class="fa-solid fa-plus"></i> Tambah Upkeep
-                    </button>
-                </form>
+                    <form id="form-upkeep" style="margin-top: 20px;">
+                        <div class="form-group">
+                            <label>Pilih Divisi (Opsional)</label>
+                            <select class="form-control select-divisi" onchange="filterBlok(this.value, 'u-block')"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Blok</label>
+                            <select id="u-block" class="form-control select-blok" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Jenis Pekerjaan</label>
+                            <select id="u-type" class="form-control">
+                                <option>Pruning</option>
+                                <option>Weeding</option>
+                                <option>Spraying</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Target (Ha)</label>
+                            <input type="number" step="0.1" id="u-target" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Target HK (Orang)</label>
+                            <input type="number" id="u-workers" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Penanggung Jawab (Mandor)</label>
+                            <input type="text" id="u-worker" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                            <i class="fa-solid fa-plus"></i> Tambah Upkeep
+                        </button>
+                    </form>
+                </div>
             </div>
-            <div class="glass-card table-wrapper">
-                <div class="view-header">
+            <div class="glass-card table-wrapper" style="width: 100%;">
+                <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
                     <h2>Progress Upkeep Harian</h2>
+                    <button type="button" class="btn btn-primary" id="btn-input-upkeep" onclick="document.getElementById('modal-upkeep-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Input Upkeep</button>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
@@ -418,38 +428,44 @@ const views = {
         </div>
     `,
     pemupukan: `
-        <div class="animate-fade-in module-layout">
-            <div class="glass-card form-container">
-                <h2>Buat Rencana Pemupukan</h2>
-                <form id="form-pemupukan" style="margin-top: 20px;">
-                    <div class="form-group">
-                        <label>Tanggal Mulai</label>
-                        <input type="date" id="p-start" class="form-control" required>
+        <div class="animate-fade-in" style="padding-top: 10px;">
+            <div id="modal-pemupukan-input" class="modal-overlay" style="display:none;">
+                <div class="modal-content animate-fade-in">
+                    <div class="modal-header">
+                        <h3>Buat Rencana Pemupukan</h3>
+                        <button type="button" class="modal-close" onclick="document.getElementById('modal-pemupukan-input').style.display='none';">&times;</button>
                     </div>
-                    <div class="form-group">
-                        <label>Pilih Divisi (Opsional)</label>
-                        <select class="form-control select-divisi" onchange="filterBlok(this.value, 'p-block')"></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Pilihan Blok</label>
-                        <select id="p-block" class="form-control select-blok" required></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Jenis Pupuk</label>
-                        <select id="p-plan" class="form-control select-pupuk" required></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Target Total (Kg)</label>
-                        <input type="number" id="p-target" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                        <i class="fa-solid fa-plus"></i> Buat Rencana
-                    </button>
-                </form>
+                    <form id="form-pemupukan" style="margin-top: 20px;">
+                        <div class="form-group">
+                            <label>Tanggal Mulai</label>
+                            <input type="date" id="p-start" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Pilih Divisi (Opsional)</label>
+                            <select class="form-control select-divisi" onchange="filterBlok(this.value, 'p-block')"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Pilihan Blok</label>
+                            <select id="p-block" class="form-control select-blok" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Jenis Pupuk</label>
+                            <select id="p-plan" class="form-control select-pupuk" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Target Total (Kg)</label>
+                            <input type="number" id="p-target" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                            <i class="fa-solid fa-plus"></i> Buat Rencana
+                        </button>
+                    </form>
+                </div>
             </div>
-            <div class="glass-card table-wrapper">
-                <div class="view-header">
+            <div class="glass-card table-wrapper" style="width: 100%;">
+                <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
                     <h2>Monitoring Pemupukan Blok</h2>
+                    <button type="button" class="btn btn-primary" id="btn-input-pemupukan" onclick="document.getElementById('modal-pemupukan-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Input Pemupukan</button>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
@@ -471,89 +487,101 @@ const views = {
         </div>
     `,
     harvesting: `
-        <div class="animate-fade-in module-layout">
-            <div class="glass-card form-container" id="harvesting-form-container">
-                <div id="container-monthly-plan">
-                    <h2>Rencana Panen Bulanan</h2>
-                    <form id="form-harvesting-monthly" style="margin-top: 15px; margin-bottom: 30px;">
+        <div class="animate-fade-in" style="padding-top: 10px;">
+            <div id="modal-harvesting-monthly-input" class="modal-overlay" style="display:none;">
+                <div class="modal-content animate-fade-in">
+                    <div class="modal-header">
+                        <h3>Rencana Panen Bulanan</h3>
+                        <button type="button" class="modal-close" onclick="document.getElementById('modal-harvesting-monthly-input').style.display='none';">&times;</button>
+                    </div>
+                    <form id="form-harvesting-monthly" style="margin-top: 15px;">
                         <div class="form-group">
                             <label>Pilih Divisi</label>
                             <select id="hm-divisi" class="form-control select-divisi" required onchange="checkMonthlyPlan()"></select>
                         </div>
-                    <div class="form-group">
-                        <label>Bulan Rencana</label>
-                        <select id="hm-month" class="form-control select-month" required onchange="checkMonthlyPlan()"></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Target Panen (Kg)</label>
-                        <input type="number" id="hm-target" class="form-control" required>
-                    </div>
+                        <div class="form-group">
+                            <label>Bulan Rencana</label>
+                            <select id="hm-month" class="form-control select-month" required onchange="checkMonthlyPlan()"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Target Panen (Kg)</label>
+                            <input type="number" id="hm-target" class="form-control" required>
+                        </div>
                         <button type="submit" id="btn-hm-submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
                             <i class="fa-solid fa-calendar-days"></i> Simpan Rencana Bulanan
                         </button>
                     </form>
                 </div>
+            </div>
 
-                <div id="container-daily-plan">
-                    <h2>Rencana Panen Harian</h2>
+            <div id="modal-harvesting-daily-input" class="modal-overlay" style="display:none;">
+                <div class="modal-content animate-fade-in">
+                    <div class="modal-header">
+                        <h3>Rencana Panen Harian</h3>
+                        <button type="button" class="modal-close" onclick="document.getElementById('modal-harvesting-daily-input').style.display='none';">&times;</button>
+                    </div>
                     <form id="form-harvesting-daily" style="margin-top: 15px;">
                         <div class="form-group">
                             <label>Tanggal Rencana</label>
-                        <input type="date" id="hd-date" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Pilih Divisi</label>
-                        <select id="hd-divisi" class="form-control select-divisi" required onchange="filterBlok(this.value, 'hd-block')"></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Blok</label>
-                        <select id="hd-block" class="form-control select-blok" required onchange="calcHarvestingEstimate()"></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Angka Kerapatan Panen (AKP %)</label>
-                        <input type="number" step="0.1" id="hd-akp" class="form-control" required oninput="calcHarvestingEstimate()">
-                    </div>
-                    <div class="form-group">
-                        <label>Pusingan Panen</label>
-                        <input type="number" id="hd-pusingan" class="form-control" required>
-                    </div>
-                    <div style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 0.85rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                            <span style="white-space:nowrap;">Est Ttl JJG:</span>
-                            <strong id="hd-est-janjang" style="text-align:right; word-break:break-all; margin-left:10px; font-size:1rem;">0</strong>
+                            <input type="date" id="hd-date" class="form-control" required>
                         </div>
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="white-space:nowrap;">Est Ttl Kg:</span>
-                            <strong id="hd-est-kg" style="text-align:right; word-break:break-all; margin-left:10px; font-size:1rem;">0 Kg</strong>
+                        <div class="form-group">
+                            <label>Pilih Divisi</label>
+                            <select id="hd-divisi" class="form-control select-divisi" required onchange="filterBlok(this.value, 'hd-block')"></select>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Rencana Alokasi Pemanen</label>
-                        <input type="number" id="hd-pemanen" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Alokasi Truk Divisi</label>
-                        <button type="button" class="btn btn-primary" style="background:#f8fafc; color:#0f172a; border:1px solid #cbd5e1; width:100%; text-align:left; display:flex; justify-content:space-between; align-items:center;" onclick="openTruckSelectionModal()">
-                            <span id="btn-truck-text">-- Pilih Truk --</span>
-                            <i class="fa-solid fa-chevron-down"></i>
+                        <div class="form-group">
+                            <label>Blok</label>
+                            <select id="hd-block" class="form-control select-blok" required onchange="calcHarvestingEstimate()"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Angka Kerapatan Panen (AKP %)</label>
+                            <input type="number" step="0.1" id="hd-akp" class="form-control" required oninput="calcHarvestingEstimate()">
+                        </div>
+                        <div class="form-group">
+                            <label>Pusingan Panen</label>
+                            <input type="number" id="hd-pusingan" class="form-control" required>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 0.85rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                                <span style="white-space:nowrap;">Est Ttl JJG:</span>
+                                <strong id="hd-est-janjang" style="text-align:right; word-break:break-all; margin-left:10px; font-size:1rem;">0</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="white-space:nowrap;">Est Ttl Kg:</span>
+                                <strong id="hd-est-kg" style="text-align:right; word-break:break-all; margin-left:10px; font-size:1rem;">0 Kg</strong>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Rencana Alokasi Pemanen</label>
+                            <input type="number" id="hd-pemanen" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Alokasi Truk Divisi</label>
+                            <button type="button" class="btn btn-primary" style="background:#f8fafc; color:#0f172a; border:1px solid #cbd5e1; width:100%; text-align:left; display:flex; justify-content:space-between; align-items:center;" onclick="openTruckSelectionModal()">
+                                <span id="btn-truck-text">-- Pilih Truk --</span>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </button>
+                        </div>
+                        <div class="form-group">
+                            <label>Mandor / Pengawas</label>
+                            <input type="text" id="hd-mandor" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                            <i class="fa-solid fa-clipboard-list"></i> Buat Rencana Harian
                         </button>
-                    </div>
-                    <div class="form-group">
-                        <label>Mandor / Pengawas</label>
-                        <input type="text" id="hd-mandor" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                        <i class="fa-solid fa-clipboard-list"></i> Buat Rencana Harian
-                    </button>
-                </form>
+                    </form>
+                </div>
             </div>
-        </div>
-        
-        <div class="glass-card table-wrapper">
+            
+            <div class="glass-card table-wrapper" style="width: 100%;">
                 <div class="view-header" style="margin-bottom: 5px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
                         <h2>Monitoring Panen Harian</h2>
-                        <button type="button" class="btn btn-primary btn-sm" onclick="openMonthlyRealization()"><i class="fa-solid fa-chart-pie"></i> Monitoring Realisasi Bulanan</button>
+                        <div style="display:flex; gap: 10px;">
+                            <button type="button" class="btn btn-primary btn-sm" id="btn-input-hm" onclick="document.getElementById('modal-harvesting-monthly-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Rencana Bulanan</button>
+                            <button type="button" class="btn btn-primary btn-sm" id="btn-input-hd" onclick="document.getElementById('modal-harvesting-daily-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Rencana Harian</button>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="openMonthlyRealization()"><i class="fa-solid fa-chart-pie"></i> Realisasi Bulanan</button>
+                        </div>
                     </div>
                 </div>
                 <h4 id="monitoring-month-year" style="margin-top: 0; margin-bottom: 5px; color: var(--text-secondary); font-weight: 500;"></h4>
@@ -819,84 +847,90 @@ const views = {
         </div>
     `,
     users: `
-        <div class="animate-fade-in module-layout">
-            <div class="glass-card form-container">
-                <h2>Master User Baru</h2>
-                <form id="form-user" style="margin-top: 20px;">
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" id="u-username" class="form-control" required>
+        <div class="animate-fade-in" style="padding-top: 10px;">
+            <div id="modal-user-input" class="modal-overlay" style="display:none;">
+                <div class="modal-content animate-fade-in">
+                    <div class="modal-header">
+                        <h3>Tambah User Baru</h3>
+                        <button type="button" class="modal-close" onclick="document.getElementById('modal-user-input').style.display='none';">&times;</button>
                     </div>
-                    <div class="form-group">
-                        <label>Password (Sementara)</label>
-                        <input type="text" id="u-password" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Role</label>
-                        <select id="u-role" class="form-control" required onchange="window.toggleEstateUI('u-role', 'u-estate-dropdown', 'u-estate-container', 'u-estate-label')">
-                            <option>Senior Field Manager</option>
-                            <option>Manager</option>
-                            <option>Manager Mill</option>
-                            <option>Askep</option>
-                            <option>Office Assistant (OAA)</option>
-                            <option>Office Assistant Mill</option>
-                            <option>Assistant</option>
-                            <option>Mandor</option>
-                            <option>Krani Divisi</option>
-                            <option>Krani Mill</option>
-                            <option>Supir</option>
-                            <option>Security</option>
-                            <option>Admin</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label id="u-estate-label">Penempatan Estate / Mill (Bisa Pilih Banyak)</label>
-                        <select id="u-estate-dropdown" class="form-control" style="display: none;">
-                            <option value="" disabled selected>-- Pilih Estate / Mill --</option>
-                            <option>Semua Estate (Khusus Admin)</option>
-                            <option>Bunga Tanjung Estate</option>
-                            <option>Sungai Teramang Estate</option>
-                            <option>Air Bukik Estate</option>
-                            <option>Air Buluh Estate</option>
-                            <option>Malin Demang Estate</option>
-                            <option>Batu Kuda Estate</option>
-                            <option>Sungai Jerinjing Estate</option>
-                            <option>Muko Muko Estate</option>
-                            <option>Talang Petai Estate</option>
-                            <option>Sungai Kiang Estate</option>
-                            <option>Tanah Rekah Estate</option>
-                            <option>Air Majunto Estate</option>
-                            <option>Small Holder</option>
-                            <option>Bunga Tanjung Mill</option>
-                            <option>Muko Muko Mill</option>
-                        </select>
-                        <div id="u-estate-container" class="form-control" style="height: 150px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-color);">
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Semua Estate (Khusus Admin)"> Semua Estate (Khusus Admin)</label>
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Bunga Tanjung Estate"> Bunga Tanjung Estate</label>
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Teramang Estate"> Sungai Teramang Estate</label>
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Bukik Estate"> Air Bukik Estate</label>
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Buluh Estate"> Air Buluh Estate</label>
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Malin Demang Estate"> Malin Demang Estate</label>
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Batu Kuda Estate"> Batu Kuda Estate</label>
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Jerinjing Estate"> Sungai Jerinjing Estate</label>
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Muko Muko Estate"> Muko Muko Estate</label>
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Talang Petai Estate"> Talang Petai Estate</label>
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Kiang Estate"> Sungai Kiang Estate</label>
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Tanah Rekah Estate"> Tanah Rekah Estate</label>
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Majunto Estate"> Air Majunto Estate</label>
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Small Holder"> Small Holder</label>
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Bunga Tanjung Mill"> Bunga Tanjung Mill</label>
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Muko Muko Mill"> Muko Muko Mill</label>
+                    <form id="form-user" style="margin-top: 20px;">
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" id="u-username" class="form-control" required>
                         </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                        <i class="fa-solid fa-user-plus"></i> Tambah User
-                    </button>
-                </form>
+                        <div class="form-group">
+                            <label>Password (Sementara)</label>
+                            <input type="text" id="u-password" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Role</label>
+                            <select id="u-role" class="form-control" required onchange="window.toggleEstateUI('u-role', 'u-estate-dropdown', 'u-estate-container', 'u-estate-label')">
+                                <option>Senior Field Manager</option>
+                                <option>Manager</option>
+                                <option>Manager Mill</option>
+                                <option>Askep</option>
+                                <option>Office Assistant (OAA)</option>
+                                <option>Office Assistant Mill</option>
+                                <option>Assistant</option>
+                                <option>Mandor</option>
+                                <option>Krani Divisi</option>
+                                <option>Krani Mill</option>
+                                <option>Supir</option>
+                                <option>Security</option>
+                                <option>Admin</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label id="u-estate-label">Penempatan Estate / Mill (Bisa Pilih Banyak)</label>
+                            <select id="u-estate-dropdown" class="form-control" style="display: none;">
+                                <option value="" disabled selected>-- Pilih Estate / Mill --</option>
+                                <option>Semua Estate (Khusus Admin)</option>
+                                <option>Bunga Tanjung Estate</option>
+                                <option>Sungai Teramang Estate</option>
+                                <option>Air Bukik Estate</option>
+                                <option>Air Buluh Estate</option>
+                                <option>Malin Demang Estate</option>
+                                <option>Batu Kuda Estate</option>
+                                <option>Sungai Jerinjing Estate</option>
+                                <option>Muko Muko Estate</option>
+                                <option>Talang Petai Estate</option>
+                                <option>Sungai Kiang Estate</option>
+                                <option>Tanah Rekah Estate</option>
+                                <option>Air Majunto Estate</option>
+                                <option>Small Holder</option>
+                                <option>Bunga Tanjung Mill</option>
+                                <option>Muko Muko Mill</option>
+                            </select>
+                            <div id="u-estate-container" class="form-control" style="height: 150px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-color);">
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Semua Estate (Khusus Admin)"> Semua Estate (Khusus Admin)</label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Bunga Tanjung Estate"> Bunga Tanjung Estate</label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Teramang Estate"> Sungai Teramang Estate</label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Bukik Estate"> Air Bukik Estate</label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Buluh Estate"> Air Buluh Estate</label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Malin Demang Estate"> Malin Demang Estate</label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Batu Kuda Estate"> Batu Kuda Estate</label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Jerinjing Estate"> Sungai Jerinjing Estate</label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Muko Muko Estate"> Muko Muko Estate</label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Talang Petai Estate"> Talang Petai Estate</label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Kiang Estate"> Sungai Kiang Estate</label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Tanah Rekah Estate"> Tanah Rekah Estate</label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Majunto Estate"> Air Majunto Estate</label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Small Holder"> Small Holder</label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Bunga Tanjung Mill"> Bunga Tanjung Mill</label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Muko Muko Mill"> Muko Muko Mill</label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                            <i class="fa-solid fa-user-plus"></i> Tambah User
+                        </button>
+                    </form>
+                </div>
             </div>
-            <div class="glass-card table-wrapper">
-                <div class="view-header">
+            <div class="glass-card table-wrapper" style="width: 100%;">
+                <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
                     <h2>Daftar User Sistem</h2>
+                    <button type="button" class="btn btn-primary" id="btn-input-user" onclick="document.getElementById('modal-user-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Tambah User</button>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
