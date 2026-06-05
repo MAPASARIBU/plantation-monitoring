@@ -3810,6 +3810,55 @@ window.calculateTonaseTotals = () => {
     });
 };
 
+window.handleTonasePaste = (e) => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    if (!text) return;
+    
+    const rows = text.trim().split('\n').map(row => row.split('\t'));
+    const target = e.target;
+    const tbody = target.closest('tbody');
+    const tr = target.closest('tr');
+    const td = target.closest('td');
+    
+    if (!tbody || !tr || !td) return;
+    
+    const trs = Array.from(tbody.querySelectorAll('tr'));
+    const startRowIdx = trs.indexOf(tr);
+    
+    const tds = Array.from(tr.querySelectorAll('td')).filter(el => el.querySelector('input.tonase-input'));
+    const startColIdx = tds.indexOf(td);
+    
+    rows.forEach((row, i) => {
+        const rowIdx = startRowIdx + i;
+        if (rowIdx >= 0 && rowIdx < trs.length) {
+            const currentTr = trs[rowIdx];
+            const currentTds = Array.from(currentTr.querySelectorAll('td')).filter(el => el.querySelector('input.tonase-input'));
+            
+            row.forEach((cellVal, j) => {
+                const colIdx = startColIdx + j;
+                if (colIdx >= 0 && colIdx < currentTds.length) {
+                    const input = currentTds[colIdx].querySelector('input.tonase-input');
+                    if (input && !input.disabled && !input.readOnly) {
+                        let cleanVal = cellVal.trim();
+                        if (cleanVal.includes(',') && !cleanVal.includes('.')) {
+                            cleanVal = cleanVal.replace(',', '.');
+                        } else {
+                            cleanVal = cleanVal.replace(/,/g, '');
+                        }
+                        cleanVal = cleanVal.replace(/[^0-9.-]/g, '');
+                        if (cleanVal) {
+                            input.value = cleanVal;
+                        }
+                    }
+                }
+            });
+        }
+    });
+    
+    window.calculateTonaseTotals();
+};
+
 window.loadTonaseInputData = async () => {
     const date = document.getElementById('t-date').value;
     const hourSelect = document.getElementById('t-hour').value;
@@ -3895,6 +3944,7 @@ window.loadTonaseInputData = async () => {
         const inputs = container.querySelectorAll('.tonase-input');
         inputs.forEach(input => {
             input.addEventListener('input', calculateTonaseTotals);
+            input.addEventListener('paste', handleTonasePaste);
         });
         
     } catch (e) {
