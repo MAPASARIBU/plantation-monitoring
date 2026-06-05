@@ -2330,7 +2330,12 @@ const bindForms = () => {
         // Find the selected block from masterData
         const blockData = (masterData.blok || []).find(b => b.name === blockName);
         if (blockData) {
-            const totalStand = blockData.total_stand || 0;
+            let totalStand = parseFloat(blockData.total_stand) || 0;
+            if (totalStand === 0) {
+                const sph = parseFloat(blockData.sph) || 0;
+                const grossArea = parseFloat(blockData.gross_area) || 0;
+                totalStand = sph * grossArea;
+            }
             const target = (dosis * totalStand).toFixed(1);
             pTarget.value = target;
         } else {
