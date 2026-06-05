@@ -4444,6 +4444,10 @@ window.loadPrimeTimeChart = async () => {
         const middlePct = [];
         const lastPct = [];
         
+        const primeRaw = [];
+        const middleRaw = [];
+        const lastRaw = [];
+        
         // Prepare chart arrays
         for (let i = 1; i <= daysInMonth; i++) {
             labels.push(i.toString());
@@ -4459,6 +4463,10 @@ window.loadPrimeTimeChart = async () => {
                 middlePct.push(0);
                 lastPct.push(0);
             }
+            
+            primeRaw.push(dayRecord.prime);
+            middleRaw.push(dayRecord.middle);
+            lastRaw.push(dayRecord.last);
         }
         
         const ctx = document.getElementById('primeTimeChart');
@@ -4476,16 +4484,19 @@ window.loadPrimeTimeChart = async () => {
                     {
                         label: 'Prime Time (06:00 - 12:00)',
                         data: primePct,
+                        rawTonase: primeRaw,
                         backgroundColor: '#1d4ed8', // Blue
                     },
                     {
                         label: 'Middle Time (13:00 - 18:00)',
                         data: middlePct,
+                        rawTonase: middleRaw,
                         backgroundColor: '#22c55e', // Green
                     },
                     {
                         label: 'Last Time (19:00 - 24:00)',
                         data: lastPct,
+                        rawTonase: lastRaw,
                         backgroundColor: '#eab308', // Yellow
                     }
                 ]
@@ -4498,7 +4509,10 @@ window.loadPrimeTimeChart = async () => {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + '%';
+                                const ds = context.dataset;
+                                const rawKg = ds.rawTonase ? ds.rawTonase[context.dataIndex] : 0;
+                                const rawTon = (rawKg / 1000).toFixed(2);
+                                return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + '% (' + rawTon + ' Ton)';
                             }
                         }
                     }
