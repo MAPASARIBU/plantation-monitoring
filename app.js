@@ -2484,9 +2484,22 @@ const bindForms = () => {
     if(formPemupukanRealization) formPemupukanRealization.onsubmit = async (e) => {
         e.preventDefault();
         const id = document.getElementById('pr-id').value;
+        const inputHa = parseFloat(document.getElementById('pr-input-ha').value) || 0;
+        const planHaStr = document.getElementById('pr-plan-ha').innerText;
+        const targetHa = parseFloat(planHaStr) || 0;
+
+        if (inputHa > targetHa) {
+            alert('Peringatan: Realisasi Area (Ha) tidak boleh melebihi Target Area (' + targetHa + ' Ha)!');
+            return;
+        }
+
+        if (!confirm('Are you sure data is correct? Data yang tersimpan akan langsung menutup laporan dan status menjadi Selesai.')) {
+            return;
+        }
+
         const payload = {
             realizedKg: parseFloat(document.getElementById('pr-input-kg').value) || 0,
-            realizedHa: parseFloat(document.getElementById('pr-input-ha').value) || 0,
+            realizedHa: inputHa,
             realizedWorkers: parseInt(document.getElementById('pr-input-workers').value) || 0
         };
         try {
