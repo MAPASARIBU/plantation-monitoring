@@ -61,6 +61,32 @@ const checkAuth = () => {
         document.querySelector('.user-name').innerText = currentUser.username;
         document.getElementById('display-role').innerText = currentUser.role;
         
+        // Setup Header Estate Dropdown
+        const dropdownContainer = document.getElementById('header-estate-dropdown-container');
+        const dropdown = document.getElementById('header-estate-dropdown');
+        if (dropdownContainer && dropdown) {
+            if (currentUser.assignedEstates && (currentUser.assignedEstates.length > 1 || currentUser.assignedEstates.includes('ALL'))) {
+                dropdownContainer.style.display = 'block';
+                let optionsHtml = '';
+                
+                const allEstatesList = ['Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bukik Estate', 'Air Buluh Estate', 'Malin Demang Estate', 'Batu Kuda Estate', 'Sungai Jerinjing Estate', 'Muko Muko Estate', 'Talang Petai Estate', 'Sungai Kiang Estate', 'Tanah Rekah Estate', 'Air Majunto Estate', 'Small Holder', 'Bunga Tanjung Mill', 'Muko Muko Mill'];
+                
+                const listToRender = currentUser.assignedEstates.includes('ALL') ? allEstatesList : currentUser.assignedEstates;
+                
+                if (currentUser.assignedEstates.includes('ALL')) {
+                    optionsHtml += `<option value="Semua Estate (Khusus Admin)" ${currentUser.estate === 'Semua Estate (Khusus Admin)' ? 'selected' : ''}>Semua Estate</option>`;
+                }
+                
+                listToRender.forEach(est => {
+                    optionsHtml += `<option value="${est}" ${currentUser.estate === est ? 'selected' : ''}>${est}</option>`;
+                });
+                
+                dropdown.innerHTML = optionsHtml;
+            } else {
+                dropdownContainer.style.display = 'none';
+            }
+        }
+        
         // Load data after auth
         loadData();
         if (currentUser.role === 'Admin') loadUsers();
@@ -94,13 +120,21 @@ const login = async (username, password, estate) => {
             const dbUser = result.user;
             
             // Validasi penempatan (kecuali Admin, -, atau Semua Estate)
-            if (dbUser.role !== 'Admin' && dbUser.estate !== '-' && dbUser.estate !== 'Semua Estate (Khusus Admin)' && dbUser.estate !== estate) {
-                errorEl.innerText = `Akses ditolak! Anda hanya diizinkan masuk ke ${dbUser.estate}.`;
+            let assignedEstates = [];
+            if (dbUser.estate === 'Semua Estate (Khusus Admin)' || dbUser.role === 'Admin') {
+                assignedEstates = ['ALL'];
+            } else if (dbUser.estate && dbUser.estate !== '-') {
+                assignedEstates = dbUser.estate.split(',').map(e => e.trim());
+            }
+            
+            if (dbUser.role !== 'Admin' && dbUser.estate !== '-' && dbUser.estate !== 'Semua Estate (Khusus Admin)' && !assignedEstates.includes(estate)) {
+                errorEl.innerText = `Akses ditolak! Anda tidak diizinkan masuk ke ${estate}. Anda terdaftar di: ${dbUser.estate}`;
                 errorEl.style.display = 'block';
                 return;
             }
             
             errorEl.style.display = 'none';
+            dbUser.assignedEstates = assignedEstates;
             currentUser = dbUser;
             if (estate) currentUser.estate = estate;
             localStorage.setItem('agrimonitor_user', JSON.stringify(currentUser));
@@ -123,6 +157,14 @@ const logout = () => {
 };
 
 // RBAC (Role-Based Access Control) Filter
+window.changeActiveEstate = (estate) => {
+    if (currentUser) {
+        currentUser.estate = estate;
+        localStorage.setItem('agrimonitor_user', JSON.stringify(currentUser));
+        loadData();
+    }
+};
+
 const applyRBAC = () => {
     if (!currentUser) return;
     const role = currentUser.role;
@@ -788,8 +830,7 @@ const views = {
                     </div>
                     <div class="form-group">
                         <label>Penempatan Estate / Mill</label>
-                        <select id="u-estate" class="form-control" required>
-                            <option value="" disabled selected>-- Pilih Estate / Mill --</option>
+                        <select id="u-estate" class="form-control" multiple="multiple" style="height: 120px;" required>
                             <option>Semua Estate (Khusus Admin)</option>
                             <option>Bunga Tanjung Estate</option>
                             <option>Sungai Teramang Estate</option>
@@ -1061,7 +1102,7 @@ const renderHarvestingTable = () => {
     };
 
     let filteredData = db.harvesting_daily;
-    if (currentUser && currentUser.estate) {
+    if (currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
         filteredData = filteredData.filter(h => !h.estate || h.estate === currentUser.estate);
     }
 
@@ -1210,10 +1251,11 @@ window.promptEditUser = (id) => {
     const user = db.users.find(u => u.id === id);
     if (!user) return;
     
-    let estatesOptions = `<option value="Semua Estate (Khusus Admin)">Semua Estate (Khusus Admin)</option>`;
+    const userEstates = user.estate ? user.estate.split(',').map(e => e.trim()) : [];
+    let estatesOptions = `<option value="Semua Estate (Khusus Admin)" ${userEstates.includes('Semua Estate (Khusus Admin)') ? 'selected' : ''}>Semua Estate (Khusus Admin)</option>`;
     const allEstates = ['Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bukik Estate', 'Air Buluh Estate', 'Malin Demang Estate', 'Batu Kuda Estate', 'Sungai Jerinjing Estate', 'Muko Muko Estate', 'Talang Petai Estate', 'Sungai Kiang Estate', 'Tanah Rekah Estate', 'Air Majunto Estate', 'Small Holder', 'Bunga Tanjung Mill', 'Muko Muko Mill'];
     allEstates.forEach(est => {
-        estatesOptions += `<option value="${est}" ${user.estate === est ? 'selected' : ''}>${est}</option>`;
+        estatesOptions += `<option value="${est}" ${userEstates.includes(est) ? 'selected' : ''}>${est}</option>`;
     });
 
     const html = `
@@ -1243,7 +1285,7 @@ window.promptEditUser = (id) => {
                 </div>
                 <div class="form-group">
                     <label>Penempatan (Estate / Mill)</label>
-                    <select id="eu-estate" class="form-control">
+                    <select id="eu-estate" class="form-control" multiple="multiple" style="height: 120px;">
                         ${estatesOptions}
                     </select>
                 </div>
@@ -1260,7 +1302,7 @@ window.promptEditUser = (id) => {
 
 window.editUser = async (id) => {
     const role = document.getElementById('eu-role').value;
-    const estate = document.getElementById('eu-estate').value;
+    const estate = Array.from(document.getElementById('eu-estate').selectedOptions).map(o => o.value).join(', ');
     const password = document.getElementById('eu-password').value;
     
     try {
@@ -1687,13 +1729,13 @@ window.openMonthlyRealization = () => {
     } else {
         masterDivisiList.forEach(div => {
             let filteredMonthly = db.harvesting_monthly || [];
-            if (currentUser && currentUser.estate) {
+            if (currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
                 filteredMonthly = filteredMonthly.filter(m => !m.estate || m.estate === currentUser.estate);
             }
             const planRecord = filteredMonthly.find(m => m.divisi === div.name && m.month === currentMonthStr);
             const targetKg = planRecord ? (planRecord.target_kg || 0) : 0;
             let filteredDaily = db.harvesting_daily || [];
-            if (currentUser && currentUser.estate) {
+            if (currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
                 filteredDaily = filteredDaily.filter(h => !h.estate || h.estate === currentUser.estate);
             }
             
@@ -2198,7 +2240,7 @@ const bindForms = () => {
             username: document.getElementById('u-username').value,
             password: document.getElementById('u-password').value,
             role: document.getElementById('u-role').value,
-            estate: document.getElementById('u-estate').value
+            estate: Array.from(document.getElementById('u-estate').selectedOptions).map(o => o.value).join(', ')
         };
         try {
             const res = await fetch(`${API_URL}/users`, {
@@ -2241,7 +2283,7 @@ const initDashboardChart = async () => {
         
         // Filter by estate if user is not a Mill
         const isMill = currentUser.estate && currentUser.estate.endsWith('Mill');
-        if (!isMill && currentUser.estate) {
+        if (!isMill && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
             resData = resData.filter(item => item.estate === currentUser.estate);
         }
         
