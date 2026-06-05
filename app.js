@@ -677,7 +677,7 @@ const views = {
                         </div>
                         
                         <div style="margin-top: 20px; text-align: right;">
-                            <button type="button" class="btn" style="background-color: #ef4444; color: white; margin-right: 10px;" onclick="resetTonaseInputs()"><i class="fa-solid fa-rotate-left"></i> Reset ke 0</button>
+                            <button type="button" id="t-btn-reset" class="btn" style="background-color: #ef4444; color: white; margin-right: 10px;" onclick="resetTonaseInputs()"><i class="fa-solid fa-rotate-left"></i> Reset ke 0</button>
                             <button type="button" class="btn" style="background-color: #e2e8f0; color: #333; margin-right: 10px;" onclick="document.getElementById('tonase-modal').style.display='none'">Batal</button>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fa-solid fa-save"></i> <span id="t-btn-label">Simpan</span>
@@ -3786,11 +3786,13 @@ window.openTonaseModal = (mode) => {
         const planMode = document.getElementById('t-plan-mode') ? document.getElementById('t-plan-mode').value : 'single';
         document.getElementById('container-t-hour').style.display = planMode === 'grid' ? 'none' : 'block';
         document.getElementById('t-btn-label').innerText = 'Simpan Plan (Target)';
+        if (document.getElementById('t-btn-reset')) document.getElementById('t-btn-reset').style.display = 'inline-block';
     } else {
         document.getElementById('tonase-form-title').innerText = 'Input Realisasi Tonase';
         if (document.getElementById('container-plan-mode')) document.getElementById('container-plan-mode').style.display = 'none';
         document.getElementById('container-t-hour').style.display = 'block';
         document.getElementById('t-btn-label').innerText = 'Simpan Realisasi';
+        if (document.getElementById('t-btn-reset')) document.getElementById('t-btn-reset').style.display = 'none';
     }
     
     if (!document.getElementById('t-date').value) {
