@@ -829,24 +829,25 @@ const views = {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Penempatan Estate / Mill</label>
-                        <select id="u-estate" class="form-control" multiple="multiple" style="height: 120px;" required>
-                            <option>Semua Estate (Khusus Admin)</option>
-                            <option>Bunga Tanjung Estate</option>
-                            <option>Sungai Teramang Estate</option>
-                            <option>Air Bukik Estate</option>
-                            <option>Air Buluh Estate</option>
-                            <option>Malin Demang Estate</option>
-                            <option>Batu Kuda Estate</option>
-                            <option>Sungai Jerinjing Estate</option>
-                            <option>Muko Muko Estate</option>
-                            <option>Talang Petai Estate</option>
-                            <option>Sungai Kiang Estate</option>
-                            <option>Tanah Rekah Estate</option>
-                            <option>Air Majunto Estate</option>
-                            <option>Bunga Tanjung Mill</option>
-                            <option>Muko Muko Mill</option>
-                        </select>
+                        <label>Penempatan Estate / Mill (Bisa Pilih Banyak)</label>
+                        <div id="u-estate-container" class="form-control" style="height: 150px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-color);">
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Semua Estate (Khusus Admin)"> Semua Estate (Khusus Admin)</label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Bunga Tanjung Estate"> Bunga Tanjung Estate</label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Teramang Estate"> Sungai Teramang Estate</label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Bukik Estate"> Air Bukik Estate</label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Buluh Estate"> Air Buluh Estate</label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Malin Demang Estate"> Malin Demang Estate</label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Batu Kuda Estate"> Batu Kuda Estate</label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Jerinjing Estate"> Sungai Jerinjing Estate</label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Muko Muko Estate"> Muko Muko Estate</label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Talang Petai Estate"> Talang Petai Estate</label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Kiang Estate"> Sungai Kiang Estate</label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Tanah Rekah Estate"> Tanah Rekah Estate</label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Majunto Estate"> Air Majunto Estate</label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Small Holder"> Small Holder</label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Bunga Tanjung Mill"> Bunga Tanjung Mill</label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Muko Muko Mill"> Muko Muko Mill</label>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
                         <i class="fa-solid fa-user-plus"></i> Tambah User
@@ -1252,10 +1253,10 @@ window.promptEditUser = (id) => {
     if (!user) return;
     
     const userEstates = user.estate ? user.estate.split(',').map(e => e.trim()) : [];
-    let estatesOptions = `<option value="Semua Estate (Khusus Admin)" ${userEstates.includes('Semua Estate (Khusus Admin)') ? 'selected' : ''}>Semua Estate (Khusus Admin)</option>`;
+    let estatesOptions = `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="eu_estate" value="Semua Estate (Khusus Admin)" ${userEstates.includes('Semua Estate (Khusus Admin)') ? 'checked' : ''}> Semua Estate (Khusus Admin)</label>`;
     const allEstates = ['Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bukik Estate', 'Air Buluh Estate', 'Malin Demang Estate', 'Batu Kuda Estate', 'Sungai Jerinjing Estate', 'Muko Muko Estate', 'Talang Petai Estate', 'Sungai Kiang Estate', 'Tanah Rekah Estate', 'Air Majunto Estate', 'Small Holder', 'Bunga Tanjung Mill', 'Muko Muko Mill'];
     allEstates.forEach(est => {
-        estatesOptions += `<option value="${est}" ${userEstates.includes(est) ? 'selected' : ''}>${est}</option>`;
+        estatesOptions += `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="eu_estate" value="${est}" ${userEstates.includes(est) ? 'checked' : ''}> ${est}</label>`;
     });
 
     const html = `
@@ -1284,10 +1285,10 @@ window.promptEditUser = (id) => {
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Penempatan (Estate / Mill)</label>
-                    <select id="eu-estate" class="form-control" multiple="multiple" style="height: 120px;">
+                    <label>Penempatan (Estate / Mill) - Bisa Pilih Banyak</label>
+                    <div id="eu-estate-container" class="form-control" style="height: 150px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-color);">
                         ${estatesOptions}
-                    </select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Password Baru (Kosongkan jika tidak ingin diubah)</label>
@@ -1302,7 +1303,7 @@ window.promptEditUser = (id) => {
 
 window.editUser = async (id) => {
     const role = document.getElementById('eu-role').value;
-    const estate = Array.from(document.getElementById('eu-estate').selectedOptions).map(o => o.value).join(', ');
+    const estate = Array.from(document.querySelectorAll('input[name="eu_estate"]:checked')).map(cb => cb.value).join(', ');
     const password = document.getElementById('eu-password').value;
     
     try {
@@ -2240,7 +2241,7 @@ const bindForms = () => {
             username: document.getElementById('u-username').value,
             password: document.getElementById('u-password').value,
             role: document.getElementById('u-role').value,
-            estate: Array.from(document.getElementById('u-estate').selectedOptions).map(o => o.value).join(', ')
+            estate: Array.from(document.querySelectorAll('input[name="u_estate"]:checked')).map(cb => cb.value).join(', ')
         };
         try {
             const res = await fetch(`${API_URL}/users`, {
