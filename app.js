@@ -715,8 +715,14 @@ const views = {
             
             <!-- Prime Time Chart -->
             <div class="glass-card table-wrapper" style="margin-top: 20px;">
-                <div class="view-header">
-                    <h2>Prime Time Monitoring</h2>
+                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <h2 style="margin:0;">Prime Time Monitoring</h2>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <label style="font-weight: bold; font-size: 0.9em; color: var(--text-secondary);">Estate:</label>
+                        <select id="prime-estate" class="form-control" style="width: auto; min-width: 200px;" onchange="loadPrimeTimeChart()">
+                            <option value="ALL">All Estate (Gabungan)</option>
+                        </select>
+                    </div>
                 </div>
                 <div style="height: 400px; width: 100%; margin-top: 20px;">
                     <canvas id="primeTimeChart"></canvas>
@@ -4359,6 +4365,22 @@ window.loadPrimeTimeChart = async () => {
             mill = 'Bunga Tanjung Mill';
         }
         
+        const primeSel = document.getElementById('prime-estate');
+        if (primeSel && primeSel.options.length <= 1) {
+            try {
+                const masterRes = await fetch(`${API_URL}/master/${mill}`);
+                const masterData = await masterRes.json();
+                masterData.supply_chain.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.estate;
+                    opt.innerText = s.estate;
+                    primeSel.appendChild(opt);
+                });
+            } catch(e) { console.error(e); }
+        }
+        
+        const selectedEstate = primeSel ? primeSel.value : 'ALL';
+        
         const res = await fetch(`${API_URL}/tonase/${mill}/month/${month}`);
         const data = await res.json();
         
@@ -4386,6 +4408,8 @@ window.loadPrimeTimeChart = async () => {
         const lastHours = ['19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
         
         data.forEach(item => {
+            if (selectedEstate !== 'ALL' && item.estate !== selectedEstate) return;
+            
             const d = item.date.split('T')[0];
             if (!dailyData[d]) dailyData[d] = { prime: 0, middle: 0, last: 0, total: 0 };
             
