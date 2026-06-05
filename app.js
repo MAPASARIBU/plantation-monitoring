@@ -336,7 +336,7 @@ const views = {
                 <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
                     <h2>Tabel Monitoring Truk</h2>
                     <div style="display:flex; gap: 10px;">
-                        <button type="button" class="btn btn-primary" id="btn-input-vehicle" onclick="document.getElementById('modal-vehicle-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Input Pergerakan</button>
+                        <button type="button" class="btn btn-primary" id="btn-input-vehicle" onclick="document.getElementById('modal-vehicle-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Vehicle Motion Input</button>
                         <button type="button" class="btn" style="background-color: white; color: var(--text-primary); border: 2px solid var(--danger); font-weight: bold; padding: 6px 15px;" onclick="promptHistoricalVehicle()">Historical</button>
                     </div>
                 </div>
@@ -972,10 +972,21 @@ const renderVehicleTable = () => {
     
     const btnInput = document.getElementById('btn-input-vehicle');
     if (btnInput) {
-        if (currentUser.role.includes('Security') || currentUser.role === 'Security Mill' || currentUser.role === 'Manager' || currentUser.role === 'Manager Mill') {
-            btnInput.style.display = 'none';
-        } else {
+        if (currentUser.role === 'Supir' || currentUser.role === 'Mandor' || currentUser.role === 'Admin') {
             btnInput.style.display = 'flex';
+            btnInput.disabled = false;
+            btnInput.style.opacity = '1';
+            btnInput.style.cursor = 'pointer';
+            btnInput.onclick = () => { document.getElementById('modal-vehicle-input').style.display='flex'; };
+        } else if (currentUser.role === 'Assistant' || currentUser.role === 'Senior Field Manager') {
+            btnInput.style.display = 'flex';
+            btnInput.disabled = true;
+            btnInput.style.opacity = '0.5';
+            btnInput.style.cursor = 'not-allowed';
+            btnInput.onclick = null;
+            btnInput.title = 'Hanya Supir dan Mandor yang dapat menginput pergerakan';
+        } else {
+            btnInput.style.display = 'none';
         }
     }
 
