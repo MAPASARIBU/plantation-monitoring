@@ -456,8 +456,12 @@ const views = {
                             <select id="p-plan" class="form-control select-pupuk" required></select>
                         </div>
                         <div class="form-group">
+                            <label>Dosis (Kg / Pokok)</label>
+                            <input type="number" step="0.1" id="p-dosis" class="form-control" placeholder="Contoh: 1.5" required>
+                        </div>
+                        <div class="form-group">
                             <label>Target Total (Kg)</label>
-                            <input type="number" id="p-target" class="form-control" required>
+                            <input type="number" id="p-target" class="form-control" readonly style="background-color: #f1f5f9; cursor: not-allowed;" placeholder="Dihitung otomatis" required>
                         </div>
                         <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
                             <i class="fa-solid fa-plus"></i> Buat Rencana
@@ -2308,6 +2312,34 @@ const bindForms = () => {
             await loadData();
         } catch (e) { console.error(e); }
     };
+    
+    // Auto-calculate Target Total for Pemupukan based on Dosis and Blok Total Stand
+    const pDosis = document.getElementById('p-dosis');
+    const pBlock = document.getElementById('p-block');
+    const pTarget = document.getElementById('p-target');
+    
+    const calculatePemupukanTarget = () => {
+        if (!pDosis || !pBlock || !pTarget) return;
+        const dosis = parseFloat(pDosis.value) || 0;
+        const blockName = pBlock.value;
+        if (!blockName || dosis <= 0) {
+            pTarget.value = '';
+            return;
+        }
+        
+        // Find the selected block from masterData
+        const blockData = (masterData.blok || []).find(b => b.name === blockName);
+        if (blockData) {
+            const totalStand = blockData.total_stand || 0;
+            const target = (dosis * totalStand).toFixed(1);
+            pTarget.value = target;
+        } else {
+            pTarget.value = '';
+        }
+    };
+    
+    if (pDosis) pDosis.addEventListener('input', calculatePemupukanTarget);
+    if (pBlock) pBlock.addEventListener('change', calculatePemupukanTarget);
     
     const formHarvestingMonthly = document.getElementById('form-harvesting-monthly');
     if (formHarvestingMonthly) formHarvestingMonthly.onsubmit = async (e) => {
