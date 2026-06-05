@@ -677,6 +677,7 @@ const views = {
                         </div>
                         
                         <div style="margin-top: 20px; text-align: right;">
+                            <button type="button" class="btn" style="background-color: #ef4444; color: white; margin-right: 10px;" onclick="resetTonaseInputs()"><i class="fa-solid fa-rotate-left"></i> Reset ke 0</button>
                             <button type="button" class="btn" style="background-color: #e2e8f0; color: #333; margin-right: 10px;" onclick="document.getElementById('tonase-modal').style.display='none'">Batal</button>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fa-solid fa-save"></i> <span id="t-btn-label">Simpan</span>
@@ -3818,6 +3819,17 @@ window.calculateTonaseTotals = () => {
             totalEl.innerText = parseFloat(totals[est].toFixed(2));
         }
     });
+};
+
+window.resetTonaseInputs = () => {
+    if (!confirm('Yakin ingin mereset semua input di tabel ini menjadi 0?')) return;
+    const inputs = document.querySelectorAll('.tonase-input');
+    inputs.forEach(input => {
+        if (!input.disabled && !input.readOnly) {
+            input.value = 0;
+        }
+    });
+    calculateTonaseTotals();
 };
 
 window.handleTonasePaste = (e) => {
