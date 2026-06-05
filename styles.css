@@ -601,15 +601,15 @@ h1, h2, h3, h4, h5, h6 {
     justify-content: center;
     z-index: 2000;
     backdrop-filter: blur(4px);
-    padding: 40px 20px;
     overflow-y: auto;
+    padding-bottom: 50px;
 }
 .modal-content {
     background: white;
     border-radius: var(--border-radius-md);
     width: 450px;
     max-width: 90%;
-    margin: auto;
+    margin: 50px auto;
     padding: 24px;
     box-shadow: var(--shadow-lg);
     animation: fadeIn 0.3s ease;
