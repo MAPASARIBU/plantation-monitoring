@@ -2884,6 +2884,23 @@ const navigate = (viewId) => {
         } else {
             document.querySelectorAll('.btn-tonase-action').forEach(b => b.style.display = 'none');
         }
+
+        // Auto select current hour
+        const hourDropdown = document.getElementById('monitor-tonase-hour');
+        if (hourDropdown) {
+            const currentHour = new Date().getHours().toString().padStart(2, '0') + ':00';
+            let optionExists = false;
+            for (let i = 0; i < hourDropdown.options.length; i++) {
+                if (hourDropdown.options[i].value === currentHour) {
+                    optionExists = true;
+                    break;
+                }
+            }
+            if (optionExists) {
+                hourDropdown.value = currentHour;
+            }
+        }
+
         loadTonaseChartData();
     }
     if(viewId === 'users') { 
