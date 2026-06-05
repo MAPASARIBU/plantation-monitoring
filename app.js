@@ -1195,7 +1195,7 @@ const renderHarvestingTable = () => {
     const btnHm = document.getElementById('btn-input-hm');
     const btnHd = document.getElementById('btn-input-hd');
     if (btnHm && btnHd) {
-        if (currentUser.role.includes('Security') || currentUser.role.includes('Manager')) {
+        if (currentUser.role.includes('Security') || currentUser.role.includes('Manager') || currentUser.role === 'Supir') {
             btnHm.style.display = 'none';
             btnHd.style.display = 'none';
         } else {
