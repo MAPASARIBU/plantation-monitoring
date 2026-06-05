@@ -650,5 +650,5 @@ h1, h2, h3, h4, h5, h6 {
     text-align: left;
 }
 
-. a c t i o n - g r o u p - h o v e r   . b t n - h a p u s - h o v e r   {   d i s p l a y :   n o n e ;   o p a c i t y :   0 ;   t r a n s i t i o n :   o p a c i t y   0 . 2 s   e a s e ;   }   . a c t i o n - g r o u p - h o v e r : h o v e r   . b t n - h a p u s - h o v e r   {   d i s p l a y :   b l o c k ;   o p a c i t y :   1 ;   }  
- 
+.action-group-hover .btn-hapus-hover { display: none; opacity: 0; transition: opacity 0.2s ease; }
+.action-group-hover:hover .btn-hapus-hover { display: block; opacity: 1; }
