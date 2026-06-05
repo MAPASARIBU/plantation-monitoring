@@ -967,15 +967,12 @@ const renderVehicleTable = () => {
         todaysVehicles = todaysVehicles.filter(v => v.estate === currentUser.estate);
     }
     
-    const layout = document.getElementById('vehicle-module-layout');
-    const formContainer = document.getElementById('vehicle-form-container');
-    if (formContainer && layout) {
+    const btnInput = document.getElementById('btn-input-vehicle');
+    if (btnInput) {
         if (currentUser.role.includes('Security') || currentUser.role === 'Security Mill' || currentUser.role === 'Manager' || currentUser.role === 'Manager Mill') {
-            formContainer.style.display = 'none';
-            layout.style.gridTemplateColumns = '1fr';
+            btnInput.style.display = 'none';
         } else {
-            formContainer.style.display = 'block';
-            layout.style.gridTemplateColumns = '240px 1fr';
+            btnInput.style.display = 'flex';
         }
     }
 
@@ -1030,6 +1027,15 @@ const renderUpkeepTable = () => {
     }
     const aktif = allUpkeep.filter(u => u.status !== 'Selesai');
     const selesai = allUpkeep.filter(u => u.status === 'Selesai');
+    
+    const btnInput = document.getElementById('btn-input-upkeep');
+    if (btnInput) {
+        if (currentUser.role.includes('Security') || currentUser.role.includes('Manager')) {
+            btnInput.style.display = 'none';
+        } else {
+            btnInput.style.display = 'flex';
+        }
+    }
     
     const renderRow = (u) => {
         const pct = getProgressStr(u.realized, u.target);
@@ -1089,6 +1095,15 @@ const renderPemupukanTable = () => {
     }
     const aktif = allPemupukan.filter(p => p.status !== 'Selesai');
     const selesai = allPemupukan.filter(p => p.status === 'Selesai');
+
+    const btnInput = document.getElementById('btn-input-pemupukan');
+    if (btnInput) {
+        if (currentUser.role.includes('Security') || currentUser.role.includes('Manager')) {
+            btnInput.style.display = 'none';
+        } else {
+            btnInput.style.display = 'flex';
+        }
+    }
 
     const renderRow = (p) => {
         const tKg = p.targetkg || p.targetKg || 0;
@@ -1172,6 +1187,18 @@ const renderHarvestingTable = () => {
     const titleEl = document.getElementById('monitoring-month-year');
     if (titleEl) {
         titleEl.textContent = `Month : ${fullMonths[now.getMonth()]} ${now.getFullYear()}`;
+    }
+    
+    const btnHm = document.getElementById('btn-input-hm');
+    const btnHd = document.getElementById('btn-input-hd');
+    if (btnHm && btnHd) {
+        if (currentUser.role.includes('Security') || currentUser.role.includes('Manager')) {
+            btnHm.style.display = 'none';
+            btnHd.style.display = 'none';
+        } else {
+            btnHm.style.display = 'inline-block';
+            btnHd.style.display = 'inline-block';
+        }
     }
     
     const sortFn = (a, b) => {
@@ -1314,6 +1341,15 @@ const renderUsersTable = () => {
     const tbody = document.getElementById('tbody-users');
     if (!tbody) return;
     tbody.innerHTML = '';
+    const btnInput = document.getElementById('btn-input-user');
+    if (btnInput) {
+        if (currentUser.role === 'Admin') {
+            btnInput.style.display = 'inline-block';
+        } else {
+            btnInput.style.display = 'none';
+        }
+    }
+    
     [...db.users].forEach(u => {
         const actionBtns = (u.username !== 'admin' && currentUser.role !== 'Senior Field Manager') ? 
             `<button class="btn btn-primary" style="padding: 4px 8px; font-size: 0.8rem; margin-right:5px;" onclick="promptEditUser(${u.id})"><i class="fa-solid fa-pen"></i></button>` +
