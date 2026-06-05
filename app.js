@@ -503,14 +503,6 @@ const views = {
                                     <div style="display:flex; justify-content:space-between;"><span>Pekerja:</span> <strong id="pr-plan-workers">0 Orang</strong></div>
                                 </div>
                             </div>
-                            <div style="flex:1; background: #f1f5f9; padding:15px; border-radius:8px; border-left: 4px solid #94a3b8;">
-                                <h4 style="margin:0 0 10px 0; color:#334155; font-size:0.95rem;">Realisasi Sebelumnya:</h4>
-                                <div style="font-size:0.85rem; color:#475569; line-height:1.5;">
-                                    <div style="display:flex; justify-content:space-between;"><span>Pupuk:</span> <strong id="pr-real-kg">0 Kg</strong></div>
-                                    <div style="display:flex; justify-content:space-between;"><span>Area:</span> <strong id="pr-real-ha">0 Ha</strong></div>
-                                    <div style="display:flex; justify-content:space-between;"><span>Pekerja:</span> <strong id="pr-real-workers">0 Orang</strong></div>
-                                </div>
-                            </div>
                         </div>
 
                         <label style="font-weight:600; margin-bottom:10px; display:block; font-size:0.95rem;">Masukkan Input Realisasi (Sekali Input):</label>
@@ -1274,11 +1266,6 @@ window.openPemupukanRealizationModal = (id, block, plan, tKg, rKg, tHa, rHa, tWo
     document.getElementById('pr-plan-kg').innerText = `${tKg} Kg`;
     document.getElementById('pr-plan-ha').innerText = `${tHa} Ha`;
     document.getElementById('pr-plan-workers').innerText = `${tWorkers} Orang`;
-    
-    // Set Current Realization Display
-    document.getElementById('pr-real-kg').innerText = `${rKg} Kg`;
-    document.getElementById('pr-real-ha').innerText = `${rHa} Ha`;
-    document.getElementById('pr-real-workers').innerText = `${rWorkers} Orang`;
     
     // Clear Inputs
     document.getElementById('pr-input-kg').value = '';
