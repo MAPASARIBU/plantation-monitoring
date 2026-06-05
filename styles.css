@@ -597,28 +597,34 @@ h1, h2, h3, h4, h5, h6 {
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.5);
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
     z-index: 2000;
     backdrop-filter: blur(4px);
-    overflow-y: auto;
-    padding-bottom: 50px;
 }
 .modal-content {
     background: white;
     border-radius: var(--border-radius-md);
     width: 450px;
     max-width: 90%;
-    margin: 50px auto;
+    margin: auto;
     padding: 24px;
     box-shadow: var(--shadow-lg);
     animation: fadeIn 0.3s ease;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin: -24px -24px 20px -24px;
+    padding: 24px 24px 15px 24px;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+    border-bottom: 1px solid var(--border-color);
 }
 .modal-header h3 {
     margin: 0;
