@@ -1080,8 +1080,13 @@ const renderHarvestingTable = () => {
         return divA.localeCompare(divB);
     };
 
-    const draftData = db.harvesting_daily.filter(h => h.status !== 'Selesai' && h.status !== 'Closed').sort(sortFn);
-    const selesaiData = db.harvesting_daily.filter(h => h.status === 'Selesai' || h.status === 'Closed').sort(sortFn);
+    let filteredData = db.harvesting_daily;
+    if (currentUser && currentUser.estate) {
+        filteredData = filteredData.filter(h => !h.estate || h.estate === currentUser.estate);
+    }
+
+    const draftData = filteredData.filter(h => h.status !== 'Selesai' && h.status !== 'Closed').sort(sortFn);
+    const selesaiData = filteredData.filter(h => h.status === 'Selesai' || h.status === 'Closed').sort(sortFn);
     
     const renderDailyRow = (h) => {
         let statusEl = '<span style="color:green;font-weight:bold;">Closed</span>';
@@ -1701,10 +1706,18 @@ window.openMonthlyRealization = () => {
         html += `<tr><td colspan="4" style="text-align:center;">Belum ada master divisi</td></tr>`;
     } else {
         masterDivisiList.forEach(div => {
-            const planRecord = (db.harvesting_monthly || []).find(m => m.divisi === div.name && m.month === currentMonthStr);
+            let filteredMonthly = db.harvesting_monthly || [];
+            if (currentUser && currentUser.estate) {
+                filteredMonthly = filteredMonthly.filter(m => !m.estate || m.estate === currentUser.estate);
+            }
+            const planRecord = filteredMonthly.find(m => m.divisi === div.name && m.month === currentMonthStr);
             const targetKg = planRecord ? (planRecord.target_kg || 0) : 0;
+            let filteredDaily = db.harvesting_daily || [];
+            if (currentUser && currentUser.estate) {
+                filteredDaily = filteredDaily.filter(h => !h.estate || h.estate === currentUser.estate);
+            }
             
-            const divRealisasi = (db.harvesting_daily || []).filter(h => 
+            const divRealisasi = filteredDaily.filter(h => 
                 h.divisi === div.name && 
                 (h.status === 'Selesai' || h.status === 'Closed') &&
                 h.date && h.date.startsWith(currentMonthStr)
