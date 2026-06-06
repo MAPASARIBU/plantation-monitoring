@@ -627,16 +627,28 @@ const views = {
                                 <strong id="hd-est-kg" style="text-align:right; word-break:break-all; margin-left:10px; font-size:1rem;">0 Kg</strong>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Rencana Alokasi Pemanen</label>
-                            <input type="number" id="hd-pemanen" class="form-control" required>
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label>Alokasi Pemanen</label>
+                                <input type="number" id="hd-pemanen" class="form-control" required oninput="calcHarvestingEstimate()">
+                            </div>
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label>Alokasi Truk</label>
+                                <button type="button" class="btn btn-primary" style="background:#f8fafc; color:#0f172a; border:1px solid #cbd5e1; width:100%; text-align:left; display:flex; justify-content:space-between; align-items:center; padding-left: 8px; padding-right: 8px;" onclick="openTruckSelectionModal()">
+                                    <span id="btn-truck-text" style="font-size: 0.9em;">-- Pilih Truk --</span>
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Alokasi Truk Divisi</label>
-                            <button type="button" class="btn btn-primary" style="background:#f8fafc; color:#0f172a; border:1px solid #cbd5e1; width:100%; text-align:left; display:flex; justify-content:space-between; align-items:center;" onclick="openTruckSelectionModal()">
-                                <span id="btn-truck-text">-- Pilih Truk --</span>
-                                <i class="fa-solid fa-chevron-down"></i>
-                            </button>
+                        <div style="background: rgba(16, 185, 129, 0.1); padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 0.85rem; border: 1px solid rgba(16, 185, 129, 0.2);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                                <span style="white-space:nowrap; font-weight: 500; color: #047857;">Plan Prestasi Kg/HK:</span>
+                                <strong id="hd-prestasi-kg" style="text-align:right; color: #047857;">0 Kg</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="white-space:nowrap; font-weight: 500; color: #047857;">Plan Prestasi Ha/HK:</span>
+                                <strong id="hd-prestasi-ha" style="text-align:right; color: #047857;">0 Ha</strong>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Mandor / Pengawas</label>
@@ -1810,6 +1822,7 @@ window.calcHarvestingEstimate = () => {
     
     let totalJanjang = 0;
     let totalKg = 0;
+    let totalHa = 0;
     
     rows.forEach(row => {
         const block = row.querySelector('.hd-block-select').value;
@@ -1830,11 +1843,26 @@ window.calcHarvestingEstimate = () => {
             
             totalJanjang += estJanjang;
             totalKg += estKg;
+            
+            let rawArea = blockData.gross_area;
+            if(typeof rawArea === 'string') rawArea = rawArea.replace(/,/g, '');
+            totalHa += parseFloat(rawArea) || 0;
         }
     });
     
     document.getElementById('hd-est-janjang').innerText = totalJanjang.toLocaleString('id-ID');
     document.getElementById('hd-est-kg').innerText = totalKg.toLocaleString('id-ID') + ' Kg';
+    
+    const pemanen = parseFloat(document.getElementById('hd-pemanen').value) || 0;
+    if (pemanen > 0) {
+        const kgHk = Math.round(totalKg / pemanen);
+        const haHk = (totalHa / pemanen).toFixed(2);
+        document.getElementById('hd-prestasi-kg').innerText = kgHk.toLocaleString('id-ID') + ' Kg';
+        document.getElementById('hd-prestasi-ha').innerText = haHk + ' Ha';
+    } else {
+        document.getElementById('hd-prestasi-kg').innerText = '0 Kg';
+        document.getElementById('hd-prestasi-ha').innerText = '0 Ha';
+    }
 };
 
 window.openBlockHistory = (block, divisi) => {
