@@ -2306,6 +2306,9 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
                 </select>
                 ${allocatedTrucks.size === 0 ? '<small style="color:#ef4444; font-size:0.8rem;">*Tidak ada truk dialokasikan di divisi ini.</small>' : ''}
             </div>
+            <div style="grid-column: 1 / -1; margin-top: 5px; margin-bottom: 0;">
+                <small style="color: #ef4444; font-weight: bold; font-style: italic;">*Input sesuai actual WB Mill</small>
+            </div>
             <div class="form-group" style="margin-bottom: 0;">
                 <label title="Opsional untuk Brondolan">Tambahan Janjang</label>
                 <input type="number" id="hr-janjang" class="form-control" placeholder="0">
