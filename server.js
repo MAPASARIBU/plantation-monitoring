@@ -142,6 +142,8 @@ async function initDB() {
         try { await pool.query("ALTER TABLE harvesting_daily ADD COLUMN realized_ha REAL DEFAULT 0"); } catch(e) {}
         try { await pool.query("ALTER TABLE harvesting_daily ADD COLUMN allocated_trucks TEXT DEFAULT '[]'"); } catch(e) {}
         try { await pool.query("ALTER TABLE harvesting_daily ADD COLUMN ritase_list TEXT DEFAULT '[]'"); } catch(e) {}
+        try { await pool.query("ALTER TABLE harvesting_daily ALTER COLUMN akp TYPE TEXT USING akp::TEXT"); } catch(e) {}
+
 
         await pool.query(`CREATE TABLE IF NOT EXISTS master_divisi (id SERIAL PRIMARY KEY, estate TEXT, name TEXT)`);
         // Added divisi column because it's used in bulk insert checking
