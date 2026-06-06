@@ -594,20 +594,29 @@ const views = {
                         </div>
                         <div class="form-group">
                             <label>Pilih Divisi</label>
-                            <select id="hd-divisi" class="form-control select-divisi" required onchange="filterBlok(this.value, 'hd-block')"></select>
+                            <select id="hd-divisi" class="form-control select-divisi" required onchange="filterBlok(this.value, 'hd-block'); window.resetHarvestingBlocks();"></select>
                         </div>
-                        <div class="form-group">
-                            <label>Blok</label>
-                            <select id="hd-block" class="form-control select-blok" required onchange="calcHarvestingEstimate()"></select>
+                        
+                        <div id="hd-blocks-container">
+                            <div class="hd-block-row" style="background:#f8fafc; padding:10px; border-radius:5px; margin-bottom:10px; border: 1px solid #e2e8f0; position:relative;">
+                                <div class="form-group">
+                                    <label>Blok</label>
+                                    <select id="hd-block" class="form-control select-blok hd-block-select" required onchange="calcHarvestingEstimate()"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Angka Kerapatan Panen (AKP %)</label>
+                                    <input type="number" step="0.1" class="form-control hd-akp-input" required oninput="calcHarvestingEstimate()">
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label>Pusingan Panen</label>
+                                    <input type="number" class="form-control hd-pusingan-input" required>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Angka Kerapatan Panen (AKP %)</label>
-                            <input type="number" step="0.1" id="hd-akp" class="form-control" required oninput="calcHarvestingEstimate()">
-                        </div>
-                        <div class="form-group">
-                            <label>Pusingan Panen</label>
-                            <input type="number" id="hd-pusingan" class="form-control" required>
-                        </div>
+                        
+                        <button type="button" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-bottom: 15px; background: #e2e8f0; color: #334155; border: 1px dashed #94a3b8;" onclick="window.addHarvestingBlockRow()">
+                            <i class="fa-solid fa-plus"></i> Tambah Blok
+                        </button>
                         <div style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 0.85rem;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
                                 <span style="white-space:nowrap;">Est Ttl JJG:</span>
@@ -1747,33 +1756,85 @@ window.deleteUser = async (id) => {
     }
 };
 
-window.calcHarvestingEstimate = () => {
-    const block = document.getElementById('hd-block').value;
-    const divisi = document.getElementById('hd-divisi').value;
-    const akp = parseFloat(document.getElementById('hd-akp').value) || 0;
-    
-    // Pastikan match nama blok dan divisinya
-    const blockData = masterData.blok.find(b => b.name === block && b.divisi === divisi);
-    
-    if (blockData) {
-        // Hapus koma atau titik jika formatnya ribuan sebelum di-parse
-        let rawTs = blockData.total_stand;
-        if(typeof rawTs === 'string') rawTs = rawTs.replace(/,/g, '');
-        const ts = parseFloat(rawTs) || 0;
-        
-        let rawBjr = blockData.bjr;
-        if(typeof rawBjr === 'string') rawBjr = rawBjr.replace(/,/g, '');
-        const bjr = parseFloat(rawBjr) || 0;
-        
-        const estJanjang = Math.round(ts * (akp / 100));
-        const estKg = Math.round(estJanjang * bjr);
-        
-        document.getElementById('hd-est-janjang').innerText = estJanjang.toLocaleString('id-ID');
-        document.getElementById('hd-est-kg').innerText = estKg.toLocaleString('id-ID') + ' Kg';
-    } else {
-        document.getElementById('hd-est-janjang').innerText = '0';
-        document.getElementById('hd-est-kg').innerText = '0 Kg';
+window.resetHarvestingBlocks = () => {
+    const container = document.getElementById('hd-blocks-container');
+    if(!container) return;
+    const rows = container.querySelectorAll('.hd-block-row');
+    for(let i=1; i<rows.length; i++) {
+        rows[i].remove();
     }
+    const firstRow = rows[0];
+    if(firstRow) {
+        firstRow.querySelector('.hd-block-select').value = '';
+        firstRow.querySelector('.hd-akp-input').value = '';
+        firstRow.querySelector('.hd-pusingan-input').value = '';
+    }
+    calcHarvestingEstimate();
+};
+
+window.addHarvestingBlockRow = () => {
+    const container = document.getElementById('hd-blocks-container');
+    const firstRow = container.querySelector('.hd-block-row');
+    if(!firstRow) return;
+    
+    const newRow = firstRow.cloneNode(true);
+    newRow.querySelector('.hd-block-select').value = '';
+    newRow.querySelector('.hd-akp-input').value = '';
+    newRow.querySelector('.hd-pusingan-input').value = '';
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn btn-danger';
+    removeBtn.innerHTML = '&times;';
+    removeBtn.style.position = 'absolute';
+    removeBtn.style.top = '10px';
+    removeBtn.style.right = '10px';
+    removeBtn.style.padding = '2px 8px';
+    removeBtn.style.background = '#ef4444';
+    removeBtn.style.color = 'white';
+    removeBtn.style.border = 'none';
+    removeBtn.style.borderRadius = '4px';
+    removeBtn.style.cursor = 'pointer';
+    removeBtn.onclick = function() {
+        newRow.remove();
+        calcHarvestingEstimate();
+    };
+    newRow.appendChild(removeBtn);
+    
+    container.appendChild(newRow);
+};
+
+window.calcHarvestingEstimate = () => {
+    const divisi = document.getElementById('hd-divisi').value;
+    const rows = document.querySelectorAll('.hd-block-row');
+    
+    let totalJanjang = 0;
+    let totalKg = 0;
+    
+    rows.forEach(row => {
+        const block = row.querySelector('.hd-block-select').value;
+        const akp = parseFloat(row.querySelector('.hd-akp-input').value) || 0;
+        
+        const blockData = masterData.blok.find(b => b.name === block && b.divisi === divisi);
+        if (blockData) {
+            let rawTs = blockData.total_stand;
+            if(typeof rawTs === 'string') rawTs = rawTs.replace(/,/g, '');
+            const ts = parseFloat(rawTs) || 0;
+            
+            let rawBjr = blockData.bjr;
+            if(typeof rawBjr === 'string') rawBjr = rawBjr.replace(/,/g, '');
+            const bjr = parseFloat(rawBjr) || 0;
+            
+            const estJanjang = Math.round(ts * (akp / 100));
+            const estKg = Math.round(estJanjang * bjr);
+            
+            totalJanjang += estJanjang;
+            totalKg += estKg;
+        }
+    });
+    
+    document.getElementById('hd-est-janjang').innerText = totalJanjang.toLocaleString('id-ID');
+    document.getElementById('hd-est-kg').innerText = totalKg.toLocaleString('id-ID') + ' Kg';
 };
 
 window.openBlockHistory = (block, divisi) => {
@@ -2604,8 +2665,24 @@ const bindForms = () => {
     const formHarvestingDaily = document.getElementById('form-harvesting-daily');
     if (formHarvestingDaily) formHarvestingDaily.onsubmit = async (e) => {
         e.preventDefault();
-        const block = document.getElementById('hd-block').value;
-        const akp = parseFloat(document.getElementById('hd-akp').value);
+        const rows = document.querySelectorAll('.hd-block-row');
+        const blocks = [];
+        const akps = [];
+        const pusingans = [];
+        rows.forEach(row => {
+            const b = row.querySelector('.hd-block-select').value;
+            const a = row.querySelector('.hd-akp-input').value;
+            const p = row.querySelector('.hd-pusingan-input').value;
+            if(b) {
+                blocks.push(b);
+                akps.push(a);
+                pusingans.push(p);
+            }
+        });
+        
+        const blockStr = blocks.join(', ');
+        const akpStr = akps.join(', ');
+        const pusinganStr = pusingans.join(', ');
         
         const estJanjang = parseInt(document.getElementById('hd-est-janjang').innerText.replace(/,/g, '').replace(/\./g, '')) || 0;
         const estKg = parseFloat(document.getElementById('hd-est-kg').innerText.replace(/,/g, '').replace(/\./g, '').replace(' Kg', '')) || 0;
@@ -2616,13 +2693,13 @@ const bindForms = () => {
             date: document.getElementById('hd-date').value,
             estate: currentUser.estate,
             divisi: document.getElementById('hd-divisi').value,
-            block: block,
-            akp: akp,
+            block: blockStr,
+            akp: akpStr, // Send as string for multiple blocks
             est_janjang: estJanjang,
             est_kg: estKg,
             plan_pemanen: parseInt(document.getElementById('hd-pemanen').value),
             mandor: document.getElementById('hd-mandor').value,
-            pusingan: document.getElementById('hd-pusingan').value,
+            pusingan: pusinganStr, // Send as string for multiple blocks
             allocated_trucks: JSON.stringify(allocatedTrucks)
         };
         try {
