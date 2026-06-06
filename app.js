@@ -2710,20 +2710,50 @@ const bindForms = () => {
     const formHarvestingDaily = document.getElementById('form-harvesting-daily');
     if (formHarvestingDaily) formHarvestingDaily.onsubmit = async (e) => {
         e.preventDefault();
+        const dateVal = document.getElementById('hd-date').value;
+        const divisiVal = document.getElementById('hd-divisi').value;
+        const pemanenVal = document.getElementById('hd-pemanen').value;
+        
+        if (!dateVal) { alert("Tanggal Rencana wajib diisi!"); return; }
+        if (!divisiVal) { alert("Divisi wajib dipilih!"); return; }
+        
         const rows = document.querySelectorAll('.hd-block-row');
         const blocks = [];
         const akps = [];
         const pusingans = [];
+        let hasIncompleteBlock = false;
+        
         rows.forEach(row => {
             const b = row.querySelector('.hd-block-select').value;
             const a = row.querySelector('.hd-akp-input').value;
             const p = row.querySelector('.hd-pusingan-input').value;
             if(b) {
                 blocks.push(b);
+                if (!a || !p) hasIncompleteBlock = true;
                 akps.push(a);
                 pusingans.push(p);
             }
         });
+        
+        if (blocks.length === 0) {
+            alert("Minimal 1 Blok wajib dipilih!");
+            return;
+        }
+        if (hasIncompleteBlock) {
+            alert("Setiap blok yang dipilih wajib diisi nilai AKP dan Pusingan Panen!");
+            return;
+        }
+        
+        if (!pemanenVal || parseFloat(pemanenVal) <= 0) {
+            alert("Alokasi Pemanen wajib diisi!");
+            return;
+        }
+        
+        const allocatedTrucks = window.selectedDailyTrucks || [];
+        if (allocatedTrucks.length === 0) {
+            alert("Alokasi Truk wajib dipilih minimal 1!");
+            return;
+        }
         
         const blockStr = blocks.join(', ');
         const akpStr = akps.join(', ');
@@ -2731,8 +2761,6 @@ const bindForms = () => {
         
         const estJanjang = parseInt(document.getElementById('hd-est-janjang').innerText.replace(/,/g, '').replace(/\./g, '')) || 0;
         const estKg = parseFloat(document.getElementById('hd-est-kg').innerText.replace(/,/g, '').replace(/\./g, '').replace(' Kg', '')) || 0;
-        
-        const allocatedTrucks = window.selectedDailyTrucks || [];
 
         const payload = {
             date: document.getElementById('hd-date').value,
