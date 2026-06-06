@@ -2239,14 +2239,20 @@ window.saveTruckSelection = () => {
 };
 
 window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg, divisi) => {
-    let blockData;
-    if (divisi && divisi !== 'undefined') {
-        blockData = masterData.blok.find(b => b.name === block && b.divisi === divisi);
-    }
-    if (!blockData) {
-        blockData = masterData.blok.find(b => b.name === block); // fallback
-    }
-    const grossArea = blockData ? blockData.gross_area : 0;
+    let grossArea = 0;
+    const blockNames = block ? block.split(',').map(s => s.trim()) : [];
+    blockNames.forEach(bName => {
+        let bData;
+        if (divisi && divisi !== 'undefined') {
+            bData = masterData.blok.find(b => b.name === bName && b.divisi === divisi);
+        }
+        if (!bData) bData = masterData.blok.find(b => b.name === bName); // fallback
+        if (bData) {
+            let area = bData.gross_area;
+            if(typeof area === 'string') area = area.replace(/,/g, '');
+            grossArea += parseFloat(area) || 0;
+        }
+    });
     
     const h = (db.harvesting_daily || []).find(x => x.id == id) || {};
     const currJanjang = h.realized_janjang || 0;
@@ -2418,12 +2424,20 @@ window.submitHarvestingRealization = async (id) => {
         }
     }
     
-    let blockData;
-    if (h.divisi && h.divisi !== 'undefined') {
-        blockData = masterData.blok.find(b => b.name === h.block && b.divisi === h.divisi);
-    }
-    if (!blockData) blockData = masterData.blok.find(b => b.name === h.block);
-    const grossArea = blockData ? blockData.gross_area : 0;
+    let grossArea = 0;
+    const blockNames = h.block ? h.block.split(',').map(s => s.trim()) : [];
+    blockNames.forEach(bName => {
+        let bData;
+        if (h.divisi && h.divisi !== 'undefined') {
+            bData = masterData.blok.find(b => b.name === bName && b.divisi === h.divisi);
+        }
+        if (!bData) bData = masterData.blok.find(b => b.name === bName);
+        if (bData) {
+            let area = bData.gross_area;
+            if(typeof area === 'string') area = area.replace(/,/g, '');
+            grossArea += parseFloat(area) || 0;
+        }
+    });
     
     const totalJanjang = (h.realized_janjang || 0) + addJanjang;
     const totalPemanen = (h.realized_pemanen || 0) + addPemanen;
