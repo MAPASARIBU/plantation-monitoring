@@ -1484,7 +1484,7 @@ const renderHarvestingTable = () => {
             }
         } else if (h.status === 'Published') {
             statusEl = `<span class="status-badge" style="background:#e0e7ff; color:#4338ca; padding:2px 6px;">${h.status}</span>`;
-            if (currentUser.role === 'Kerani Buah' || currentUser.role === 'Admin' || currentUser.role === 'Asisten Divisi') {
+            if (['Kerani Buah', 'Krani Divisi', 'Admin', 'Asisten Divisi', 'Supir', 'Mandor'].includes(currentUser.role)) {
                 statusEl = `<button type="button" class="btn btn-primary" style="padding:2px 8px; font-size:0.8rem; background-color:orange; border:none; border-radius:15px; font-weight:bold;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}', ${h.est_janjang || 0}, ${h.plan_pemanen || 0}, ${h.est_kg || 0}, '${h.divisi}')">Update</button>`;
             }
         } else if (h.status === 'Selesai') {
@@ -3124,7 +3124,7 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
         return;
     }
     
-    const isGroupA = ['Mandor', 'Supir', 'Krani Divisi', 'Krani Mill'].includes(currentUser.role);
+    const isGroupA = ['Mandor', 'Supir', 'Krani Divisi', 'Kerani Buah', 'Krani Mill'].includes(currentUser.role);
     const isGroupB = !isGroupA;
 
     let formFieldsHtml = '';
@@ -3208,7 +3208,7 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
 };
 
 window.submitHarvestingRealization = async (id) => {
-    const isGroupA = ['Mandor', 'Supir', 'Krani Divisi', 'Krani Mill'].includes(currentUser.role);
+    const isGroupA = ['Mandor', 'Supir', 'Krani Divisi', 'Kerani Buah', 'Krani Mill'].includes(currentUser.role);
     const isGroupB = !isGroupA;
     
     // Get current values
