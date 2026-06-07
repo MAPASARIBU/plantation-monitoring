@@ -4888,7 +4888,7 @@ window.onVehicleTrukChange = (selectEl) => {
 window.promptHistoricalVehicle = () => {
     const html = `
         <div class="modal-overlay" id="modal-historical-vehicle">
-            <div class="modal-content" style="width: 800px; max-width: 95%;">
+            <div class="modal-content" style="width: 95%; max-width: 1200px;">
                 <div class="modal-header">
                     <h3>Historical Vehicle Motion</h3>
                     <button class="modal-close" onclick="document.getElementById('modal-historical-vehicle').remove()">&times;</button>
