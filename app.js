@@ -2419,6 +2419,205 @@ window.openBlockHistory = (block, divisi) => {
     document.body.insertAdjacentHTML('beforeend', html);
 };
 
+window.printHistoryBulanan = (divisi, estate) => {
+    const monthVal = document.getElementById('print-history-month').value;
+    if (!monthVal) {
+        alert("Pilih bulan terlebih dahulu untuk di-print!");
+        return;
+    }
+    
+    const [year, month] = monthVal.split('-');
+    const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    const monthName = monthNames[parseInt(month) - 1];
+    
+    let historyData = db.harvesting_daily.filter(h => h.divisi === divisi && (h.status === 'Selesai' || h.status === 'Closed'));
+    if (estate) {
+        historyData = historyData.filter(h => h.estate === estate);
+    }
+    
+    historyData = historyData.filter(h => {
+        let hDate = typeof h.date === 'string' && h.date.includes('T') ? h.date.split('T')[0] : h.date;
+        return hDate.startsWith(monthVal);
+    });
+    
+    const dateMap = {};
+    historyData.forEach(h => {
+        const dStr = typeof h.date === 'string' && h.date.includes('T') ? h.date.split('T')[0] : h.date;
+        if(!dateMap[dStr]) {
+            dateMap[dStr] = { date: dStr, planHvr: 0, planKg: 0, planJjg: 0, planPokok: 0, actHvr: 0, actHa: 0, actKg: 0, actJjg: 0, actPokok: 0, grossArea: 0, pusinganSum: 0, pusinganCount: 0, akpSum: 0, akpCount: 0, blocks: new Set() };
+        }
+        dateMap[dStr].planHvr += h.plan_pemanen || 0;
+        dateMap[dStr].planKg += h.est_kg || 0;
+        dateMap[dStr].planJjg += h.est_janjang || 0;
+        dateMap[dStr].actHvr += h.realized_pemanen || 0;
+        dateMap[dStr].actHa += h.realized_ha || 0;
+        dateMap[dStr].actKg += h.realized_kg || 0;
+        dateMap[dStr].actJjg += h.realized_janjang || 0;
+        
+        let blockData = masterData.blok.find(b => b.name === h.block && b.divisi === divisi);
+        if (!blockData) blockData = masterData.blok.find(b => b.name === h.block);
+        const sph = (blockData && blockData.sph) ? parseFloat(blockData.sph) : 136;
+        dateMap[dStr].actPokok += (h.realized_ha || 0) * sph;
+        
+        if (h.pusingan) { dateMap[dStr].pusinganSum += parseInt(h.pusingan) || 0; dateMap[dStr].pusinganCount++; }
+        if (h.akp) {
+            const akpVals = String(h.akp).split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+            akpVals.forEach(v => { dateMap[dStr].akpSum += v; dateMap[dStr].akpCount++; });
+        }
+        if (!dateMap[dStr].blocks.has(h.block)) {
+            dateMap[dStr].blocks.add(h.block);
+            dateMap[dStr].grossArea += (blockData ? blockData.gross_area : 0);
+            dateMap[dStr].planPokok += (blockData ? blockData.gross_area : 0) * sph;
+        }
+    });
+
+    const dates = Object.values(dateMap).sort((a,b) => a.date.localeCompare(b.date));
+    
+    let totalPlanHvr = 0, totalPlanKg = 0, totalPlanJjg = 0;
+    let totalActHvr = 0, totalActHa = 0, totalActKg = 0, totalActJjg = 0;
+    
+    let rowsHtml = '';
+    if (dates.length === 0) {
+        rowsHtml = `<tr><td colspan="17" style="text-align:center; padding: 10px; border: 1px solid #000;">Tidak ada data untuk bulan ${monthName} ${year}</td></tr>`;
+    } else {
+        dates.forEach(r => {
+            let formattedDate = r.date;
+            const d = new Date(r.date);
+            if(!isNaN(d)) {
+                const day = String(d.getDate()).padStart(2, '0');
+                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                formattedDate = `${day} ${months[d.getMonth()]}`;
+            }
+            
+            let varHvr = 0; if (r.planHvr > 0) varHvr = (r.actHvr / r.planHvr) * 100;
+            let varHa = 0; if (r.grossArea > 0) varHa = (r.actHa / r.grossArea) * 100;
+            const prestasiHvr = r.actHvr > 0 ? r.actKg / r.actHvr : 0;
+            const kapasitasHa = r.actHvr > 0 ? r.actHa / r.actHvr : 0;
+            const avgPusingan = r.pusinganCount > 0 ? (r.pusinganSum / r.pusinganCount).toFixed(1) : '-';
+            const avgAkp = r.akpCount > 0 ? (r.akpSum / r.akpCount).toFixed(1) : '0.0';
+            const bjrActual = r.actJjg > 0 ? (r.actKg / r.actJjg).toFixed(2) : '0.00';
+            
+            rowsHtml += `
+                <tr>
+                    <td style="border: 1px solid #000; text-align:center; padding: 4px;">${formattedDate}</td>
+                    <td style="border: 1px solid #000; text-align:center; padding: 4px;"><strong>${divisi}</strong></td>
+                    <td style="border: 1px solid #000; text-align:center; padding: 4px;">${avgPusingan}</td>
+                    <td style="border: 1px solid #000; text-align:center; padding: 4px;">${avgAkp}</td>
+                    <td style="border: 1px solid #000; text-align:center; padding: 4px;">${r.grossArea.toFixed(2)}</td>
+                    <td style="border: 1px solid #000; text-align:center; padding: 4px;">${r.planJjg}</td>
+                    <td style="border: 1px solid #000; text-align:center; padding: 4px;">${r.planKg}</td>
+                    <td style="border: 1px solid #000; text-align:center; padding: 4px;">${r.planHvr}</td>
+                    <td style="border: 1px solid #000; text-align:center; padding: 4px;">${r.actHa.toFixed(2)}</td>
+                    <td style="border: 1px solid #000; text-align:center; padding: 4px;">${r.actJjg}</td>
+                    <td style="border: 1px solid #000; text-align:center; padding: 4px;">${r.actKg}</td>
+                    <td style="border: 1px solid #000; text-align:center; padding: 4px;">${r.actHvr}</td>
+                    <td style="border: 1px solid #000; text-align:center; padding: 4px;">${kapasitasHa.toFixed(2)}</td>
+                    <td style="border: 1px solid #000; text-align:center; padding: 4px;">${prestasiHvr.toFixed(1)}</td>
+                    <td style="border: 1px solid #000; text-align:center; padding: 4px;">${varHa.toFixed(1)}%</td>
+                    <td style="border: 1px solid #000; text-align:center; padding: 4px;">${r.planJjg > 0 ? ((r.actJjg / r.planJjg)*100).toFixed(1) : '100.0'}%</td>
+                    <td style="border: 1px solid #000; text-align:center; padding: 4px;">${bjrActual}</td>
+                </tr>
+            `;
+            
+            totalPlanHvr += r.planHvr;
+            totalPlanKg += r.planKg;
+            totalPlanJjg += r.planJjg;
+            totalActHvr += r.actHvr;
+            totalActHa += r.actHa;
+            totalActKg += r.actKg;
+            totalActJjg += r.actJjg;
+        });
+        
+        const totalPrestasiHvr = totalActHvr > 0 ? totalActKg / totalActHvr : 0;
+        const totalKapasitasHa = totalActHvr > 0 ? totalActHa / totalActHvr : 0;
+        const totalBjr = totalActJjg > 0 ? (totalActKg / totalActJjg).toFixed(2) : '0.00';
+        const totalTurnOut = totalPlanJjg > 0 ? ((totalActJjg / totalPlanJjg)*100).toFixed(1) : '100.0';
+        
+        rowsHtml += `
+            <tr style="font-weight: bold; background-color: #f1f5f9;">
+                <td colspan="5" style="text-align:center; border: 1px solid #000; padding: 6px;">TOTAL BULAN ${monthName.toUpperCase()}</td>
+                <td style="border: 1px solid #000; text-align:center; padding: 6px;">${totalPlanJjg}</td>
+                <td style="border: 1px solid #000; text-align:center; padding: 6px;">${totalPlanKg}</td>
+                <td style="border: 1px solid #000; text-align:center; padding: 6px;">${totalPlanHvr}</td>
+                <td style="border: 1px solid #000; text-align:center; padding: 6px;">${totalActHa.toFixed(2)}</td>
+                <td style="border: 1px solid #000; text-align:center; padding: 6px;">${totalActJjg}</td>
+                <td style="border: 1px solid #000; text-align:center; padding: 6px;">${totalActKg}</td>
+                <td style="border: 1px solid #000; text-align:center; padding: 6px;">${totalActHvr}</td>
+                <td style="border: 1px solid #000; text-align:center; padding: 6px;">${totalKapasitasHa.toFixed(2)}</td>
+                <td style="border: 1px solid #000; text-align:center; padding: 6px;">${totalPrestasiHvr.toFixed(1)}</td>
+                <td style="border: 1px solid #000; text-align:center; padding: 6px;">-</td>
+                <td style="border: 1px solid #000; text-align:center; padding: 6px;">${totalTurnOut}%</td>
+                <td style="border: 1px solid #000; text-align:center; padding: 6px;">${totalBjr}</td>
+            </tr>
+        `;
+    }
+    
+    let printWin = window.open('', '_blank');
+    printWin.document.write(`
+        <html>
+        <head>
+            <title>Print History Prestasi Divisi</title>
+            <style>
+                body { font-family: 'Arial', sans-serif; padding: 20px; font-size: 11px; }
+                h2, h3, h4 { margin: 5px 0; text-align: center; }
+                table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+                th { background-color: #f1f5f9; border: 1px solid #000; padding: 8px 4px; text-align: center; }
+                td { border: 1px solid #000; padding: 4px; text-align: center; }
+                @media print {
+                    @page { size: landscape; margin: 10mm; }
+                    body { padding: 0; }
+                }
+            </style>
+        </head>
+        <body>
+            <h2>LAPORAN HISTORIS PRESTASI DIVISI BULANAN</h2>
+            <h3>ESTATE: ${estate ? getEstateCode(estate) : 'SEMUA'} - DIVISI: ${divisi}</h3>
+            <h4>PERIODE: ${monthName.toUpperCase()} ${year}</h4>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>DATE</th>
+                        <th>DIVISI</th>
+                        <th>AVG<br>ROUND</th>
+                        <th>AVG<br>AKP (%)</th>
+                        <th>PLAN AREA<br>(HA)</th>
+                        <th>PLAN<br>TOTAL JJG</th>
+                        <th>PLAN<br>PANEN (KG)</th>
+                        <th>PLAN<br>HVR (HK)</th>
+                        <th>ACT AREA<br>(HA)</th>
+                        <th>ACT<br>TOTAL JJG</th>
+                        <th>ACT<br>PANEN (KG)</th>
+                        <th>ACT<br>HVR (HK)</th>
+                        <th>PRESTASI<br>HA/ACT HVR</th>
+                        <th>PRESTASI<br>KG/WD (KG/HK)</th>
+                        <th>VAR<br>HA(%)</th>
+                        <th>TURN OUT<br>(%)</th>
+                        <th>ABW<br>(BJR ACTUAL)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                </tbody>
+            </table>
+            
+            <div style="margin-top: 30px; display: flex; justify-content: flex-end; width: 100%;">
+                <div style="text-align: center; width: 200px;">
+                    <p>Dibuat Oleh,</p>
+                    <br><br><br>
+                    <p>(....................................)</p>
+                </div>
+            </div>
+            
+            <script>
+                window.onload = function() { window.print(); window.onafterprint = function(){ window.close(); } };
+            </script>
+        </body>
+        </html>
+    `);
+    printWin.document.close();
+};
+
 window.openDivisiHistory = (divisi, date = null, estate = null) => {
     let historyData = db.harvesting_daily.filter(h => h.divisi === divisi && (h.status === 'Selesai' || h.status === 'Closed'));
     
@@ -2507,9 +2706,13 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
     let html = `
         <div class="modal-overlay" id="modal-history-divisi">
             <div class="modal-content animate-fade-in" style="width:98vw; max-width:1500px; max-height:85vh; overflow-y:auto; padding: 20px;">
-                <div class="modal-header">
-                    <h3>${titleStr}</h3>
-                    <button class="modal-close" onclick="document.getElementById('modal-history-divisi').remove()">&times;</button>
+                <div class="modal-header" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+                    <h3 style="margin: 0; padding-right: 20px;">${titleStr}</h3>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 5px;">
+                        <input type="month" id="print-history-month" class="form-control" style="width: auto; padding: 4px 8px; font-size: 0.9rem;" title="Pilih Bulan">
+                        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.9rem;" onclick="printHistoryBulanan('${divisi}', '${estate || ''}')"><i class="fa-solid fa-print"></i> Print Bulanan</button>
+                        <button class="modal-close" onclick="document.getElementById('modal-history-divisi').remove()" style="margin-left: 10px;">&times;</button>
+                    </div>
                 </div>
                 <div style="overflow-x: auto; width: 100%;">
                 <table class="data-table table-compact" style="font-size:0.75rem; margin-top:15px; width:100%; border-collapse: collapse; min-width: 1200px;">
