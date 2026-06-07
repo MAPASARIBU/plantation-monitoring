@@ -699,6 +699,35 @@ const views = {
                         <tbody id="tbody-harvesting-daily"></tbody>
                     </table>
                 </div>
+                
+                <h3 id="closed-jobs-title" style="margin-top: 30px; margin-bottom: 10px; color: var(--text-primary); display: none;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Closed</h3>
+                <div class="table-container" id="closed-jobs-container" style="margin-bottom: 30px; display: none;">
+                    <table class="data-table table-compact">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Estate</th>
+                                <th>Div</th>
+                                <th>Blok</th>
+                                <th>Round</th>
+                                <th>Mandor</th>
+                                <th>Plan<br>(Jjg)</th>
+                                <th>Plan<br>(Kg)</th>
+                                <th>Hvr</th>
+                                <th>Act<br>(Jjg)</th>
+                                <th>Act<br>(Hvr)</th>
+                                <th>Act<br>(Kg)</th>
+                                <th>Prestasi<br>Ha/WD</th>
+                                <th>Prestasi<br>Kg/WD</th>
+                                <th>Actual<br>BJR</th>
+                                <th>Var Act Ha<br>vs Plan (%)</th>
+                                <th>Turn Out<br>(%)</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-harvesting-closed"></tbody>
+                    </table>
+                </div>
 
                 <!-- Rekap Panen Table -->
                 <div class="table-container" style="margin-bottom: 30px; overflow-x: auto;">
@@ -1493,10 +1522,63 @@ const renderHarvestingTable = () => {
     draftData.forEach(h => tbodyDaily.innerHTML += renderDailyRow(h));
     
     if (selesaiData.length > 0) {
-        tbodyDaily.innerHTML += `<tr><td colspan="13" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Closed</td></tr>`;
-        selesaiData.forEach(h => {
-            tbodyDaily.innerHTML += renderDailyRow(h);
-        });
+        const tbodyClosed = document.getElementById('tbody-harvesting-closed');
+        const titleClosed = document.getElementById('closed-jobs-title');
+        const containerClosed = document.getElementById('closed-jobs-container');
+        
+        if (tbodyClosed) {
+            tbodyClosed.innerHTML = '';
+            titleClosed.style.display = 'block';
+            containerClosed.style.display = 'block';
+            selesaiData.forEach(h => {
+                let statusEl = `<span class="status-badge" style="background:#d1fae5; color:#065f46; padding:2px 6px;">${h.status}</span>`;
+                if (h.status === 'Selesai') {
+                    statusEl = `<span class="status-badge" style="background:#dcfce7; color:#15803d; padding:2px 6px;">${h.status}</span>`;
+                    if (currentUser.role === 'Asisten Divisi' || currentUser.role === 'Admin') {
+                        statusEl += ` <button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-left:5px; background-color:#16a34a; border:none;" onclick="closeHarvesting(${h.id})">Close</button>`;
+                    }
+                }
+                
+                const dateStr = typeof h.date === 'string' && h.date.includes('T') ? h.date.split('T')[0] : h.date;
+                const dObj = new Date(dateStr);
+                const formattedDate = !isNaN(dObj) ? dObj.toLocaleDateString('id-ID', {day:'2-digit', month:'short'}) : dateStr;
+                
+                const prestasiHaWd = (h.realized_pemanen > 0) ? (h.realized_ha / h.realized_pemanen).toFixed(2) : '0.00';
+                const prestasiKgWd = (h.realized_pemanen > 0) ? (h.realized_kg / h.realized_pemanen).toFixed(1) : '0.0';
+                const actualBjr = (h.realized_janjang > 0) ? (h.realized_kg / h.realized_janjang).toFixed(2) : '0.00';
+                
+                let blockData = masterData.blok.find(b => b.name === h.block && b.divisi === h.divisi);
+                if (!blockData) blockData = masterData.blok.find(b => b.name === h.block);
+                const grossArea = blockData ? blockData.gross_area : 0;
+                let varActHa = '0.0';
+                if (grossArea > 0) varActHa = ((h.realized_ha / grossArea) * 100).toFixed(1);
+                
+                const turnOut = (h.plan_pemanen > 0) ? ((h.realized_pemanen / h.plan_pemanen) * 100).toFixed(1) : '0.0';
+
+                tbodyClosed.innerHTML += `
+                    <tr>
+                        <td>${formattedDate}</td>
+                        <td><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px; white-space:nowrap;">${getEstateCode(h.estate)}</span></td>
+                        <td><strong>${h.divisi}</strong></td>
+                        <td>${h.block}</td>
+                        <td>${h.pusingan || '-'}</td>
+                        <td><small>${h.mandor || '-'}</small></td>
+                        <td>${h.est_janjang}</td>
+                        <td>${h.est_kg}</td>
+                        <td>${h.plan_pemanen}</td>
+                        <td>${h.realized_janjang}</td>
+                        <td>${h.realized_pemanen}</td>
+                        <td>${h.realized_kg}</td>
+                        <td>${prestasiHaWd}</td>
+                        <td>${prestasiKgWd}</td>
+                        <td>${actualBjr}</td>
+                        <td>${varActHa}%</td>
+                        <td>${turnOut}%</td>
+                        <td>${statusEl}</td>
+                    </tr>
+                `;
+            });
+        }
         
         const rekapMap = {};
         const currentMonthPrefix = new Date().toISOString().substring(0, 7);
@@ -1622,6 +1704,13 @@ const renderHarvestingTable = () => {
     
     if(draftData.length === 0 && selesaiData.length === 0) {
         tbodyDaily.innerHTML = `<tr><td colspan="13" style="text-align:center;">Belum ada rencana panen harian.</td></tr>`;
+    } else if (draftData.length === 0) {
+        tbodyDaily.innerHTML = `<tr><td colspan="13" style="text-align:center;">Belum ada pekerjaan yang berstatus Draft atau Published.</td></tr>`;
+    } else if (selesaiData.length === 0) {
+        const titleClosed = document.getElementById('closed-jobs-title');
+        const containerClosed = document.getElementById('closed-jobs-container');
+        if(titleClosed) titleClosed.style.display = 'none';
+        if(containerClosed) containerClosed.style.display = 'none';
     }
 };
 
