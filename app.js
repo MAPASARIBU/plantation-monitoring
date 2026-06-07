@@ -5086,17 +5086,17 @@ window.promptAddUpkeepProgress = (id, block, type, target, realized) => {
                 </div>
                 <form id="form-upkeep-add-${id}" onsubmit="submitUpkeepProgress(event, ${id})">
                     <div class="form-group">
-                        <label>Realisasi Tambahan (Ha)</label>
-                        <input type="number" step="0.1" id="upkeep-add-${id}" class="form-control" required placeholder="Contoh: 2.5" max="${sisa}">
+                        <label>Realisasi (Ha)</label>
+                        <input type="number" step="0.01" id="upkeep-add-${id}" class="form-control" required placeholder="Contoh: 2.5" max="${sisa}" oninput="calcPrestasiUpkeep(${id})">
                     </div>
                     <div class="form-group">
                         <label>Jumlah Pekerja (Orang)</label>
-                        <input type="number" id="upkeep-workers-${id}" class="form-control" required placeholder="Contoh: 5">
+                        <input type="number" id="upkeep-workers-${id}" class="form-control" required placeholder="Contoh: 5" oninput="calcPrestasiUpkeep(${id})">
                     </div>
-                    <div class="form-group">
-                        <label>Tanggal Pengerjaan</label>
-                        <input type="date" id="upkeep-date-${id}" class="form-control" required value="${today}">
+                    <div class="form-group" style="background:#e0f2fe; padding:8px; border-radius:4px; margin-bottom: 10px;">
+                        <label style="margin-bottom:0; font-size: 0.9rem;">Prestasi Pekerja: <strong id="upkeep-prestasi-${id}" style="color:#0369a1;">-</strong></label>
                     </div>
+                    <input type="hidden" id="upkeep-date-${id}" value="${today}">
                     <div class="form-group">
                         <label>Penanggung Jawab / Keterangan</label>
                         <input type="text" id="upkeep-worker-${id}" class="form-control" placeholder="Opsional">
@@ -5110,6 +5110,22 @@ window.promptAddUpkeepProgress = (id, block, type, target, realized) => {
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+};
+
+window.calcPrestasiUpkeep = (id) => {
+    const haEl = document.getElementById(`upkeep-add-${id}`);
+    const hkEl = document.getElementById(`upkeep-workers-${id}`);
+    const prestasiEl = document.getElementById(`upkeep-prestasi-${id}`);
+    
+    if (haEl && hkEl && prestasiEl) {
+        const ha = parseFloat(haEl.value) || 0;
+        const hk = parseFloat(hkEl.value) || 0;
+        if (hk > 0) {
+            prestasiEl.innerText = (ha / hk).toFixed(2) + " Ha/HK";
+        } else {
+            prestasiEl.innerText = "-";
+        }
+    }
 };
 
 window.submitUpkeepProgress = async (e, id) => {
