@@ -2703,22 +2703,17 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
         titleStr += ` - ${getEstateCode(estate)}`;
     }
 
-    const uniqueMonths = new Set();
-    dates.forEach(d => {
-        if(d.date && d.date.length >= 7) uniqueMonths.add(d.date.substring(0, 7));
-    });
     let monthOptionsHtml = '';
     const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-    Array.from(uniqueMonths).sort().reverse().forEach(ym => {
-        const [y, m] = ym.split('-');
-        const name = `${monthNames[parseInt(m)-1]} ${y}`;
-        monthOptionsHtml += `<option value="${ym}">${name}</option>`;
-    });
-    if (uniqueMonths.size === 0) {
-        const dLocal = new Date(window.getLocalDate());
-        const mStr = String(dLocal.getMonth()+1).padStart(2, '0');
-        const ym = `${dLocal.getFullYear()}-${mStr}`;
-        monthOptionsHtml += `<option value="${ym}">${monthNames[dLocal.getMonth()]} ${dLocal.getFullYear()}</option>`;
+    const dLocal = new Date(window.getLocalDate());
+    const currentYear = dLocal.getFullYear();
+    const currentMonthStr = String(dLocal.getMonth() + 1).padStart(2, '0');
+    
+    for (let i = 1; i <= 12; i++) {
+        const mStr = String(i).padStart(2, '0');
+        const ym = `${currentYear}-${mStr}`;
+        const isSelected = (mStr === currentMonthStr) ? 'selected' : '';
+        monthOptionsHtml += `<option value="${ym}" ${isSelected}>${monthNames[i-1]} ${currentYear}</option>`;
     }
 
     let html = `
