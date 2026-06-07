@@ -3125,16 +3125,17 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
         return;
     }
     
-    const isGroupA = ['Mandor', 'Supir', 'Krani Divisi', 'Kerani Buah', 'Krani Mill'].includes(currentUser.role);
-    const isGroupB = !isGroupA;
+    const isGroupA = ['Mandor', 'Supir', 'Krani Divisi', 'Kerani Buah', 'Krani Mill', 'Admin'].includes(currentUser.role);
+    const isGroupB = ['Mandor', 'Asisten Divisi', 'Admin'].includes(currentUser.role);
 
     let formFieldsHtml = '';
     
     if (isGroupA) {
-        formFieldsHtml = `
+        formFieldsHtml += `
+            <div style="grid-column: 1 / -1; background:#f0fdf4; padding:8px; border-radius:4px; font-weight:bold; margin-bottom:5px; border-left:4px solid #22c55e;">Input Ritase (Truk & Hasil Panen)</div>
             <div class="form-group" style="grid-column: 1 / -1; margin-bottom: 0;">
-                <label>Pilih Truk (Wajib)</label>
-                <select id="hr-truck" class="form-control" required>
+                <label>Pilih Truk (Wajib jika isi ritase)</label>
+                <select id="hr-truck" class="form-control">
                     <option value="" disabled selected>-- Pilih Truk Dialokasikan --</option>
                     ${allocatedTrucksOptions}
                 </select>
@@ -3147,20 +3148,23 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
                 <label title="Opsional untuk Brondolan">Tambahan Janjang</label>
                 <input type="number" id="hr-janjang" class="form-control" placeholder="0">
             </div>
-            <div class="form-group" style="margin-bottom: 0;">
+            <div class="form-group" style="margin-bottom: 10px;">
                 <label>Tambahan Kg</label>
-                <input type="number" step="0.1" id="hr-kg" class="form-control" placeholder="0" required>
+                <input type="number" step="0.1" id="hr-kg" class="form-control" placeholder="0">
             </div>
         `;
-    } else if (isGroupB) {
-        formFieldsHtml = `
+    }
+    
+    if (isGroupB) {
+        formFieldsHtml += `
+            <div style="grid-column: 1 / -1; background:#fefce8; padding:8px; border-radius:4px; font-weight:bold; margin-bottom:5px; margin-top: ${isGroupA ? '10px' : '0'}; border-left:4px solid #eab308;">Input Realisasi Hektar, HK & Status</div>
             <div class="form-group" style="margin-bottom: 0;">
                 <label>HK Pemanen</label>
-                <input type="number" id="hr-pemanen" class="form-control" placeholder="0" ${isPemanenLocked ? 'disabled style="background:#e2e8f0; cursor:not-allowed;" title="HK Pemanen sudah dilock karena cukup 1 kali input."' : 'required'}>
+                <input type="number" id="hr-pemanen" class="form-control" placeholder="0" ${isPemanenLocked ? 'disabled style="background:#e2e8f0; cursor:not-allowed;" title="HK Pemanen sudah dilock karena cukup 1 kali input."' : ''}>
             </div>
             <div class="form-group" style="margin-bottom: 0;">
                 <label>Luasan (Ha)</label>
-                <input type="number" step="0.01" id="hr-ha" class="form-control" placeholder="0" ${isHaLocked ? 'disabled style="background:#e2e8f0; cursor:not-allowed;" title="Luasan Ha sudah dilock karena cukup 1 kali input."' : 'required'}>
+                <input type="number" step="0.01" id="hr-ha" class="form-control" placeholder="0" ${isHaLocked ? 'disabled style="background:#e2e8f0; cursor:not-allowed;" title="Luasan Ha sudah dilock karena cukup 1 kali input."' : ''}>
             </div>
             <div class="form-group" style="grid-column: 1 / -1; margin-bottom: 0;">
                 <label>Status Blok</label>
@@ -3209,8 +3213,8 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
 };
 
 window.submitHarvestingRealization = async (id) => {
-    const isGroupA = ['Mandor', 'Supir', 'Krani Divisi', 'Kerani Buah', 'Krani Mill'].includes(currentUser.role);
-    const isGroupB = !isGroupA;
+    const isGroupA = ['Mandor', 'Supir', 'Krani Divisi', 'Kerani Buah', 'Krani Mill', 'Admin'].includes(currentUser.role);
+    const isGroupB = ['Mandor', 'Asisten Divisi', 'Admin'].includes(currentUser.role);
     
     // Get current values
     const h = (db.harvesting_daily || []).find(x => x.id == id) || {};
@@ -3223,19 +3227,19 @@ window.submitHarvestingRealization = async (id) => {
     let status = h.status || 'In Progress';
 
     if (isGroupA) {
-        truck = document.getElementById('hr-truck').value;
-        if (!truck) {
-            alert("Pilih truk pengangkut terlebih dahulu!");
-            return;
-        }
-        addJanjang = parseFloat(document.getElementById('hr-janjang').value) || 0;
-        addKg = parseFloat(document.getElementById('hr-kg').value) || 0;
+        addJanjang = parseFloat(document.getElementById('hr-janjang')?.value) || 0;
+        addKg = parseFloat(document.getElementById('hr-kg')?.value) || 0;
         
-        if (addJanjang === 0 && addKg === 0) {
-            alert("Inputan tambahan masih kosong. Silakan isi setidaknya satu nilai (Kg atau Janjang).");
-            return;
+        if (addJanjang > 0 || addKg > 0) {
+            truck = document.getElementById('hr-truck')?.value;
+            if (!truck) {
+                alert("Pilih truk pengangkut terlebih dahulu untuk ritase ini!");
+                return;
+            }
         }
-    } else if (isGroupB) {
+    }
+    
+    if (isGroupB) {
         const pEl = document.getElementById('hr-pemanen');
         if(pEl && !pEl.disabled) {
             addPemanen = parseInt(pEl.value) || 0;
@@ -3244,12 +3248,12 @@ window.submitHarvestingRealization = async (id) => {
         if(haEl && !haEl.disabled) {
             addHa = parseFloat(haEl.value) || 0;
         }
-        status = document.getElementById('hr-status').value;
-
-        if (addPemanen === 0 && addHa === 0 && status === h.status) {
-            alert("Tidak ada data atau status yang diupdate.");
-            return;
-        }
+        status = document.getElementById('hr-status')?.value || h.status;
+    }
+    
+    if (addJanjang === 0 && addKg === 0 && addPemanen === 0 && addHa === 0 && status === h.status) {
+        alert("Tidak ada data atau status yang diupdate.");
+        return;
     }
     
     let grossArea = 0;
