@@ -717,6 +717,8 @@ const views = {
                                 <th>Act<br>(Jjg)</th>
                                 <th>Act<br>(Hvr)</th>
                                 <th>Act<br>(Kg)</th>
+                                <th>Plan<br>(Ha)</th>
+                                <th>Act<br>(Ha)</th>
                                 <th>Prestasi<br>Ha/WD</th>
                                 <th>Prestasi<br>Kg/WD</th>
                                 <th>Actual<br>BJR</th>
@@ -1548,9 +1550,21 @@ const renderHarvestingTable = () => {
                 const prestasiKgWd = (h.realized_pemanen > 0) ? (h.realized_kg / h.realized_pemanen).toFixed(1) : '0.0';
                 const actualBjr = (h.realized_janjang > 0) ? (h.realized_kg / h.realized_janjang).toFixed(2) : '0.00';
                 
-                let blockData = masterData.blok.find(b => b.name === h.block && b.divisi === h.divisi);
-                if (!blockData) blockData = masterData.blok.find(b => b.name === h.block);
-                const grossArea = blockData ? blockData.gross_area : 0;
+                let grossArea = 0;
+                const blockNames = h.block ? h.block.split(',').map(s => s.trim()) : [];
+                blockNames.forEach(bName => {
+                    let bData;
+                    if (h.divisi && h.divisi !== 'undefined') {
+                        bData = masterData.blok.find(b => b.name === bName && b.divisi === h.divisi);
+                    }
+                    if (!bData) bData = masterData.blok.find(b => b.name === bName);
+                    if (bData) {
+                        let area = bData.gross_area;
+                        if(typeof area === 'string') area = area.replace(/,/g, '');
+                        grossArea += parseFloat(area) || 0;
+                    }
+                });
+                
                 let varActHa = '0.0';
                 if (grossArea > 0) varActHa = ((h.realized_ha / grossArea) * 100).toFixed(1);
                 
@@ -1570,6 +1584,8 @@ const renderHarvestingTable = () => {
                         <td>${h.realized_janjang}</td>
                         <td>${h.realized_pemanen}</td>
                         <td>${h.realized_kg}</td>
+                        <td>${grossArea.toFixed(2)}</td>
+                        <td>${h.realized_ha ? parseFloat(h.realized_ha).toFixed(2) : '0.00'}</td>
                         <td>${prestasiHaWd}</td>
                         <td>${prestasiKgWd}</td>
                         <td>${actualBjr}</td>
