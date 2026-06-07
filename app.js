@@ -5402,6 +5402,9 @@ window.promptAddUpkeepProgress = (id, block, type, target, realized, targetWorke
     const today = window.getLocalDate();
     const sisa = Math.max(0, target - realized).toFixed(2);
 
+    const blockData = db.blocks.find(b => b.name === block);
+    const grossArea = blockData ? blockData.gross_area : 0;
+
     const modalHTML = `
         <div class="modal-overlay" id="${modalId}">
             <div class="modal-content" style="max-width: 400px;">
@@ -5412,8 +5415,8 @@ window.promptAddUpkeepProgress = (id, block, type, target, realized, targetWorke
                 <div style="margin-bottom: 15px; font-size: 0.9rem; background: #f8fafc; padding: 10px; border-radius: 8px;">
                     <strong>Blok:</strong> ${block}<br>
                     <strong>Pekerjaan:</strong> ${type}<br>
-                    <strong>Target:</strong> ${target} Ha<br>
-                    <strong>Target HK:</strong> ${targetWorkers || 0} Orang
+                    <strong>Target Hektar (Ha):</strong> ${target} Ha (Luas Blok: ${grossArea} Ha)<br>
+                    <strong>Rencana Man Power (HK):</strong> ${targetWorkers || 0} Orang
                 </div>
                 <form id="form-upkeep-add-${id}" onsubmit="submitUpkeepProgress(event, ${id})">
                     <div class="form-group">
