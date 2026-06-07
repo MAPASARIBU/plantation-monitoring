@@ -1922,15 +1922,16 @@ window.executePrintRekap = () => {
         rekapByEstate[r.estate].push(r);
     });
     
-    let allTablesHtml = '';
+    const estateNames = Array.from(estatesInvolved).map(e => getEstateCode(e)).join(', ') || 'All Estates';
+    
+    let allTableRowsHtml = '';
     
     if (Object.keys(rekapByEstate).length === 0) {
-        allTablesHtml = `<table><tr><td style="text-align:center; padding: 20px;">Tidak ada data pada periode dan estate yang dipilih.</td></tr></table>`;
+        allTableRowsHtml = `<tr><td colspan="15" style="text-align:center; padding: 20px;">Tidak ada data pada periode dan estate yang dipilih.</td></tr>`;
     } else {
         Object.keys(rekapByEstate).sort().forEach(estate => {
             const rows = rekapByEstate[estate];
             let totPlanJjg = 0, totPlanKg = 0, totActJjg = 0, totActKg = 0, totActHvr = 0, totActHa = 0;
-            let tableRows = '';
             
             rows.forEach(r => {
                 const avgPusingan = r.pusingan_count > 0 ? (r.pusingan_sum / r.pusingan_count).toFixed(1) : '-';
@@ -1948,7 +1949,7 @@ window.executePrintRekap = () => {
                 totActHvr += r.act_pemanen;
                 totActHa += r.act_ha;
                 
-                tableRows += `
+                allTableRowsHtml += `
                     <tr>
                         <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${periodLabel}</td>
                         <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${getEstateCode(r.estate)}</td>
@@ -1973,49 +1974,20 @@ window.executePrintRekap = () => {
             const totPrestasiHvr = totActHvr > 0 ? totActKg / totActHvr : 0;
             const totKapasitasHa = totActHvr > 0 ? totActHa / totActHvr : 0;
             
-            allTablesHtml += `
-                <div class="header-info" style="margin-top: ${allTablesHtml === '' ? '0' : '40px'};">
-                    <h2>REKAP PANEN PER DIVISI</h2>
-                    <h3>ESTATE: ${getEstateCode(estate)}</h3>
-                    <h4>PERIODE: ${periodLabel}</h4>
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>PERIODE</th>
-                            <th>ESTATE</th>
-                            <th>DIVISI</th>
-                            <th>AVG<br>ROUND</th>
-                            <th>AKP<br>(%)</th>
-                            <th>PLAN<br>TOTAL JJG</th>
-                            <th>PLAN<br>PANEN (KG)</th>
-                            <th>ACT<br>TOTAL JJG</th>
-                            <th>ACT<br>PANEN (KG)</th>
-                            <th>ACT<br>HVR (HK)</th>
-                            <th>PRESTASI<br>HA/ACT HVR</th>
-                            <th>PRESTASI<br>KG/WD (KG/HK)</th>
-                            <th>VAR<br>HA(%)</th>
-                            <th>TURN OUT<br>(%)</th>
-                            <th>ABW<br>(BJR ACTUAL)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${tableRows}
-                        <tr style="background-color: #f1f5f9; font-weight: bold;">
-                            <td colspan="5" style="border: 1px solid #cbd5e1; text-align:right; padding: 6px;">TOTAL ${getEstateCode(estate)}</td>
-                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totPlanJjg}</td>
-                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totPlanKg}</td>
-                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totActJjg}</td>
-                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totActKg}</td>
-                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totActHvr}</td>
-                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totKapasitasHa.toFixed(2)}</td>
-                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totPrestasiHvr.toFixed(1)}</td>
-                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">-</td>
-                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">-</td>
-                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totBjr}</td>
-                        </tr>
-                    </tbody>
-                </table>
+            allTableRowsHtml += `
+                <tr style="background-color: #f1f5f9; font-weight: bold;">
+                    <td colspan="5" style="border: 1px solid #cbd5e1; text-align:right; padding: 6px;">TOTAL ${getEstateCode(estate)}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totPlanJjg}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totPlanKg}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totActJjg}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totActKg}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totActHvr}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totKapasitasHa.toFixed(2)}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totPrestasiHvr.toFixed(1)}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">-</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">-</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totBjr}</td>
+                </tr>
             `;
         });
     }
@@ -2039,7 +2011,35 @@ window.executePrintRekap = () => {
             </style>
         </head>
         <body onload="window.print();">
-            ${allTablesHtml}
+            <div class="header-info">
+                <h2>REKAP PANEN PER DIVISI</h2>
+                <h3>ESTATE: ${estateNames}</h3>
+                <h4>PERIODE: ${periodLabel}</h4>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>PERIODE</th>
+                        <th>ESTATE</th>
+                        <th>DIVISI</th>
+                        <th>AVG<br>ROUND</th>
+                        <th>AKP<br>(%)</th>
+                        <th>PLAN<br>TOTAL JJG</th>
+                        <th>PLAN<br>PANEN (KG)</th>
+                        <th>ACT<br>TOTAL JJG</th>
+                        <th>ACT<br>PANEN (KG)</th>
+                        <th>ACT<br>HVR (HK)</th>
+                        <th>PRESTASI<br>HA/ACT HVR</th>
+                        <th>PRESTASI<br>KG/WD (KG/HK)</th>
+                        <th>VAR<br>HA(%)</th>
+                        <th>TURN OUT<br>(%)</th>
+                        <th>ABW<br>(BJR ACTUAL)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${allTableRowsHtml}
+                </tbody>
+            </table>
         </body>
         </html>
     `;
