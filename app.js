@@ -710,6 +710,7 @@ const views = {
                                 <th style="border: 1px solid #cbd5e1; text-align:center;">ESTATE</th>
                                 <th style="border: 1px solid #cbd5e1; text-align:center;">DIVISI</th>
                                 <th style="border: 1px solid #cbd5e1; text-align:center;">AVG<br>ROUND</th>
+                                <th style="border: 1px solid #cbd5e1; text-align:center;">AKP<br>(%)</th>
                                 <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN<br>TOTAL JJG</th>
                                 <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN<br>PANEN (KG)</th>
                                 <th style="border: 1px solid #cbd5e1; text-align:center;">ACT<br>TOTAL JJG</th>
@@ -1521,6 +1522,8 @@ const renderHarvestingTable = () => {
                     gross_area: 0,
                     pusingan_sum: 0,
                     pusingan_count: 0,
+                    akp_sum: 0,
+                    akp_count: 0,
                     blocks: new Set()
                 };
             }
@@ -1537,9 +1540,18 @@ const renderHarvestingTable = () => {
             const sph = (blockData && blockData.sph) ? parseFloat(blockData.sph) : 136;
             rekapMap[key].act_pokok += (h.realized_ha || 0) * sph;
             
+            
             if (h.pusingan) {
                 rekapMap[key].pusingan_sum += parseInt(h.pusingan) || 0;
                 rekapMap[key].pusingan_count++;
+            }
+            
+            if (h.akp) {
+                const akpVals = String(h.akp).split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+                akpVals.forEach(v => {
+                    rekapMap[key].akp_sum += v;
+                    rekapMap[key].akp_count++;
+                });
             }
             
             if (!rekapMap[key].blocks.has(h.block)) {
@@ -1565,8 +1577,7 @@ const renderHarvestingTable = () => {
             } else {
                 sortedRekap.forEach(r => {
                     const avgPusingan = r.pusingan_count > 0 ? (r.pusingan_sum / r.pusingan_count).toFixed(1) : '-';
-                    const akpPlan = r.plan_pokok > 0 ? ((r.plan_jjg / r.plan_pokok) * 100).toFixed(1) : '0.0';
-                    const akpActual = r.act_pokok > 0 ? ((r.act_jjg / r.act_pokok) * 100).toFixed(1) : '0.0';
+                    const akpPlan = r.akp_count > 0 ? (r.akp_sum / r.akp_count).toFixed(1) : '0.0';
                     const bjrActual = r.act_jjg > 0 ? (r.act_kg / r.act_jjg).toFixed(2) : '0.00';
                     
                     const prestasiHvr = r.act_pemanen > 0 ? r.act_kg / r.act_pemanen : 0;
@@ -1584,6 +1595,7 @@ const renderHarvestingTable = () => {
                             <td style="border: 1px solid #cbd5e1; text-align:center;"><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px; white-space:nowrap;">${getEstateCode(r.estate)}</span></td>
                             <td style="border: 1px solid #cbd5e1; text-align:center;">${r.divisi ? `<a href="#" onclick="openDivisiHistory('${r.divisi}', null, '${r.estate}')" style="color:var(--primary); font-weight:bold; text-decoration:underline; cursor:pointer;" title="Lihat Detail Divisi">${r.divisi}</a>` : '-'}</td>
                             <td style="border: 1px solid #cbd5e1; text-align:center;">${avgPusingan}</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center;">${akpPlan}%</td>
                             <td style="border: 1px solid #cbd5e1; text-align:center;"><strong>${r.plan_jjg}</strong></td>
                             <td style="border: 1px solid #cbd5e1; text-align:center;"><strong>${r.plan_kg}</strong></td>
                             <td style="border: 1px solid #cbd5e1; text-align:center;"><strong>${r.act_jjg}</strong></td>
@@ -1601,7 +1613,7 @@ const renderHarvestingTable = () => {
         }
     } else {
         if (tbodyRekap) {
-            tbodyRekap.innerHTML = `<tr><td colspan="14" style="text-align:center; border: 1px solid #cbd5e1;">Belum ada data rekap</td></tr>`;
+            tbodyRekap.innerHTML = `<tr><td colspan="15" style="text-align:center; border: 1px solid #cbd5e1;">Belum ada data rekap</td></tr>`;
         }
     }
     
@@ -1988,6 +2000,7 @@ window.openBlockHistory = (block, divisi) => {
                             <th>Date</th>
                             <th>Div</th>
                             <th>Blok</th>
+                            <th>AKP (%)</th>
                             <th>Plan<br>Hvr</th>
                             <th>Act<br>Hvr</th>
                             <th>Gross Area<br>(Ha)</th>
@@ -2003,7 +2016,7 @@ window.openBlockHistory = (block, divisi) => {
     `;
     
     if(historyData.length === 0) {
-        html += `<tr><td colspan="12" style="text-align:center;">Belum ada data historis</td></tr>`;
+        html += `<tr><td colspan="13" style="text-align:center;">Belum ada data historis</td></tr>`;
     } else {
         historyData.forEach(h => {
             let dateStr = h.date;
@@ -2044,6 +2057,7 @@ window.openBlockHistory = (block, divisi) => {
                         <strong>${h.block}</strong>
                         <div style="font-size:0.75rem; color:#64748b; margin-top:4px; max-width: 150px; white-space: normal;">${trucksStr}</div>
                     </td>
+                    <td>${h.akp || '-'}</td>
                     <td>${planHvr}</td>
                     <td>${actHvr}</td>
                     <td>${grossArea}</td>
@@ -2098,6 +2112,8 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
                 grossArea: 0,
                 pusinganSum: 0,
                 pusinganCount: 0,
+                akpSum: 0,
+                akpCount: 0,
                 blocks: new Set()
             };
         }
@@ -2117,6 +2133,14 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
         if (h.pusingan) {
             dateMap[dStr].pusinganSum += parseInt(h.pusingan) || 0;
             dateMap[dStr].pusinganCount++;
+        }
+        
+        if (h.akp) {
+            const akpVals = String(h.akp).split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+            akpVals.forEach(v => {
+                dateMap[dStr].akpSum += v;
+                dateMap[dStr].akpCount++;
+            });
         }
         
         if (!dateMap[dStr].blocks.has(h.block)) {
@@ -2159,6 +2183,7 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
                             <th style="border: 1px solid #cbd5e1; text-align:center;">DATE</th>
                             <th style="border: 1px solid #cbd5e1; text-align:center;">DIVISI</th>
                             <th style="border: 1px solid #cbd5e1; text-align:center;">AVG<br>ROUND</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">AVG<br>AKP (%)</th>
                             <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN AREA<br>(HA)</th>
                             <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN<br>TOTAL JJG</th>
                             <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN<br>PANEN (KG)</th>
@@ -2178,7 +2203,7 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
     `;
     
     if(dates.length === 0) {
-        html += `<tr><td colspan="16" style="text-align:center; border: 1px solid #cbd5e1;">Belum ada data historis divisi</td></tr>`;
+        html += `<tr><td colspan="17" style="text-align:center; border: 1px solid #cbd5e1;">Belum ada data historis divisi</td></tr>`;
     } else {
         dates.forEach(r => {
             let formattedDate = r.date;
@@ -2198,16 +2223,16 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
             const prestasiHvr = r.actHvr > 0 ? r.actKg / r.actHvr : 0;
             const kapasitasHa = r.actHvr > 0 ? r.actHa / r.actHvr : 0;
             const avgPusingan = r.pusinganCount > 0 ? (r.pusinganSum / r.pusinganCount).toFixed(1) : '-';
+            const avgAkp = r.akpCount > 0 ? (r.akpSum / r.akpCount).toFixed(1) : '0.0';
             
             const bjrActual = r.actJjg > 0 ? (r.actKg / r.actJjg).toFixed(2) : '0.00';
-            const akpActual = r.actPokok > 0 ? ((r.actJjg / r.actPokok) * 100).toFixed(1) : '0.0';
-            const akpPlan = r.planPokok > 0 ? ((r.planJjg / r.planPokok) * 100).toFixed(1) : '0.0';
             
             html += `
                 <tr>
                     <td style="border: 1px solid #cbd5e1; text-align:center;">${formattedDate}</td>
                     <td style="border: 1px solid #cbd5e1; text-align:center;"><strong>${divisi}</strong></td>
                     <td style="border: 1px solid #cbd5e1; text-align:center;">${avgPusingan}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center;">${avgAkp}</td>
                     <td style="border: 1px solid #cbd5e1; text-align:center;">${r.grossArea.toFixed(2)}</td>
                     <td style="border: 1px solid #cbd5e1; text-align:center;">${r.planJjg}</td>
                     <td style="border: 1px solid #cbd5e1; text-align:center;">${r.planKg}</td>
