@@ -1207,7 +1207,7 @@ const renderUpkeepTable = () => {
         
         if (u.status === 'Selesai') {
             actionBtn = `<span class="status-badge status-done" style="margin-right: 5px;">Selesai</span>`;
-        } else if (currentUser && currentUser.role && (currentUser.role.includes('Krani') || currentUser.role === 'Admin')) {
+        } else if (currentUser && currentUser.role && (['Asisten Divisi', 'Krani Divisi', 'Mandor', 'Admin'].includes(currentUser.role) || currentUser.role.includes('Krani'))) {
             actionBtn = `
                 <div style="display:flex; flex-direction:column; gap:5px; align-items:center;">
                     <div style="display:flex; gap:5px;">
