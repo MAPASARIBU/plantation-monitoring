@@ -702,7 +702,10 @@ const views = {
 
                 <!-- Rekap Panen Table -->
                 <div class="table-container" style="margin-bottom: 30px; overflow-x: auto;">
-                    <div style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border: 1px solid #cbd5e1; border-bottom: none;"><i class="fa-solid fa-chart-simple" style="color: var(--primary-color);"></i> Rekap Panen per Divisi (Dari Pekerjaan Selesai)</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; padding: 12px 15px; border: 1px solid #cbd5e1; border-bottom: none;">
+                        <div><i class="fa-solid fa-chart-simple" style="color: var(--primary-color);"></i> Rekap Panen per Divisi (Dari Pekerjaan Selesai)</div>
+                        <button class="btn btn-primary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="openPrintRekapModal()"><i class="fa-solid fa-print"></i> Print Out</button>
+                    </div>
                     <table class="data-table table-compact" style="border-collapse: collapse; min-width: 1200px;">
                         <thead>
                             <tr>
@@ -1619,6 +1622,282 @@ const renderHarvestingTable = () => {
     
     if(draftData.length === 0 && selesaiData.length === 0) {
         tbodyDaily.innerHTML = `<tr><td colspan="13" style="text-align:center;">Belum ada rencana panen harian.</td></tr>`;
+    }
+};
+
+window.openPrintRekapModal = () => {
+    let divisiOptions = masterData.divisi.map(d => `
+        <label style="display:block; margin-bottom:5px;">
+            <input type="checkbox" name="print-divisi" value="${d.name}" checked> ${d.name}
+        </label>
+    `).join('');
+
+    const html = `
+        <div class="modal-overlay" id="modal-print-rekap">
+            <div class="modal-content animate-fade-in" style="width:90vw; max-width:500px;">
+                <div class="modal-header">
+                    <h3>Print Rekap Panen per Divisi</h3>
+                    <button class="modal-close" onclick="document.getElementById('modal-print-rekap').remove()">&times;</button>
+                </div>
+                <div style="padding: 20px;">
+                    <div class="form-group">
+                        <label>Periode Dari Tanggal</label>
+                        <input type="date" id="print-rekap-start" class="form-control" value="${new Date().toISOString().substring(0, 10)}">
+                    </div>
+                    <div class="form-group">
+                        <label>Sampai Tanggal</label>
+                        <input type="date" id="print-rekap-end" class="form-control" value="${new Date().toISOString().substring(0, 10)}">
+                    </div>
+                    <div class="form-group">
+                        <label>Pilih Divisi</label>
+                        <div style="max-height: 150px; overflow-y: auto; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px;">
+                            ${divisiOptions}
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px; text-align: right;">
+                        <button class="btn btn-secondary" onclick="document.getElementById('modal-print-rekap').remove()">Batal</button>
+                        <button class="btn btn-primary" onclick="executePrintRekap()">Print / Export</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.executePrintRekap = () => {
+    const startDate = document.getElementById('print-rekap-start').value;
+    const endDate = document.getElementById('print-rekap-end').value;
+    const checkboxes = document.querySelectorAll('input[name="print-divisi"]:checked');
+    const selectedDivisis = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (!startDate || !endDate) {
+        alert("Pilih periode tanggal terlebih dahulu.");
+        return;
+    }
+    if (selectedDivisis.length === 0) {
+        alert("Pilih minimal satu divisi.");
+        return;
+    }
+    
+    // Filter data
+    const selesaiData = db.harvesting_daily.filter(h => h.status === 'Selesai' || h.status === 'Closed');
+    
+    const rekapMap = {};
+    
+    const startObj = new Date(startDate);
+    const endObj = new Date(endDate);
+    
+    const formatDate = (dateString) => {
+        const d = new Date(dateString);
+        return d.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'});
+    };
+    const periodLabel = `${formatDate(startDate)} - ${formatDate(endDate)}`;
+    let estatesInvolved = new Set();
+    
+    selesaiData.forEach(h => {
+        const hDateStr = typeof h.date === 'string' && h.date.includes('T') ? h.date.split('T')[0] : h.date;
+        if (!hDateStr) return;
+        const hDateObj = new Date(hDateStr);
+        
+        // Check date range
+        if (hDateObj < startObj || hDateObj > endObj) return;
+        
+        // Check divisi filter
+        if (!selectedDivisis.includes(h.divisi)) return;
+        
+        if (h.estate) estatesInvolved.add(h.estate);
+        
+        const key = h.estate + '_' + h.divisi;
+        if(!rekapMap[key]) {
+            rekapMap[key] = {
+                label: 'Periode Ini',
+                estate: h.estate,
+                divisi: h.divisi,
+                plan_jjg: 0,
+                plan_kg: 0,
+                plan_pemanen: 0,
+                act_jjg: 0,
+                act_kg: 0,
+                act_ha: 0,
+                act_pemanen: 0,
+                act_pokok: 0,
+                gross_area: 0,
+                pusingan_sum: 0,
+                pusingan_count: 0,
+                akp_sum: 0,
+                akp_count: 0,
+                blocks: new Set()
+            };
+        }
+        rekapMap[key].plan_jjg += h.est_janjang || 0;
+        rekapMap[key].plan_kg += h.est_kg || 0;
+        rekapMap[key].plan_pemanen += h.plan_pemanen || 0;
+        rekapMap[key].act_jjg += h.realized_janjang || 0;
+        rekapMap[key].act_kg += h.realized_kg || 0;
+        rekapMap[key].act_pemanen += h.realized_pemanen || 0;
+        rekapMap[key].act_ha += h.realized_ha || 0;
+        
+        let blockData = masterData.blok.find(b => b.name === h.block && b.divisi === h.divisi);
+        if (!blockData) blockData = masterData.blok.find(b => b.name === h.block);
+        const sph = (blockData && blockData.sph) ? parseFloat(blockData.sph) : 136;
+        rekapMap[key].act_pokok += (h.realized_ha || 0) * sph;
+        
+        if (h.pusingan) {
+            rekapMap[key].pusingan_sum += parseInt(h.pusingan) || 0;
+            rekapMap[key].pusingan_count++;
+        }
+        
+        if (h.akp) {
+            const akpVals = String(h.akp).split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+            akpVals.forEach(v => {
+                rekapMap[key].akp_sum += v;
+                rekapMap[key].akp_count++;
+            });
+        }
+        
+        if (!rekapMap[key].blocks.has(h.block)) {
+            rekapMap[key].blocks.add(h.block);
+            rekapMap[key].gross_area += (blockData ? blockData.gross_area : 0);
+        }
+    });
+    
+    const sortedRekap = Object.values(rekapMap).sort((a, b) => {
+        const estA = a.estate || '';
+        const estB = b.estate || '';
+        if (estA !== estB) return estA.localeCompare(estB);
+        const divA = a.divisi || '';
+        const divB = b.divisi || '';
+        return divA.localeCompare(divB, undefined, {numeric: true});
+    });
+    
+    let tableRows = '';
+    let totPlanJjg = 0, totPlanKg = 0, totActJjg = 0, totActKg = 0, totActHvr = 0, totActHa = 0;
+    
+    if (sortedRekap.length === 0) {
+        tableRows = \`<tr><td colspan="15" style="text-align:center; padding: 10px; border: 1px solid #cbd5e1;">Tidak ada data pada periode dan divisi yang dipilih.</td></tr>\`;
+    } else {
+        sortedRekap.forEach(r => {
+            const avgPusingan = r.pusingan_count > 0 ? (r.pusingan_sum / r.pusingan_count).toFixed(1) : '-';
+            const akpPlan = r.akp_count > 0 ? (r.akp_sum / r.akp_count).toFixed(1) : '0.0';
+            const bjrActual = r.act_jjg > 0 ? (r.act_kg / r.act_jjg).toFixed(2) : '0.00';
+            const prestasiHvr = r.act_pemanen > 0 ? r.act_kg / r.act_pemanen : 0;
+            const kapasitasHa = r.act_pemanen > 0 ? r.act_ha / r.act_pemanen : 0;
+            let varHvr = 0;
+            if (r.plan_pemanen > 0) varHvr = (r.act_pemanen / r.plan_pemanen) * 100;
+            let varHa = 0;
+            if (r.gross_area > 0) varHa = (r.act_ha / r.gross_area) * 100;
+            
+            totPlanJjg += r.plan_jjg;
+            totPlanKg += r.plan_kg;
+            totActJjg += r.act_jjg;
+            totActKg += r.act_kg;
+            totActHvr += r.act_pemanen;
+            totActHa += r.act_ha;
+
+            tableRows += \`
+                <tr>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${periodLabel}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${getEstateCode(r.estate)}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${r.divisi || '-'}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${avgPusingan}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${akpPlan}%</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>\${r.plan_jjg}</strong></td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>\${r.plan_kg}</strong></td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>\${r.act_jjg}</strong></td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>\${r.act_kg}</strong></td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>\${r.act_pemanen}</strong></td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${kapasitasHa.toFixed(2)}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${prestasiHvr.toFixed(1)}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${varHa.toFixed(1)}%</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${varHvr.toFixed(1)}%</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${bjrActual}</td>
+                </tr>
+            \`;
+        });
+        
+        // Add total row
+        const totBjr = totActJjg > 0 ? (totActKg / totActJjg).toFixed(2) : '0.00';
+        const totPrestasiHvr = totActHvr > 0 ? totActKg / totActHvr : 0;
+        const totKapasitasHa = totActHvr > 0 ? totActHa / totActHvr : 0;
+        tableRows += \`
+            <tr style="background-color: #f1f5f9; font-weight: bold;">
+                <td colspan="5" style="border: 1px solid #cbd5e1; text-align:right; padding: 6px;">TOTAL</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${totPlanJjg}</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${totPlanKg}</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${totActJjg}</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${totActKg}</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${totActHvr}</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${totKapasitasHa.toFixed(2)}</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${totPrestasiHvr.toFixed(1)}</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">-</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">-</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${totBjr}</td>
+            </tr>
+        \`;
+    }
+
+    const estateNames = Array.from(estatesInvolved).map(e => getEstateCode(e)).join(', ') || 'All Estates';
+
+    const printHtml = \`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Print Rekap Panen per Divisi</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; }
+                h2, h3, h4 { margin: 5px 0; text-align: center; }
+                .header-info { text-align: center; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11px; }
+                th, td { border: 1px solid #000; padding: 6px; text-align: center; }
+                th { background-color: #f2f2f2; }
+                @media print {
+                    @page { size: landscape; }
+                }
+            </style>
+        </head>
+        <body onload="window.print();">
+            <div class="header-info">
+                <h2>REKAP PANEN PER DIVISI</h2>
+                <h3>ESTATE: \${estateNames}</h3>
+                <h4>PERIODE: \${periodLabel}</h4>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>PERIODE</th>
+                        <th>ESTATE</th>
+                        <th>DIVISI</th>
+                        <th>AVG<br>ROUND</th>
+                        <th>AKP<br>(%)</th>
+                        <th>PLAN<br>TOTAL JJG</th>
+                        <th>PLAN<br>PANEN (KG)</th>
+                        <th>ACT<br>TOTAL JJG</th>
+                        <th>ACT<br>PANEN (KG)</th>
+                        <th>ACT<br>HVR (HK)</th>
+                        <th>PRESTASI<br>HA/ACT HVR</th>
+                        <th>PRESTASI<br>KG/WD (KG/HK)</th>
+                        <th>VAR<br>HA(%)</th>
+                        <th>TURN OUT<br>(%)</th>
+                        <th>ABW<br>(BJR ACTUAL)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    \${tableRows}
+                </tbody>
+            </table>
+        </body>
+        </html>
+    \`;
+
+    const printWin = window.open('', '', 'width=1200,height=800');
+    if (printWin) {
+        printWin.document.open();
+        printWin.document.write(printHtml);
+        printWin.document.close();
+        document.getElementById('modal-print-rekap').remove();
+    } else {
+        alert("Popup diblokir oleh browser. Izinkan popup untuk mencetak.");
     }
 };
 
