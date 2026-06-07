@@ -1216,7 +1216,7 @@ const renderUpkeepTable = () => {
         
         if (u.status === 'Selesai') {
             actionBtn = `<span class="status-badge status-done" style="margin-right: 5px;">Selesai</span>`;
-        } else if (currentUser && currentUser.role && (['Asisten Divisi', 'Assistant', 'Krani Divisi', 'Mandor', 'Admin'].includes(currentUser.role) || currentUser.role.includes('Krani'))) {
+        } else if (currentUser && currentUser.role && (['Asisten Divisi', 'Assistant', 'Krani Divisi', 'Mandor'].includes(currentUser.role))) {
             actionBtn = `
                 <div style="display:flex; justify-content:center; width: 100%;">
                     <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; justify-content:center;" onclick="promptAddUpkeepProgress(${u.id}, '${u.block}', '${safeType}', ${u.target}, ${u.realized}, ${u.targetworkers || 0})"><i class="fa-solid fa-pen-to-square"></i> Update</button>
