@@ -426,7 +426,7 @@ const views = {
                                 <th>Target (Ha)</th>
                                 <th>Target HK</th>
                                 <th>Realisasi (Ha)</th>
-                                <th>Progress</th>
+                                <th>Realisasi Prestasi (Ha/HK)</th>
                                 <th style="text-align:center;">Aksi / Status</th>
                             </tr>
                         </thead>
@@ -1223,6 +1223,14 @@ const renderUpkeepTable = () => {
             actionBtn = '-';
         }
         
+        let prestasiCell = '-';
+        if (u.realized > 0 && u.realizedworkers > 0) {
+            const prestasiVal = (u.realized / u.realizedworkers).toFixed(2);
+            prestasiCell = `<strong style="color:#0369a1; font-size:1.05rem;">${prestasiVal}</strong> Ha/HK`;
+        } else if (u.realized > 0) {
+            prestasiCell = `<span style="color:#64748b; font-size:0.85rem;">Menunggu data HK</span>`;
+        }
+        
         return `
             <tr>
                 <td><strong><a href="#" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;" onclick="viewUpkeepHistory(${u.id}, '${u.block}', '${safeType}'); return false;">${u.block}</a></strong></td>
@@ -1231,12 +1239,7 @@ const renderUpkeepTable = () => {
                 <td>${u.target}</td>
                 <td>${u.targetworkers || 0} Orang</td>
                 <td>${u.realized}</td>
-                <td>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <div class="progress-wrapper" style="width: 100px; margin:0;"><div class="progress-fill" style="width: ${pct}%"></div></div>
-                        <small>${pct}%</small>
-                    </div>
-                </td>
+                <td>${prestasiCell}</td>
                 <td style="text-align:center;">${actionBtn}</td>
             </tr>
         `;

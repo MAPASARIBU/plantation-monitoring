@@ -97,6 +97,7 @@ async function initDB() {
         )`);
         try { await pool.query("ALTER TABLE upkeep ADD COLUMN status TEXT DEFAULT 'Aktif'"); } catch(e) {}
         try { await pool.query("ALTER TABLE upkeep ADD COLUMN targetWorkers INTEGER DEFAULT 0"); } catch(e) {}
+        try { await pool.query("ALTER TABLE upkeep ADD COLUMN realizedWorkers INTEGER DEFAULT 0"); } catch(e) {}
         try { await pool.query("ALTER TABLE upkeep ADD COLUMN startDate TEXT"); } catch(e) {}
         try { await pool.query("ALTER TABLE upkeep ADD COLUMN estate TEXT DEFAULT 'Bunga Tanjung Estate'"); } catch(e) {}
 
@@ -594,7 +595,7 @@ app.put('/api/upkeep/:id/add', async (req, res) => {
     try {
         const { additionalHa, dateAdded, worker, workers } = req.body;
         await client.query('BEGIN');
-        await client.query('UPDATE upkeep SET realized = realized + $1 WHERE id = $2', [additionalHa, req.params.id]);
+        await client.query('UPDATE upkeep SET realized = realized + $1, realizedWorkers = COALESCE(realizedWorkers, 0) + $3 WHERE id = $2', [additionalHa, req.params.id, workers || 0]);
         await client.query(
             'INSERT INTO upkeep_history (upkeep_id, dateAdded, addedHa, worker, workers) VALUES ($1,$2,$3,$4,$5)',
             [req.params.id, dateAdded, additionalHa, worker || '', workers || 0]
