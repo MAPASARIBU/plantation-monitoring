@@ -3339,7 +3339,7 @@ window.checkMonthlyPlan = () => {
     const targetInput = document.getElementById('hm-target');
     
     if(divisi && month) {
-        const existing = (db.harvesting_monthly || []).find(m => m.divisi === divisi && m.month === month);
+        const existing = (db.harvesting_monthly || []).find(m => m.divisi === divisi && m.month === month && (!m.estate || m.estate === currentUser.estate));
         if(existing) {
             currentMonthlyPlanId = existing.id;
             targetInput.value = existing.target_kg;
