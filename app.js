@@ -380,7 +380,7 @@ const views = {
                         </div>
                         <div class="form-group">
                             <label>Blok</label>
-                            <select id="u-block" class="form-control select-blok" required></select>
+                            <select id="u-block" class="form-control select-blok" required onchange="updateUpkeepMaxLabel()"></select>
                         </div>
                         <div class="form-group">
                             <label>Jenis Pekerjaan</label>
@@ -391,7 +391,7 @@ const views = {
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Target (Ha)</label>
+                            <label>Target (Ha) <span id="u-target-max-label" style="font-size: 0.8rem; font-weight: normal; color: #f59e0b; display: block; margin-top: 2px;"></span></label>
                             <input type="number" step="0.1" id="u-target" class="form-control" required>
                         </div>
                         <div class="form-group">
@@ -4821,6 +4821,26 @@ window.filterBlok = (divisiName, targetId) => {
         if(akpEl) akpEl.value = '';
         document.getElementById('hd-est-janjang').innerText = '0';
         document.getElementById('hd-est-kg').innerText = '0 Kg';
+    } else if (targetId === 'u-block') {
+        updateUpkeepMaxLabel();
+    }
+};
+
+window.updateUpkeepMaxLabel = () => {
+    const blockEl = document.getElementById('u-block');
+    const labelSpan = document.getElementById('u-target-max-label');
+    if (!blockEl || !labelSpan) return;
+    
+    if (blockEl.selectedIndex >= 0) {
+        const selectedOption = blockEl.options[blockEl.selectedIndex];
+        const maxArea = parseFloat(selectedOption.getAttribute('data-gross')) || 0;
+        if (maxArea > 0) {
+            labelSpan.innerText = `*maksimal Hektar Blok dipilih ${maxArea} Ha`;
+        } else {
+            labelSpan.innerText = '';
+        }
+    } else {
+        labelSpan.innerText = '';
     }
 };
 
