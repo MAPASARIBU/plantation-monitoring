@@ -1483,7 +1483,7 @@ const renderHarvestingTable = () => {
                 statusEl += ` <button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-left:5px;" onclick="publishHarvesting(${h.id})">Publish</button>`;
             }
         } else if (h.status === 'Published' || h.status === 'Open' || h.status === 'In Progress') {
-            if (['Kerani Buah', 'Krani Divisi', 'Admin', 'Asisten Divisi', 'Supir', 'Mandor'].includes(currentUser.role)) {
+            if (['Kerani Buah', 'Krani Divisi', 'Admin', 'Asisten Divisi', 'Assistant', 'Supir', 'Mandor'].includes(currentUser.role)) {
                 statusEl = `<button type="button" class="btn btn-primary" style="padding:2px 8px; font-size:0.8rem; background-color:orange; border:none; border-radius:15px; font-weight:bold;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}', ${h.est_janjang || 0}, ${h.plan_pemanen || 0}, ${h.est_kg || 0}, '${h.divisi}')">Update</button>`;
             } else {
                 statusEl = `<span class="status-badge" style="background:#d1fae5; color:#065f46; padding:2px 6px;">${h.status}</span>`;
@@ -3126,7 +3126,7 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
     }
     
     const isGroupA = ['Mandor', 'Supir', 'Krani Divisi', 'Kerani Buah', 'Krani Mill', 'Admin'].includes(currentUser.role);
-    const isGroupB = ['Mandor', 'Asisten Divisi', 'Admin'].includes(currentUser.role);
+    const isGroupB = ['Mandor', 'Asisten Divisi', 'Assistant', 'Admin'].includes(currentUser.role);
 
     let formFieldsHtml = '';
     
@@ -3214,7 +3214,7 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
 
 window.submitHarvestingRealization = async (id) => {
     const isGroupA = ['Mandor', 'Supir', 'Krani Divisi', 'Kerani Buah', 'Krani Mill', 'Admin'].includes(currentUser.role);
-    const isGroupB = ['Mandor', 'Asisten Divisi', 'Admin'].includes(currentUser.role);
+    const isGroupB = ['Mandor', 'Asisten Divisi', 'Assistant', 'Admin'].includes(currentUser.role);
     
     // Get current values
     const h = (db.harvesting_daily || []).find(x => x.id == id) || {};
