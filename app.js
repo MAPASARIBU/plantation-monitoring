@@ -5168,14 +5168,15 @@ window.loadTonaseInputData = async () => {
             : [hourSelect];
         
         let html = `
-            <table class="data-table" style="min-width: 600px;">
+            <div style="overflow-x: auto; max-width: 100%; padding-bottom: 10px; border: 1px solid #cbd5e1; border-radius: 4px;">
+            <table class="data-table" style="min-width: 800px; border-collapse: collapse; width: 100%;">
                 <thead>
                     <tr>
-                        <th style="min-width: 80px; position: sticky; left: 0; top: 0; background: #ffffff; z-index: 11; border-bottom: 2px solid #ddd; padding: 10px;">HOUR</th>
+                        <th style="min-width: 80px; position: sticky; left: 0; top: 0; background: #ffffff; z-index: 11; border-bottom: 2px solid #ddd; padding: 10px;">JAM</th>
         `;
         supplyChain.forEach(est => {
             let thText = est.toUpperCase();
-            html += `<th style="position: sticky; top: 0; background: #ffffff; z-index: 10; min-width: 80px; border-bottom: 2px solid #ddd; padding: 10px;">${thText}</th>`;
+            html += `<th style="position: sticky; top: 0; background: #ffffff; z-index: 10; min-width: 140px; border-bottom: 2px solid #ddd; padding: 10px;">${thText}</th>`;
         });
         html += `</tr></thead><tbody>`;
         
@@ -5189,8 +5190,8 @@ window.loadTonaseInputData = async () => {
                     val = parseFloat((parseFloat(rawVal) / 1000).toFixed(2));
                 }
                 html += `
-                    <td style="padding: 2px;">
-                        <input type="number" step="0.01" class="form-control tonase-input" data-estate="${est}" data-hour="${hour}" value="${val}" min="0" placeholder="" style="min-width: 70px; padding: 5px;">
+                    <td style="padding: 4px;">
+                        <input type="number" step="0.01" class="form-control tonase-input" data-estate="${est}" data-hour="${hour}" value="${val}" min="0" placeholder="" style="min-width: 120px; padding: 8px; text-align: center;">
                     </td>
                 `;
             });
@@ -5208,7 +5209,7 @@ window.loadTonaseInputData = async () => {
         });
         html += `</tr></tfoot>`;
         
-        html += `</table>`;
+        html += `</table></div>`;
         container.innerHTML = html;
         
         calculateTonaseTotals();
