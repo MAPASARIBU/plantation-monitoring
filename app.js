@@ -1642,13 +1642,17 @@ window.openPrintRekapModal = async () => {
 
     let estateSelectHtml = '';
     if (canSeeAll) {
-        let options = estateList.map(e => `<option value="${e}" ${e === selectedEstate ? 'selected' : ''}>${e}</option>`).join('');
+        let checkboxes = estateList.map(e => `
+            <label style="display:block; margin-bottom:5px;">
+                <input type="checkbox" name="print-rekap-estate-cb" value="${e}" ${e === selectedEstate ? 'checked' : ''}> ${e}
+            </label>
+        `).join('');
         estateSelectHtml = `
             <div class="form-group">
                 <label>Pilih Estate</label>
-                <select id="print-rekap-estate" class="form-control" onchange="updatePrintDivisiList()">
-                    ${options}
-                </select>
+                <div style="max-height: 150px; overflow-y: auto; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px;">
+                    ${checkboxes}
+                </div>
             </div>
         `;
     } else {
@@ -1672,12 +1676,6 @@ window.openPrintRekapModal = async () => {
                         <label>Sampai Tanggal</label>
                         <input type="date" id="print-rekap-end" class="form-control" value="${new Date().toISOString().substring(0, 10)}">
                     </div>
-                    <div class="form-group">
-                        <label>Pilih Divisi</label>
-                        <div id="print-divisi-container" style="max-height: 150px; overflow-y: auto; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px;">
-                            Memuat divisi...
-                        </div>
-                    </div>
                     <div style="margin-top: 20px; text-align: right;">
                         <button class="btn btn-secondary" onclick="document.getElementById('modal-print-rekap').remove()">Batal</button>
                         <button class="btn btn-primary" onclick="executePrintRekap()">Print / Export</button>
@@ -1687,8 +1685,6 @@ window.openPrintRekapModal = async () => {
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', html);
-    
-    await window.updatePrintDivisiList();
 };
 
 window.updatePrintDivisiList = async () => {
@@ -1720,16 +1716,23 @@ window.updatePrintDivisiList = async () => {
 window.executePrintRekap = () => {
     const startDate = document.getElementById('print-rekap-start').value;
     const endDate = document.getElementById('print-rekap-end').value;
-    const targetEstate = document.getElementById('print-rekap-estate').value;
-    const checkboxes = document.querySelectorAll('input[name="print-divisi"]:checked');
-    const selectedDivisis = Array.from(checkboxes).map(cb => cb.value);
+    
+    const canSeeAll = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Manager' || currentUser.role === 'Senior Field Manager');
+    let targetEstates = [];
+    if (canSeeAll) {
+        const estateCbs = document.querySelectorAll('input[name="print-rekap-estate-cb"]:checked');
+        targetEstates = Array.from(estateCbs).map(cb => cb.value);
+        if (targetEstates.length === 0) {
+            alert("Pilih minimal satu estate.");
+            return;
+        }
+    } else {
+        const hiddenEstate = document.getElementById('print-rekap-estate');
+        if(hiddenEstate) targetEstates = [hiddenEstate.value];
+    }
     
     if (!startDate || !endDate) {
         alert("Pilih periode tanggal terlebih dahulu.");
-        return;
-    }
-    if (selectedDivisis.length === 0) {
-        alert("Pilih minimal satu divisi.");
         return;
     }
     
@@ -1757,10 +1760,7 @@ window.executePrintRekap = () => {
         if (hDateObj < startObj || hDateObj > endObj) return;
         
         // Check estate filter
-        if (h.estate !== targetEstate) return;
-        
-        // Check divisi filter
-        if (!selectedDivisis.includes(h.divisi)) return;
+        if (!targetEstates.includes(h.estate)) return;
         
         if (h.estate) estatesInvolved.add(h.estate);
         
