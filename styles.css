@@ -652,3 +652,8 @@ h1, h2, h3, h4, h5, h6 {
 
 .action-group-hover .btn-hapus-hover { display: none; opacity: 0; transition: opacity 0.2s ease; }
 .action-group-hover:hover .btn-hapus-hover { display: block; opacity: 1; }
+
+/* Read-Only Master Data styling */
+.master-read-only button {
+    display: none !important;
+}

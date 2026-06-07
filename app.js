@@ -207,7 +207,9 @@ const applyRBAC = () => {
     
     if (role === 'Admin') {
         showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'users', 'master']);
-    } else if (role === 'Senior Field Manager' || role === 'Estate Manager' || role === 'Manager' || role === 'Asisten Kepala' || role === 'Division Manager' || role === 'Assistant') {
+    } else if (role === 'Senior Field Manager' || role === 'Manager') {
+        showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'master']);
+    } else if (role === 'Estate Manager' || role === 'Asisten Kepala' || role === 'Division Manager' || role === 'Assistant') {
         showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting']);
     } else if (role === 'Manager Mill') {
         showViews(['dashboard', 'vehicle', 'tonase', 'master']);
@@ -3043,6 +3045,14 @@ const navigate = (viewId) => {
     if(viewId === 'upkeep') { renderUpkeepTable(); bindForms(); }
     if(viewId === 'pemupukan') { renderPemupukanTable(); bindForms(); }
     if(viewId === 'harvesting') { renderHarvestingTable(); bindForms(); }
+    if(viewId === 'master') {
+        if (currentUser && (currentUser.role === 'Senior Field Manager' || currentUser.role === 'Manager')) {
+            const masterGrid = document.querySelector('.master-grid');
+            if (masterGrid) {
+                masterGrid.classList.add('master-read-only');
+            }
+        }
+    }
     if(viewId === 'tonase') {
         if (currentUser.role === 'Krani Mill' || currentUser.role === 'Manager Mill' || currentUser.role === 'Admin' || currentUser.role === 'Office Assistant Mill') {
             document.querySelectorAll('.btn-tonase-action').forEach(b => b.style.display = 'inline-block');
