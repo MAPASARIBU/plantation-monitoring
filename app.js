@@ -1999,6 +1999,7 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
             dateMap[dStr] = {
                 date: dStr,
                 planHvr: 0,
+                planKg: 0,
                 actHvr: 0,
                 actHa: 0,
                 actKg: 0,
@@ -2009,6 +2010,7 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
             };
         }
         dateMap[dStr].planHvr += h.plan_pemanen || 0;
+        dateMap[dStr].planKg += h.est_kg || 0;
         dateMap[dStr].actHvr += h.realized_pemanen || 0;
         dateMap[dStr].actHa += h.realized_ha || 0;
         dateMap[dStr].actKg += h.realized_kg || 0;
@@ -2059,12 +2061,13 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
                             <th>Divisi</th>
                             <th>Avg<br>Round</th>
                             <th>Plan<br>Hvr</th>
-                            <th>Act<br>Hvr</th>
-                            <th>Total Gross Area<br>(Ha)</th>
-                            <th>Act<br>Ha</th>
-                            <th>Act<br>Kg</th>
-                            <th>Prestasi<br>(Kg/HK)</th>
-                            <th>Kapasitas<br>(Ha/WD)</th>
+                            <th>Plan<br>Gross Area (Ha)</th>
+                            <th>Plan<br>Kg panen</th>
+                            <th>Actual<br>Area Panen (Ha)</th>
+                            <th>Actual<br>Kg</th>
+                            <th>Actual<br>Hvr (HK)</th>
+                            <th>Prestasi<br>Ha/WD (Ha/HK)</th>
+                            <th>Prestasi<br>Kg/WD (Kg/HK)</th>
                             <th>Var<br>Hvr (%)</th>
                             <th>Var<br>Ha (%)</th>
                         </tr>
@@ -2073,7 +2076,7 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
     `;
     
     if(dates.length === 0) {
-        html += `<tr><td colspan="12" style="text-align:center;">Belum ada data historis divisi</td></tr>`;
+        html += `<tr><td colspan="13" style="text-align:center;">Belum ada data historis divisi</td></tr>`;
     } else {
         dates.forEach(r => {
             let formattedDate = r.date;
@@ -2100,12 +2103,13 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
                     <td><strong>${divisi}</strong></td>
                     <td>${avgPusingan}</td>
                     <td>${r.planHvr}</td>
-                    <td>${r.actHvr}</td>
                     <td>${r.grossArea.toFixed(2)}</td>
+                    <td>${r.planKg}</td>
                     <td>${r.actHa.toFixed(2)}</td>
                     <td>${r.actKg}</td>
-                    <td>${prestasiHvr.toFixed(1)}</td>
+                    <td>${r.actHvr}</td>
                     <td>${kapasitasHa.toFixed(2)}</td>
+                    <td>${prestasiHvr.toFixed(1)}</td>
                     <td style="color:${varHvr > 100 ? 'red' : (varHvr < 100 ? 'green' : 'black')}; font-weight:bold;">${varHvr.toFixed(1)}%</td>
                     <td style="color:${varHa > 100 ? 'red' : (varHa < 100 ? 'green' : 'black')}; font-weight:bold;">${varHa.toFixed(1)}%</td>
                 </tr>
