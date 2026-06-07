@@ -5153,7 +5153,7 @@ window.promptAddUpkeepProgress = (id, block, type, target, realized) => {
                 <div style="margin-bottom: 15px; font-size: 0.9rem; background: #f8fafc; padding: 10px; border-radius: 8px;">
                     <strong>Blok:</strong> ${block}<br>
                     <strong>Pekerjaan:</strong> ${type}<br>
-                    <strong>Sisa Target:</strong> ${sisa} Ha
+                    <strong>Target:</strong> ${target} Ha
                 </div>
                 <form id="form-upkeep-add-${id}" onsubmit="submitUpkeepProgress(event, ${id})">
                     <div class="form-group">
@@ -5201,6 +5201,8 @@ window.calcPrestasiUpkeep = (id) => {
 
 window.submitUpkeepProgress = async (e, id) => {
     e.preventDefault();
+    if (!confirm("Sudah yakin inputan benar?")) return;
+
     const additionalHa = parseFloat(document.getElementById(`upkeep-add-${id}`).value);
     const dateAdded = document.getElementById(`upkeep-date-${id}`).value;
     const worker = document.getElementById(`upkeep-worker-${id}`).value;
@@ -5213,6 +5215,9 @@ window.submitUpkeepProgress = async (e, id) => {
             body: JSON.stringify({ additionalHa, dateAdded, worker, workers })
         });
         if (res.ok) {
+            // Automatically close the upkeep since it's a one-time entry
+            await fetch(`${API_URL}/upkeep/${id}/close`, { method: 'PUT' });
+            
             document.getElementById(`modal-upkeep-progress-${id}`).remove();
             await loadData();
         } else {
