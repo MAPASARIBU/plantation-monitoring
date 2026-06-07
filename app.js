@@ -422,6 +422,7 @@ const views = {
                             <tr>
                                 <th>Blok</th>
                                 <th>Tanggal Mulai</th>
+                                <th>Estate</th>
                                 <th>Pekerjaan</th>
                                 <th>Target (Ha)</th>
                                 <th>Target HK</th>
@@ -554,6 +555,7 @@ const views = {
                         <thead>
                             <tr>
                                 <th>Mulai</th>
+                                <th>Estate</th>
                                 <th>DIV</th>
                                 <th>Blok</th>
                                 <th>Pupuk</th>
@@ -1253,6 +1255,7 @@ const renderUpkeepTable = () => {
             <tr>
                 <td><strong><a href="#" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;" onclick="viewUpkeepHistory(${u.id}, '${u.block}', '${safeType}'); return false;">${u.block}</a></strong></td>
                 <td>${u.startdate || '-'}</td>
+                <td>${u.estate || '-'}</td>
                 <td>${u.type}<br><small>${u.worker}</small></td>
                 <td>${u.target}</td>
                 <td>${u.targetworkers || 0} Orang</td>
@@ -1266,7 +1269,7 @@ const renderUpkeepTable = () => {
     aktif.forEach(u => tbody.innerHTML += renderRow(u));
 
     if (selesai.length > 0) {
-        tbody.innerHTML += `<tr><td colspan="8" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Selesai</td></tr>`;
+        tbody.innerHTML += `<tr><td colspan="9" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Selesai</td></tr>`;
         selesai.forEach(u => tbody.innerHTML += renderRow(u));
     }
 };
@@ -1330,6 +1333,7 @@ const renderPemupukanTable = () => {
         return `
             <tr>
                 <td>${sDate || '-'}</td>
+                <td>${p.estate || '-'}</td>
                 <td><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px;">${divisi}</span></td>
                 <td><strong><a href="#" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;" onclick="viewPemupukanSummary('${p.block}', '${p.plan}', ${tKg}, ${tHa}, ${tWorkers}, ${rKg}, ${rHa}, ${rWorkers}); return false;">${p.block}</a></strong></td>
                 <td>${p.plan}</td>
@@ -1361,7 +1365,7 @@ const renderPemupukanTable = () => {
     aktif.forEach(p => tbody.innerHTML += renderRow(p));
 
     if (selesai.length > 0) {
-        tbody.innerHTML += `<tr><td colspan="8" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Selesai</td></tr>`;
+        tbody.innerHTML += `<tr><td colspan="9" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Selesai</td></tr>`;
         selesai.forEach(p => tbody.innerHTML += renderRow(p));
     }
 };
