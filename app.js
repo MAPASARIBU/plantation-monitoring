@@ -1380,9 +1380,11 @@ window.deleteHarvestingDaily = async (id) => {
 
 const renderHarvestingTable = () => {
     const tbodyDaily = document.getElementById('tbody-harvesting-daily');
+    const tbodyRekap = document.getElementById('tbody-harvesting-rekap');
     if (!tbodyDaily) return;
     
     tbodyDaily.innerHTML = '';
+    if (tbodyRekap) tbodyRekap.innerHTML = '';
     
     const now = new Date();
     const fullMonths = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -1412,6 +1414,31 @@ const renderHarvestingTable = () => {
         const divB = b.divisi || '';
         return divA.localeCompare(divB);
     };
+
+    let filteredData = db.harvesting_daily;
+    if (currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+        filteredData = filteredData.filter(h => !h.estate || h.estate === currentUser.estate);
+    }
+    
+    // Check if there are any UI filters active (like date or estate from the UI)
+    const dateFilterEl = document.getElementById('harvesting-date-filter');
+    const estateFilterEl = document.getElementById('harvesting-estate-filter');
+    if (dateFilterEl && dateFilterEl.value) {
+        filteredData = filteredData.filter(h => h.date && h.date.startsWith(dateFilterEl.value));
+    }
+    if (estateFilterEl && estateFilterEl.value) {
+        filteredData = filteredData.filter(h => h.estate === estateFilterEl.value);
+    }
+    
+    // Filter divisi if SFM/Manager
+    if (currentUser && (currentUser.role === 'Manager' || currentUser.role === 'Senior Field Manager')) {
+        const divFilterEl = document.getElementById('harvesting-divisi-filter');
+        if (divFilterEl && divFilterEl.value) {
+            filteredData = filteredData.filter(h => h.divisi === divFilterEl.value);
+        }
+    } else if (currentUser && currentUser.role === 'Asisten Divisi') {
+        filteredData = filteredData.filter(h => h.divisi === currentUser.divisi);
+    }
 
     const draftData = filteredData.filter(h => h.status !== 'Selesai' && h.status !== 'Closed').sort(sortFn);
     const selesaiData = filteredData.filter(h => h.status === 'Selesai' || h.status === 'Closed').sort(sortFn);
