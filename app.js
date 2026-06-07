@@ -672,6 +672,7 @@ const views = {
                             <button type="button" class="btn btn-primary btn-sm" id="btn-input-hm" onclick="document.getElementById('modal-harvesting-monthly-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Rencana Bulanan</button>
                             <button type="button" class="btn btn-primary btn-sm" id="btn-input-hd" onclick="document.getElementById('modal-harvesting-daily-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Rencana Harian</button>
                             <button type="button" class="btn btn-primary btn-sm" onclick="openMonthlyRealization()"><i class="fa-solid fa-chart-pie"></i> Realisasi Bulanan</button>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="printHarvestingDaily()" style="background-color: #64748b; border: none;"><i class="fa-solid fa-print"></i> Print Out</button>
                         </div>
                     </div>
                 </div>
@@ -1475,7 +1476,15 @@ const renderHarvestingTable = () => {
     }
 
     const draftData = filteredData.filter(h => h.status !== 'Selesai' && h.status !== 'Closed').sort(sortFn);
-    const selesaiData = filteredData.filter(h => h.status === 'Selesai' || h.status === 'Closed').sort(sortFn);
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+    twoDaysAgo.setHours(0, 0, 0, 0);
+
+    const selesaiData = filteredData.filter(h => {
+        if (h.status !== 'Selesai' && h.status !== 'Closed') return false;
+        const dObj = new Date(h.date);
+        return isNaN(dObj) || dObj >= twoDaysAgo;
+    }).sort(sortFn);
     
     const renderDailyRow = (h) => {
         let statusEl = '';
@@ -1728,6 +1737,51 @@ const renderHarvestingTable = () => {
         const containerClosed = document.getElementById('closed-jobs-container');
         if(titleClosed) titleClosed.style.display = 'none';
         if(containerClosed) containerClosed.style.display = 'none';
+    }
+};
+
+window.printHarvestingDaily = () => {
+    const estate = document.getElementById('header-estate-dropdown')?.value || currentUser.estate || 'Semua Estate';
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
+    
+    let html = `
+        <html><head><title>Print Realisasi Panen Harian</title>
+        <style>
+            body { font-family: sans-serif; font-size: 11px; margin: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            th, td { border: 1px solid #000; padding: 4px 6px; text-align: left; }
+            th { background: #f0f0f0; }
+            h2, h3 { text-align: center; margin: 5px 0; }
+            .status-badge { font-weight: bold; }
+        </style>
+        </head><body onload="window.print()">
+        <h2>Laporan Realisasi Panen Harian - ${estate}</h2>
+        <h3 style="margin-bottom: 20px;">Tanggal Cetak: ${dateStr}</h3>
+    `;
+    
+    const dailyTableEl = document.querySelector('#tbody-harvesting-daily');
+    if (dailyTableEl && dailyTableEl.innerHTML.trim() !== '' && !dailyTableEl.innerHTML.includes('Belum ada')) {
+        const dailyTable = dailyTableEl.closest('table').cloneNode(true);
+        dailyTable.querySelectorAll('button').forEach(b => b.remove());
+        html += `<h4>Monitoring Panen Harian (Open/In Progress)</h4>` + dailyTable.outerHTML;
+    }
+    
+    const closedTableEl = document.querySelector('#tbody-harvesting-closed');
+    if (closedTableEl && closedTableEl.innerHTML.trim() !== '') {
+        const closedTable = closedTableEl.closest('table').cloneNode(true);
+        closedTable.querySelectorAll('button').forEach(b => b.remove());
+        html += `<h4>Pekerjaan Sudah Selesai (Closed)</h4>` + closedTable.outerHTML;
+    }
+    
+    html += `</body></html>`;
+    
+    const win = window.open('', '_blank');
+    if (win) {
+        win.document.write(html);
+        win.document.close();
+    } else {
+        alert('Pop-up terblokir. Silakan izinkan pop-up untuk mencetak.');
     }
 };
 
