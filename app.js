@@ -1234,6 +1234,9 @@ const renderUpkeepTable = () => {
                     <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; justify-content:center;" onclick="promptAddUpkeepProgress(${u.id}, '${u.block}', '${safeType}', ${u.target}, ${u.realized}, ${u.targetworkers || 0})"><i class="fa-solid fa-pen-to-square"></i> Update</button>
                 </div>
             `;
+            } else {
+                actionBtn = '-';
+            }
         } else {
             actionBtn = '-';
         }
