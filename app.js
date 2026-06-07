@@ -1775,7 +1775,7 @@ window.executePrintRekap = () => {
     let totPlanJjg = 0, totPlanKg = 0, totActJjg = 0, totActKg = 0, totActHvr = 0, totActHa = 0;
     
     if (sortedRekap.length === 0) {
-        tableRows = \`<tr><td colspan="15" style="text-align:center; padding: 10px; border: 1px solid #cbd5e1;">Tidak ada data pada periode dan divisi yang dipilih.</td></tr>\`;
+        tableRows = `<tr><td colspan="15" style="text-align:center; padding: 10px; border: 1px solid #cbd5e1;">Tidak ada data pada periode dan divisi yang dipilih.</td></tr>`;
     } else {
         sortedRekap.forEach(r => {
             const avgPusingan = r.pusingan_count > 0 ? (r.pusingan_sum / r.pusingan_count).toFixed(1) : '-';
@@ -1795,51 +1795,51 @@ window.executePrintRekap = () => {
             totActHvr += r.act_pemanen;
             totActHa += r.act_ha;
 
-            tableRows += \`
+            tableRows += `
                 <tr>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${periodLabel}</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${getEstateCode(r.estate)}</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${r.divisi || '-'}</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${avgPusingan}</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${akpPlan}%</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>\${r.plan_jjg}</strong></td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>\${r.plan_kg}</strong></td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>\${r.act_jjg}</strong></td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>\${r.act_kg}</strong></td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>\${r.act_pemanen}</strong></td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${kapasitasHa.toFixed(2)}</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${prestasiHvr.toFixed(1)}</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${varHa.toFixed(1)}%</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${varHvr.toFixed(1)}%</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${bjrActual}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${periodLabel}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${getEstateCode(r.estate)}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${r.divisi || '-'}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${avgPusingan}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${akpPlan}%</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>${r.plan_jjg}</strong></td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>${r.plan_kg}</strong></td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>${r.act_jjg}</strong></td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>${r.act_kg}</strong></td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>${r.act_pemanen}</strong></td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${kapasitasHa.toFixed(2)}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${prestasiHvr.toFixed(1)}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${varHa.toFixed(1)}%</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${varHvr.toFixed(1)}%</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${bjrActual}</td>
                 </tr>
-            \`;
+            `;
         });
         
         // Add total row
         const totBjr = totActJjg > 0 ? (totActKg / totActJjg).toFixed(2) : '0.00';
         const totPrestasiHvr = totActHvr > 0 ? totActKg / totActHvr : 0;
         const totKapasitasHa = totActHvr > 0 ? totActHa / totActHvr : 0;
-        tableRows += \`
+        tableRows += `
             <tr style="background-color: #f1f5f9; font-weight: bold;">
                 <td colspan="5" style="border: 1px solid #cbd5e1; text-align:right; padding: 6px;">TOTAL</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${totPlanJjg}</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${totPlanKg}</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${totActJjg}</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${totActKg}</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${totActHvr}</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${totKapasitasHa.toFixed(2)}</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${totPrestasiHvr.toFixed(1)}</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totPlanJjg}</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totPlanKg}</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totActJjg}</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totActKg}</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totActHvr}</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totKapasitasHa.toFixed(2)}</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totPrestasiHvr.toFixed(1)}</td>
                 <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">-</td>
                 <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">-</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">\${totBjr}</td>
+                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totBjr}</td>
             </tr>
-        \`;
+        `;
     }
 
     const estateNames = Array.from(estatesInvolved).map(e => getEstateCode(e)).join(', ') || 'All Estates';
 
-    const printHtml = \`
+    const printHtml = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -1859,8 +1859,8 @@ window.executePrintRekap = () => {
         <body onload="window.print();">
             <div class="header-info">
                 <h2>REKAP PANEN PER DIVISI</h2>
-                <h3>ESTATE: \${estateNames}</h3>
-                <h4>PERIODE: \${periodLabel}</h4>
+                <h3>ESTATE: ${estateNames}</h3>
+                <h4>PERIODE: ${periodLabel}</h4>
             </div>
             <table>
                 <thead>
@@ -1883,12 +1883,12 @@ window.executePrintRekap = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    \${tableRows}
+                    ${tableRows}
                 </tbody>
             </table>
         </body>
         </html>
-    \`;
+    `;
 
     const printWin = window.open('', '', 'width=1200,height=800');
     if (printWin) {
