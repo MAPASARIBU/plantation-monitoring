@@ -1479,7 +1479,21 @@ const renderHarvestingTable = () => {
             rekapMap[key].act_pemanen += h.realized_pemanen || 0;
         });
         
-        Object.values(rekapMap).reverse().forEach(r => {
+        const sortedRekap = Object.values(rekapMap).sort((a, b) => {
+            const dateA = new Date(a.date).getTime() || 0;
+            const dateB = new Date(b.date).getTime() || 0;
+            if (dateA !== dateB) return dateB - dateA;
+            
+            const estA = a.estate || '';
+            const estB = b.estate || '';
+            if (estA !== estB) return estA.localeCompare(estB);
+            
+            const divA = a.divisi || '';
+            const divB = b.divisi || '';
+            return divA.localeCompare(divB, undefined, {numeric: true});
+        });
+        
+        sortedRekap.forEach(r => {
             let dateStr = r.date;
             if(typeof dateStr === 'string' && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
             let formattedDate = dateStr;
