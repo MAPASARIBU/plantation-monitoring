@@ -1625,12 +1625,35 @@ const renderHarvestingTable = () => {
     }
 };
 
-window.openPrintRekapModal = () => {
-    let divisiOptions = masterData.divisi.map(d => `
-        <label style="display:block; margin-bottom:5px;">
-            <input type="checkbox" name="print-divisi" value="${d.name}" checked> ${d.name}
-        </label>
-    `).join('');
+window.openPrintRekapModal = async () => {
+    // Tentukan apakah user bisa melihat beberapa estate
+    const canSeeAll = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Manager' || currentUser.role === 'Senior Field Manager');
+    
+    const estateList = [
+        "Bunga Tanjung Estate", "Sungai Teramang Estate", "Air Bikuk Estate", "Batu Kuda Estate",
+        "Air Buluh Estate", "Malin Deman Estate", "Tanah Rekah Estate", "Muko Muko Estate",
+        "Sei Jerinjing Estate", "Talang Petai Estate", "Sungai Kiang Estate", "Air Majunto Estate"
+    ];
+    
+    let selectedEstate = currentUser ? currentUser.estate : '';
+    if (selectedEstate === 'Semua Estate (Khusus Admin)' || !selectedEstate || selectedEstate === '-') {
+        selectedEstate = estateList[0];
+    }
+
+    let estateSelectHtml = '';
+    if (canSeeAll) {
+        let options = estateList.map(e => `<option value="${e}" ${e === selectedEstate ? 'selected' : ''}>${e}</option>`).join('');
+        estateSelectHtml = `
+            <div class="form-group">
+                <label>Pilih Estate</label>
+                <select id="print-rekap-estate" class="form-control" onchange="updatePrintDivisiList()">
+                    ${options}
+                </select>
+            </div>
+        `;
+    } else {
+        estateSelectHtml = `<input type="hidden" id="print-rekap-estate" value="${selectedEstate}">`;
+    }
 
     const html = `
         <div class="modal-overlay" id="modal-print-rekap">
@@ -1640,6 +1663,7 @@ window.openPrintRekapModal = () => {
                     <button class="modal-close" onclick="document.getElementById('modal-print-rekap').remove()">&times;</button>
                 </div>
                 <div style="padding: 20px;">
+                    ${estateSelectHtml}
                     <div class="form-group">
                         <label>Periode Dari Tanggal</label>
                         <input type="date" id="print-rekap-start" class="form-control" value="${new Date().toISOString().substring(0, 10)}">
@@ -1650,8 +1674,8 @@ window.openPrintRekapModal = () => {
                     </div>
                     <div class="form-group">
                         <label>Pilih Divisi</label>
-                        <div style="max-height: 150px; overflow-y: auto; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px;">
-                            ${divisiOptions}
+                        <div id="print-divisi-container" style="max-height: 150px; overflow-y: auto; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px;">
+                            Memuat divisi...
                         </div>
                     </div>
                     <div style="margin-top: 20px; text-align: right;">
@@ -1663,11 +1687,40 @@ window.openPrintRekapModal = () => {
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', html);
+    
+    await window.updatePrintDivisiList();
+};
+
+window.updatePrintDivisiList = async () => {
+    const estate = document.getElementById('print-rekap-estate').value;
+    const container = document.getElementById('print-divisi-container');
+    if (!container) return;
+    
+    container.innerHTML = 'Memuat divisi...';
+    try {
+        const res = await fetch(`${API_URL}/master/${encodeURIComponent(estate)}`);
+        const data = await res.json();
+        const divisies = data.divisi || [];
+        
+        if (divisies.length === 0) {
+            container.innerHTML = '<span style="color:red; font-style:italic;">Tidak ada data divisi untuk estate ini.</span>';
+            return;
+        }
+        
+        container.innerHTML = divisies.map(d => `
+            <label style="display:block; margin-bottom:5px;">
+                <input type="checkbox" name="print-divisi" value="${d.name}" checked> ${d.name}
+            </label>
+        `).join('');
+    } catch (e) {
+        container.innerHTML = '<span style="color:red;">Gagal memuat divisi.</span>';
+    }
 };
 
 window.executePrintRekap = () => {
     const startDate = document.getElementById('print-rekap-start').value;
     const endDate = document.getElementById('print-rekap-end').value;
+    const targetEstate = document.getElementById('print-rekap-estate').value;
     const checkboxes = document.querySelectorAll('input[name="print-divisi"]:checked');
     const selectedDivisis = Array.from(checkboxes).map(cb => cb.value);
     
@@ -1702,6 +1755,9 @@ window.executePrintRekap = () => {
         
         // Check date range
         if (hDateObj < startObj || hDateObj > endObj) return;
+        
+        // Check estate filter
+        if (h.estate !== targetEstate) return;
         
         // Check divisi filter
         if (!selectedDivisis.includes(h.divisi)) return;
