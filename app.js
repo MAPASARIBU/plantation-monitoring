@@ -1500,7 +1500,8 @@ const renderHarvestingTable = () => {
                 statusEl += ` <button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-left:5px;" onclick="publishHarvesting(${h.id})">Publish</button>`;
             }
         } else if (h.status === 'Published' || h.status === 'Open' || h.status === 'In Progress') {
-            if (['Kerani Buah', 'Krani Divisi', 'Admin', 'Asisten Divisi', 'Assistant', 'Supir', 'Mandor'].includes(currentUser.role)) {
+            const roleL = currentUser.role ? currentUser.role.toLowerCase() : '';
+            if (['kerani buah', 'krani divisi', 'admin', 'asisten divisi', 'assistant', 'assistant divisi', 'asst divisi', 'supir', 'mandor', 'mandor divisi'].includes(roleL)) {
                 statusEl = `<button type="button" class="btn btn-primary" style="padding:2px 8px; font-size:0.8rem; background-color:orange; border:none; border-radius:15px; font-weight:bold;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}', ${h.est_janjang || 0}, ${h.plan_pemanen || 0}, ${h.est_kg || 0}, '${h.divisi}')">Update</button>`;
             } else {
                 statusEl = `<span class="status-badge" style="background:#d1fae5; color:#065f46; padding:2px 6px;">${h.status}</span>`;
@@ -3413,8 +3414,9 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
         return;
     }
     
-    const isGroupA = ['Supir', 'Krani Divisi', 'Kerani Buah', 'Krani Mill', 'Admin'].includes(currentUser.role);
-    const isGroupB = ['Mandor', 'Asisten Divisi', 'Assistant', 'Admin'].includes(currentUser.role);
+    const roleL = currentUser.role ? currentUser.role.toLowerCase() : '';
+    const isGroupA = ['supir', 'krani divisi', 'kerani buah', 'krani mill', 'admin'].includes(roleL);
+    const isGroupB = ['mandor', 'mandor divisi', 'asisten divisi', 'assistant', 'assistant divisi', 'asst divisi', 'admin'].includes(roleL);
 
     let formFieldsHtml = '';
     
@@ -3503,8 +3505,9 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
 window.submitHarvestingRealization = async (id) => {
     if (!confirm("Apakah input laporan sudah benar?")) return;
     
-    const isGroupA = ['Supir', 'Krani Divisi', 'Kerani Buah', 'Krani Mill', 'Admin'].includes(currentUser.role);
-    const isGroupB = ['Mandor', 'Asisten Divisi', 'Assistant', 'Admin'].includes(currentUser.role);
+    const roleL = currentUser.role ? currentUser.role.toLowerCase() : '';
+    const isGroupA = ['supir', 'krani divisi', 'kerani buah', 'krani mill', 'admin'].includes(roleL);
+    const isGroupB = ['mandor', 'mandor divisi', 'asisten divisi', 'assistant', 'assistant divisi', 'asst divisi', 'admin'].includes(roleL);
     
     // Get current values
     const h = (db.harvesting_daily || []).find(x => x.id == id) || {};
