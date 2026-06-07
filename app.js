@@ -1827,73 +1827,109 @@ window.executePrintRekap = () => {
         return divA.localeCompare(divB, undefined, {numeric: true});
     });
     
-    let tableRows = '';
-    let totPlanJjg = 0, totPlanKg = 0, totActJjg = 0, totActKg = 0, totActHvr = 0, totActHa = 0;
+    const rekapByEstate = {};
+    sortedRekap.forEach(r => {
+        if (!rekapByEstate[r.estate]) rekapByEstate[r.estate] = [];
+        rekapByEstate[r.estate].push(r);
+    });
     
-    if (sortedRekap.length === 0) {
-        tableRows = `<tr><td colspan="15" style="text-align:center; padding: 10px; border: 1px solid #cbd5e1;">Tidak ada data pada periode dan divisi yang dipilih.</td></tr>`;
+    let allTablesHtml = '';
+    
+    if (Object.keys(rekapByEstate).length === 0) {
+        allTablesHtml = `<table><tr><td style="text-align:center; padding: 20px;">Tidak ada data pada periode dan estate yang dipilih.</td></tr></table>`;
     } else {
-        sortedRekap.forEach(r => {
-            const avgPusingan = r.pusingan_count > 0 ? (r.pusingan_sum / r.pusingan_count).toFixed(1) : '-';
-            const akpPlan = r.akp_count > 0 ? (r.akp_sum / r.akp_count).toFixed(1) : '0.0';
-            const bjrActual = r.act_jjg > 0 ? (r.act_kg / r.act_jjg).toFixed(2) : '0.00';
-            const prestasiHvr = r.act_pemanen > 0 ? r.act_kg / r.act_pemanen : 0;
-            const kapasitasHa = r.act_pemanen > 0 ? r.act_ha / r.act_pemanen : 0;
-            let varHvr = 0;
-            if (r.plan_pemanen > 0) varHvr = (r.act_pemanen / r.plan_pemanen) * 100;
-            let varHa = 0;
-            if (r.gross_area > 0) varHa = (r.act_ha / r.gross_area) * 100;
+        Object.keys(rekapByEstate).sort().forEach(estate => {
+            const rows = rekapByEstate[estate];
+            let totPlanJjg = 0, totPlanKg = 0, totActJjg = 0, totActKg = 0, totActHvr = 0, totActHa = 0;
+            let tableRows = '';
             
-            totPlanJjg += r.plan_jjg;
-            totPlanKg += r.plan_kg;
-            totActJjg += r.act_jjg;
-            totActKg += r.act_kg;
-            totActHvr += r.act_pemanen;
-            totActHa += r.act_ha;
-
-            tableRows += `
-                <tr>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${periodLabel}</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${getEstateCode(r.estate)}</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${r.divisi || '-'}</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${avgPusingan}</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${akpPlan}%</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>${r.plan_jjg}</strong></td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>${r.plan_kg}</strong></td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>${r.act_jjg}</strong></td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>${r.act_kg}</strong></td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>${r.act_pemanen}</strong></td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${kapasitasHa.toFixed(2)}</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${prestasiHvr.toFixed(1)}</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${varHa.toFixed(1)}%</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${varHvr.toFixed(1)}%</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${bjrActual}</td>
-                </tr>
+            rows.forEach(r => {
+                const avgPusingan = r.pusingan_count > 0 ? (r.pusingan_sum / r.pusingan_count).toFixed(1) : '-';
+                const akpPlan = r.akp_count > 0 ? (r.akp_sum / r.akp_count).toFixed(1) : '0.0';
+                const bjrActual = r.act_jjg > 0 ? (r.act_kg / r.act_jjg).toFixed(2) : '0.00';
+                const prestasiHvr = r.act_pemanen > 0 ? r.act_kg / r.act_pemanen : 0;
+                const kapasitasHa = r.act_pemanen > 0 ? r.act_ha / r.act_pemanen : 0;
+                let varHvr = 0; if (r.plan_pemanen > 0) varHvr = (r.act_pemanen / r.plan_pemanen) * 100;
+                let varHa = 0; if (r.gross_area > 0) varHa = (r.act_ha / r.gross_area) * 100;
+                
+                totPlanJjg += r.plan_jjg;
+                totPlanKg += r.plan_kg;
+                totActJjg += r.act_jjg;
+                totActKg += r.act_kg;
+                totActHvr += r.act_pemanen;
+                totActHa += r.act_ha;
+                
+                tableRows += `
+                    <tr>
+                        <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${periodLabel}</td>
+                        <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${getEstateCode(r.estate)}</td>
+                        <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${r.divisi || '-'}</td>
+                        <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${avgPusingan}</td>
+                        <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${akpPlan}%</td>
+                        <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>${r.plan_jjg}</strong></td>
+                        <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>${r.plan_kg}</strong></td>
+                        <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>${r.act_jjg}</strong></td>
+                        <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>${r.act_kg}</strong></td>
+                        <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;"><strong>${r.act_pemanen}</strong></td>
+                        <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${kapasitasHa.toFixed(2)}</td>
+                        <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${prestasiHvr.toFixed(1)}</td>
+                        <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${varHa.toFixed(1)}%</td>
+                        <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${varHvr.toFixed(1)}%</td>
+                        <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${bjrActual}</td>
+                    </tr>
+                `;
+            });
+            
+            const totBjr = totActJjg > 0 ? (totActKg / totActJjg).toFixed(2) : '0.00';
+            const totPrestasiHvr = totActHvr > 0 ? totActKg / totActHvr : 0;
+            const totKapasitasHa = totActHvr > 0 ? totActHa / totActHvr : 0;
+            
+            allTablesHtml += `
+                <div class="header-info" style="margin-top: ${allTablesHtml === '' ? '0' : '40px'};">
+                    <h2>REKAP PANEN PER DIVISI</h2>
+                    <h3>ESTATE: ${getEstateCode(estate)}</h3>
+                    <h4>PERIODE: ${periodLabel}</h4>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>PERIODE</th>
+                            <th>ESTATE</th>
+                            <th>DIVISI</th>
+                            <th>AVG<br>ROUND</th>
+                            <th>AKP<br>(%)</th>
+                            <th>PLAN<br>TOTAL JJG</th>
+                            <th>PLAN<br>PANEN (KG)</th>
+                            <th>ACT<br>TOTAL JJG</th>
+                            <th>ACT<br>PANEN (KG)</th>
+                            <th>ACT<br>HVR (HK)</th>
+                            <th>PRESTASI<br>HA/ACT HVR</th>
+                            <th>PRESTASI<br>KG/WD (KG/HK)</th>
+                            <th>VAR<br>HA(%)</th>
+                            <th>TURN OUT<br>(%)</th>
+                            <th>ABW<br>(BJR ACTUAL)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                        <tr style="background-color: #f1f5f9; font-weight: bold;">
+                            <td colspan="5" style="border: 1px solid #cbd5e1; text-align:right; padding: 6px;">TOTAL ${getEstateCode(estate)}</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totPlanJjg}</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totPlanKg}</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totActJjg}</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totActKg}</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totActHvr}</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totKapasitasHa.toFixed(2)}</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totPrestasiHvr.toFixed(1)}</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">-</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">-</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totBjr}</td>
+                        </tr>
+                    </tbody>
+                </table>
             `;
         });
-        
-        // Add total row
-        const totBjr = totActJjg > 0 ? (totActKg / totActJjg).toFixed(2) : '0.00';
-        const totPrestasiHvr = totActHvr > 0 ? totActKg / totActHvr : 0;
-        const totKapasitasHa = totActHvr > 0 ? totActHa / totActHvr : 0;
-        tableRows += `
-            <tr style="background-color: #f1f5f9; font-weight: bold;">
-                <td colspan="5" style="border: 1px solid #cbd5e1; text-align:right; padding: 6px;">TOTAL</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totPlanJjg}</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totPlanKg}</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totActJjg}</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totActKg}</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totActHvr}</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totKapasitasHa.toFixed(2)}</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totPrestasiHvr.toFixed(1)}</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">-</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">-</td>
-                <td style="border: 1px solid #cbd5e1; text-align:center; padding: 6px;">${totBjr}</td>
-            </tr>
-        `;
     }
-
-    const estateNames = Array.from(estatesInvolved).map(e => getEstateCode(e)).join(', ') || 'All Estates';
 
     const printHtml = `
         <!DOCTYPE html>
@@ -1914,35 +1950,7 @@ window.executePrintRekap = () => {
             </style>
         </head>
         <body onload="window.print();">
-            <div class="header-info">
-                <h2>REKAP PANEN PER DIVISI</h2>
-                <h3>ESTATE: ${estateNames}</h3>
-                <h4>PERIODE: ${periodLabel}</h4>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>PERIODE</th>
-                        <th>ESTATE</th>
-                        <th>DIVISI</th>
-                        <th>AVG<br>ROUND</th>
-                        <th>AKP<br>(%)</th>
-                        <th>PLAN<br>TOTAL JJG</th>
-                        <th>PLAN<br>PANEN (KG)</th>
-                        <th>ACT<br>TOTAL JJG</th>
-                        <th>ACT<br>PANEN (KG)</th>
-                        <th>ACT<br>HVR (HK)</th>
-                        <th>PRESTASI<br>HA/ACT HVR</th>
-                        <th>PRESTASI<br>KG/WD (KG/HK)</th>
-                        <th>VAR<br>HA(%)</th>
-                        <th>TURN OUT<br>(%)</th>
-                        <th>ABW<br>(BJR ACTUAL)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${tableRows}
-                </tbody>
-            </table>
+            ${allTablesHtml}
         </body>
         </html>
     `;
