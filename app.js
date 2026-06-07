@@ -1908,7 +1908,8 @@ window.executePrintRekap = () => {
                 th, td { border: 1px solid #000; padding: 6px; text-align: center; }
                 th { background-color: #f2f2f2; }
                 @media print {
-                    @page { size: landscape; }
+                    @page { margin: 10mm; }
+                    body { -webkit-print-color-adjust: exact; padding: 0; margin: 0; }
                 }
             </style>
         </head>
@@ -2564,7 +2565,7 @@ window.printHistoryBulanan = (divisi, estate) => {
                 th { background-color: #f1f5f9; border: 1px solid #000; padding: 8px 4px; text-align: center; }
                 td { border: 1px solid #000; padding: 4px; text-align: center; }
                 @media print {
-                    @page { size: landscape; margin: 10mm; }
+                    @page { margin: 10mm; }
                     body { padding: 0; }
                 }
             </style>
