@@ -1508,7 +1508,7 @@ const renderHarvestingTable = () => {
                 <tr style="background-color: #f8fafc;">
                     <td>${formattedDate}</td>
                     <td><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px; white-space:nowrap;">${getEstateCode(r.estate)}</span></td>
-                    <td>${r.divisi ? `<a href="#" onclick="openDivisiHistory('${r.divisi}')" style="color:var(--primary); font-weight:bold; text-decoration:underline; cursor:pointer;" title="Lihat History Divisi">${r.divisi}</a>` : '-'}</td>
+                    <td>${r.divisi ? `<a href="#" onclick="openDivisiHistory('${r.divisi}', '${r.date}', '${r.estate}')" style="color:var(--primary); font-weight:bold; text-decoration:underline; cursor:pointer;" title="Lihat Detail Divisi">${r.divisi}</a>` : '-'}</td>
                     <td style="color:#94a3b8;">-</td>
                     <td style="color:#94a3b8;">-</td>
                     <td style="color:#94a3b8;">-</td>
@@ -1989,8 +1989,15 @@ window.openBlockHistory = (block, divisi) => {
     document.body.insertAdjacentHTML('beforeend', html);
 };
 
-window.openDivisiHistory = (divisi) => {
-    const historyData = db.harvesting_daily.filter(h => h.divisi === divisi && (h.status === 'Selesai' || h.status === 'Closed'));
+window.openDivisiHistory = (divisi, date = null, estate = null) => {
+    let historyData = db.harvesting_daily.filter(h => h.divisi === divisi && (h.status === 'Selesai' || h.status === 'Closed'));
+    
+    if (estate) {
+        historyData = historyData.filter(h => h.estate === estate);
+    }
+    if (date) {
+        historyData = historyData.filter(h => h.date === date);
+    }
     
     const dateMap = {};
     historyData.forEach(h => {
@@ -2028,11 +2035,28 @@ window.openDivisiHistory = (divisi) => {
 
     const dates = Object.values(dateMap).sort((a,b) => b.date.localeCompare(a.date));
 
+    let titleStr = `History Prestasi Divisi: ${divisi}`;
+    if (date) {
+        let dateStr = date;
+        if(typeof dateStr === 'string' && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
+        let formattedDate = dateStr;
+        const d = new Date(dateStr);
+        if(!isNaN(d)) {
+            const day = String(d.getDate()).padStart(2, '0');
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            formattedDate = `${day} ${months[d.getMonth()]}`;
+        }
+        titleStr = `Detail Prestasi Divisi: ${divisi} (${formattedDate})`;
+    }
+    if (estate) {
+        titleStr += ` - ${getEstateCode(estate)}`;
+    }
+
     let html = `
         <div class="modal-overlay" id="modal-history-divisi">
             <div class="modal-content animate-fade-in" style="width:95vw; max-width:1200px; max-height:85vh; overflow-y:auto;">
                 <div class="modal-header">
-                    <h3>History Prestasi Divisi: ${divisi}</h3>
+                    <h3>${titleStr}</h3>
                     <button class="modal-close" onclick="document.getElementById('modal-history-divisi').remove()">&times;</button>
                 </div>
                 <table class="data-table table-compact" style="font-size:0.85rem; margin-top:15px;">
