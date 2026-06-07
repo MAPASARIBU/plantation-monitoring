@@ -1209,11 +1209,11 @@ const renderUpkeepTable = () => {
         
         if (u.status === 'Selesai') {
             actionBtn = `<span class="status-badge status-done" style="margin-right: 5px;">Selesai</span>`;
-        } else if (currentUser && currentUser.role && (['Asisten Divisi', 'Krani Divisi', 'Mandor', 'Admin'].includes(currentUser.role) || currentUser.role.includes('Krani'))) {
+        } else if (currentUser && currentUser.role && (['Asisten Divisi', 'Assistant', 'Krani Divisi', 'Mandor', 'Admin'].includes(currentUser.role) || currentUser.role.includes('Krani'))) {
             actionBtn = `
                 <div style="display:flex; flex-direction:column; gap:5px; align-items:center;">
-                    <div style="display:flex; gap:5px;">
-                        <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="promptAddUpkeepProgress(${u.id}, '${u.block}', '${safeType}', ${u.target}, ${u.realized})"><i class="fa-solid fa-plus"></i> Progress</button>
+                    <div style="display:flex; gap:5px; width: 100%;">
+                        <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; justify-content:center;" onclick="promptAddUpkeepProgress(${u.id}, '${u.block}', '${safeType}', ${u.target}, ${u.realized})"><i class="fa-solid fa-pen-to-square"></i> Update</button>
                     </div>
                     <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; width:100%; justify-content:center;" onclick="closeUpkeep(${u.id}, '${u.block}')"><i class="fa-solid fa-check"></i> Selesai</button>
                 </div>
@@ -1299,7 +1299,7 @@ const renderPemupukanTable = () => {
         } else {
             actionBtn = `
                 <div class="action-group-hover" style="display:flex; flex-direction:column; gap:3px; min-height: 40px; justify-content: center;">
-                    <button class="btn btn-primary" style="padding: 2px 6px; font-size: 0.7rem; background:#3b82f6; border:none; width: 100%;" onclick="openPemupukanRealizationModal(${p.id}, '${p.block}', '${p.plan}', ${tKg}, ${rKg}, ${tHa}, ${rHa}, ${tWorkers}, ${rWorkers})"><i class="fa-solid fa-pen-to-square"></i> Update</button>
+                    <button class="btn btn-primary" style="padding: 2px 6px; font-size: 0.7rem; background:#f59e0b; border:none; width: 100%;" onclick="openPemupukanRealizationModal(${p.id}, '${p.block}', '${p.plan}', ${tKg}, ${rKg}, ${tHa}, ${rHa}, ${tWorkers}, ${rWorkers})"><i class="fa-solid fa-pen-to-square"></i> Update</button>
                     ${hapusBtn}
                 </div>
             `;
