@@ -2703,13 +2703,33 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
         titleStr += ` - ${getEstateCode(estate)}`;
     }
 
+    const uniqueMonths = new Set();
+    dates.forEach(d => {
+        if(d.date && d.date.length >= 7) uniqueMonths.add(d.date.substring(0, 7));
+    });
+    let monthOptionsHtml = '';
+    const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    Array.from(uniqueMonths).sort().reverse().forEach(ym => {
+        const [y, m] = ym.split('-');
+        const name = `${monthNames[parseInt(m)-1]} ${y}`;
+        monthOptionsHtml += `<option value="${ym}">${name}</option>`;
+    });
+    if (uniqueMonths.size === 0) {
+        const dLocal = new Date(window.getLocalDate());
+        const mStr = String(dLocal.getMonth()+1).padStart(2, '0');
+        const ym = `${dLocal.getFullYear()}-${mStr}`;
+        monthOptionsHtml += `<option value="${ym}">${monthNames[dLocal.getMonth()]} ${dLocal.getFullYear()}</option>`;
+    }
+
     let html = `
         <div class="modal-overlay" id="modal-history-divisi">
             <div class="modal-content animate-fade-in" style="width:98vw; max-width:1500px; max-height:85vh; overflow-y:auto; padding: 20px;">
                 <div class="modal-header" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;">
                     <h3 style="margin: 0; padding-right: 20px;">${titleStr}</h3>
                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 5px;">
-                        <input type="month" id="print-history-month" class="form-control" style="width: auto; padding: 4px 8px; font-size: 0.9rem;" title="Pilih Bulan">
+                        <select id="print-history-month" class="form-control" style="width: auto; padding: 4px 8px; font-size: 0.9rem;" title="Pilih Bulan">
+                            ${monthOptionsHtml}
+                        </select>
                         <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.9rem;" onclick="printHistoryBulanan('${divisi}', '${estate || ''}')"><i class="fa-solid fa-print"></i> Print Bulanan</button>
                         <button class="modal-close" onclick="document.getElementById('modal-history-divisi').remove()" style="margin-left: 10px;">&times;</button>
                     </div>
