@@ -1212,11 +1212,8 @@ const renderUpkeepTable = () => {
             actionBtn = `<span class="status-badge status-done" style="margin-right: 5px;">Selesai</span>`;
         } else if (currentUser && currentUser.role && (['Asisten Divisi', 'Assistant', 'Krani Divisi', 'Mandor', 'Admin'].includes(currentUser.role) || currentUser.role.includes('Krani'))) {
             actionBtn = `
-                <div style="display:flex; flex-direction:column; gap:5px; align-items:center;">
-                    <div style="display:flex; gap:5px; width: 100%;">
-                        <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; justify-content:center;" onclick="promptAddUpkeepProgress(${u.id}, '${u.block}', '${safeType}', ${u.target}, ${u.realized})"><i class="fa-solid fa-pen-to-square"></i> Update</button>
-                    </div>
-                    <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; width:100%; justify-content:center;" onclick="closeUpkeep(${u.id}, '${u.block}')"><i class="fa-solid fa-check"></i> Selesai</button>
+                <div style="display:flex; justify-content:center; width: 100%;">
+                    <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; justify-content:center;" onclick="promptAddUpkeepProgress(${u.id}, '${u.block}', '${safeType}', ${u.target}, ${u.realized})"><i class="fa-solid fa-pen-to-square"></i> Update</button>
                 </div>
             `;
         } else {
