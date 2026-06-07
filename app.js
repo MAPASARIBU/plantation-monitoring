@@ -5017,7 +5017,11 @@ window.tonaseMode = 'plan';
 
 window.openTonaseModal = (mode) => {
     window.tonaseMode = mode;
-    document.getElementById('tonase-modal').style.display = 'flex';
+    let modal = document.getElementById('tonase-modal');
+    if (modal && modal.parentElement && modal.parentElement.tagName !== 'BODY') {
+        document.body.appendChild(modal);
+    }
+    modal.style.display = 'flex';
     
     if (mode === 'plan') {
         document.getElementById('tonase-form-title').innerText = 'Input Target (Plan) Tonase';
@@ -5169,14 +5173,14 @@ window.loadTonaseInputData = async () => {
         
         let html = `
             <div style="overflow-x: auto; max-width: 100%; padding-bottom: 10px; border: 1px solid #cbd5e1; border-radius: 4px;">
-            <table class="data-table" style="min-width: 800px; border-collapse: collapse; width: 100%;">
+            <table class="data-table" style="min-width: 600px; border-collapse: collapse; width: 100%;">
                 <thead>
                     <tr>
-                        <th style="min-width: 80px; position: sticky; left: 0; top: 0; background: #ffffff; z-index: 11; border-bottom: 2px solid #ddd; padding: 10px;">JAM</th>
+                        <th style="min-width: 60px; position: sticky; left: 0; top: 0; background: #ffffff; z-index: 11; border-bottom: 2px solid #ddd; padding: 8px;">JAM</th>
         `;
         supplyChain.forEach(est => {
             let thText = est.toUpperCase();
-            html += `<th style="position: sticky; top: 0; background: #ffffff; z-index: 10; min-width: 140px; border-bottom: 2px solid #ddd; padding: 10px;">${thText}</th>`;
+            html += `<th style="position: sticky; top: 0; background: #ffffff; z-index: 10; min-width: 100px; border-bottom: 2px solid #ddd; padding: 8px; font-size: 0.8rem;">${thText}</th>`;
         });
         html += `</tr></thead><tbody>`;
         
@@ -5191,7 +5195,7 @@ window.loadTonaseInputData = async () => {
                 }
                 html += `
                     <td style="padding: 4px;">
-                        <input type="number" step="0.01" class="form-control tonase-input" data-estate="${est}" data-hour="${hour}" value="${val}" min="0" placeholder="" style="min-width: 120px; padding: 8px; text-align: center;">
+                        <input type="number" step="0.01" class="form-control tonase-input" data-estate="${est}" data-hour="${hour}" value="${val}" min="0" placeholder="" style="min-width: 80px; width: 100%; padding: 6px; text-align: center; font-size: 0.9rem;">
                     </td>
                 `;
             });
