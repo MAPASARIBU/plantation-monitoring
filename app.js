@@ -822,7 +822,7 @@ const views = {
             
             <!-- Modal Tonase -->
             <div class="modal-overlay" id="tonase-modal" style="display:none; z-index: 1000;">
-                <div class="modal-content" style="max-width: 95%; width: 1200px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-content" style="width: 95%; max-width: 1200px; max-height: 90vh; overflow-y: auto; overflow-x: hidden;">
                     <div class="modal-header">
                         <h2 id="tonase-form-title">Input Tonase</h2>
                         <button type="button" class="modal-close" onclick="document.getElementById('tonase-modal').style.display = 'none'">&times;</button>
