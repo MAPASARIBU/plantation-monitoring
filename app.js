@@ -1457,10 +1457,11 @@ const renderHarvestingTable = () => {
         
         const rekapMap = {};
         selesaiData.forEach(h => {
-            const key = h.date + '_' + h.divisi;
+            const key = h.date + '_' + h.estate + '_' + h.divisi;
             if(!rekapMap[key]) {
                 rekapMap[key] = {
                     date: h.date,
+                    estate: h.estate,
                     divisi: h.divisi,
                     plan_jjg: 0,
                     plan_kg: 0,
@@ -1492,6 +1493,7 @@ const renderHarvestingTable = () => {
             tbodyDaily.innerHTML += `
                 <tr style="background-color: #f8fafc;">
                     <td>${formattedDate}</td>
+                    <td><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px; white-space:nowrap;">${getEstateCode(r.estate)}</span></td>
                     <td>${r.divisi ? `<a href="#" onclick="openDivisiHistory('${r.divisi}')" style="color:var(--primary); font-weight:bold; text-decoration:underline; cursor:pointer;" title="Lihat History Divisi">${r.divisi}</a>` : '-'}</td>
                     <td style="color:#94a3b8;">-</td>
                     <td style="color:#94a3b8;">-</td>
