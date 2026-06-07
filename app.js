@@ -1940,7 +1940,8 @@ window.executePrintClosedHarvesting = () => {
             let prestasiHaWd = 0; if(h.realized_pemanen > 0) prestasiHaWd = h.realized_ha / h.realized_pemanen;
             let prestasiKgWd = 0; if(h.realized_pemanen > 0) prestasiKgWd = h.realized_kg / h.realized_pemanen;
             let bjrActual = 0; if(h.realized_janjang > 0) bjrActual = h.realized_kg / h.realized_janjang;
-            const blockData = db.blocks.find(b => b.name === h.block && b.estate === h.estate);
+            let blockData = masterData.blok.find(b => b.name === h.block && b.divisi === h.divisi);
+            if (!blockData) blockData = masterData.blok.find(b => b.name === h.block);
             const grossArea = blockData ? blockData.gross_area : 0;
             let varHa = 0; if (grossArea > 0) varHa = (h.realized_ha / grossArea) * 100;
             let varHvr = 0; if (h.plan_pemanen > 0) varHvr = (h.realized_pemanen / h.plan_pemanen) * 100;
@@ -5442,7 +5443,7 @@ window.promptAddUpkeepProgress = (id, block, type, target, realized, targetWorke
     const today = window.getLocalDate();
     const sisa = Math.max(0, target - realized).toFixed(2);
 
-    const blockData = db.blocks.find(b => b.name === block);
+    let blockData = masterData.blok.find(b => b.name === block);
     const grossArea = blockData ? blockData.gross_area : 0;
 
     const modalHTML = `
