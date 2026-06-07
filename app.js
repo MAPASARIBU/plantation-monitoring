@@ -3504,7 +3504,12 @@ const bindForms = () => {
             if (workers > 0 && targetVal > 0) {
                 const estKg = (targetVal / workers).toFixed(1);
                 const estHa = targetHaVal > 0 ? (targetHaVal / workers).toFixed(2) : 0;
-                pEstimate.innerHTML = `<i class="fa-solid fa-chart-line"></i> Prestasi: ${estKg} Kg / Org<br><i class="fa-solid fa-chart-area"></i> Prestasi: ${estHa} Ha / Org`;
+                const estKgPerHa = targetHaVal > 0 ? (targetVal / targetHaVal).toFixed(1) : 0;
+                pEstimate.innerHTML = `
+                    <div style="margin-bottom: 3px;"><i class="fa-solid fa-leaf" style="width:16px;"></i> ${estKgPerHa} Kg Pupuk / Ha</div>
+                    <div style="margin-bottom: 3px;"><i class="fa-solid fa-weight-hanging" style="width:16px;"></i> ${estKg} Kg Pupuk / HK</div>
+                    <div><i class="fa-solid fa-map" style="width:16px;"></i> ${estHa} Prestasi Ha / HK</div>
+                `;
                 pEstimate.style.display = 'block';
             } else {
                 pEstimate.style.display = 'none';
