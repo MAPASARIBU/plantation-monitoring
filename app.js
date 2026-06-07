@@ -1255,7 +1255,7 @@ const renderUpkeepTable = () => {
             <tr>
                 <td><strong><a href="#" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;" onclick="viewUpkeepHistory(${u.id}, '${u.block}', '${safeType}'); return false;">${u.block}</a></strong></td>
                 <td>${u.startdate || '-'}</td>
-                <td>${u.estate || '-'}</td>
+                <td><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px; white-space:nowrap; font-weight:bold;">${getEstateCode(u.estate)}</span></td>
                 <td>${u.type}<br><small>${u.worker}</small></td>
                 <td>${u.target}</td>
                 <td>${u.targetworkers || 0} Orang</td>
@@ -1333,7 +1333,7 @@ const renderPemupukanTable = () => {
         return `
             <tr>
                 <td>${sDate || '-'}</td>
-                <td>${p.estate || '-'}</td>
+                <td><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px; white-space:nowrap; font-weight:bold;">${getEstateCode(p.estate)}</span></td>
                 <td><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px;">${divisi}</span></td>
                 <td><strong><a href="#" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;" onclick="viewPemupukanSummary('${p.block}', '${p.plan}', ${tKg}, ${tHa}, ${tWorkers}, ${rKg}, ${rHa}, ${rWorkers}); return false;">${p.block}</a></strong></td>
                 <td>${p.plan}</td>
