@@ -190,6 +190,11 @@ async function initDB() {
                 await pool.query('INSERT INTO users (username, password, role) VALUES ($1, $2, $3)', user);
             }
         }
+        
+        // Auto-fix null estates for previously seeded users
+        await pool.query("UPDATE users SET estate = 'Semua Estate (Khusus Admin)' WHERE role IN ('Senior Field Manager') AND (estate IS NULL OR estate = '')");
+        await pool.query("UPDATE users SET estate = 'Bunga Tanjung Estate' WHERE role NOT IN ('Admin', 'Senior Field Manager') AND (estate IS NULL OR estate = '')");
+        
 
         // Seed Default Data
         const vCount = await pool.query('SELECT COUNT(*) FROM vehicles');
