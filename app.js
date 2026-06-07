@@ -2003,6 +2003,8 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
                 actHvr: 0,
                 actHa: 0,
                 actKg: 0,
+                actJjg: 0,
+                actPokok: 0,
                 grossArea: 0,
                 pusinganSum: 0,
                 pusinganCount: 0,
@@ -2014,6 +2016,12 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
         dateMap[dStr].actHvr += h.realized_pemanen || 0;
         dateMap[dStr].actHa += h.realized_ha || 0;
         dateMap[dStr].actKg += h.realized_kg || 0;
+        dateMap[dStr].actJjg += h.realized_janjang || 0;
+        
+        let blockData = masterData.blok.find(b => b.name === h.block && b.divisi === divisi);
+        if (!blockData) blockData = masterData.blok.find(b => b.name === h.block);
+        const sph = (blockData && blockData.sph) ? parseFloat(blockData.sph) : 136;
+        dateMap[dStr].actPokok += (h.realized_ha || 0) * sph;
         
         if (h.pusingan) {
             dateMap[dStr].pusinganSum += parseInt(h.pusingan) || 0;
@@ -2068,15 +2076,17 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
                             <th>Actual<br>Hvr (HK)</th>
                             <th>Prestasi<br>Ha/WD (Ha/HK)</th>
                             <th>Prestasi<br>Kg/WD (Kg/HK)</th>
-                            <th>Var<br>Hvr (%)</th>
+                            <th>Turn Out (%)</th>
                             <th>Var<br>Ha (%)</th>
+                            <th>BJR<br>Actual</th>
+                            <th>AKP (%)</th>
                         </tr>
                     </thead>
                     <tbody>
     `;
     
     if(dates.length === 0) {
-        html += `<tr><td colspan="13" style="text-align:center;">Belum ada data historis divisi</td></tr>`;
+        html += `<tr><td colspan="15" style="text-align:center;">Belum ada data historis divisi</td></tr>`;
     } else {
         dates.forEach(r => {
             let formattedDate = r.date;
@@ -2096,6 +2106,8 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
             const prestasiHvr = r.actHvr > 0 ? r.actKg / r.actHvr : 0;
             const kapasitasHa = r.actHvr > 0 ? r.actHa / r.actHvr : 0;
             const avgPusingan = r.pusinganCount > 0 ? (r.pusinganSum / r.pusinganCount).toFixed(1) : '-';
+            const bjrActual = r.actJjg > 0 ? (r.actKg / r.actJjg).toFixed(2) : '0.00';
+            const akp = r.actPokok > 0 ? ((r.actJjg / r.actPokok) * 100).toFixed(1) : '0.0';
             
             html += `
                 <tr>
@@ -2112,6 +2124,8 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
                     <td>${prestasiHvr.toFixed(1)}</td>
                     <td style="color:${varHvr > 100 ? 'red' : (varHvr < 100 ? 'green' : 'black')}; font-weight:bold;">${varHvr.toFixed(1)}%</td>
                     <td style="color:${varHa > 100 ? 'red' : (varHa < 100 ? 'green' : 'black')}; font-weight:bold;">${varHa.toFixed(1)}%</td>
+                    <td>${bjrActual}</td>
+                    <td>${akp}%</td>
                 </tr>
             `;
         });
