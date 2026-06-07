@@ -375,6 +375,10 @@ const views = {
                     </div>
                     <form id="form-upkeep" style="margin-top: 20px;">
                         <div class="form-group">
+                            <label>Tanggal Rencana</label>
+                            <input type="date" id="u-date" class="form-control" required>
+                        </div>
+                        <div class="form-group">
                             <label>Pilih Divisi (Opsional)</label>
                             <select class="form-control select-divisi" onchange="filterBlok(this.value, 'u-block')"></select>
                         </div>
@@ -414,7 +418,7 @@ const views = {
             <div class="glass-card table-wrapper" style="width: 100%;">
                 <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
                     <h2>Progress Upkeep Harian</h2>
-                    <button type="button" class="btn btn-primary" id="btn-input-upkeep" onclick="document.getElementById('modal-upkeep-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Input Upkeep</button>
+                    <button type="button" class="btn btn-primary" id="btn-input-upkeep" onclick="document.getElementById('u-date').value = window.getLocalDate(); document.getElementById('modal-upkeep-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Input Upkeep</button>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
@@ -3718,7 +3722,7 @@ const bindForms = () => {
             target: parseFloat(document.getElementById('u-target').value),
             targetWorkers: parseInt(document.getElementById('u-workers').value) || 0,
             worker: document.getElementById('u-worker').value,
-            startDate: window.getLocalDate(),
+            startDate: document.getElementById('u-date').value,
             estate: currentUser.estate
         };
         try {
