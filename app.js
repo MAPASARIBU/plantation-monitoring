@@ -1213,7 +1213,7 @@ const renderUpkeepTable = () => {
         } else if (currentUser && currentUser.role && (['Asisten Divisi', 'Assistant', 'Krani Divisi', 'Mandor', 'Admin'].includes(currentUser.role) || currentUser.role.includes('Krani'))) {
             actionBtn = `
                 <div style="display:flex; justify-content:center; width: 100%;">
-                    <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; justify-content:center;" onclick="promptAddUpkeepProgress(${u.id}, '${u.block}', '${safeType}', ${u.target}, ${u.realized})"><i class="fa-solid fa-pen-to-square"></i> Update</button>
+                    <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; justify-content:center;" onclick="promptAddUpkeepProgress(${u.id}, '${u.block}', '${safeType}', ${u.target}, ${u.realized}, ${u.targetworkers || 0})"><i class="fa-solid fa-pen-to-square"></i> Update</button>
                 </div>
             `;
         } else {
@@ -5137,7 +5137,7 @@ window.updateLocationList = () => {
     }
 };
 
-window.promptAddUpkeepProgress = (id, block, type, target, realized) => {
+window.promptAddUpkeepProgress = (id, block, type, target, realized, targetWorkers) => {
     const modalId = 'modal-upkeep-progress-' + id;
     const existing = document.getElementById(modalId);
     if (existing) existing.remove();
@@ -5155,7 +5155,8 @@ window.promptAddUpkeepProgress = (id, block, type, target, realized) => {
                 <div style="margin-bottom: 15px; font-size: 0.9rem; background: #f8fafc; padding: 10px; border-radius: 8px;">
                     <strong>Blok:</strong> ${block}<br>
                     <strong>Pekerjaan:</strong> ${type}<br>
-                    <strong>Target:</strong> ${target} Ha
+                    <strong>Target:</strong> ${target} Ha<br>
+                    <strong>Target HK:</strong> ${targetWorkers || 0} Orang
                 </div>
                 <form id="form-upkeep-add-${id}" onsubmit="submitUpkeepProgress(event, ${id})">
                     <div class="form-group">
@@ -5191,9 +5192,12 @@ window.calcPrestasiUpkeep = (id) => {
     const prestasiEl = document.getElementById(`upkeep-prestasi-${id}`);
     
     if (haEl && hkEl && prestasiEl) {
-        const ha = parseFloat(haEl.value) || 0;
-        const hk = parseFloat(hkEl.value) || 0;
-        if (hk > 0) {
+        const haStr = haEl.value.trim();
+        const hkStr = hkEl.value.trim();
+        const ha = parseFloat(haStr) || 0;
+        const hk = parseFloat(hkStr) || 0;
+        
+        if (haStr !== '' && hkStr !== '' && hk > 0) {
             prestasiEl.innerText = (ha / hk).toFixed(2) + " Ha/HK";
         } else {
             prestasiEl.innerText = "-";
