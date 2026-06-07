@@ -423,6 +423,7 @@ const views = {
                                 <th>Blok</th>
                                 <th>Tanggal Mulai</th>
                                 <th>Estate</th>
+                                <th>Divisi</th>
                                 <th>Pekerjaan</th>
                                 <th>Target (Ha)</th>
                                 <th>Target HK</th>
@@ -1251,11 +1252,15 @@ const renderUpkeepTable = () => {
             prestasiCell = `<span style="color:#64748b; font-size:0.85rem;">Menunggu data HK</span>`;
         }
         
+        const bData = masterData.blok.find(x => x.name === u.block);
+        const divisi = bData ? bData.divisi : '-';
+        
         return `
             <tr>
                 <td><strong><a href="#" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;" onclick="viewUpkeepHistory(${u.id}, '${u.block}', '${safeType}'); return false;">${u.block}</a></strong></td>
                 <td>${u.startdate || '-'}</td>
                 <td><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px; white-space:nowrap; font-weight:bold;">${getEstateCode(u.estate)}</span></td>
+                <td><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px; white-space:nowrap;">${divisi}</span></td>
                 <td>${u.type}<br><small>${u.worker}</small></td>
                 <td>${u.target}</td>
                 <td>${u.targetworkers || 0} Orang</td>
@@ -1269,7 +1274,7 @@ const renderUpkeepTable = () => {
     aktif.forEach(u => tbody.innerHTML += renderRow(u));
 
     if (selesai.length > 0) {
-        tbody.innerHTML += `<tr><td colspan="9" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Selesai</td></tr>`;
+        tbody.innerHTML += `<tr><td colspan="10" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Selesai</td></tr>`;
         selesai.forEach(u => tbody.innerHTML += renderRow(u));
     }
 };

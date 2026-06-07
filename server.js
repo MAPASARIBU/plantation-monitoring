@@ -311,11 +311,20 @@ app.delete('/api/users/:id', async (req, res) => {
 app.get('/api/master/:estate', async (req, res) => {
     try {
         const estate = req.params.estate;
-        const divisi = await pool.query('SELECT * FROM master_divisi WHERE estate = $1', [estate]);
-        const blok = await pool.query('SELECT * FROM master_blok WHERE estate = $1', [estate]);
-        const truk = await pool.query('SELECT * FROM master_truk WHERE estate = $1', [estate]);
-        const pupuk = await pool.query('SELECT * FROM master_pupuk WHERE estate = $1', [estate]);
-        const supir = await pool.query('SELECT * FROM master_supir WHERE estate = $1', [estate]);
+        let divisi, blok, truk, pupuk, supir;
+        if (estate === 'Semua Estate (Khusus Admin)') {
+            divisi = await pool.query('SELECT * FROM master_divisi');
+            blok = await pool.query('SELECT * FROM master_blok');
+            truk = await pool.query('SELECT * FROM master_truk');
+            pupuk = await pool.query('SELECT * FROM master_pupuk');
+            supir = await pool.query('SELECT * FROM master_supir');
+        } else {
+            divisi = await pool.query('SELECT * FROM master_divisi WHERE estate = $1', [estate]);
+            blok = await pool.query('SELECT * FROM master_blok WHERE estate = $1', [estate]);
+            truk = await pool.query('SELECT * FROM master_truk WHERE estate = $1', [estate]);
+            pupuk = await pool.query('SELECT * FROM master_pupuk WHERE estate = $1', [estate]);
+            supir = await pool.query('SELECT * FROM master_supir WHERE estate = $1', [estate]);
+        }
         
         let supply_chain = { rows: [] };
         if (estate.endsWith('Mill')) {
