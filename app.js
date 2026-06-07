@@ -682,6 +682,7 @@ const views = {
                         <thead>
                             <tr>
                                 <th>Date</th>
+                                <th>Estate</th>
                                 <th>Div</th>
                                 <th>Blok</th>
                                 <th>Round</th>
@@ -1426,6 +1427,7 @@ const renderHarvestingTable = () => {
         return `
             <tr>
                 <td>${formattedDate}</td>
+                <td><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px; white-space:nowrap;">${getEstateCode(h.estate)}</span></td>
                 <td>${h.divisi || '-'}</td>
                 <td>${(h.status === 'Selesai' || h.status === 'Closed') ? `<a href="#" onclick="openBlockHistory('${h.block}', '${h.divisi}')" style="color:var(--primary); font-weight:bold; text-decoration:underline; cursor:pointer;" title="Lihat History">${h.block}</a>` : `<strong>${h.block}</strong>`}</td>
                 <td>${h.pusingan || '-'}</td>
@@ -1446,12 +1448,12 @@ const renderHarvestingTable = () => {
     draftData.forEach(h => tbodyDaily.innerHTML += renderDailyRow(h));
     
     if (selesaiData.length > 0) {
-        tbodyDaily.innerHTML += `<tr><td colspan="12" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Closed</td></tr>`;
+        tbodyDaily.innerHTML += `<tr><td colspan="13" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Closed</td></tr>`;
         selesaiData.forEach(h => {
             tbodyDaily.innerHTML += renderDailyRow(h);
         });
         
-        tbodyDaily.innerHTML += `<tr><td colspan="12" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-chart-simple" style="color: var(--primary-color);"></i> Rekap Panen per Divisi (Dari Pekerjaan Selesai)</td></tr>`;
+        tbodyDaily.innerHTML += `<tr><td colspan="13" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-chart-simple" style="color: var(--primary-color);"></i> Rekap Panen per Divisi (Dari Pekerjaan Selesai)</td></tr>`;
         
         const rekapMap = {};
         selesaiData.forEach(h => {
