@@ -704,7 +704,10 @@ const views = {
                     </table>
                 </div>
                 
-                <h3 id="closed-jobs-title" style="margin-top: 30px; margin-bottom: 10px; color: var(--text-primary); display: none;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Closed</h3>
+                <div id="closed-jobs-header" style="display: none; justify-content: space-between; align-items: center; margin-top: 30px; margin-bottom: 10px;">
+                    <h3 style="margin: 0; color: var(--text-primary);"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Closed</h3>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="openPrintClosedHarvestingModal()" style="background-color: #64748b; border: none; padding: 6px 12px; font-size: 0.8rem;"><i class="fa-solid fa-print"></i> Print Out</button>
+                </div>
                 <div class="table-container" id="closed-jobs-container" style="margin-bottom: 30px; display: none;">
                     <table class="data-table table-compact">
                         <thead>
@@ -1538,12 +1541,12 @@ const renderHarvestingTable = () => {
     
     if (selesaiData.length > 0) {
         const tbodyClosed = document.getElementById('tbody-harvesting-closed');
-        const titleClosed = document.getElementById('closed-jobs-title');
+        const titleClosed = document.getElementById('closed-jobs-header');
         const containerClosed = document.getElementById('closed-jobs-container');
         
         if (tbodyClosed) {
             tbodyClosed.innerHTML = '';
-            titleClosed.style.display = 'block';
+            titleClosed.style.display = 'flex';
             containerClosed.style.display = 'block';
             selesaiData.forEach(h => {
                 let statusEl = `<span class="status-badge" style="background:#d1fae5; color:#065f46; padding:2px 6px;">${h.status}</span>`;
@@ -1736,7 +1739,7 @@ const renderHarvestingTable = () => {
     } else if (draftData.length === 0) {
         tbodyDaily.innerHTML = `<tr><td colspan="13" style="text-align:center;">Belum ada pekerjaan yang berstatus Draft atau Published.</td></tr>`;
     } else if (selesaiData.length === 0) {
-        const titleClosed = document.getElementById('closed-jobs-title');
+        const titleClosed = document.getElementById('closed-jobs-header');
         const containerClosed = document.getElementById('closed-jobs-container');
         if(titleClosed) titleClosed.style.display = 'none';
         if(containerClosed) containerClosed.style.display = 'none';
@@ -1785,6 +1788,218 @@ window.printHarvestingDaily = () => {
         win.document.close();
     } else {
         alert('Pop-up terblokir. Silakan izinkan pop-up untuk mencetak.');
+    }
+};
+
+window.openPrintClosedHarvestingModal = async () => {
+    const canSeeAll = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Manager' || currentUser.role === 'Senior Field Manager');
+    
+    const estateList = [
+        "Bunga Tanjung Estate", "Sungai Teramang Estate", "Air Bikuk Estate", "Batu Kuda Estate",
+        "Air Buluh Estate", "Malin Deman Estate", "Tanah Rekah Estate", "Muko Muko Estate",
+        "Sei Jerinjing Estate", "Talang Petai Estate", "Sungai Kiang Estate", "Air Majunto Estate"
+    ];
+    
+    let selectedEstate = currentUser ? currentUser.estate : '';
+    if (selectedEstate === 'Semua Estate (Khusus Admin)' || !selectedEstate || selectedEstate === '-') {
+        selectedEstate = estateList[0];
+    }
+
+    let estateSelectHtml = '';
+    if (canSeeAll) {
+        let checkboxes = estateList.map(e => `
+            <label style="display:block; margin-bottom:5px;">
+                <input type="checkbox" name="print-closed-estate-cb" value="${e}" ${e === selectedEstate ? 'checked' : ''}> ${e}
+            </label>
+        `).join('');
+        estateSelectHtml = `
+            <div class="form-group">
+                <label>Pilih Estate</label>
+                <div style="max-height: 150px; overflow-y: auto; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px;">
+                    ${checkboxes}
+                </div>
+            </div>
+        `;
+    } else {
+        estateSelectHtml = `<input type="hidden" id="print-closed-estate" value="${selectedEstate}">`;
+    }
+
+    const html = `
+        <div class="modal-overlay" id="modal-print-closed-harvesting">
+            <div class="modal-content animate-fade-in" style="width:90vw; max-width:500px;">
+                <div class="modal-header">
+                    <h3>Print Harvesting (Selesai)</h3>
+                    <button class="modal-close" onclick="document.getElementById('modal-print-closed-harvesting').remove()">&times;</button>
+                </div>
+                <div style="padding: 20px;">
+                    ${estateSelectHtml}
+                    <div class="form-group">
+                        <label>Periode Dari Tanggal</label>
+                        <input type="date" id="print-closed-start" class="form-control" value="${new Date().toISOString().substring(0, 10)}">
+                    </div>
+                    <div class="form-group">
+                        <label>Sampai Tanggal</label>
+                        <input type="date" id="print-closed-end" class="form-control" value="${new Date().toISOString().substring(0, 10)}">
+                    </div>
+                    <div style="margin-top: 20px; text-align: right;">
+                        <button class="btn btn-secondary" onclick="document.getElementById('modal-print-closed-harvesting').remove()">Batal</button>
+                        <button class="btn btn-primary" onclick="executePrintClosedHarvesting()">Print / Export</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.executePrintClosedHarvesting = () => {
+    const startStr = document.getElementById('print-closed-start').value;
+    const endStr = document.getElementById('print-closed-end').value;
+    
+    if (!startStr || !endStr) {
+        alert("Pilih periode tanggal terlebih dahulu!");
+        return;
+    }
+
+    let estatesInvolved = new Set();
+    const canSeeAll = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Manager' || currentUser.role === 'Senior Field Manager');
+    
+    if (canSeeAll) {
+        const cbs = document.querySelectorAll('input[name="print-closed-estate-cb"]:checked');
+        cbs.forEach(cb => estatesInvolved.add(cb.value));
+    } else {
+        estatesInvolved.add(currentUser.estate);
+    }
+    
+    if (estatesInvolved.size === 0) {
+        alert("Pilih minimal 1 Estate!");
+        return;
+    }
+
+    let rawData = [...db.harvesting_daily];
+    
+    const filtered = rawData.filter(d => {
+        if (d.status !== 'Selesai' && d.status !== 'Closed') return false;
+        if (!estatesInvolved.has(d.estate)) return false;
+        return d.date >= startStr && d.date <= endStr;
+    });
+    
+    filtered.sort((a, b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
+        if (a.estate !== b.estate) return a.estate.localeCompare(b.estate);
+        if (a.divisi !== b.divisi) return (a.divisi||'').localeCompare(b.divisi||'', undefined, {numeric: true});
+        return (a.block||'').localeCompare(b.block||'');
+    });
+
+    const estateNames = Array.from(estatesInvolved).map(e => getEstateCode(e)).join(', ') || 'All Estates';
+    const periodLabel = `${startStr} s/d ${endStr}`;
+    
+    let tableRows = '';
+    if (filtered.length === 0) {
+        tableRows = `<tr><td colspan="20" style="text-align:center; padding: 20px;">Tidak ada data pekerjaan selesai pada periode dan estate yang dipilih.</td></tr>`;
+    } else {
+        filtered.forEach(h => {
+            let prestasiHaWd = 0; if(h.realized_pemanen > 0) prestasiHaWd = h.realized_ha / h.realized_pemanen;
+            let prestasiKgWd = 0; if(h.realized_pemanen > 0) prestasiKgWd = h.realized_kg / h.realized_pemanen;
+            let bjrActual = 0; if(h.realized_janjang > 0) bjrActual = h.realized_kg / h.realized_janjang;
+            const blockData = db.blocks.find(b => b.name === h.block && b.estate === h.estate);
+            const grossArea = blockData ? blockData.gross_area : 0;
+            let varHa = 0; if (grossArea > 0) varHa = (h.realized_ha / grossArea) * 100;
+            let varHvr = 0; if (h.plan_pemanen > 0) varHvr = (h.realized_pemanen / h.plan_pemanen) * 100;
+            
+            tableRows += `
+                <tr>
+                    <td>${h.date}</td>
+                    <td>${getEstateCode(h.estate)}</td>
+                    <td>${h.divisi}</td>
+                    <td>${h.block}</td>
+                    <td>${h.pusingan || '-'}</td>
+                    <td>${h.mandor || '-'}</td>
+                    <td>${h.plan_janjang || h.est_janjang || 0}</td>
+                    <td>${h.plan_kg || h.est_kg || 0}</td>
+                    <td>${h.plan_pemanen}</td>
+                    <td>${h.realized_janjang}</td>
+                    <td>${h.realized_pemanen}</td>
+                    <td>${h.realized_kg}</td>
+                    <td>${h.plan_ha || 0}</td>
+                    <td>${h.realized_ha || 0}</td>
+                    <td>${prestasiHaWd.toFixed(2)}</td>
+                    <td>${prestasiKgWd.toFixed(1)}</td>
+                    <td>${bjrActual.toFixed(2)}</td>
+                    <td>${varHa.toFixed(1)}%</td>
+                    <td>${varHvr.toFixed(1)}%</td>
+                    <td>Selesai</td>
+                </tr>
+            `;
+        });
+    }
+
+    const printHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Print Harvesting (Selesai)</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; font-size: 11px; }
+                .header-info { margin-bottom: 20px; text-align: center; }
+                .header-info h2, .header-info h3, .header-info h4 { margin: 5px 0; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                th, td { border: 1px solid #cbd5e1; padding: 6px; text-align: left; }
+                th { background-color: #f2f2f2; text-align: center; }
+                td { text-align: center; }
+                @media print {
+                    @page { margin: 10mm; size: landscape; }
+                    body { -webkit-print-color-adjust: exact; padding: 0; margin: 0; }
+                }
+            </style>
+        </head>
+        <body onload="window.print();">
+            <div class="header-info">
+                <h2>LIST PEKERJAAN PANEN (SELESAI)</h2>
+                <h3>ESTATE: ${estateNames}</h3>
+                <h4>PERIODE: ${periodLabel}</h4>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>DATE</th>
+                        <th>ESTATE</th>
+                        <th>DIV</th>
+                        <th>BLOK</th>
+                        <th>ROUND</th>
+                        <th>MANDOR</th>
+                        <th>PLAN<br>(JJG)</th>
+                        <th>PLAN<br>(KG)</th>
+                        <th>HVR</th>
+                        <th>ACT<br>(JJG)</th>
+                        <th>ACT<br>(HVR)</th>
+                        <th>ACT<br>(KG)</th>
+                        <th>PLAN<br>(HA)</th>
+                        <th>ACT<br>(HA)</th>
+                        <th>PRESTASI<br>HA/WD</th>
+                        <th>PRESTASI<br>KG/WD</th>
+                        <th>ACTUAL<br>BJR</th>
+                        <th>VAR ACT HA<br>VS PLAN (%)</th>
+                        <th>TURN OUT<br>(%)</th>
+                        <th>STATUS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        </body>
+        </html>
+    `;
+
+    const printWin = window.open('', '', 'width=1200,height=800');
+    if (printWin) {
+        printWin.document.open();
+        printWin.document.write(printHtml);
+        printWin.document.close();
+        document.getElementById('modal-print-closed-harvesting').remove();
+    } else {
+        alert("Popup diblokir oleh browser. Izinkan popup untuk mencetak.");
     }
 };
 
