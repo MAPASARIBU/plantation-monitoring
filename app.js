@@ -3427,8 +3427,19 @@ const bindForms = () => {
     const formUpkeep = document.getElementById('form-upkeep');
     if(formUpkeep) formUpkeep.onsubmit = async (e) => {
         e.preventDefault();
+        
+        const blockEl = document.getElementById('u-block');
+        const selectedOption = blockEl.options[blockEl.selectedIndex];
+        const maxArea = selectedOption ? parseFloat(selectedOption.getAttribute('data-gross')) || 0 : 0;
+        const targetHa = parseFloat(document.getElementById('u-target').value);
+        
+        if (maxArea > 0 && targetHa > maxArea) {
+            alert(`Target luasan tidak boleh melebihi luasan blok ${blockEl.value} (Maksimal ${maxArea} Ha)`);
+            return;
+        }
+        
         const payload = {
-            block: document.getElementById('u-block').value,
+            block: blockEl.value,
             type: document.getElementById('u-type').value,
             target: parseFloat(document.getElementById('u-target').value),
             targetWorkers: parseInt(document.getElementById('u-workers').value) || 0,
