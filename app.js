@@ -165,6 +165,7 @@ window.changeActiveEstate = (estate) => {
         const currentViewId = activeNav ? activeNav.getAttribute('data-view') : 'dashboard';
         navigate(currentViewId);
         loadData();
+        if (typeof loadMasterData === 'function') loadMasterData();
     }
 };
 
