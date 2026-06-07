@@ -183,7 +183,8 @@ async function initDB() {
                 ['KRND', 'KRND123', 'Krani Divisi'],
                 ['SPR', 'SPR123', 'Supir'],
                 ['SCR', 'SCR123', 'Security'],
-                ['KRNM', 'KRNM123', 'Krani Mill']
+                ['KRNM', 'KRNM123', 'Krani Mill'],
+                ['MDR', 'MDR123', 'Mandor']
             ];
             for (let user of seedUsers) {
                 await pool.query('INSERT INTO users (username, password, role) VALUES ($1, $2, $3)', user);
