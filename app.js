@@ -699,6 +699,33 @@ const views = {
                         <tbody id="tbody-harvesting-daily"></tbody>
                     </table>
                 </div>
+
+                <!-- Rekap Panen Table -->
+                <div class="table-container" style="margin-bottom: 30px; overflow-x: auto;">
+                    <div style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border: 1px solid #cbd5e1; border-bottom: none;"><i class="fa-solid fa-chart-simple" style="color: var(--primary-color);"></i> Rekap Panen per Divisi (Dari Pekerjaan Selesai)</div>
+                    <table class="data-table table-compact" style="border-collapse: collapse; min-width: 1200px;">
+                        <thead>
+                            <tr>
+                                <th style="border: 1px solid #cbd5e1; text-align:center;">MTD</th>
+                                <th style="border: 1px solid #cbd5e1; text-align:center;">ESTATE</th>
+                                <th style="border: 1px solid #cbd5e1; text-align:center;">DIVISI</th>
+                                <th style="border: 1px solid #cbd5e1; text-align:center;">AVG<br>ROUND</th>
+                                <th style="border: 1px solid #cbd5e1; text-align:center;">AKP<br>(%)</th>
+                                <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN<br>TOTAL JJG</th>
+                                <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN<br>PANEN (KG)</th>
+                                <th style="border: 1px solid #cbd5e1; text-align:center;">ACT<br>TOTAL JJG</th>
+                                <th style="border: 1px solid #cbd5e1; text-align:center;">ACT<br>PANEN (KG)</th>
+                                <th style="border: 1px solid #cbd5e1; text-align:center;">ACT<br>HVR (HK)</th>
+                                <th style="border: 1px solid #cbd5e1; text-align:center;">PRESTASI<br>HA/ACT HVR</th>
+                                <th style="border: 1px solid #cbd5e1; text-align:center;">PRESTASI<br>KG/WD (KG/HK)</th>
+                                <th style="border: 1px solid #cbd5e1; text-align:center;">VAR<br>HA(%)</th>
+                                <th style="border: 1px solid #cbd5e1; text-align:center;">TURN OUT<br>(%)</th>
+                                <th style="border: 1px solid #cbd5e1; text-align:center;">ABW<br>(BJR ACTUAL)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-harvesting-rekap"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     `,
@@ -1386,52 +1413,42 @@ const renderHarvestingTable = () => {
         return divA.localeCompare(divB);
     };
 
-    let filteredData = db.harvesting_daily;
-    if (currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
-        filteredData = filteredData.filter(h => !h.estate || h.estate === currentUser.estate);
-    }
-
     const draftData = filteredData.filter(h => h.status !== 'Selesai' && h.status !== 'Closed').sort(sortFn);
     const selesaiData = filteredData.filter(h => h.status === 'Selesai' || h.status === 'Closed').sort(sortFn);
     
     const renderDailyRow = (h) => {
-        let statusEl = '<span style="color:green;font-weight:bold;">Closed</span>';
-        if (h.status !== 'Selesai' && h.status !== 'Closed') {
-            const canUpdateRoles = ['Askep', 'Assistant', 'Mandor', 'Krani Divisi', 'Krani Mill', 'Supir', 'Admin'];
-            if (currentUser && canUpdateRoles.includes(currentUser.role)) {
+        let statusEl = '';
+        if (h.status === 'Draft') {
+            statusEl = `<span class="status-badge" style="background:#fef3c7; color:#d97706; padding:2px 6px;">${h.status}</span>`;
+            if (currentUser.role === 'Mandor' || currentUser.role === 'Admin') {
+                statusEl += ` <button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-left:5px;" onclick="publishHarvesting(${h.id})">Publish</button>`;
+            }
+        } else if (h.status === 'Published') {
+            statusEl = `<span class="status-badge" style="background:#e0e7ff; color:#4338ca; padding:2px 6px;">${h.status}</span>`;
+            if (currentUser.role === 'Kerani Buah' || currentUser.role === 'Admin' || currentUser.role === 'Asisten Divisi') {
                 statusEl = `<button type="button" class="btn btn-primary" style="padding:2px 8px; font-size:0.8rem; background-color:orange; border:none; border-radius:15px; font-weight:bold;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}', ${h.est_janjang || 0}, ${h.plan_pemanen || 0}, ${h.est_kg || 0}, '${h.divisi}')">Update</button>`;
-            } else {
-                statusEl = '<span style="color:gray; font-weight:bold;">In Progress</span>';
             }
-        }
-        
-        let deleteBtn = '';
-        if (currentUser && (currentUser.role === 'Manager' || currentUser.role === 'Admin')) {
-            deleteBtn = `<button type="button" class="btn-delete-hover" style="margin-left:5px; font-weight:bold; vertical-align:middle; padding:2px 8px;" onclick="deleteHarvestingDaily(${h.id})">Del</button>`;
-        }
-        statusEl = `<div style="display:flex; align-items:center;">${statusEl}${deleteBtn}</div>`;
-        
-        let dateStr = h.date;
-        if(typeof dateStr === 'string' && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
-        
-        let formattedDate = dateStr;
-        if(dateStr) {
-            const d = new Date(dateStr);
-            if(!isNaN(d)) {
-                const day = String(d.getDate()).padStart(2, '0');
-                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-                formattedDate = `${day} ${months[d.getMonth()]}`;
+        } else if (h.status === 'Selesai') {
+            statusEl = `<span class="status-badge" style="background:#dcfce7; color:#15803d; padding:2px 6px;">${h.status}</span>`;
+            if (currentUser.role === 'Asisten Divisi' || currentUser.role === 'Admin') {
+                statusEl += ` <button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-left:5px; background-color:#16a34a; border:none;" onclick="closeHarvesting(${h.id})">Close</button>`;
             }
+        } else {
+            statusEl = `<span class="status-badge" style="background:#d1fae5; color:#065f46; padding:2px 6px;">${h.status}</span>`;
         }
+
+        const dateStr = typeof h.date === 'string' && h.date.includes('T') ? h.date.split('T')[0] : h.date;
+        const dObj = new Date(dateStr);
+        const formattedDate = !isNaN(dObj) ? dObj.toLocaleDateString('id-ID', {day:'2-digit', month:'short'}) : dateStr;
             
         return `
             <tr>
                 <td>${formattedDate}</td>
                 <td><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px; white-space:nowrap;">${getEstateCode(h.estate)}</span></td>
-                <td>${h.divisi || '-'}</td>
-                <td>${(h.status === 'Selesai' || h.status === 'Closed') ? `<a href="#" onclick="openBlockHistory('${h.block}', '${h.divisi}')" style="color:var(--primary); font-weight:bold; text-decoration:underline; cursor:pointer;" title="Lihat History">${h.block}</a>` : `<strong>${h.block}</strong>`}</td>
+                <td><strong>${h.divisi}</strong></td>
+                <td>${h.block}</td>
                 <td>${h.pusingan || '-'}</td>
-                <td>${h.mandor}</td>
+                <td><small>${h.mandor || '-'}</small></td>
                 <td>${h.est_janjang}</td>
                 <td>${h.est_kg}</td>
                 <td>${h.plan_pemanen}</td>
@@ -1443,8 +1460,6 @@ const renderHarvestingTable = () => {
         `;
     };
 
-
-
     draftData.forEach(h => tbodyDaily.innerHTML += renderDailyRow(h));
     
     if (selesaiData.length > 0) {
@@ -1452,8 +1467,6 @@ const renderHarvestingTable = () => {
         selesaiData.forEach(h => {
             tbodyDaily.innerHTML += renderDailyRow(h);
         });
-        
-        tbodyDaily.innerHTML += `<tr><td colspan="13" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-chart-simple" style="color: var(--primary-color);"></i> Rekap Panen per Divisi (Dari Pekerjaan Selesai)</td></tr>`;
         
         const rekapMap = {};
         const currentMonthPrefix = new Date().toISOString().substring(0, 7);
@@ -1473,9 +1486,16 @@ const renderHarvestingTable = () => {
                     plan_jjg: 0,
                     plan_kg: 0,
                     plan_pemanen: 0,
+                    plan_pokok: 0,
                     act_jjg: 0,
                     act_kg: 0,
-                    act_pemanen: 0
+                    act_ha: 0,
+                    act_pemanen: 0,
+                    act_pokok: 0,
+                    gross_area: 0,
+                    pusingan_sum: 0,
+                    pusingan_count: 0,
+                    blocks: new Set()
                 };
             }
             rekapMap[key].plan_jjg += h.est_janjang || 0;
@@ -1484,6 +1504,23 @@ const renderHarvestingTable = () => {
             rekapMap[key].act_jjg += h.realized_janjang || 0;
             rekapMap[key].act_kg += h.realized_kg || 0;
             rekapMap[key].act_pemanen += h.realized_pemanen || 0;
+            rekapMap[key].act_ha += h.realized_ha || 0;
+            
+            let blockData = masterData.blok.find(b => b.name === h.block && b.divisi === h.divisi);
+            if (!blockData) blockData = masterData.blok.find(b => b.name === h.block);
+            const sph = (blockData && blockData.sph) ? parseFloat(blockData.sph) : 136;
+            rekapMap[key].act_pokok += (h.realized_ha || 0) * sph;
+            
+            if (h.pusingan) {
+                rekapMap[key].pusingan_sum += parseInt(h.pusingan) || 0;
+                rekapMap[key].pusingan_count++;
+            }
+            
+            if (!rekapMap[key].blocks.has(h.block)) {
+                rekapMap[key].blocks.add(h.block);
+                rekapMap[key].gross_area += (blockData ? blockData.gross_area : 0);
+                rekapMap[key].plan_pokok += (blockData ? blockData.gross_area : 0) * sph;
+            }
         });
         
         const sortedRekap = Object.values(rekapMap).sort((a, b) => {
@@ -1496,29 +1533,55 @@ const renderHarvestingTable = () => {
             return divA.localeCompare(divB, undefined, {numeric: true});
         });
         
-        sortedRekap.forEach(r => {
-            tbodyDaily.innerHTML += `
-                <tr style="background-color: #f8fafc;">
-                    <td><strong style="color:var(--primary-color);">${r.label}</strong></td>
-                    <td><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px; white-space:nowrap;">${getEstateCode(r.estate)}</span></td>
-                    <td>${r.divisi ? `<a href="#" onclick="openDivisiHistory('${r.divisi}', null, '${r.estate}')" style="color:var(--primary); font-weight:bold; text-decoration:underline; cursor:pointer;" title="Lihat Detail Divisi">${r.divisi}</a>` : '-'}</td>
-                    <td style="color:#94a3b8;">-</td>
-                    <td style="color:#94a3b8;">-</td>
-                    <td style="color:#94a3b8;">-</td>
-                    <td><strong>${r.plan_jjg}</strong></td>
-                    <td><strong>${r.plan_kg}</strong></td>
-                    <td><strong>${r.plan_pemanen}</strong></td>
-                    <td><strong>${r.act_jjg}</strong></td>
-                    <td><strong>${r.act_pemanen}</strong></td>
-                    <td><strong>${r.act_kg}</strong></td>
-                    <td><span style="color:green;font-weight:bold;">Closed</span></td>
-                </tr>
-            `;
-        });
+        if (tbodyRekap) {
+            if (sortedRekap.length === 0) {
+                tbodyRekap.innerHTML = `<tr><td colspan="15" style="text-align:center; border: 1px solid #cbd5e1;">Belum ada data rekap</td></tr>`;
+            } else {
+                sortedRekap.forEach(r => {
+                    const avgPusingan = r.pusingan_count > 0 ? (r.pusingan_sum / r.pusingan_count).toFixed(1) : '-';
+                    const akpPlan = r.plan_pokok > 0 ? ((r.plan_jjg / r.plan_pokok) * 100).toFixed(1) : '0.0';
+                    const akpActual = r.act_pokok > 0 ? ((r.act_jjg / r.act_pokok) * 100).toFixed(1) : '0.0';
+                    const bjrActual = r.act_jjg > 0 ? (r.act_kg / r.act_jjg).toFixed(2) : '0.00';
+                    
+                    const prestasiHvr = r.act_pemanen > 0 ? r.act_kg / r.act_pemanen : 0;
+                    const kapasitasHa = r.act_pemanen > 0 ? r.act_ha / r.act_pemanen : 0;
+                    
+                    let varHvr = 0;
+                    if (r.plan_pemanen > 0) varHvr = (r.act_pemanen / r.plan_pemanen) * 100;
+                    
+                    let varHa = 0;
+                    if (r.gross_area > 0) varHa = (r.act_ha / r.gross_area) * 100;
+
+                    tbodyRekap.innerHTML += `
+                        <tr style="background-color: #ffffff;">
+                            <td style="border: 1px solid #cbd5e1; text-align:center;"><strong style="color:var(--primary-color);">${r.label}</strong></td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center;"><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px; white-space:nowrap;">${getEstateCode(r.estate)}</span></td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center;">${r.divisi ? `<a href="#" onclick="openDivisiHistory('${r.divisi}', null, '${r.estate}')" style="color:var(--primary); font-weight:bold; text-decoration:underline; cursor:pointer;" title="Lihat Detail Divisi">${r.divisi}</a>` : '-'}</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center;">${avgPusingan}</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center;">${akpPlan}%</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center;"><strong>${r.plan_jjg}</strong></td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center;"><strong>${r.plan_kg}</strong></td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center;"><strong>${r.act_jjg}</strong></td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center;"><strong>${r.act_kg}</strong></td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center;"><strong>${r.act_pemanen}</strong></td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center;">${kapasitasHa.toFixed(2)}</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center;">${prestasiHvr.toFixed(1)}</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center; color:${varHa > 100 ? 'red' : (varHa < 100 ? 'green' : 'black')}; font-weight:bold;">${varHa.toFixed(1)}%</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center; color:${varHvr > 100 ? 'red' : (varHvr < 100 ? 'green' : 'black')}; font-weight:bold;">${varHvr.toFixed(1)}%</td>
+                            <td style="border: 1px solid #cbd5e1; text-align:center;">${bjrActual}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+    } else {
+        if (tbodyRekap) {
+            tbodyRekap.innerHTML = `<tr><td colspan="15" style="text-align:center; border: 1px solid #cbd5e1;">Belum ada data rekap</td></tr>`;
+        }
     }
     
     if(draftData.length === 0 && selesaiData.length === 0) {
-        tbodyDaily.innerHTML = `<tr><td colspan="12" style="text-align:center;">Belum ada rencana panen harian.</td></tr>`;
+        tbodyDaily.innerHTML = `<tr><td colspan="13" style="text-align:center;">Belum ada rencana panen harian.</td></tr>`;
     }
 };
 
