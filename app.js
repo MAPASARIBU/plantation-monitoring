@@ -2000,6 +2000,8 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
                 date: dStr,
                 planHvr: 0,
                 planKg: 0,
+                planJjg: 0,
+                planPokok: 0,
                 actHvr: 0,
                 actHa: 0,
                 actKg: 0,
@@ -2013,6 +2015,7 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
         }
         dateMap[dStr].planHvr += h.plan_pemanen || 0;
         dateMap[dStr].planKg += h.est_kg || 0;
+        dateMap[dStr].planJjg += h.est_janjang || 0;
         dateMap[dStr].actHvr += h.realized_pemanen || 0;
         dateMap[dStr].actHa += h.realized_ha || 0;
         dateMap[dStr].actKg += h.realized_kg || 0;
@@ -2030,9 +2033,8 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
         
         if (!dateMap[dStr].blocks.has(h.block)) {
             dateMap[dStr].blocks.add(h.block);
-            let blockData = masterData.blok.find(b => b.name === h.block && b.divisi === divisi);
-            if (!blockData) blockData = masterData.blok.find(b => b.name === h.block);
             dateMap[dStr].grossArea += (blockData ? blockData.gross_area : 0);
+            dateMap[dStr].planPokok += (blockData ? blockData.gross_area : 0) * sph;
         }
     });
 
@@ -2057,36 +2059,40 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
 
     let html = `
         <div class="modal-overlay" id="modal-history-divisi">
-            <div class="modal-content animate-fade-in" style="width:95vw; max-width:1200px; max-height:85vh; overflow-y:auto;">
+            <div class="modal-content animate-fade-in" style="width:98vw; max-width:1500px; max-height:85vh; overflow-y:auto; padding: 20px;">
                 <div class="modal-header">
                     <h3>${titleStr}</h3>
                     <button class="modal-close" onclick="document.getElementById('modal-history-divisi').remove()">&times;</button>
                 </div>
-                <table class="data-table table-compact" style="font-size:0.85rem; margin-top:15px;">
+                <div style="overflow-x: auto; width: 100%;">
+                <table class="data-table table-compact" style="font-size:0.75rem; margin-top:15px; width:100%; border-collapse: collapse; min-width: 1200px;">
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Divisi</th>
-                            <th>Avg<br>Round</th>
-                            <th>Plan<br>Hvr</th>
-                            <th>Plan<br>Gross Area (Ha)</th>
-                            <th>Plan<br>Kg panen</th>
-                            <th>Actual<br>Area Panen (Ha)</th>
-                            <th>Actual<br>Kg</th>
-                            <th>Actual<br>Hvr (HK)</th>
-                            <th>Prestasi<br>Ha/WD (Ha/HK)</th>
-                            <th>Prestasi<br>Kg/WD (Kg/HK)</th>
-                            <th>Turn Out (%)</th>
-                            <th>Var<br>Ha (%)</th>
-                            <th>BJR<br>Actual</th>
-                            <th>AKP (%)</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">DATE</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">DIVISI</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">AVG<br>ROUND</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">AKP<br>(%)</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN AREA<br>(HA)</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN<br>TOTAL JJG</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN<br>PANEN (KG)</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN<br>HVR (HK)</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">ACT AREA<br>(HA)</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">ACT<br>TOTAL JJG</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">ACT<br>PANEN (KG)</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">ACT<br>HVR (HK)</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">PRESTASI<br>HA/ACT HVR</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">PRESTASI<br>KG/WD (KG/HK)</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">VAR<br>HA(%)</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">TURN OUT<br>(%)</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">ABW<br>(BJR ACTUAL)</th>
+                            <th style="border: 1px solid #cbd5e1; text-align:center;">AKP ACTUAL<br>(%)</th>
                         </tr>
                     </thead>
                     <tbody>
     `;
     
     if(dates.length === 0) {
-        html += `<tr><td colspan="15" style="text-align:center;">Belum ada data historis divisi</td></tr>`;
+        html += `<tr><td colspan="18" style="text-align:center; border: 1px solid #cbd5e1;">Belum ada data historis divisi</td></tr>`;
     } else {
         dates.forEach(r => {
             let formattedDate = r.date;
@@ -2106,26 +2112,31 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
             const prestasiHvr = r.actHvr > 0 ? r.actKg / r.actHvr : 0;
             const kapasitasHa = r.actHvr > 0 ? r.actHa / r.actHvr : 0;
             const avgPusingan = r.pusinganCount > 0 ? (r.pusinganSum / r.pusinganCount).toFixed(1) : '-';
+            
             const bjrActual = r.actJjg > 0 ? (r.actKg / r.actJjg).toFixed(2) : '0.00';
-            const akp = r.actPokok > 0 ? ((r.actJjg / r.actPokok) * 100).toFixed(1) : '0.0';
+            const akpActual = r.actPokok > 0 ? ((r.actJjg / r.actPokok) * 100).toFixed(1) : '0.0';
+            const akpPlan = r.planPokok > 0 ? ((r.planJjg / r.planPokok) * 100).toFixed(1) : '0.0';
             
             html += `
                 <tr>
-                    <td>${formattedDate}</td>
-                    <td><strong>${divisi}</strong></td>
-                    <td>${avgPusingan}</td>
-                    <td>${r.planHvr}</td>
-                    <td>${r.grossArea.toFixed(2)}</td>
-                    <td>${r.planKg}</td>
-                    <td>${r.actHa.toFixed(2)}</td>
-                    <td>${r.actKg}</td>
-                    <td>${r.actHvr}</td>
-                    <td>${kapasitasHa.toFixed(2)}</td>
-                    <td>${prestasiHvr.toFixed(1)}</td>
-                    <td style="color:${varHvr > 100 ? 'red' : (varHvr < 100 ? 'green' : 'black')}; font-weight:bold;">${varHvr.toFixed(1)}%</td>
-                    <td style="color:${varHa > 100 ? 'red' : (varHa < 100 ? 'green' : 'black')}; font-weight:bold;">${varHa.toFixed(1)}%</td>
-                    <td>${bjrActual}</td>
-                    <td>${akp}%</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center;">${formattedDate}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center;"><strong>${divisi}</strong></td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center;">${avgPusingan}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center;">${akpPlan}%</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center;">${r.grossArea.toFixed(2)}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center;">${r.planJjg}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center;">${r.planKg}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center;">${r.planHvr}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center;">${r.actHa.toFixed(2)}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center;">${r.actJjg}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center;">${r.actKg}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center;">${r.actHvr}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center;">${kapasitasHa.toFixed(2)}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center;">${prestasiHvr.toFixed(1)}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; color:${varHa > 100 ? 'red' : (varHa < 100 ? 'green' : 'black')}; font-weight:bold;">${varHa.toFixed(1)}%</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center; color:${varHvr > 100 ? 'red' : (varHvr < 100 ? 'green' : 'black')}; font-weight:bold;">${varHvr.toFixed(1)}%</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center;">${bjrActual}</td>
+                    <td style="border: 1px solid #cbd5e1; text-align:center;">${akpActual}%</td>
                 </tr>
             `;
         });
