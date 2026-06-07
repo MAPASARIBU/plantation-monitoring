@@ -420,33 +420,31 @@ h1, h2, h3, h4, h5, h6 {
 }
 .data-table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
+    border-collapse: collapse;
     margin-top: 15px;
+    border: 1px solid #cbd5e1;
 }
 .data-table th, .data-table td {
-    padding: 6px 8px;
+    padding: 8px 10px;
     text-align: left;
-    border-bottom: 1px solid #f1f5f9;
+    border: 1px solid #cbd5e1;
     font-size: 0.8rem;
 }
 .data-table th {
     font-weight: 600;
     color: var(--text-secondary);
-    background: #f8fafc;
+    background: #f1f5f9;
     font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
-.data-table th:first-child { border-top-left-radius: var(--border-radius-sm); }
-.data-table th:last-child { border-top-right-radius: var(--border-radius-sm); }
 .data-table tr:hover td {
     background-color: #f8fafc;
 }
 
 /* Compact Table for tight spaces */
 .table-compact th, .table-compact td {
-    padding: 6px 4px;
+    padding: 8px 8px;
     font-size: 0.75rem;
     white-space: nowrap;
 }
