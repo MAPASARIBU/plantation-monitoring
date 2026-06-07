@@ -1482,10 +1482,10 @@ const renderHarvestingTable = () => {
             if (currentUser.role === 'Mandor' || currentUser.role === 'Admin') {
                 statusEl += ` <button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-left:5px;" onclick="publishHarvesting(${h.id})">Publish</button>`;
             }
-        } else if (h.status === 'Published') {
-            statusEl = `<span class="status-badge" style="background:#e0e7ff; color:#4338ca; padding:2px 6px;">${h.status}</span>`;
+        } else if (h.status === 'Published' || h.status === 'Open' || h.status === 'In Progress') {
+            statusEl = `<span class="status-badge" style="background:#d1fae5; color:#065f46; padding:2px 6px;">${h.status}</span>`;
             if (['Kerani Buah', 'Krani Divisi', 'Admin', 'Asisten Divisi', 'Supir', 'Mandor'].includes(currentUser.role)) {
-                statusEl = `<button type="button" class="btn btn-primary" style="padding:2px 8px; font-size:0.8rem; background-color:orange; border:none; border-radius:15px; font-weight:bold;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}', ${h.est_janjang || 0}, ${h.plan_pemanen || 0}, ${h.est_kg || 0}, '${h.divisi}')">Update</button>`;
+                statusEl += ` <button type="button" class="btn btn-primary" style="padding:2px 8px; font-size:0.8rem; background-color:orange; border:none; border-radius:15px; font-weight:bold; margin-left: 5px;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}', ${h.est_janjang || 0}, ${h.plan_pemanen || 0}, ${h.est_kg || 0}, '${h.divisi}')">Update</button>`;
             }
         } else if (h.status === 'Selesai') {
             statusEl = `<span class="status-badge" style="background:#dcfce7; color:#15803d; padding:2px 6px;">${h.status}</span>`;
