@@ -710,7 +710,6 @@ const views = {
                                 <th style="border: 1px solid #cbd5e1; text-align:center;">ESTATE</th>
                                 <th style="border: 1px solid #cbd5e1; text-align:center;">DIVISI</th>
                                 <th style="border: 1px solid #cbd5e1; text-align:center;">AVG<br>ROUND</th>
-                                <th style="border: 1px solid #cbd5e1; text-align:center;">AKP<br>(%)</th>
                                 <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN<br>TOTAL JJG</th>
                                 <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN<br>PANEN (KG)</th>
                                 <th style="border: 1px solid #cbd5e1; text-align:center;">ACT<br>TOTAL JJG</th>
@@ -1562,7 +1561,7 @@ const renderHarvestingTable = () => {
         
         if (tbodyRekap) {
             if (sortedRekap.length === 0) {
-                tbodyRekap.innerHTML = `<tr><td colspan="15" style="text-align:center; border: 1px solid #cbd5e1;">Belum ada data rekap</td></tr>`;
+                tbodyRekap.innerHTML = `<tr><td colspan="14" style="text-align:center; border: 1px solid #cbd5e1;">Belum ada data rekap</td></tr>`;
             } else {
                 sortedRekap.forEach(r => {
                     const avgPusingan = r.pusingan_count > 0 ? (r.pusingan_sum / r.pusingan_count).toFixed(1) : '-';
@@ -1585,7 +1584,6 @@ const renderHarvestingTable = () => {
                             <td style="border: 1px solid #cbd5e1; text-align:center;"><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px; white-space:nowrap;">${getEstateCode(r.estate)}</span></td>
                             <td style="border: 1px solid #cbd5e1; text-align:center;">${r.divisi ? `<a href="#" onclick="openDivisiHistory('${r.divisi}', null, '${r.estate}')" style="color:var(--primary); font-weight:bold; text-decoration:underline; cursor:pointer;" title="Lihat Detail Divisi">${r.divisi}</a>` : '-'}</td>
                             <td style="border: 1px solid #cbd5e1; text-align:center;">${avgPusingan}</td>
-                            <td style="border: 1px solid #cbd5e1; text-align:center;">${akpPlan}%</td>
                             <td style="border: 1px solid #cbd5e1; text-align:center;"><strong>${r.plan_jjg}</strong></td>
                             <td style="border: 1px solid #cbd5e1; text-align:center;"><strong>${r.plan_kg}</strong></td>
                             <td style="border: 1px solid #cbd5e1; text-align:center;"><strong>${r.act_jjg}</strong></td>
@@ -1603,7 +1601,7 @@ const renderHarvestingTable = () => {
         }
     } else {
         if (tbodyRekap) {
-            tbodyRekap.innerHTML = `<tr><td colspan="15" style="text-align:center; border: 1px solid #cbd5e1;">Belum ada data rekap</td></tr>`;
+            tbodyRekap.innerHTML = `<tr><td colspan="14" style="text-align:center; border: 1px solid #cbd5e1;">Belum ada data rekap</td></tr>`;
         }
     }
     
@@ -2161,7 +2159,6 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
                             <th style="border: 1px solid #cbd5e1; text-align:center;">DATE</th>
                             <th style="border: 1px solid #cbd5e1; text-align:center;">DIVISI</th>
                             <th style="border: 1px solid #cbd5e1; text-align:center;">AVG<br>ROUND</th>
-                            <th style="border: 1px solid #cbd5e1; text-align:center;">AKP<br>(%)</th>
                             <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN AREA<br>(HA)</th>
                             <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN<br>TOTAL JJG</th>
                             <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN<br>PANEN (KG)</th>
@@ -2175,14 +2172,13 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
                             <th style="border: 1px solid #cbd5e1; text-align:center;">VAR<br>HA(%)</th>
                             <th style="border: 1px solid #cbd5e1; text-align:center;">TURN OUT<br>(%)</th>
                             <th style="border: 1px solid #cbd5e1; text-align:center;">ABW<br>(BJR ACTUAL)</th>
-                            <th style="border: 1px solid #cbd5e1; text-align:center;">AKP ACTUAL<br>(%)</th>
                         </tr>
                     </thead>
                     <tbody>
     `;
     
     if(dates.length === 0) {
-        html += `<tr><td colspan="18" style="text-align:center; border: 1px solid #cbd5e1;">Belum ada data historis divisi</td></tr>`;
+        html += `<tr><td colspan="16" style="text-align:center; border: 1px solid #cbd5e1;">Belum ada data historis divisi</td></tr>`;
     } else {
         dates.forEach(r => {
             let formattedDate = r.date;
@@ -2212,7 +2208,6 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
                     <td style="border: 1px solid #cbd5e1; text-align:center;">${formattedDate}</td>
                     <td style="border: 1px solid #cbd5e1; text-align:center;"><strong>${divisi}</strong></td>
                     <td style="border: 1px solid #cbd5e1; text-align:center;">${avgPusingan}</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center;">${akpPlan}%</td>
                     <td style="border: 1px solid #cbd5e1; text-align:center;">${r.grossArea.toFixed(2)}</td>
                     <td style="border: 1px solid #cbd5e1; text-align:center;">${r.planJjg}</td>
                     <td style="border: 1px solid #cbd5e1; text-align:center;">${r.planKg}</td>
@@ -2226,7 +2221,6 @@ window.openDivisiHistory = (divisi, date = null, estate = null) => {
                     <td style="border: 1px solid #cbd5e1; text-align:center; color:${varHa > 100 ? 'red' : (varHa < 100 ? 'green' : 'black')}; font-weight:bold;">${varHa.toFixed(1)}%</td>
                     <td style="border: 1px solid #cbd5e1; text-align:center; color:${varHvr > 100 ? 'red' : (varHvr < 100 ? 'green' : 'black')}; font-weight:bold;">${varHvr.toFixed(1)}%</td>
                     <td style="border: 1px solid #cbd5e1; text-align:center;">${bjrActual}</td>
-                    <td style="border: 1px solid #cbd5e1; text-align:center;">${akpActual}%</td>
                 </tr>
             `;
         });
