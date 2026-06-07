@@ -392,11 +392,14 @@ const views = {
                         </div>
                         <div class="form-group">
                             <label>Target (Ha) <span id="u-target-max-label" style="font-size: 0.8rem; font-weight: normal; color: #f59e0b; display: block; margin-top: 2px;"></span></label>
-                            <input type="number" step="0.1" id="u-target" class="form-control" required>
+                            <input type="number" step="0.1" id="u-target" class="form-control" oninput="calcPrestasiUpkeepPlan()" required>
                         </div>
                         <div class="form-group">
                             <label>Target HK (Orang)</label>
-                            <input type="number" id="u-workers" class="form-control" required>
+                            <input type="number" id="u-workers" class="form-control" oninput="calcPrestasiUpkeepPlan()" required>
+                        </div>
+                        <div class="form-group" style="background:#e0f2fe; padding:8px; border-radius:4px; margin-bottom: 10px;">
+                            <label style="margin-bottom:0; font-size: 0.9rem;">Estimasi Prestasi: <strong id="u-prestasi-plan" style="color:#0369a1;">-</strong></label>
                         </div>
                         <div class="form-group">
                             <label>Penanggung Jawab (Mandor)</label>
@@ -5226,6 +5229,25 @@ window.calcPrestasiUpkeep = (id) => {
     const haEl = document.getElementById(`upkeep-add-${id}`);
     const hkEl = document.getElementById(`upkeep-workers-${id}`);
     const prestasiEl = document.getElementById(`upkeep-prestasi-${id}`);
+    
+    if (haEl && hkEl && prestasiEl) {
+        const haStr = haEl.value.trim();
+        const hkStr = hkEl.value.trim();
+        const ha = parseFloat(haStr) || 0;
+        const hk = parseFloat(hkStr) || 0;
+        
+        if (haStr !== '' && hkStr !== '' && hk > 0) {
+            prestasiEl.innerText = (ha / hk).toFixed(2) + " Ha/HK";
+        } else {
+            prestasiEl.innerText = "-";
+        }
+    }
+};
+
+window.calcPrestasiUpkeepPlan = () => {
+    const haEl = document.getElementById('u-target');
+    const hkEl = document.getElementById('u-workers');
+    const prestasiEl = document.getElementById('u-prestasi-plan');
     
     if (haEl && hkEl && prestasiEl) {
         const haStr = haEl.value.trim();
