@@ -1456,11 +1456,18 @@ const renderHarvestingTable = () => {
         tbodyDaily.innerHTML += `<tr><td colspan="13" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-chart-simple" style="color: var(--primary-color);"></i> Rekap Panen per Divisi (Dari Pekerjaan Selesai)</td></tr>`;
         
         const rekapMap = {};
+        const currentMonthPrefix = new Date().toISOString().substring(0, 7);
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const mtdLabel = `MTD ${months[new Date().getMonth()]} ${new Date().getFullYear()}`;
+
         selesaiData.forEach(h => {
-            const key = h.date + '_' + h.estate + '_' + h.divisi;
+            const hDate = typeof h.date === 'string' && h.date.includes('T') ? h.date.split('T')[0] : h.date;
+            if (!hDate || !hDate.startsWith(currentMonthPrefix)) return;
+
+            const key = h.estate + '_' + h.divisi;
             if(!rekapMap[key]) {
                 rekapMap[key] = {
-                    date: h.date,
+                    label: mtdLabel,
                     estate: h.estate,
                     divisi: h.divisi,
                     plan_jjg: 0,
@@ -1480,10 +1487,6 @@ const renderHarvestingTable = () => {
         });
         
         const sortedRekap = Object.values(rekapMap).sort((a, b) => {
-            const dateA = new Date(a.date).getTime() || 0;
-            const dateB = new Date(b.date).getTime() || 0;
-            if (dateA !== dateB) return dateB - dateA;
-            
             const estA = a.estate || '';
             const estB = b.estate || '';
             if (estA !== estB) return estA.localeCompare(estB);
@@ -1494,21 +1497,11 @@ const renderHarvestingTable = () => {
         });
         
         sortedRekap.forEach(r => {
-            let dateStr = r.date;
-            if(typeof dateStr === 'string' && dateStr.includes('T')) dateStr = dateStr.split('T')[0];
-            let formattedDate = dateStr;
-            const d = new Date(dateStr);
-            if(!isNaN(d)) {
-                const day = String(d.getDate()).padStart(2, '0');
-                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-                formattedDate = `${day} ${months[d.getMonth()]}`;
-            }
-            
             tbodyDaily.innerHTML += `
                 <tr style="background-color: #f8fafc;">
-                    <td>${formattedDate}</td>
+                    <td><strong style="color:var(--primary-color);">${r.label}</strong></td>
                     <td><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px; white-space:nowrap;">${getEstateCode(r.estate)}</span></td>
-                    <td>${r.divisi ? `<a href="#" onclick="openDivisiHistory('${r.divisi}', '${r.date}', '${r.estate}')" style="color:var(--primary); font-weight:bold; text-decoration:underline; cursor:pointer;" title="Lihat Detail Divisi">${r.divisi}</a>` : '-'}</td>
+                    <td>${r.divisi ? `<a href="#" onclick="openDivisiHistory('${r.divisi}', null, '${r.estate}')" style="color:var(--primary); font-weight:bold; text-decoration:underline; cursor:pointer;" title="Lihat Detail Divisi">${r.divisi}</a>` : '-'}</td>
                     <td style="color:#94a3b8;">-</td>
                     <td style="color:#94a3b8;">-</td>
                     <td style="color:#94a3b8;">-</td>
