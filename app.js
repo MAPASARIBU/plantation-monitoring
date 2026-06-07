@@ -514,16 +514,26 @@ const views = {
                         <label style="font-weight:600; margin-bottom:10px; display:block; font-size:0.95rem;">Masukkan Input Realisasi (Sekali Input):</label>
                         <div class="form-group">
                             <label>Realisasi Pupuk (Kg)</label>
-                            <input type="number" step="any" id="pr-input-kg" class="form-control" placeholder="Total Kg" required>
+                            <input type="number" step="any" id="pr-input-kg" class="form-control" placeholder="Total Kg" required oninput="window.calcPrestasiPemupukan()">
                         </div>
                         <div style="display:flex; gap:10px;">
                             <div class="form-group" style="flex:1;">
                                 <label>Realisasi Area (Ha)</label>
-                                <input type="number" step="any" id="pr-input-ha" class="form-control" placeholder="Total Ha" required>
+                                <input type="number" step="any" id="pr-input-ha" class="form-control" placeholder="Total Ha" required oninput="window.calcPrestasiPemupukan()">
                             </div>
                             <div class="form-group" style="flex:1;">
                                 <label>Realisasi Pekerja</label>
-                                <input type="number" id="pr-input-workers" class="form-control" placeholder="Total Orang" required>
+                                <input type="number" id="pr-input-workers" class="form-control" placeholder="Total Orang" required oninput="window.calcPrestasiPemupukan()">
+                            </div>
+                        </div>
+                        
+                        <div style="background:#f0fdf4; padding:10px; border-radius:4px; margin-top:10px; border-left:4px solid #16a34a; font-size: 0.9rem;">
+                            <strong style="color:#166534;">Realisasi Prestasi Otomatis:</strong>
+                            <div style="display:flex; justify-content:space-between; margin-top: 5px;">
+                                <span style="color:#15803d;">Prestasi Area (Ha/Pekerja):</span> <strong id="pr-prestasi-ha" style="color:#166534;">-</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-top: 5px;">
+                                <span style="color:#15803d;">Prestasi Pupuk (Kg/Pekerja):</span> <strong id="pr-prestasi-kg" style="color:#166534;">-</strong>
                             </div>
                         </div>
                         
@@ -1365,8 +1375,33 @@ window.openPemupukanRealizationModal = (id, block, plan, tKg, rKg, tHa, rHa, tWo
     document.getElementById('pr-input-ha').value = '';
     document.getElementById('pr-input-workers').value = '';
     
+    // Clear Prestasi Text
+    document.getElementById('pr-prestasi-ha').innerText = '-';
+    document.getElementById('pr-prestasi-kg').innerText = '-';
+    
     document.getElementById('modal-pemupukan-realization').style.display = 'flex';
 };
+
+window.calcPrestasiPemupukan = () => {
+    const kg = parseFloat(document.getElementById('pr-input-kg').value) || 0;
+    const ha = parseFloat(document.getElementById('pr-input-ha').value) || 0;
+    const hk = parseInt(document.getElementById('pr-input-workers').value) || 0;
+    
+    const prestasiHaEl = document.getElementById('pr-prestasi-ha');
+    const prestasiKgEl = document.getElementById('pr-prestasi-kg');
+    
+    if (hk > 0) {
+        if (ha > 0) prestasiHaEl.innerText = (ha / hk).toFixed(2) + ' Ha/HK';
+        else prestasiHaEl.innerText = '-';
+        
+        if (kg > 0) prestasiKgEl.innerText = (kg / hk).toFixed(2) + ' Kg/HK';
+        else prestasiKgEl.innerText = '-';
+    } else {
+        prestasiHaEl.innerText = '-';
+        prestasiKgEl.innerText = '-';
+    }
+};
+
 
 window.deletePemupukan = async (id) => {
     if(confirm('Apakah Anda yakin ingin menghapus data rencana pemupukan ini? Seluruh data realisasi yang terikat juga akan terhapus.')) {
