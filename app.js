@@ -3192,7 +3192,7 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
         return;
     }
     
-    const isGroupA = ['Mandor', 'Supir', 'Krani Divisi', 'Kerani Buah', 'Krani Mill', 'Admin'].includes(currentUser.role);
+    const isGroupA = ['Supir', 'Krani Divisi', 'Kerani Buah', 'Krani Mill', 'Admin'].includes(currentUser.role);
     const isGroupB = ['Mandor', 'Asisten Divisi', 'Assistant', 'Admin'].includes(currentUser.role);
 
     let formFieldsHtml = '';
@@ -3282,7 +3282,7 @@ window.openAddHarvestingRealizationModal = (id, block, planJjg, planHvr, planKg,
 window.submitHarvestingRealization = async (id) => {
     if (!confirm("Apakah input laporan sudah benar?")) return;
     
-    const isGroupA = ['Mandor', 'Supir', 'Krani Divisi', 'Kerani Buah', 'Krani Mill', 'Admin'].includes(currentUser.role);
+    const isGroupA = ['Supir', 'Krani Divisi', 'Kerani Buah', 'Krani Mill', 'Admin'].includes(currentUser.role);
     const isGroupB = ['Mandor', 'Asisten Divisi', 'Assistant', 'Admin'].includes(currentUser.role);
     
     // Get current values
