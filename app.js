@@ -290,8 +290,9 @@ const views = {
                     </div>
                 </div>
                 <div class="glass-card">
-                    <div class="view-header">
-                        <h2>Progress Panen Hari Ini</h2>
+                    <div class="view-header" style="flex-direction: column; align-items: flex-start; gap: 5px;">
+                        <h2 style="margin: 0;">Progress Panen Hari Ini</h2>
+                        <span id="dashboard-progress-time" style="font-size: 0.9em; color: var(--text-secondary); font-weight: bold;"></span>
                     </div>
                     <div id="dashboard-progress-panen-container" style="margin-top: 20px;">
                         <p style="color:var(--text-secondary); text-align:center;">Loading...</p>
@@ -4097,6 +4098,15 @@ const initDashboardChart = async () => {
         });
         
         const progressContainer = document.getElementById('dashboard-progress-panen-container');
+        const progressTimeSpan = document.getElementById('dashboard-progress-time');
+        
+        if (progressTimeSpan) {
+            const now = new Date();
+            let h = now.getHours();
+            if (now.getMinutes() > 0) h = (h + 1) % 24;
+            progressTimeSpan.innerText = `Pukul : ${h.toString().padStart(2, '0')}:00 Wib`;
+        }
+
         if (progressContainer) {
             let progressHtml = '';
             const estates = Object.keys(estateProgress);
