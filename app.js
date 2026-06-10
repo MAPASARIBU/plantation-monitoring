@@ -976,6 +976,32 @@ const views = {
                     <canvas id="primeTimeChart"></canvas>
                 </div>
             </div>
+            <!-- Daily Arrival Table -->
+            <div class="glass-card table-wrapper" style="margin-top: 20px;">
+                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <h2 style="margin:0;">Daily Arrival FFB</h2>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <label style="font-weight: bold; font-size: 0.9em; color: var(--text-secondary);">Date:</label>
+                        <input type="date" id="daily-arrival-date" class="form-control" onchange="renderDailyArrivalTable()">
+                    </div>
+                </div>
+                <div style="margin-top: 20px; overflow-x: auto;">
+                    <table class="data-table table-compact" style="width: 100%; max-width: 600px; margin: 0 auto; text-align: center; border: 1px solid #0ea5e9;">
+                        <thead>
+                            <tr>
+                                <th style="background-color: #0ea5e9; color: white;">KEY OPERATIONAL INDICATORS ( ARRIVAL )</th>
+                                <th style="background-color: #0ea5e9; color: white;">FFB RECEIVED ( MT )</th>
+                                <th style="background-color: #0ea5e9; color: white;">PERCENTAGE (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-daily-arrival">
+                            <!-- rows injected here -->
+                        </tbody>
+                        <tfoot id="tfoot-daily-arrival" style="font-weight: bold; background-color: #fed7aa; color: #000;">
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
             
         </div>
     `,
@@ -6486,7 +6512,96 @@ window.loadPrimeTimeChart = async () => {
             }
         });
         
+        if (typeof window.renderDailyArrivalTable === 'function') {
+            window.renderDailyArrivalTable();
+        }
     } catch(e) {
         console.error('Error loading prime time chart:', e);
+    }
+};
+
+window.renderDailyArrivalTable = async () => {
+    const dateInput = document.getElementById('daily-arrival-date');
+    if (!dateInput) return;
+    
+    if (!dateInput.value) {
+        // Fallback to monitor tonase date if available, otherwise today
+        const mainDate = document.getElementById('monitor-tonase-date');
+        if (mainDate && mainDate.value) {
+            dateInput.value = mainDate.value;
+        } else {
+            dateInput.value = window.getLocalDate();
+        }
+    }
+    const date = dateInput.value;
+    
+    const tbody = document.getElementById('tbody-daily-arrival');
+    const tfoot = document.getElementById('tfoot-daily-arrival');
+    if (!tbody || !tfoot) return;
+    
+    try {
+        let mill = currentUser.estate;
+        if (!mill || !mill.endsWith('Mill')) {
+            mill = 'Bunga Tanjung Mill';
+        }
+        
+        const primeSel = document.getElementById('prime-estate');
+        const selectedEstate = primeSel ? primeSel.value : 'ALL';
+        
+        const res = await fetch(`${API_URL}/tonase/${mill}/${date}`);
+        const data = await res.json();
+        
+        // Ranges
+        let r1 = 0; // 06am to 10am (06, 07, 08, 09, 10)
+        let r2 = 0; // 10am to 12pm (11, 12)
+        let r3 = 0; // 12pm to 2pm (13, 14)
+        let r4 = 0; // 2pm to 4pm (15, 16)
+        let r5 = 0; // 4pm to 6pm (17, 18)
+        let r6 = 0; // After 6pm (19 to 24, 01 to 06)
+        
+        data.forEach(item => {
+            if (selectedEstate !== 'ALL' && item.estate !== selectedEstate) return;
+            
+            const kg = parseFloat(item.realized_kg) || 0;
+            if (kg > 0) {
+                const h = item.time_hour;
+                if (['06:00', '07:00', '08:00', '09:00', '10:00'].includes(h)) r1 += kg;
+                else if (['11:00', '12:00'].includes(h)) r2 += kg;
+                else if (['13:00', '14:00'].includes(h)) r3 += kg;
+                else if (['15:00', '16:00'].includes(h)) r4 += kg;
+                else if (['17:00', '18:00'].includes(h)) r5 += kg;
+                else r6 += kg;
+            }
+        });
+        
+        const totalKg = r1 + r2 + r3 + r4 + r5 + r6;
+        const totalMt = totalKg / 1000;
+        
+        const formatRow = (label, kg) => {
+            const mt = kg / 1000;
+            const pct = totalKg > 0 ? ((kg / totalKg) * 100).toFixed(2) + '%' : '0.00%';
+            return `<tr>
+                <td style="text-align: left; font-weight: bold; border: 1px solid #cbd5e1;">${label}</td>
+                <td style="border: 1px solid #cbd5e1;">${mt.toFixed(2)}</td>
+                <td style="border: 1px solid #cbd5e1;">${pct}</td>
+            </tr>`;
+        };
+        
+        tbody.innerHTML = formatRow('06am to 10am', r1) +
+                          formatRow('10am to 12pm', r2) +
+                          formatRow('12pm to 2pm', r3) +
+                          formatRow('2pm to 4pm', r4) +
+                          formatRow('4pm to 6pm', r5) +
+                          formatRow('After 6pm', r6);
+                          
+        tfoot.innerHTML = `<tr>
+            <td style="text-align: left; border: 1px solid #cbd5e1;">Total FFB (MT)</td>
+            <td style="border: 1px solid #cbd5e1;">${totalMt.toFixed(2)}</td>
+            <td style="border: 1px solid #cbd5e1;">${totalKg > 0 ? '100.00%' : '0.00%'}</td>
+        </tr>`;
+        
+    } catch(e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="3" style="color:red; border: 1px solid #cbd5e1;">Error memuat data</td></tr>';
     }
 };
