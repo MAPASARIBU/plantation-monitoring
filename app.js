@@ -4103,7 +4103,6 @@ const initDashboardChart = async () => {
         if (progressTimeSpan) {
             const now = new Date();
             let h = now.getHours();
-            if (now.getMinutes() > 0) h = (h + 1) % 24;
             progressTimeSpan.innerText = `Pukul : ${h.toString().padStart(2, '0')}:00 Wib`;
         }
 
