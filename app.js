@@ -280,12 +280,34 @@ const views = {
                 </div>
             </div>
             
+            <!-- Dashboard Historical Modal -->
+            <div class="modal-overlay" id="dashboard-historical-modal" style="display:none; z-index: 1000;">
+                <div class="modal-content" style="max-width: 95%; width: 1000px; max-height: 90vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h2>Historical Tonase TBS / Jam</h2>
+                        <button type="button" class="modal-close" onclick="document.getElementById('dashboard-historical-modal').style.display = 'none'">&times;</button>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div style="display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 20px;">
+                            <label style="font-weight: bold;">Pilih Tanggal:</label>
+                            <input type="date" id="dashboard-historical-date" class="form-control" style="width: auto;">
+                            <button class="btn" style="background-color: #e2e8f0; color: #333;" onclick="document.getElementById('dashboard-historical-modal').style.display='none'">No</button>
+                            <button class="btn btn-primary" onclick="loadDashboardHistoricalChart()">OK</button>
+                        </div>
+                        <div id="dashboard-historical-chart-container" style="height: 400px; width: 100%; display: none;">
+                            <canvas id="dashboardHistoricalChartCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="charts-grid">
                 <div class="glass-card">
-                    <div class="view-header">
-                        <h2>Grafik Tonase TBS / Jam</h2>
+                    <div class="view-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2 style="margin: 0;">Grafik Tonase TBS / Jam</h2>
+                        <button class="btn btn-primary btn-sm" onclick="document.getElementById('dashboard-historical-modal').style.display='flex';"><i class="fa-solid fa-clock-rotate-left"></i> Historical</button>
                     </div>
-                    <div style="height: 8cm; width: 100%;">
+                    <div style="height: 8cm; width: 100%; margin-top: 15px;">
                         <canvas id="tonaseChart"></canvas>
                     </div>
                 </div>
