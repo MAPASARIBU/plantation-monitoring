@@ -4329,7 +4329,26 @@ window.loadDashboardHistoricalChart = async () => {
         ]);
         
         const masterData = await masterRes.json();
-        const tonaseData = await tonaseRes.json();
+        let tonaseData = await tonaseRes.json();
+        
+        const isMillUser = currentUser && currentUser.estate && currentUser.estate.endsWith('Mill');
+        let displayName = 'Bunga Tanjung Mill';
+        if (currentUser && currentUser.estate) {
+            if (currentUser.estate === 'Semua Estate (Khusus Admin)') {
+                displayName = 'Semua Estate';
+            } else {
+                displayName = currentUser.estate;
+            }
+        }
+        
+        const headerTitle = document.querySelector('#dashboard-historical-modal-header h2');
+        if (headerTitle) {
+            headerTitle.innerHTML = `<i class="fa-solid fa-arrows-up-down-left-right"></i> Historical Tonase TBS per Jam ${displayName}`;
+        }
+        
+        if (!isMillUser && currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+            tonaseData = tonaseData.filter(item => item.estate === currentUser.estate);
+        }
         
         const hours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
         const actualData = new Array(hours.length).fill(0);
