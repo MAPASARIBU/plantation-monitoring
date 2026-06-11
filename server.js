@@ -195,6 +195,14 @@ async function initDB() {
         await pool.query("UPDATE users SET estate = 'Semua Estate (Khusus Admin)' WHERE role IN ('Senior Field Manager') AND (estate IS NULL OR estate = '')");
         await pool.query("UPDATE users SET estate = 'Bunga Tanjung Estate' WHERE role NOT IN ('Admin', 'Senior Field Manager') AND (estate IS NULL OR estate = '')");
         
+        // Auto-fix typo Maling Demang
+        const tablesWithEstate = ['users', 'vehicles', 'upkeep', 'pemupukan', 'harvesting_monthly', 'harvesting_daily', 'master_divisi', 'master_blok', 'master_truk', 'master_supir', 'master_supply_chain', 'tonase_hourly'];
+        for (let t of tablesWithEstate) {
+            try { await pool.query(`UPDATE ${t} SET estate = 'Malin Deman Estate' WHERE estate LIKE '%Maling Demang%' OR estate LIKE '%Malin Demang%'`); } catch(e) {}
+        }
+        try { await pool.query(`UPDATE users SET estate = REPLACE(estate, 'Maling Demang Estate', 'Malin Deman Estate')`); } catch(e) {}
+        try { await pool.query(`UPDATE users SET estate = REPLACE(estate, 'Malin Demang Estate', 'Malin Deman Estate')`); } catch(e) {}
+        
 
         // Seed Default Data
         const vCount = await pool.query('SELECT COUNT(*) FROM vehicles');

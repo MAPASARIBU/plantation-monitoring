@@ -1,6 +1,26 @@
 // API Base URL
 const API_URL = window.location.protocol === 'file:' ? 'http://localhost:3005/api' : '/api';
 
+const originalFetch = window.fetch;
+window.fetch = async (...args) => {
+    const response = await originalFetch(...args);
+    if (args[0] && typeof args[0] === 'string' && args[0].includes(API_URL)) {
+        const clonedResponse = response.clone();
+        try {
+            const text = await clonedResponse.text();
+            if (text.includes('Maling Demang') || text.includes('Malin Demang')) {
+                const newText = text.replace(/Maling Demang|Malin Demang/gi, 'Malin Deman');
+                return new Response(newText, {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: response.headers
+                });
+            }
+        } catch(e) {}
+    }
+    return response;
+};
+
 window.getLocalDate = () => {
     const d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -10,7 +30,7 @@ window.parseTonaseResponse = async (response) => {
     try {
         const text = await response.text();
         if (!text || text.trim() === '') return [];
-        const parsed = JSON.parse(text.replace(/Maling Demang/gi, 'Malin Deman'));
+        const parsed = JSON.parse(text);
         return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
         console.error("parseTonaseResponse error:", e);
@@ -2717,6 +2737,11 @@ window.deleteUser = async (id) => {
     if(confirm('Yakin ingin menghapus user ini?')) {
         try {
             const res = await fetch(`${API_URL}/users/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                await loadUsers();
+            } else {
+                alert('Gagal menghapus user');
+            }
         } catch(e) { console.error(e); }
     }
 };
