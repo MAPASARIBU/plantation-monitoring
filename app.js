@@ -282,19 +282,19 @@ const views = {
             
             <!-- Dashboard Historical Modal -->
             <div class="modal-overlay" id="dashboard-historical-modal" style="display:none; z-index: 1000;">
-                <div class="modal-content" style="max-width: 95%; width: 1000px; max-height: 90vh; overflow-y: auto;">
-                    <div class="modal-header">
-                        <h2>Historical Tonase TBS / Jam</h2>
+                <div class="modal-content" style="width: 95%; height: 90vh; max-width: none; overflow-y: auto; display: flex; flex-direction: column;">
+                    <div class="modal-header" id="dashboard-historical-modal-header" style="cursor: move; background-color: #f1f5f9; padding: 15px; border-bottom: 1px solid #e2e8f0;">
+                        <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-arrows-up-down-left-right"></i> Historical Tonase TBS / Jam</h2>
                         <button type="button" class="modal-close" onclick="document.getElementById('dashboard-historical-modal').style.display = 'none'">&times;</button>
                     </div>
-                    <div style="padding: 20px;">
+                    <div style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
                         <div style="display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 20px;">
                             <label style="font-weight: bold;">Pilih Tanggal:</label>
                             <input type="date" id="dashboard-historical-date" class="form-control" style="width: auto;">
                             <button class="btn" style="background-color: #e2e8f0; color: #333;" onclick="document.getElementById('dashboard-historical-modal').style.display='none'">No</button>
                             <button class="btn btn-primary" onclick="loadDashboardHistoricalChart()">OK</button>
                         </div>
-                        <div id="dashboard-historical-chart-container" style="height: 400px; width: 100%; display: none;">
+                        <div id="dashboard-historical-chart-container" style="flex: 1; width: 100%; display: none; min-height: 400px;">
                             <canvas id="dashboardHistoricalChartCanvas"></canvas>
                         </div>
                     </div>
@@ -4264,6 +4264,142 @@ const initBigTonaseChart = () => {
         }
     });
 };
+
+// Draggable Modal logic
+function makeDraggable(modalId, headerId) {
+    const modal = document.getElementById(modalId);
+    const header = document.getElementById(headerId);
+    if (!modal || !header) return;
+    
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    header.onmousedown = dragMouseDown;
+
+    function dragMouseDown(e) {
+        if (e.target.tagName.toLowerCase() === 'button') return;
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        
+        const content = modal.querySelector('.modal-content');
+        if (content) {
+            content.style.position = 'absolute';
+            content.style.top = (content.offsetTop - pos2) + "px";
+            content.style.left = (content.offsetLeft - pos1) + "px";
+            content.style.margin = '0';
+            content.style.transform = 'none';
+        }
+    }
+
+    function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
+}
+
+let dashboardHistoricalChartInstance = null;
+window.loadDashboardHistoricalChart = async () => {
+    const dateInput = document.getElementById('dashboard-historical-date');
+    if (!dateInput || !dateInput.value) {
+        alert('Pilih tanggal terlebih dahulu');
+        return;
+    }
+    const date = dateInput.value;
+    
+    document.getElementById('dashboard-historical-chart-container').style.display = 'block';
+    
+    try {
+        let mill = currentUser.estate;
+        if (!mill || !mill.endsWith('Mill')) {
+            mill = 'Bunga Tanjung Mill';
+        }
+        
+        const [masterRes, tonaseRes] = await Promise.all([
+            fetch(`${API_URL}/master/${mill}`),
+            fetch(`${API_URL}/tonase/${mill}/${date}`)
+        ]);
+        
+        const masterData = await masterRes.json();
+        const tonaseData = await tonaseRes.json();
+        
+        const hours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
+        const actualData = new Array(hours.length).fill(0);
+        
+        tonaseData.forEach(item => {
+            const hIdx = hours.indexOf(item.time_hour);
+            if (hIdx !== -1) {
+                actualData[hIdx] += parseFloat(item.realized_kg) || 0;
+            }
+        });
+        
+        for (let i = 0; i < actualData.length; i++) {
+            actualData[i] = actualData[i] / 1000;
+        }
+        
+        const ctx = document.getElementById('dashboardHistoricalChartCanvas');
+        if (!ctx) return;
+        
+        if (dashboardHistoricalChartInstance) dashboardHistoricalChartInstance.destroy();
+        
+        dashboardHistoricalChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: hours,
+                datasets: [{
+                    label: 'Tonase Masuk (Ton)',
+                    data: actualData,
+                    borderColor: '#0d8b4e',
+                    backgroundColor: 'rgba(13, 139, 78, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            plugins: [ChartDataLabels],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    datalabels: {
+                        display: true,
+                        align: 'end',
+                        anchor: 'end',
+                        color: '#0d8b4e',
+                        font: { weight: 'bold' },
+                        formatter: function(value) {
+                            return value > 0 ? value.toFixed(1) : '';
+                        }
+                    }
+                },
+                scales: { 
+                    y: { 
+                        beginAtZero: true, 
+                        max: 200, 
+                        ticks: { stepSize: 40 } 
+                    } 
+                }
+            }
+        });
+        
+    } catch(e) {
+        console.error('Error loading dashboard historical chart:', e);
+        alert('Gagal memuat data historical');
+    }
+};
+
+// Apply draggable logic once DOM is loaded or when opened
+setTimeout(() => {
+    makeDraggable('dashboard-historical-modal', 'dashboard-historical-modal-header');
+}, 1000);
 
 // Navigation
 const navigate = (viewId) => {
