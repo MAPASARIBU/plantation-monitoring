@@ -293,6 +293,7 @@ const views = {
                             <input type="date" id="dashboard-historical-date" class="form-control" style="width: auto;">
                             <button class="btn" style="background-color: #e2e8f0; color: #333;" onclick="document.getElementById('dashboard-historical-modal').style.display='none'">No</button>
                             <button class="btn btn-primary" onclick="loadDashboardHistoricalChart()">OK</button>
+                            <button id="btn-print-historical" class="btn" style="background-color: #4a5568; color: white; display: none;" onclick="printHistoricalChart()"><i class="fa-solid fa-print"></i> Print</button>
                         </div>
                         <div id="dashboard-historical-chart-container" style="flex: 1; width: 100%; display: none; min-height: 400px;">
                             <canvas id="dashboardHistoricalChartCanvas"></canvas>
@@ -4316,6 +4317,8 @@ window.loadDashboardHistoricalChart = async () => {
     const date = dateInput.value;
     
     document.getElementById('dashboard-historical-chart-container').style.display = 'block';
+    const printBtn = document.getElementById('btn-print-historical');
+    if (printBtn) printBtn.style.display = 'none';
     
     try {
         let mill = currentUser.estate;
@@ -4367,6 +4370,8 @@ window.loadDashboardHistoricalChart = async () => {
         const ctx = document.getElementById('dashboardHistoricalChartCanvas');
         if (!ctx) return;
         
+        if (printBtn) printBtn.style.display = 'inline-block';
+        
         if (dashboardHistoricalChartInstance) dashboardHistoricalChartInstance.destroy();
         
         dashboardHistoricalChartInstance = new Chart(ctx, {
@@ -4413,6 +4418,51 @@ window.loadDashboardHistoricalChart = async () => {
         console.error('Error loading dashboard historical chart:', e);
         alert('Gagal memuat data historical');
     }
+};
+
+window.printHistoricalChart = () => {
+    const canvas = document.getElementById('dashboardHistoricalChartCanvas');
+    if (!canvas) return;
+    
+    const imgData = canvas.toDataURL('image/png');
+    const titleEl = document.querySelector('#dashboard-historical-modal-header h2');
+    const title = titleEl ? titleEl.innerText : 'Historical Tonase TBS';
+    
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        alert('Tolong izinkan popup browser untuk fitur cetak');
+        return;
+    }
+    
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Print - ${title}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+                    img { max-width: 100%; height: auto; margin-top: 20px; }
+                    h2 { color: #333; }
+                    @media print {
+                        @page { size: landscape; }
+                        body { padding: 0; margin: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                <h2>${title}</h2>
+                <img src="${imgData}" />
+                <script>
+                    window.onload = function() {
+                        setTimeout(() => {
+                            window.print();
+                            window.close();
+                        }, 500);
+                    };
+                </script>
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
 };
 
 // Apply draggable logic once DOM is loaded or when opened
