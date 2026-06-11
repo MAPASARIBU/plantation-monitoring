@@ -69,7 +69,7 @@ const checkAuth = () => {
                 dropdownContainer.style.display = 'block';
                 let optionsHtml = '';
                 
-                const allEstatesList = ['Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bukik Estate', 'Air Buluh Estate', 'Malin Deman Estate', 'Batu Kuda Estate', 'Sungai Jerinjing Estate', 'Muko Muko Estate', 'Talang Petai Estate', 'Sungai Kiang Estate', 'Tanah Rekah Estate', 'Air Majunto Estate', 'Small Holder', 'Bunga Tanjung Mill', 'Muko Muko Mill'];
+                const allEstatesList = ['Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bikuk Estate', 'Air Buluh Estate', 'Malin Deman Estate', 'Batu Kuda Estate', 'Sungai Jerinjing Estate', 'Muko Muko Estate', 'Talang Petai Estate', 'Sungai Kiang Estate', 'Tanah Rekah Estate', 'Air Majunto Estate', 'Small Holder', 'Bunga Tanjung Mill', 'Muko Muko Mill'];
                 
                 const listToRender = currentUser.assignedEstates.includes('ALL') ? allEstatesList : currentUser.assignedEstates;
                 
@@ -1114,7 +1114,7 @@ const views = {
                                 <option>Semua Estate (Khusus Admin)</option>
                                 <option>Bunga Tanjung Estate</option>
                                 <option>Sungai Teramang Estate</option>
-                                <option>Air Bukik Estate</option>
+                                <option>Air Bikuk Estate</option>
                                 <option>Air Buluh Estate</option>
                                 <option>Malin Deman Estate</option>
                                 <option>Batu Kuda Estate</option>
@@ -1132,7 +1132,7 @@ const views = {
                                 <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Semua Estate (Khusus Admin)"> Semua Estate (Khusus Admin)</label>
                                 <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Bunga Tanjung Estate"> Bunga Tanjung Estate</label>
                                 <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Teramang Estate"> Sungai Teramang Estate</label>
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Bukik Estate"> Air Bukik Estate</label>
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Bikuk Estate"> Air Bikuk Estate</label>
                                 <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Buluh Estate"> Air Buluh Estate</label>
                                 <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Malin Deman Estate"> Malin Deman Estate</label>
                                 <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Batu Kuda Estate"> Batu Kuda Estate</label>
@@ -2483,7 +2483,7 @@ window.promptEditUser = (id) => {
     
     const userEstates = user.estate ? user.estate.split(',').map(e => e.trim()) : [];
     let estatesOptions = `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="eu_estate" value="Semua Estate (Khusus Admin)" ${userEstates.includes('Semua Estate (Khusus Admin)') ? 'checked' : ''}> Semua Estate (Khusus Admin)</label>`;
-    const allEstates = ['Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bukik Estate', 'Air Buluh Estate', 'Malin Deman Estate', 'Batu Kuda Estate', 'Sungai Jerinjing Estate', 'Muko Muko Estate', 'Talang Petai Estate', 'Sungai Kiang Estate', 'Tanah Rekah Estate', 'Air Majunto Estate', 'Small Holder', 'Bunga Tanjung Mill', 'Muko Muko Mill'];
+    const allEstates = ['Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bikuk Estate', 'Air Buluh Estate', 'Malin Deman Estate', 'Batu Kuda Estate', 'Sungai Jerinjing Estate', 'Muko Muko Estate', 'Talang Petai Estate', 'Sungai Kiang Estate', 'Tanah Rekah Estate', 'Air Majunto Estate', 'Small Holder', 'Bunga Tanjung Mill', 'Muko Muko Mill'];
     let dropdownOptions = '';
     allEstates.forEach(est => {
         dropdownOptions += `<option value="${est}" ${user.estate === est ? 'selected' : ''}>${est}</option>`;
