@@ -6,6 +6,18 @@ window.getLocalDate = () => {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 };
 
+window.parseTonaseResponse = async (response) => {
+    try {
+        const text = await response.text();
+        if (!text || text.trim() === '') return [];
+        const parsed = JSON.parse(text.replace(/Maling Demang/gi, 'Malin Deman'));
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+        console.error("parseTonaseResponse error:", e);
+        return [];
+    }
+};
+
 // Disable DataLabels globally so it only shows where explicitly enabled
 if (typeof ChartDataLabels !== 'undefined') {
     Chart.register(ChartDataLabels);
@@ -4091,8 +4103,7 @@ const initDashboardChart = async () => {
         const date = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
         
         const res = await fetch(`${API_URL}/tonase/${mill}/${date}`);
-        let resData = JSON.parse((await res.text()).replace(/Maling Demang/gi, 'Malin Deman'));
-        if (!Array.isArray(resData)) resData = [];
+        let resData = await window.parseTonaseResponse(res);
         
         // Filter by estate if user is not a Mill
         const isMill = currentUser.estate && currentUser.estate.endsWith('Mill');
@@ -4333,8 +4344,7 @@ window.loadDashboardHistoricalChart = async () => {
         ]);
         
         const masterData = await masterRes.json();
-        let tonaseData = JSON.parse((await tonaseRes.text()).replace(/Maling Demang/gi, 'Malin Deman'));
-        if (!Array.isArray(tonaseData)) tonaseData = [];
+        let tonaseData = await window.parseTonaseResponse(tonaseRes);
         
         const isMillUser = currentUser && currentUser.estate && currentUser.estate.endsWith('Mill');
         let displayName = 'Bunga Tanjung Mill';
@@ -5962,7 +5972,7 @@ window.loadHistoricalChartData = async () => {
     
     try {
         const res = await fetch(`${API_URL}/tonase/${mill}/${date}`);
-        const tonaseData = JSON.parse((await res.text()).replace(/Maling Demang/gi, 'Malin Deman'));
+        const tonaseData = await window.parseTonaseResponse(res);
         
         const labels = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
         const targets = new Array(labels.length).fill(0);
@@ -6170,7 +6180,7 @@ window.loadTonaseInputData = async () => {
         }
         
         const tonaseRes = await fetch(`${API_URL}/tonase/${mill}/${date}`);
-        const tonaseData = JSON.parse((await tonaseRes.text()).replace(/Maling Demang/gi, 'Malin Deman'));
+        const tonaseData = await window.parseTonaseResponse(tonaseRes);
         window.tonaseDataCache = tonaseData;
         
         let planMode = 'single';
@@ -6328,7 +6338,7 @@ window.loadTonaseChartData = async () => {
     
     try {
         const res = await fetch(`${API_URL}/tonase/${mill}/${date}`);
-        const tonaseData = JSON.parse((await res.text()).replace(/Maling Demang/gi, 'Malin Deman'));
+        const tonaseData = await window.parseTonaseResponse(res);
         
         const labels = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
         const targets = new Array(labels.length).fill(0);
@@ -6424,7 +6434,7 @@ window.renderTonaseMonitorTable = async (isHistorical = false) => {
         ]);
         
         const masterData = await masterRes.json();
-        const tonaseData = JSON.parse((await tonaseRes.text()).replace(/Maling Demang/gi, 'Malin Deman'));
+        const tonaseData = await window.parseTonaseResponse(tonaseRes);
         
         const supplyChain = masterData.supply_chain.map(s => s.estate);
         
@@ -6608,7 +6618,7 @@ window.loadPrimeTimeChart = async () => {
         const selectedEstate = primeSel ? primeSel.value : 'ALL';
         
         const res = await fetch(`${API_URL}/tonase/${mill}/month/${month}`);
-        const data = JSON.parse((await res.text()).replace(/Maling Demang/gi, 'Malin Deman'));
+        const data = await window.parseTonaseResponse(res);
         
         // Group data by date
         const dailyData = {};
@@ -6787,7 +6797,7 @@ window.renderDailyArrivalTable = async () => {
         const selectedEstate = primeSel ? primeSel.value : 'ALL';
         
         const res = await fetch(`${API_URL}/tonase/${mill}/${date}`);
-        const data = JSON.parse((await res.text()).replace(/Maling Demang/gi, 'Malin Deman'));
+        const data = await window.parseTonaseResponse(res);
         
         // Ranges
         let r1 = 0; // 06am to 10am (06, 07, 08, 09, 10)
