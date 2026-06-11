@@ -291,7 +291,7 @@ const views = {
                 </div>
                 <div class="glass-card">
                     <div class="view-header" style="flex-direction: column; align-items: flex-start; gap: 5px;">
-                        <h2 style="margin: 0;">Progress Penerimaan TBS Hari Ini</h2>
+                        <h2 style="margin: 0;">Progres Penerimaan TBS Hari Ini</h2>
                         <span id="dashboard-progress-time" style="font-size: 0.9em; color: var(--text-secondary); font-weight: bold;"></span>
                     </div>
                     <div id="dashboard-progress-panen-container" style="margin-top: 20px;">
