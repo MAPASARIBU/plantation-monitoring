@@ -452,7 +452,7 @@ const views = {
                         </div>
                         <div class="form-group">
                             <label>Target (Ha) <span id="u-target-max-label" style="font-size: 0.8rem; font-weight: normal; color: #f59e0b; display: block; margin-top: 2px;"></span></label>
-                            <input type="number" step="0.1" id="u-target" class="form-control" oninput="calcPrestasiUpkeepPlan()" required>
+                            <input type="number" step="0.1" id="u-target" class="form-control" oninput="calcPrestasiUpkeepPlan()" required readonly>
                         </div>
                         <div class="form-group">
                             <label>Target HK (Orang)</label>
