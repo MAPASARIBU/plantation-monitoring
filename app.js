@@ -282,7 +282,7 @@ const views = {
             
             <!-- Dashboard Historical Modal -->
             <div class="modal-overlay" id="dashboard-historical-modal" style="display:none; z-index: 1000;">
-                <div class="modal-content" style="width: 95%; height: 90vh; max-width: none; overflow-y: auto; display: flex; flex-direction: column;">
+                <div class="modal-content" style="width: 800px; max-width: 95%; overflow-y: auto; display: flex; flex-direction: column;">
                     <div class="modal-header" id="dashboard-historical-modal-header" style="cursor: move; background-color: #f1f5f9; padding: 15px; border-bottom: 1px solid #e2e8f0;">
                         <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-arrows-up-down-left-right"></i> Historical Tonase TBS / Jam</h2>
                         <button type="button" class="modal-close" onclick="document.getElementById('dashboard-historical-modal').style.display = 'none'">&times;</button>
