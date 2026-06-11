@@ -5418,6 +5418,11 @@ window.updateUpkeepMaxLabel = () => {
         const maxArea = parseFloat(selectedOption.getAttribute('data-gross')) || 0;
         if (maxArea > 0) {
             labelSpan.innerText = `*maksimal Hektar Blok dipilih ${maxArea} Ha`;
+            const targetInput = document.getElementById('u-target');
+            if (targetInput) {
+                targetInput.value = maxArea;
+                if(typeof calcPrestasiUpkeepPlan === 'function') calcPrestasiUpkeepPlan();
+            }
         } else {
             labelSpan.innerText = '';
         }
