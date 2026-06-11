@@ -633,6 +633,34 @@ app.put('/api/upkeep/:id/add', async (req, res) => {
     }
 });
 
+
+app.get('/api/upkeep/monthly', async (req, res) => {
+    try {
+        const { estate, month } = req.query; // month like '2026-06'
+        if(!month) return res.status(400).json({ error: 'Month parameter required' });
+        
+        let queryStr = 'SELECT * FROM upkeep WHERE startDate LIKE $1';
+        let params = [`${month}%`];
+        
+        if (estate && estate !== 'ALL') {
+            queryStr += ' AND estate = $2';
+            params.push(estate);
+        }
+        
+        const upkeepRes = await pool.query(queryStr, params);
+        
+        // Fetch history for these upkeeps
+        const historyRes = await pool.query('SELECT h.* FROM upkeep_history h JOIN upkeep u ON h.upkeep_id = u.id WHERE h.dateAdded LIKE $1', [`${month}%`]);
+        
+        res.json({
+            plan: upkeepRes.rows,
+            actual: historyRes.rows
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/api/upkeep/:id/history', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM upkeep_history WHERE upkeep_id = $1 ORDER BY dateAdded DESC', [req.params.id]);
