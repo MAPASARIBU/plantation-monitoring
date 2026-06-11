@@ -4092,6 +4092,7 @@ const initDashboardChart = async () => {
         
         const res = await fetch(`${API_URL}/tonase/${mill}/${date}`);
         let resData = JSON.parse((await res.text()).replace(/Maling Demang/gi, 'Malin Deman'));
+        if (!Array.isArray(resData)) resData = [];
         
         // Filter by estate if user is not a Mill
         const isMill = currentUser.estate && currentUser.estate.endsWith('Mill');
@@ -4333,6 +4334,7 @@ window.loadDashboardHistoricalChart = async () => {
         
         const masterData = await masterRes.json();
         let tonaseData = JSON.parse((await tonaseRes.text()).replace(/Maling Demang/gi, 'Malin Deman'));
+        if (!Array.isArray(tonaseData)) tonaseData = [];
         
         const isMillUser = currentUser && currentUser.estate && currentUser.estate.endsWith('Mill');
         let displayName = 'Bunga Tanjung Mill';
