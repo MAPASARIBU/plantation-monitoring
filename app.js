@@ -5862,37 +5862,7 @@ window.addBlokBulkFromModal = async (divisiName) => {
     } catch(e) { console.error(e); }
 };
 
-window.updateLocationList = () => {
-    const type = document.getElementById('login-location-type').value;
-    const estateSelect = document.getElementById('login-estate');
-    if (!estateSelect) return;
-    
-    estateSelect.innerHTML = '';
-    
-    if (type === 'Estate') {
-        estateSelect.innerHTML = `
-            <option value="" disabled selected>LIST ESTATE</option>
-            <option>Bunga Tanjung Estate</option>
-            <option>Sungai Teramang Estate</option>
-            <option>Air Bikuk Estate</option>
-            <option>Batu Kuda Estate</option>
-            <option>Air Buluh Estate</option>
-            <option>Malin Deman Estate</option>
-            <option>Tanah Rekah Estate</option>
-            <option>Muko Muko Estate</option>
-            <option>Sei Jerinjing Estate</option>
-            <option>Talang Petai Estate</option>
-            <option>Sungai Kiang Estate</option>
-            <option>Air Majunto Estate</option>
-        `;
-    } else if (type === 'Mill') {
-        estateSelect.innerHTML = `
-            <option value="" disabled selected>LIST MILL</option>
-            <option>Bunga Tanjung Mill</option>
-            <option>Muko Muko Mill</option>
-        `;
-    }
-};
+// Removed duplicate updateLocationList
 
 window.promptAddUpkeepProgress = (id, block, type, target, realized, targetWorkers) => {
     const modalId = 'modal-upkeep-progress-' + id;
@@ -7951,11 +7921,14 @@ window.exportDashboard = function() {
 };
 
 window.updateLocationList = function() {
-    const type = document.getElementById('login-location-type').value;
+    const locationTypeEl = document.getElementById('login-location-type');
     const estateDropdown = document.getElementById('login-estate');
+    if (!locationTypeEl || !estateDropdown) return;
+    
+    const type = locationTypeEl.value.toUpperCase();
     estateDropdown.innerHTML = '';
     
-    if (type === 'Mill') {
+    if (type === 'MILL') {
         estateDropdown.innerHTML = '<option value="" disabled selected>LIST MILL</option>' +
             '<option>Bunga Tanjung Mill</option>' +
             '<option>Muko Muko Mill</option>';
@@ -7975,6 +7948,12 @@ window.updateLocationList = function() {
             '<option>Air Majunto Estate</option>';
     }
 };
+
+setTimeout(() => {
+    if(document.getElementById('login-location-type')) {
+        window.updateLocationList();
+    }
+}, 100);
 
 window.handleChangePassword = async function(e) {
     e.preventDefault();
