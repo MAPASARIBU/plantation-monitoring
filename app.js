@@ -7978,19 +7978,21 @@ window.updateLocationList = function() {
 
 window.handleChangePassword = async function(e) {
     e.preventDefault();
-    const usernameEl = document.getElementById('cp-username');
+    
+    // Ambil username dari form login (jika ada), atau dari sesi currentUser
+    const loginUsernameEl = document.getElementById('login-username');
     const oldPass = document.getElementById('cp-old').value;
     const newPass = document.getElementById('cp-new').value;
     const confirmPass = document.getElementById('cp-confirm').value;
     const errorEl = document.getElementById('cp-error');
     const submitBtn = document.getElementById('btn-submit-cp');
     
-    const username = usernameEl ? usernameEl.value : (window.currentUser ? window.currentUser.username : '');
+    const username = (loginUsernameEl && loginUsernameEl.value.trim() !== '') ? loginUsernameEl.value.trim() : (window.currentUser ? window.currentUser.username : '');
     
     errorEl.style.display = 'none';
     
     if (!username) {
-        errorEl.innerText = 'Username harus diisi!';
+        errorEl.innerText = 'Silakan isi Nama Pengguna di form login terlebih dahulu!';
         errorEl.style.display = 'block';
         return;
     }
