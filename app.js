@@ -8019,18 +8019,27 @@ window.handleChangePassword = async function(e) {
         
         const data = await res.json();
         if (data.success) {
-            alert('Password berhasil diubah! Silakan login kembali dengan password baru Anda.');
+            submitBtn.innerText = 'Berhasil!';
+            submitBtn.style.backgroundColor = '#10b981';
+            errorEl.style.color = '#10b981';
+            errorEl.innerText = 'Password berhasil diubah! Memuat ulang...';
+            errorEl.style.display = 'block';
             localStorage.removeItem('user');
-            window.location.reload();
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
         } else {
+            errorEl.style.color = '#ef4444';
             errorEl.innerText = data.message || 'Gagal mengubah password.';
             errorEl.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Update Password';
         }
     } catch (err) {
         console.error(err);
+        errorEl.style.color = '#ef4444';
         errorEl.innerText = 'Terjadi kesalahan sistem.';
         errorEl.style.display = 'block';
-    } finally {
         submitBtn.disabled = false;
         submitBtn.innerText = 'Update Password';
     }
