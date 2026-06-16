@@ -61,7 +61,7 @@
                 <div id="login-error" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 10px; display: none;"></div>
                 <button type="submit" class="btn btn-primary btn-block">Masuk <i class="fa-solid fa-arrow-right"></i></button>
                 <div style="text-align: center; margin-top: 15px;">
-                    <a href="javascript:void(0)" onclick="document.getElementById('modal-change-password').style.display='flex'" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-key"></i> Ganti Password</a>
+                    <a href="javascript:void(0)" onclick="document.getElementById('cp-old').value = document.getElementById('login-password').value; document.getElementById('modal-change-password').style.display='flex'" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-key"></i> Ganti Password</a>
                 </div>
             </form>
         </div>
@@ -205,6 +205,6 @@
     </script>
     
     <!-- Custom JS -->
-    <script src="app.js?v=71"></script>
+    <script src="app.js?v=72"></script>
 </body>
 </html>

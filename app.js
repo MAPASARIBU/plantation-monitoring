@@ -8026,25 +8026,23 @@ window.handleChangePassword = async function(e) {
         });
         
         const data = await res.json();
-        if (data.success) {
-            submitBtn.innerText = 'Berhasil!';
+            submitBtn.innerText = 'Memasuki Dashboard...';
             submitBtn.style.backgroundColor = '#10b981';
             errorEl.style.color = '#10b981';
-            errorEl.innerText = 'Password berhasil diubah! Masuk ke sistem...';
+            errorEl.innerText = 'Berhasil! Mengalihkan...';
             errorEl.style.display = 'block';
             
             const loginPassEl = document.getElementById('login-password');
             if (loginPassEl) loginPassEl.value = newPass;
             
-            setTimeout(() => {
-                document.getElementById('modal-change-password').style.display = 'none';
-                const loginForm = document.getElementById('login-form');
-                if (loginForm && !window.currentUser) {
-                    loginForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-                } else {
-                    window.location.reload();
-                }
-            }, 1000);
+            document.getElementById('modal-change-password').style.display = 'none';
+            const loginForm = document.getElementById('login-form');
+            if (loginForm && !window.currentUser) {
+                // Langsung submit form tanpa delay
+                loginForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            } else {
+                window.location.reload();
+            }
         } else {
             errorEl.style.color = '#ef4444';
             errorEl.innerText = data.message || 'Gagal mengubah password.';

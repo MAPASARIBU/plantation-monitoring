@@ -14,7 +14,15 @@ app.use((req, res, next) => {
 app.use(cors());
 app.use(express.json());
 // Serve static frontend files from current directory
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname), {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        }
+    }
+}));
 
 // Fallback route to serve index.html for frontend routing
 app.get('/', (req, res) => {
