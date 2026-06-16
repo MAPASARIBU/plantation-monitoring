@@ -6475,6 +6475,9 @@ window.loadTonaseInputData = async () => {
             html += `</tr></thead><tbody><tr>`;
             html += `<td style="font-weight:bold; background: #fff;">TONASE</td>`;
             
+            const canEditEfb = currentUser && ['Admin', 'Office Assistant Mill', 'Supervisor Mill', 'Manager Mill'].includes(currentUser.role);
+            const disableAttrEfb = canEditEfb ? '' : 'disabled title="Akses ditolak. Hanya Office Assistant Mill, Supervisor Mill, dan Manager Mill yang dapat mengisi ini."';
+
             supplyChain.forEach(est => {
                 const existingEfb = efbData.find(e => e.estate === est);
                 let valEfb = '';
@@ -6483,7 +6486,7 @@ window.loadTonaseInputData = async () => {
                 }
                 html += `
                     <td style="padding: 4px;">
-                        <input type="number" step="0.01" class="form-control efb-target-input" data-estate="${est}" value="${valEfb}" min="0" placeholder="" style="min-width: 80px; width: 100%; padding: 6px; text-align: center; font-size: 0.9rem;">
+                        <input type="number" step="0.01" class="form-control efb-target-input" data-estate="${est}" value="${valEfb}" min="0" placeholder="" style="min-width: 80px; width: 100%; padding: 6px; text-align: center; font-size: 0.9rem;" ${disableAttrEfb}>
                     </td>
                 `;
             });
