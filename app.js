@@ -4842,7 +4842,7 @@ window.renderMasterTables = () => {
     const isMill = currentUser.estate.endsWith('Mill');
     document.querySelectorAll('.master-estate-card').forEach(el => el.style.display = isMill ? 'none' : 'block');
     const scCard = document.getElementById('card-master-supply-chain');
-    if (scCard) scCard.style.display = isMill ? 'block' : 'none';
+    if (scCard) scCard.style.display = (isMill && currentUser.role !== 'Supervisor Mill') ? 'block' : 'none';
     
     if (isMill) {
         const scContainer = document.getElementById('container-master-supply-chain');
