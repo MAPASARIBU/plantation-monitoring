@@ -1260,6 +1260,7 @@ const views = {
                                 <option>Senior Field Manager</option>
                                 <option>Manager</option>
                                 <option>Manager Mill</option>
+                                <option>Supervisor Mill</option>
                                 <option>Askep</option>
                                 <option>Office Assistant (OAA)</option>
                                 <option>Office Assistant Mill</option>
@@ -2668,6 +2669,7 @@ window.promptEditUser = (id) => {
                     <select id="eu-role" class="form-control" onchange="window.toggleEstateUI('eu-role', 'eu-estate-dropdown', 'eu-estate-container', 'eu-estate-label')">
                         <option value="Manager" ${user.role === 'Manager' ? 'selected' : ''}>Manager</option>
                         <option value="Manager Mill" ${user.role === 'Manager Mill' ? 'selected' : ''}>Manager Mill</option>
+                        <option value="Supervisor Mill" ${user.role === 'Supervisor Mill' ? 'selected' : ''}>Supervisor Mill</option>
                         <option value="Askep" ${user.role === 'Askep' ? 'selected' : ''}>Askep</option>
                         <option value="Assistant" ${user.role === 'Assistant' ? 'selected' : ''}>Assistant</option>
                         <option value="Office Assistant (OAA)" ${user.role === 'Office Assistant (OAA)' ? 'selected' : ''}>Office Assistant (OAA)</option>
@@ -4681,7 +4683,7 @@ const navigate = (viewId) => {
         }
     }
     if(viewId === 'tonase') {
-        if (currentUser.role === 'Krani Mill' || currentUser.role === 'Manager Mill' || currentUser.role === 'Admin' || currentUser.role === 'Office Assistant Mill') {
+        if (currentUser.role === 'Krani Mill' || currentUser.role === 'Supervisor Mill' || currentUser.role === 'Manager Mill' || currentUser.role === 'Admin' || currentUser.role === 'Office Assistant Mill') {
             document.querySelectorAll('.btn-tonase-action').forEach(b => b.style.display = 'inline-block');
             if (!document.getElementById('t-date').value) {
                 document.getElementById('t-date').value = window.getLocalDate();
