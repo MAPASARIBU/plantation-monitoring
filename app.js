@@ -248,8 +248,10 @@ const applyRBAC = () => {
         showViews(['dashboard', 'vehicle', 'tonase', 'master']);
     } else if (role === 'Askep' || role === 'Office Assistant (OAA)') {
         showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'master']);
-    } else if (role === 'Office Assistant Mill' || role === 'Supervisor Mill') {
+    } else if (role === 'Office Assistant Mill') {
         showViews(['dashboard', 'vehicle', 'tonase', 'master']);
+    } else if (role === 'Supervisor Mill') {
+        showViews(['dashboard', 'vehicle', 'tonase']);
     } else if (role === 'Mandor' || role === 'Krani Divisi') {
         showViews(['vehicle', 'pemupukan', 'upkeep', 'harvesting']);
     } else if (role === 'Krani Mill') {
