@@ -8005,6 +8005,7 @@ window.handleChangePassword = async function(e) {
         });
         
         const data = await res.json();
+        if (data.success) {
             submitBtn.innerText = 'Memasuki Dashboard...';
             submitBtn.style.backgroundColor = '#10b981';
             errorEl.style.color = '#10b981';
