@@ -7997,6 +7997,12 @@ window.handleChangePassword = async function(e) {
         return;
     }
     
+    if (!oldPass) {
+        errorEl.innerText = 'Password lama harus diisi!';
+        errorEl.style.display = 'block';
+        return;
+    }
+    
     if (newPass !== confirmPass) {
         errorEl.innerText = 'Konfirmasi password tidak cocok!';
         errorEl.style.display = 'block';
@@ -8024,12 +8030,21 @@ window.handleChangePassword = async function(e) {
             submitBtn.innerText = 'Berhasil!';
             submitBtn.style.backgroundColor = '#10b981';
             errorEl.style.color = '#10b981';
-            errorEl.innerText = 'Password berhasil diubah! Memuat ulang...';
+            errorEl.innerText = 'Password berhasil diubah! Masuk ke sistem...';
             errorEl.style.display = 'block';
-            localStorage.removeItem('user');
+            
+            const loginPassEl = document.getElementById('login-password');
+            if (loginPassEl) loginPassEl.value = newPass;
+            
             setTimeout(() => {
-                window.location.reload();
-            }, 1500);
+                document.getElementById('modal-change-password').style.display = 'none';
+                const loginForm = document.getElementById('login-form');
+                if (loginForm && !window.currentUser) {
+                    loginForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                } else {
+                    window.location.reload();
+                }
+            }, 1000);
         } else {
             errorEl.style.color = '#ef4444';
             errorEl.innerText = data.message || 'Gagal mengubah password.';

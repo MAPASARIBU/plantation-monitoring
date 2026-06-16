@@ -169,26 +169,26 @@
                 <h3 style="margin:0;"><i class="fa-solid fa-lock"></i> Ganti Password</h3>
                 <button type="button" class="modal-close" onclick="document.getElementById('modal-change-password').style.display = 'none'">&times;</button>
             </div>
-            <form id="form-change-password" onsubmit="window.handleChangePassword(event)" style="margin-top: 15px;">
+            <div id="form-change-password" style="margin-top: 15px;">
 
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label style="display:block; margin-bottom:5px;">Password Lama</label>
-                    <input type="password" id="cp-old" class="form-control" required placeholder="Masukkan password saat ini">
+                    <input type="password" id="cp-old" class="form-control" placeholder="Masukkan password saat ini" autocomplete="new-password">
                 </div>
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label style="display:block; margin-bottom:5px;">Password Baru</label>
-                    <input type="password" id="cp-new" class="form-control" required placeholder="Masukkan password baru">
+                    <input type="password" id="cp-new" class="form-control" placeholder="Masukkan password baru" autocomplete="new-password">
                 </div>
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label style="display:block; margin-bottom:5px;">Konfirmasi Password Baru</label>
-                    <input type="password" id="cp-confirm" class="form-control" required placeholder="Ulangi password baru">
+                    <input type="password" id="cp-confirm" class="form-control" placeholder="Ulangi password baru" autocomplete="new-password">
                     <div id="cp-error" style="color: #ef4444; display: none; margin-top: 5px; font-size: 0.85rem;"></div>
                 </div>
                 <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 20px;">
                     <button type="button" class="btn" style="background:#e2e8f0; color:#333;" onclick="document.getElementById('modal-change-password').style.display='none'">Batal</button>
-                    <button type="submit" class="btn btn-primary" id="btn-submit-cp">Update Password</button>
+                    <button type="button" class="btn btn-primary" id="btn-submit-cp" onclick="window.handleChangePassword(event)">Update Password</button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -205,6 +205,6 @@
     </script>
     
     <!-- Custom JS -->
-    <script src="app.js?v=70"></script>
+    <script src="app.js?v=71"></script>
 </body>
 </html>
