@@ -1058,9 +1058,9 @@ const views = {
             </div>
 
             <!-- Modal Daily Monitor -->
-            <div class="modal-overlay" id="daily-monitor-modal" style="display:none; z-index: 1000;">
+            <div class="modal-overlay" id="daily-monitor-modal" style="display:none; z-index: 9999;">
                 <div class="modal-content" style="width: 95%; max-width: 1400px; max-height: 90vh; overflow-y: auto; overflow-x: hidden;">
-                    <div class="modal-header">
+                    <div class="modal-header" style="cursor: move;" title="Geser Pop Up">
                         <h2>Input Harian (LF / JJK / Despatch)</h2>
                         <button type="button" class="modal-close" onclick="document.getElementById('daily-monitor-modal').style.display = 'none'">&times;</button>
                     </div>
