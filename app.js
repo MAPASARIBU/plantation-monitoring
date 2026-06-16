@@ -8143,6 +8143,32 @@ window.exportDashboard = function() {
     });
 };
 
+window.updateLocationList = function() {
+    const type = document.getElementById('login-location-type').value;
+    const estateDropdown = document.getElementById('login-estate');
+    estateDropdown.innerHTML = '';
+    
+    if (type === 'Mill') {
+        estateDropdown.innerHTML = '<option value="" disabled selected>LIST MILL</option>' +
+            '<option>Bunga Tanjung Mill</option>' +
+            '<option>Muko Muko Mill</option>';
+    } else {
+        estateDropdown.innerHTML = '<option value="" disabled selected>LIST ESTATE</option>' +
+            '<option>Bunga Tanjung Estate</option>' +
+            '<option>Sungai Teramang Estate</option>' +
+            '<option>Air Bikuk Estate</option>' +
+            '<option>Batu Kuda Estate</option>' +
+            '<option>Air Buluh Estate</option>' +
+            '<option>Malin Deman Estate</option>' +
+            '<option>Tanah Rekah Estate</option>' +
+            '<option>Muko Muko Estate</option>' +
+            '<option>Sei Jerinjing Estate</option>' +
+            '<option>Talang Petai Estate</option>' +
+            '<option>Sungai Kiang Estate</option>' +
+            '<option>Air Majunto Estate</option>';
+    }
+};
+
 window.handleChangePassword = async function(e) {
     e.preventDefault();
     const usernameEl = document.getElementById('cp-username');
