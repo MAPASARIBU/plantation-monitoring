@@ -7940,6 +7940,201 @@ window.exportDashboard = function() {
         if(controls) controls.style.display = 'flex';
         glassCards.forEach((card, idx) => {
             card.style.backgroundColor = originalStyles[idx].bg;
+lfContainer.style.display = 'none';
+        }
+    } catch (err) { console.error('Error rendering Despatch/LF:', err); }
+        
+        // 2. Render JJK Table in right side container
+        try {
+            let jjkProduksi = 0;
+        if (config.is_processing === 1) {
+            jjkProduksi = totalFfb * (config.efb_ratio / 100);
+        }
+        const sisaKemarin = parseFloat(config.sisa_kemarin_jjk) || 0;
+        
+        const efbMtdData = dm.efb_mtd || [];
+        
+        let jHtml = `
+            <div style="background: #e2e8f0; padding: 10px; margin-bottom: 10px; font-family: monospace; font-size: 14px;">
+                <div style="display: flex; justify-content: space-between; width: 300px; margin-bottom: 5px;">
+                    <span style="font-weight: bold;">JJK SISA KEMARIN</span>
+                    <strong style="font-size: 1.1em;">${sisaKemarin.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TON</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; width: 300px;">
+                    <span style="font-weight: bold;">JJK PRODUKSI</span>
+                    <strong style="font-size: 1.1em;">${jjkProduksi.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TON</strong>
+                </div>
+            </div>
+            <table class="data-table" style="text-align: right; width: 100%;">
+                <thead>
+                    <tr>
+                        <th style="background-color: #000; color: #fff; text-align: left;">ESTATE</th>
+                        <th style="background-color: #000; color: #fff;">ACTUAL<br>TONASE</th>
+                        <th style="background-color: #000; color: #fff;">ACT MTD</th>
+                        <th style="background-color: #000; color: #fff;">TRIP</th>
+                        <th style="background-color: #e2e8f0; color: #000;">TARGET</th>
+                        <th style="background-color: #e2e8f0; color: #000;">TARGET MTD</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        let tEfbTon = 0, tEfbTonMtd = 0, tEfbTrip = 0, tEfbTarget = 0, tEfbTargetMtd = 0;
+            supplyChain.forEach(est => {
+                const eRow = efbData.find(x => x.estate === est);
+                const eMtd = efbMtdData.find(x => x.estate === est);
+                
+                const ton = eRow ? (parseFloat(eRow.tonase) || 0) : 0;
+                const trip = eRow ? (parseInt(eRow.trip) || 0) : 0;
+                const target = eRow ? (parseFloat(eRow.target) || 0) : 0;
+                const tonMtd = eMtd ? (parseFloat(eMtd.tonase_mtd) || 0) : 0;
+                const targetMtd = eMtd ? (parseFloat(eMtd.target_mtd) || 0) : 0;
+                
+                tEfbTon += ton;
+                tEfbTrip += trip;
+                tEfbTarget += target;
+                tEfbTonMtd += tonMtd;
+                tEfbTargetMtd += targetMtd;
+                
+                jHtml += `<tr>
+                    <td style="text-align: left; background-color: #fff;">${getAbbr(est)}</td>
+                    <td style="background-color: #fff;">${ton > 0 ? ton.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'}</td>
+                    <td style="background-color: #fff;">${tonMtd > 0 ? tonMtd.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'}</td>
+                    <td style="background-color: #fff;">${trip > 0 ? trip : '0'}</td>
+                    <td style="background-color: #f1f5f9; font-weight: bold;">${target > 0 ? target.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                    <td style="background-color: #f1f5f9; font-weight: bold;">${targetMtd > 0 ? targetMtd.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                </tr>`;
+            });
+            
+            const sisaSekarang = sisaKemarin + jjkProduksi - tEfbTon;
+            
+            jHtml += `
+                <tr style="background-color: #f8cbad; font-weight: bold;">
+                    <td style="background-color: #f8cbad; text-align: left;">TOTAL</td>
+                    <td style="background-color: #f8cbad;">${tEfbTon.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td style="background-color: #f8cbad;">${tEfbTonMtd.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td style="background-color: #f8cbad;">${tEfbTrip}</td>
+                    <td style="background-color: #f8cbad;">${tEfbTarget > 0 ? tEfbTarget.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                    <td style="background-color: #f8cbad;">${tEfbTargetMtd > 0 ? tEfbTargetMtd.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                </tr>
+                <tr style="background-color: #f8cbad; font-weight: bold; font-size: 1.1em;">
+                    <td colspan="3" style="background-color: #f8cbad; text-align: left;">SISA JJK SEKARANG</td>
+                    <td colspan="3" style="background-color: #f8cbad; text-align: right;">${sisaSekarang.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TON</td>
+                </tr>
+            </tbody></table>`;
+            
+            jContainer.innerHTML = jHtml;
+        } catch (err) {
+            console.error('Error rendering JJK:', err);
+            jContainer.innerHTML = '<div style="color:red; padding:10px;">Gagal memuat JJK / EFB</div>';
+        }
+        
+    } catch(e) {
+        console.error("renderDailyMonitorTables error:", e);
+        alert("Error loading daily monitor tables: " + e.message);
+    }
+};
+
+// ==============================================
+// DRAGGABLE MODALS (Global Event Delegation)
+// ==============================================
+let activeDragModal = null;
+let isDragging = false;
+let startX, startY, initialX, initialY;
+
+document.addEventListener('mousedown', (e) => {
+    const header = e.target.closest('.modal-header');
+    if (!header) return;
+    if (e.target.closest('.modal-close') || e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    
+    const modal = header.closest('.modal-content');
+    if (!modal) return;
+    
+    activeDragModal = modal;
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    
+    const style = window.getComputedStyle(modal);
+    const matrix = new WebKitCSSMatrix(style.transform);
+    initialX = matrix.m41;
+    initialY = matrix.m42;
+    
+    modal.style.transition = 'none';
+    e.preventDefault();
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (!isDragging || !activeDragModal) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    activeDragModal.style.transform = `translate(${initialX + dx}px, ${initialY + dy}px)`;
+});
+
+document.addEventListener('mouseup', () => {
+    if (isDragging && activeDragModal) {
+        isDragging = false;
+        activeDragModal.style.transition = 'opacity 0.3s ease';
+        activeDragModal = null;
+    }
+});
+
+window.exportDashboard = function() {
+    const container = document.getElementById('export-dashboard-wrapper');
+    if(!container) return;
+    
+    const controls = container.querySelector('div[style*="justify-content: flex-end"]');
+    if(controls) controls.style.display = 'none';
+    
+    const glassCards = container.querySelectorAll('.glass-card');
+    const originalStyles = [];
+    glassCards.forEach(card => {
+        originalStyles.push({
+            bg: card.style.backgroundColor,
+            filter: card.style.backdropFilter,
+            shadow: card.style.boxShadow,
+            border: card.style.border
+        });
+        card.style.backgroundColor = '#ffffff';
+        card.style.backdropFilter = 'none';
+        card.style.boxShadow = 'none';
+        card.style.border = '1px solid #cbd5e1';
+    });
+    
+    const dateInput = document.getElementById('monitor-tonase-date').value;
+    const hourInput = document.getElementById('monitor-tonase-hour').value;
+    
+    let formattedDate = "";
+    if(dateInput) {
+        const d = new Date(dateInput);
+        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        formattedDate = `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    }
+    
+    const fileName = `monitoring FFB dan EFB pukul ${hourInput || '00:00'} ${formattedDate}.png`;
+    
+    html2canvas(container, {
+        scale: 1.5,
+        useCORS: true,
+        backgroundColor: '#f8fafc',
+        logging: false
+    }).then(canvas => {
+        if(controls) controls.style.display = 'flex';
+        glassCards.forEach((card, idx) => {
+            card.style.backgroundColor = originalStyles[idx].bg;
+            card.style.backdropFilter = originalStyles[idx].filter;
+            card.style.boxShadow = originalStyles[idx].shadow;
+            card.style.border = originalStyles[idx].border;
+        });
+        
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = canvas.toDataURL('image/png', 1.0);
+        link.click();
+    }).catch(err => {
+        console.error('Export error:', err);
+        if(controls) controls.style.display = 'flex';
+        glassCards.forEach((card, idx) => {
+            card.style.backgroundColor = originalStyles[idx].bg;
             card.style.backdropFilter = originalStyles[idx].filter;
             card.style.boxShadow = originalStyles[idx].shadow;
             card.style.border = originalStyles[idx].border;
@@ -7950,13 +8145,22 @@ window.exportDashboard = function() {
 
 window.handleChangePassword = async function(e) {
     e.preventDefault();
+    const usernameEl = document.getElementById('cp-username');
     const oldPass = document.getElementById('cp-old').value;
     const newPass = document.getElementById('cp-new').value;
     const confirmPass = document.getElementById('cp-confirm').value;
     const errorEl = document.getElementById('cp-error');
     const submitBtn = document.getElementById('btn-submit-cp');
     
+    const username = usernameEl ? usernameEl.value : (window.currentUser ? window.currentUser.username : '');
+    
     errorEl.style.display = 'none';
+    
+    if (!username) {
+        errorEl.innerText = 'Username harus diisi!';
+        errorEl.style.display = 'block';
+        return;
+    }
     
     if (newPass !== confirmPass) {
         errorEl.innerText = 'Konfirmasi password tidak cocok!';
@@ -7974,10 +8178,10 @@ window.handleChangePassword = async function(e) {
     submitBtn.innerText = 'Loading...';
     
     try {
-        const res = await fetch(`${API_URL}/users/${currentUser.id}/password`, {
+        const res = await fetch(`${API_URL}/change-password`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ oldPassword: oldPass, newPassword: newPass })
+            body: JSON.stringify({ username: username, oldPassword: oldPass, newPassword: newPass })
         });
         
         const data = await res.json();
