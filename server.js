@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3005;
+const PORT = process.env.PORT || 3006;
 
 // Middleware
 app.use((req, res, next) => {
@@ -164,6 +164,44 @@ async function initDB() {
             target_kg REAL DEFAULT 0,
             realized_kg REAL DEFAULT 0
         )`);
+        try { await pool.query("ALTER TABLE tonase_hourly ADD COLUMN realized_trip INTEGER DEFAULT 0"); } catch(e) {}
+
+        await pool.query(`CREATE TABLE IF NOT EXISTS lf_received_daily (
+            id SERIAL PRIMARY KEY,
+            date TEXT,
+            mill TEXT,
+            estate TEXT,
+            actual_lf_tonase REAL DEFAULT 0,
+            actual_ffb_tonase REAL DEFAULT 0
+        )`);
+        await pool.query(`CREATE TABLE IF NOT EXISTS efb_transport_daily (
+            id SERIAL PRIMARY KEY,
+            date TEXT,
+            mill TEXT,
+            estate TEXT,
+            tonase REAL DEFAULT 0,
+            trip INTEGER DEFAULT 0,
+            target REAL DEFAULT 0
+        )`);
+        try { await pool.query("ALTER TABLE efb_transport_daily ADD COLUMN target REAL DEFAULT 0"); } catch(e) {}
+        await pool.query(`CREATE TABLE IF NOT EXISTS despatch_daily (
+            id SERIAL PRIMARY KEY,
+            date TEXT,
+            mill TEXT,
+            product TEXT,
+            trip INTEGER DEFAULT 0,
+            tonase REAL DEFAULT 0
+        )`);
+        await pool.query(`CREATE TABLE IF NOT EXISTS mill_daily_config (
+            id SERIAL PRIMARY KEY,
+            date TEXT,
+            mill TEXT,
+            is_processing INTEGER DEFAULT 0,
+            efb_ratio REAL DEFAULT 0,
+            sisa_kemarin_jjk REAL DEFAULT 0,
+            is_locked INTEGER DEFAULT 0
+        )`);
+
 
         try {
             await pool.query(`ALTER TABLE master_truk ADD COLUMN supir TEXT`);
@@ -848,10 +886,19 @@ app.get('/api/tonase/:mill/month/:month', async (req, res) => {
 app.post('/api/tonase/plan', async (req, res) => {
     try {
         const { date, mill, entries } = req.body;
+        
+        // Deduplicate entries (take LAST occurrence) to bypass client-side cache bugs
+        const uniqueMap = new Map();
         for (let item of entries) {
+            const key = `${item.estate}_${item.time_hour}`;
+            uniqueMap.set(key, item); // Overwrites, so last wins
+        }
+        const uniqueEntries = Array.from(uniqueMap.values());
+        
+        for (let item of uniqueEntries) {
             const check = await pool.query('SELECT id FROM tonase_hourly WHERE date=$1 AND mill=$2 AND estate=$3 AND time_hour=$4', [date, mill, item.estate, item.time_hour]);
             if (check.rows.length > 0) {
-                await pool.query('UPDATE tonase_hourly SET target_kg=$1 WHERE id=$2', [item.target_kg || 0, check.rows[0].id]);
+                await pool.query('UPDATE tonase_hourly SET target_kg=$1 WHERE date=$2 AND mill=$3 AND estate=$4 AND time_hour=$5', [item.target_kg || 0, date, mill, item.estate, item.time_hour]);
             } else {
                 await pool.query('INSERT INTO tonase_hourly (date, mill, estate, time_hour, target_kg) VALUES ($1,$2,$3,$4,$5)', [date, mill, item.estate, item.time_hour, item.target_kg || 0]);
             }
@@ -865,12 +912,21 @@ app.post('/api/tonase/plan', async (req, res) => {
 app.post('/api/tonase/realization', async (req, res) => {
     try {
         const { date, mill, entries } = req.body;
+        
+        // Deduplicate entries (take LAST occurrence) to bypass client-side cache bugs
+        const uniqueMap = new Map();
         for (let item of entries) {
+            const key = `${item.estate}_${item.time_hour}`;
+            uniqueMap.set(key, item); // Overwrites, so last wins
+        }
+        const uniqueEntries = Array.from(uniqueMap.values());
+        
+        for (let item of uniqueEntries) {
             const check = await pool.query('SELECT id FROM tonase_hourly WHERE date=$1 AND mill=$2 AND estate=$3 AND time_hour=$4', [date, mill, item.estate, item.time_hour]);
             if (check.rows.length > 0) {
-                await pool.query('UPDATE tonase_hourly SET realized_kg=$1 WHERE id=$2', [item.realized_kg || 0, check.rows[0].id]);
+                await pool.query('UPDATE tonase_hourly SET realized_kg=$1, realized_trip=$2 WHERE date=$3 AND mill=$4 AND estate=$5 AND time_hour=$6', [item.realized_kg || 0, item.realized_trip || 0, date, mill, item.estate, item.time_hour]);
             } else {
-                await pool.query('INSERT INTO tonase_hourly (date, mill, estate, time_hour, realized_kg) VALUES ($1,$2,$3,$4,$5)', [date, mill, item.estate, item.time_hour, item.realized_kg || 0]);
+                await pool.query('INSERT INTO tonase_hourly (date, mill, estate, time_hour, realized_kg, realized_trip) VALUES ($1,$2,$3,$4,$5,$6)', [date, mill, item.estate, item.time_hour, item.realized_kg || 0, item.realized_trip || 0]);
             }
         }
         res.json({ success: true });
@@ -878,6 +934,113 @@ app.post('/api/tonase/realization', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// DAILY MONITORING ROUTES
+app.get('/api/daily-monitor/:mill/:date', async (req, res) => {
+    try {
+        const { mill, date } = req.params;
+        const month = date.substring(0, 7);
+        const lf = await pool.query('SELECT * FROM lf_received_daily WHERE mill=$1 AND date=$2', [mill, date]);
+        const efb = await pool.query('SELECT * FROM efb_transport_daily WHERE mill=$1 AND date=$2', [mill, date]);
+        const despatch = await pool.query('SELECT * FROM despatch_daily WHERE mill=$1 AND date=$2', [mill, date]);
+        const config = await pool.query('SELECT * FROM mill_daily_config WHERE mill=$1 AND date=$2', [mill, date]);
+        
+        const efb_mtd = await pool.query("SELECT estate, SUM(tonase) as tonase_mtd, SUM(target) as target_mtd FROM efb_transport_daily WHERE mill=$1 AND date LIKE $2 || '%' AND date <= $3 GROUP BY estate", [mill, month, date]);
+        
+        res.json({
+            lf: lf.rows,
+            efb: efb.rows,
+            efb_mtd: efb_mtd.rows,
+            despatch: despatch.rows,
+            config: config.rows[0] || null
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/daily-monitor/lf', async (req, res) => {
+    try {
+        const { date, mill, entries } = req.body;
+        for (let item of entries) {
+            const check = await pool.query('SELECT id FROM lf_received_daily WHERE date=$1 AND mill=$2 AND estate=$3', [date, mill, item.estate]);
+            if (check.rows.length > 0) {
+                await pool.query('UPDATE lf_received_daily SET actual_lf_tonase=$1, actual_ffb_tonase=$2 WHERE date=$3 AND mill=$4 AND estate=$5', [item.actual_lf_tonase || 0, item.actual_ffb_tonase || 0, date, mill, item.estate]);
+            } else {
+                await pool.query('INSERT INTO lf_received_daily (date, mill, estate, actual_lf_tonase, actual_ffb_tonase) VALUES ($1,$2,$3,$4,$5)', [date, mill, item.estate, item.actual_lf_tonase || 0, item.actual_ffb_tonase || 0]);
+            }
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/daily-monitor/efb', async (req, res) => {
+    try {
+        const { date, mill, entries } = req.body;
+        for (let item of entries) {
+            const check = await pool.query('SELECT * FROM efb_transport_daily WHERE date=$1 AND mill=$2 AND estate=$3', [date, mill, item.estate]);
+            if (check.rows.length > 0) {
+                const e = check.rows[0];
+                const newTonase = item.tonase !== undefined ? item.tonase : e.tonase;
+                const newTrip = item.trip !== undefined ? item.trip : e.trip;
+                const newTarget = item.target !== undefined ? item.target : e.target;
+                await pool.query('UPDATE efb_transport_daily SET tonase=$1, trip=$2, target=$3 WHERE date=$4 AND mill=$5 AND estate=$6', [newTonase, newTrip, newTarget, date, mill, item.estate]);
+            } else {
+                await pool.query('INSERT INTO efb_transport_daily (date, mill, estate, tonase, trip, target) VALUES ($1,$2,$3,$4,$5,$6)', [date, mill, item.estate, item.tonase || 0, item.trip || 0, item.target || 0]);
+            }
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error("EFB SAVE ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/daily-monitor/despatch', async (req, res) => {
+    try {
+        const { date, mill, entries } = req.body;
+        for (let item of entries) {
+            const check = await pool.query('SELECT id FROM despatch_daily WHERE date=$1 AND mill=$2 AND product=$3', [date, mill, item.product]);
+            if (check.rows.length > 0) {
+                await pool.query('UPDATE despatch_daily SET trip=$1, tonase=$2 WHERE date=$3 AND mill=$4 AND product=$5', [item.trip || 0, item.tonase || 0, date, mill, item.product]);
+            } else {
+                await pool.query('INSERT INTO despatch_daily (date, mill, product, trip, tonase) VALUES ($1,$2,$3,$4,$5)', [date, mill, item.product, item.trip || 0, item.tonase || 0]);
+            }
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/daily-monitor/config', async (req, res) => {
+    try {
+        const { date, mill, is_processing, efb_ratio, sisa_kemarin_jjk, is_locked } = req.body;
+        const check = await pool.query('SELECT id FROM mill_daily_config WHERE date=$1 AND mill=$2', [date, mill]);
+        if (check.rows.length > 0) {
+            let query = 'UPDATE mill_daily_config SET is_processing=$1, efb_ratio=$2, sisa_kemarin_jjk=$3';
+            let params = [is_processing || 0, efb_ratio || 0, sisa_kemarin_jjk || 0];
+            if (is_locked !== undefined) {
+                query += ', is_locked=$4';
+                params.push(is_locked ? 1 : 0);
+                params.push(date, mill);
+                query += ' WHERE date=$5 AND mill=$6';
+            } else {
+                params.push(date, mill);
+                query += ' WHERE date=$4 AND mill=$5';
+            }
+            await pool.query(query, params);
+        } else {
+            await pool.query('INSERT INTO mill_daily_config (date, mill, is_processing, efb_ratio, sisa_kemarin_jjk, is_locked) VALUES ($1,$2,$3,$4,$5,$6)', [date, mill, is_processing || 0, efb_ratio || 0, sisa_kemarin_jjk || 0, is_locked ? 1 : 0]);
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 // Start Server
 app.listen(PORT, () => {

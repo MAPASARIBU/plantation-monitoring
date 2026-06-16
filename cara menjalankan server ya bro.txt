@@ -1,0 +1,26 @@
+Cara Menjalankan Aplikasi Secara Lokal dari Folder plantation monitoring:
+Jika besok-besok bos restart komputer dan ingin menghidupkan kembali aplikasi ini secara lokal, cukup ikuti 3 langkah mudah ini:
+
+Buka Command Prompt (CMD) Ketik cmd di menu Start Windows lalu tekan Enter.
+
+Masuk ke Folder Aplikasi Di layar hitam CMD, ketik perintah ini lalu tekan Enter:
+
+bash
+
+
+cd "C:\Users\user\plantation monitoring"
+Nyalakan Server Setelah masuk ke foldernya, ketik perintah ini lalu tekan Enter:
+
+bash
+
+
+node server.js
+(Jika muncul tulisan "Server is running on port 3006" dan "Database initialized successfully", berarti server sudah menyala!)
+
+Buka di Browser Buka Google Chrome atau Firefox, lalu ketik alamat saktinya: http://localhost:3006
+
+(Catatan: Saat ini, servernya sudah saya bantu jalankan dari belakang layar, jadi bos bisa langsung buka browser sekarang tanpa perlu mengetik ulang langkah di atas).
+
+Semua aset, database (SQLite), dan script murni 100% menggunakan folder plantation monitoring yang bersih bos. Silakan di-zip dan di-upload ke server online kapan pun bos siap! 🚀
+
+8:11 AM

@@ -1,5 +1,5 @@
 // API Base URL
-const API_URL = window.location.protocol === 'file:' ? 'http://localhost:3005/api' : '/api';
+const API_URL = window.location.protocol === 'file:' ? 'http://localhost:3006/api' : '/api';
 
 const originalFetch = window.fetch;
 window.fetch = async (...args) => {
@@ -849,52 +849,111 @@ const views = {
     tonase: `
         <div class="animate-fade-in module-layout" id="tonase-layout" style="grid-template-columns: 1fr;">
             
-            <!-- Table Monitoring -->
-            <div class="glass-card table-wrapper">
-                <div class="view-header" style="align-items: flex-start;">
-                    <h2 style="margin-top: 10px;">Tabel Monitoring FFB Received</h2>
-                    <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
-                        <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-primary btn-tonase-action" style="display:none;" onclick="openTonaseModal('plan')">
-                                <i class="fa-solid fa-plus"></i> Input Plan
-                            </button>
-                            <button class="btn btn-tonase-action" style="display:none; background-color: #f7a01d; color: white;" onclick="openTonaseModal('realization')">
-                                <i class="fa-solid fa-plus"></i> Input Realisasi
-                            </button>
-                        </div>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="date" id="monitor-tonase-date" class="form-control" onchange="renderTonaseMonitorTable()">
-                            <select id="monitor-tonase-hour" class="form-control" onchange="renderTonaseMonitorTable()">
-                                <option value="06:00">06:00</option>
-                                <option value="07:00">07:00</option>
-                                <option value="08:00">08:00</option>
-                                <option value="09:00">09:00</option>
-                                <option value="10:00">10:00</option>
-                                <option value="11:00">11:00</option>
-                                <option value="12:00">12:00</option>
-                                <option value="13:00">13:00</option>
-                                <option value="14:00">14:00</option>
-                                <option value="15:00">15:00</option>
-                                <option value="16:00">16:00</option>
-                                <option value="17:00">17:00</option>
-                                <option value="18:00">18:00</option>
-                                <option value="19:00">19:00</option>
-                                <option value="20:00">20:00</option>
-                                <option value="21:00">21:00</option>
-                                <option value="22:00">22:00</option>
-                                <option value="23:00">23:00</option>
-                                <option value="24:00">24:00</option>
-                            </select>
-                            <button class="btn btn-primary" onclick="renderTonaseMonitorTable()">
-                                <i class="fa-solid fa-rotate-right"></i> Refresh
-                            </button>
-                        </div>
+            <!-- Export Wrapper -->
+            <div id="export-dashboard-wrapper" style="background-color: #f8fafc; padding: 20px; border-radius: 8px;">
+            <div style="margin-bottom: 15px;">
+                <h2 style="margin: 0; font-size: 1.5rem; color: var(--primary-color);">Monitoring FFB Received, EFB Evacuation & Despatch CPOPK</h2>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; align-items: flex-start; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">                <!-- Controls -->
+                <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary btn-tonase-action" style="display:none;" onclick="openTonaseModal('plan')">
+                            <i class="fa-solid fa-plus"></i> Input Plan
+                        </button>
+                        <button class="btn btn-tonase-action" style="display:none; background-color: #f7a01d; color: white;" onclick="openTonaseModal('realization')">
+                            <i class="fa-solid fa-plus"></i> Input Realisasi
+                        </button>
+                        <button class="btn btn-tonase-action" style="display:none; background-color: #8b5cf6; color: white;" onclick="openDailyMonitorModal()">
+                            <i class="fa-solid fa-calendar-day"></i> Input Harian (LF/JJK/Despatch)
+                        </button>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="date" id="monitor-tonase-date" class="form-control" onchange="renderTonaseMonitorTable()">
+                        <select id="monitor-tonase-hour" class="form-control" onchange="renderTonaseMonitorTable()">
+                            <option value="06:00">06:00</option>
+                            <option value="07:00">07:00</option>
+                            <option value="08:00">08:00</option>
+                            <option value="09:00">09:00</option>
+                            <option value="10:00">10:00</option>
+                            <option value="11:00">11:00</option>
+                            <option value="12:00">12:00</option>
+                            <option value="13:00">13:00</option>
+                            <option value="14:00">14:00</option>
+                            <option value="15:00">15:00</option>
+                            <option value="16:00">16:00</option>
+                            <option value="17:00">17:00</option>
+                            <option value="18:00">18:00</option>
+                            <option value="19:00">19:00</option>
+                            <option value="20:00">20:00</option>
+                            <option value="21:00">21:00</option>
+                            <option value="22:00">22:00</option>
+                            <option value="23:00">23:00</option>
+                            <option value="24:00">24:00</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="renderTonaseMonitorTable()">
+                            <i class="fa-solid fa-rotate-right"></i> Refresh
+                        </button>
+                        <button class="btn" style="background-color: #ef4444; color: white;" onclick="exportDashboard()">
+                            <i class="fa-solid fa-download"></i> Save
+                        </button>
                     </div>
                 </div>
-                <div id="tonase-monitor-table-container" style="overflow-x: auto; margin-top: 20px;">
-                    <div style="text-align:center; padding: 20px; color:#64748b;">Memuat tabel...</div>
+            </div>
+
+            <!-- Table Dashboard Grid -->
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch;">
+                
+                <!-- FFB -->
+                <div class="glass-card table-wrapper" style="padding: 10px; flex: 1.5 1 500px;">
+                    <div style="margin-bottom: 8px;">
+                        <span style="background: #e2e8f0; padding: 4px 10px; font-weight: bold; text-decoration: underline;">FFB RECEIVED</span>
+                    </div>
+                    <!-- Summary Box moved here -->
+                    <div style="display: flex; flex-direction: column; width: 320px; font-family: monospace; font-size: 14px; border: 1px solid #000; margin-bottom: 15px;">
+                        <div style="display: flex; background: black; color: white; padding: 4px 8px; font-weight: bold;">
+                            <div style="width: 120px;">TANGGAL</div>
+                            <div>: <span id="summary-tanggal">-</span></div>
+                        </div>
+                        <div style="display: flex; background: #e2e8f0; color: black; padding: 4px 8px; font-weight: bold;">
+                            <div style="width: 120px;">JAM</div>
+                            <div>: <span id="summary-jam">-</span></div>
+                        </div>
+                        <div style="display: flex; background: #f8cbad; color: black; padding: 4px 8px; font-weight: bold;">
+                            <div style="width: 120px;">GRAND TOTAL</div>
+                            <div>: <span id="summary-total">-</span></div>
+                        </div>
+                    </div>
+                    <div id="tonase-monitor-table-container" style="overflow-x: auto;">
+                        <div style="text-align:center; padding: 20px; color:#64748b;">Memuat tabel...</div>
+                    </div>
+                </div>
+                
+                <!-- LF -->
+                <div class="glass-card table-wrapper" style="padding: 10px; flex: 1 1 350px; display: none;">
+                    <div style="margin-bottom: 8px;">
+                        <span style="background: #e2e8f0; padding: 4px 10px; font-weight: bold; text-decoration: underline;">LOOSE FRUIT RECEIVED</span>
+                    </div>
+                    <div id="lf-monitor-table-container" style="overflow-x: auto;"></div>
+                </div>
+                
+                <!-- JJK -->
+                <div class="glass-card table-wrapper" style="padding: 10px; flex: 1.5 1 450px;">
+                    <div style="margin-bottom: 8px;">
+                        <span style="background: #e2e8f0; padding: 4px 10px; font-weight: bold; text-decoration: underline;">MONITORING EVAKUASI EFB</span>
+                    </div>
+                    <div id="jjk-monitor-table-container" style="overflow-x: auto;"></div>
+                </div>
+
+                <!-- DESPATCH -->
+                <div class="glass-card table-wrapper" style="padding: 10px; flex: 1 1 250px;">
+                    <div style="margin-bottom: 8px;">
+                        <span style="background: #94a3b8; color: white; padding: 4px 10px; font-weight: bold; text-decoration: underline;">DESPATCH</span>
+                    </div>
+                    <div id="despatch-monitor-table-container" style="overflow-x: auto;"></div>
                 </div>
             </div>
+            </div> <!-- Close export-dashboard-wrapper -->
             
             <div class="glass-card table-wrapper" style="margin-top: 20px;">
                 <div class="view-header">
@@ -992,6 +1051,76 @@ const views = {
                             <button type="button" class="btn" style="background-color: #e2e8f0; color: #333; margin-right: 10px;" onclick="document.getElementById('tonase-modal').style.display='none'">Batal</button>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fa-solid fa-save"></i> <span id="t-btn-label">Simpan</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal Daily Monitor -->
+            <div class="modal-overlay" id="daily-monitor-modal" style="display:none; z-index: 1000;">
+                <div class="modal-content" style="width: 95%; max-width: 1400px; max-height: 90vh; overflow-y: auto; overflow-x: hidden;">
+                    <div class="modal-header">
+                        <h2>Input Harian (LF / JJK / Despatch)</h2>
+                        <button type="button" class="modal-close" onclick="document.getElementById('daily-monitor-modal').style.display = 'none'">&times;</button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 15px; max-width: 300px; margin-top: 15px; margin-bottom: 20px;">
+                        <div style="flex:1;">
+                            <label>Tanggal</label>
+                            <input type="date" id="dm-date" class="form-control" required onchange="loadDailyMonitorInputData()">
+                        </div>
+                    </div>
+                    
+                    <!-- Mill Config Section -->
+                    <div class="glass-card" style="margin-bottom: 20px; padding: 15px; background-color: #f8fafc;">
+                        <h3 style="margin-top: 0;">Konfigurasi Mill & Produksi JJK</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; align-items: end;">
+                            <div>
+                                <label>Olah TBS Hari Ini?</label>
+                                <select id="dm-is-processing" class="form-control">
+                                    <option value="1">Ya</option>
+                                    <option value="0">Tidak</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Ratio EFB (%)</label>
+                                <input type="number" id="dm-efb-ratio" class="form-control" step="0.01" min="0" placeholder="Cth: 20.5">
+                            </div>
+                            <div>
+                                <label>Sisa JJK Kemarin (TON)</label>
+                                <input type="number" id="dm-sisa-kemarin" class="form-control" step="0.01" min="0" placeholder="0">
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-primary" id="btn-lock-mill-config" onclick="saveMillConfig()"><i class="fa-solid fa-lock"></i> Simpan & Lock</button>
+                                <div id="mill-config-status" style="font-size: 0.8rem; color: #ef4444; margin-top: 5px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form id="form-daily-monitor" onsubmit="event.preventDefault(); saveDailyMonitorData();">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                            <!-- Kolom 1: Loose Fruit -->
+                            <div>
+                                <h3>Loose Fruit Received</h3>
+                                <div id="dm-lf-list">Memuat...</div>
+                            </div>
+                            <!-- Kolom 2: EFB Transport -->
+                            <div>
+                                <h3>EFB (JJK) Transport</h3>
+                                <div id="dm-efb-list">Memuat...</div>
+                            </div>
+                            <!-- Kolom 3: Despatch -->
+                            <div>
+                                <h3>Despatch</h3>
+                                <div id="dm-despatch-list">Memuat...</div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 20px; text-align: right; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                            <button type="button" class="btn" style="background-color: #e2e8f0; color: #333; margin-right: 10px;" onclick="document.getElementById('daily-monitor-modal').style.display='none'">Batal</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa-solid fa-save"></i> Simpan Realisasi Harian
                             </button>
                         </div>
                     </form>
@@ -4512,6 +4641,9 @@ setTimeout(() => {
 
 // Navigation
 const navigate = (viewId) => {
+    // Cleanup any orphaned modals in body from previous views to prevent duplicate IDs
+    document.querySelectorAll('body > .modal-overlay').forEach(m => m.remove());
+    
     const container = document.getElementById('view-container');
     const title = document.getElementById('page-title');
     
@@ -6103,17 +6235,47 @@ window.openTonaseModal = (mode) => {
     loadTonaseInputData();
 };
 window.calculateTonaseTotals = () => {
-    const container = document.getElementById('tonase-estate-list');
-    if (!container) return;
+    const visibleModal = Array.from(document.querySelectorAll('#tonase-modal')).find(m => m.style.display !== 'none');
+    if (!visibleModal) return;
     
-    const inputs = Array.from(container.querySelectorAll('.tonase-input'));
+    const inputs = Array.from(visibleModal.querySelectorAll('.tonase-input'));
     const totals = {};
+    const visibleHours = new Set();
     
+    // Sum inputs currently on screen
     inputs.forEach(input => {
         const est = input.getAttribute('data-estate');
+        const hour = input.getAttribute('data-hour');
+        visibleHours.add(hour);
         const val = parseFloat(input.value) || 0;
         totals[est] = (totals[est] || 0) + val;
     });
+    
+    const hoursArr = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
+    let maxHourIdx = -1;
+    visibleHours.forEach(h => {
+        const idx = hoursArr.indexOf(h);
+        if (idx > maxHourIdx) maxHourIdx = idx;
+    });
+
+    // Add historical data from cache for hours that are NOT on screen, but ONLY up to the max visible hour
+    if (window.tonaseDataCache) {
+        window.tonaseDataCache.forEach(t => {
+            const tIdx = hoursArr.indexOf(t.time_hour);
+            if (tIdx <= maxHourIdx && !visibleHours.has(t.time_hour)) {
+                let rawVal = window.tonaseMode === 'plan' ? t.target_kg : t.realized_kg;
+                let val = parseFloat((parseFloat(rawVal || 0) / 1000).toFixed(2)) || 0;
+                totals[t.estate] = (totals[t.estate] || 0) + val;
+            }
+        });
+    }
+    
+    // Default to 0 for supply chain if undefined
+    if (window.supplyChain) {
+        window.supplyChain.forEach(est => {
+            if (totals[est] === undefined) totals[est] = 0;
+        });
+    }
     
     Object.keys(totals).forEach(est => {
         const cleanEstClass = est.replace(/[^a-zA-Z0-9]/g, '-');
@@ -6151,19 +6313,19 @@ window.handleTonasePaste = (e) => {
     const trs = Array.from(tbody.querySelectorAll('tr'));
     const startRowIdx = trs.indexOf(tr);
     
-    const tds = Array.from(tr.querySelectorAll('td')).filter(el => el.querySelector('input.tonase-input'));
+    const tds = Array.from(tr.querySelectorAll('td')).filter(el => el.querySelector('input.tonase-input, input.tonase-trip-input'));
     const startColIdx = tds.indexOf(td);
     
     rows.forEach((row, i) => {
         const rowIdx = startRowIdx + i;
         if (rowIdx >= 0 && rowIdx < trs.length) {
             const currentTr = trs[rowIdx];
-            const currentTds = Array.from(currentTr.querySelectorAll('td')).filter(el => el.querySelector('input.tonase-input'));
+            const currentTds = Array.from(currentTr.querySelectorAll('td')).filter(el => el.querySelector('input.tonase-input, input.tonase-trip-input'));
             
             row.forEach((cellVal, j) => {
                 const colIdx = startColIdx + j;
                 if (colIdx >= 0 && colIdx < currentTds.length) {
-                    const input = currentTds[colIdx].querySelector('input.tonase-input');
+                    const input = currentTds[colIdx].querySelector('input.tonase-input, input.tonase-trip-input');
                     if (input && !input.disabled && !input.readOnly) {
                         let cleanVal = cellVal.trim();
                         if (cleanVal.includes(',') && !cleanVal.includes('.')) {
@@ -6250,6 +6412,7 @@ window.loadTonaseInputData = async () => {
                 if (existing) {
                     let rawVal = window.tonaseMode === 'plan' ? existing.target_kg : existing.realized_kg;
                     val = parseFloat((parseFloat(rawVal) / 1000).toFixed(2));
+                    if (val === 0 || isNaN(val)) val = '';
                 }
                 html += `
                     <td style="padding: 4px;">
@@ -6259,11 +6422,30 @@ window.loadTonaseInputData = async () => {
             });
             html += `</tr>`;
         });
+        
+        if (window.tonaseMode === 'realization') {
+            html += `<tr><td style="font-weight:bold; position: sticky; left: 0; background: #fff;">TOTAL RITASE</td>`;
+            supplyChain.forEach(est => {
+                const hour = hours[0];
+                const existing = tonaseData.find(t => t.estate === est && t.time_hour === hour);
+                let valTrip = '';
+                if (existing && existing.realized_trip) {
+                    valTrip = parseInt(existing.realized_trip);
+                    if (valTrip === 0 || isNaN(valTrip)) valTrip = '';
+                }
+                html += `
+                    <td style="padding: 4px;">
+                        <input type="number" class="form-control tonase-trip-input" data-estate="${est}" data-hour="${hour}" value="${valTrip}" min="0" placeholder="" style="min-width: 80px; width: 100%; padding: 6px; text-align: center; font-size: 0.9rem;">
+                    </td>
+                `;
+            });
+            html += `</tr>`;
+        }
         html += `</tbody>`;
         
         html += `<tfoot style="background-color: #f1f5f9; position: sticky; bottom: 0; z-index: 10;">
             <tr>
-                <td style="font-weight:bold; position: sticky; left: 0; background-color: #f1f5f9; padding: 8px;">TOTAL</td>
+                <td style="font-weight:bold; position: sticky; left: 0; background-color: #f1f5f9; padding: 8px;">TOTAL (AKUMULASI)</td>
         `;
         supplyChain.forEach(est => {
             const cleanEstClass = est.replace(/[^a-zA-Z0-9]/g, '-');
@@ -6272,13 +6454,53 @@ window.loadTonaseInputData = async () => {
         html += `</tr></tfoot>`;
         
         html += `</table></div>`;
-        container.innerHTML = html;
         
+        if (window.tonaseMode === 'plan') {
+            const dmRes = await fetch(`${API_URL}/daily-monitor/${mill}/${date}`);
+            let efbData = [];
+            if (dmRes.ok) {
+                const dmData = await dmRes.json();
+                efbData = dmData.efb || [];
+            }
+            
+            html += `<h4 style="margin-top: 25px; margin-bottom: 10px; color: var(--primary-color);">TARGET EFB (TONASE HARIAN)</h4>`;
+            html += `<div style="overflow-x: auto; max-width: 100%; padding-bottom: 10px; border: 1px solid #cbd5e1; border-radius: 4px;">
+            <table class="data-table" style="min-width: 600px; border-collapse: collapse; width: 100%;">
+                <thead>
+                    <tr>
+                        <th style="min-width: 60px; background: #f8cbad; border-bottom: 2px solid #ddd; padding: 8px;">TARGET</th>`;
+            supplyChain.forEach(est => {
+                html += `<th style="background: #f8cbad; min-width: 100px; border-bottom: 2px solid #ddd; padding: 8px; font-size: 0.8rem;">${est.toUpperCase()}</th>`;
+            });
+            html += `</tr></thead><tbody><tr>`;
+            html += `<td style="font-weight:bold; background: #fff;">TONASE</td>`;
+            
+            supplyChain.forEach(est => {
+                const existingEfb = efbData.find(e => e.estate === est);
+                let valEfb = '';
+                if (existingEfb && existingEfb.target) {
+                    valEfb = parseFloat(existingEfb.target);
+                }
+                html += `
+                    <td style="padding: 4px;">
+                        <input type="number" step="0.01" class="form-control efb-target-input" data-estate="${est}" value="${valEfb}" min="0" placeholder="" style="min-width: 80px; width: 100%; padding: 6px; text-align: center; font-size: 0.9rem;">
+                    </td>
+                `;
+            });
+            html += `</tr></tbody></table></div>`;
+        }
+        
+        container.innerHTML = html;
         calculateTonaseTotals();
         
         const inputs = container.querySelectorAll('.tonase-input');
         inputs.forEach(input => {
             input.addEventListener('input', calculateTonaseTotals);
+            input.addEventListener('paste', handleTonasePaste);
+        });
+        
+        const tripInputs = container.querySelectorAll('.tonase-trip-input');
+        tripInputs.forEach(input => {
             input.addEventListener('paste', handleTonasePaste);
         });
         
@@ -6300,7 +6522,13 @@ window.saveTonaseData = async () => {
         return;
     }
     
-    const inputs = document.querySelectorAll('.tonase-input');
+    // Fix duplicate modal bug by ONLY selecting inputs from the VISIBLE modal
+    const visibleModal = Array.from(document.querySelectorAll('#tonase-modal')).find(m => m.style.display !== 'none');
+    if (!visibleModal) {
+        alert("Error: Modal tidak ditemukan.");
+        return;
+    }
+    const inputs = visibleModal.querySelectorAll('.tonase-input');
     const entries = [];
     inputs.forEach(input => {
         let val = parseFloat(input.value);
@@ -6312,7 +6540,12 @@ window.saveTonaseData = async () => {
         if (window.tonaseMode === 'plan') {
             entries.push({ time_hour: hour, estate: est, target_kg: val });
         } else {
-            entries.push({ time_hour: hour, estate: est, realized_kg: val });
+            const tripInput = document.querySelector(`.tonase-trip-input[data-estate="${est}"][data-hour="${hour}"]`);
+            let tripVal = 0;
+            if (tripInput) {
+                tripVal = parseInt(tripInput.value) || 0;
+            }
+            entries.push({ time_hour: hour, estate: est, realized_kg: val, realized_trip: tripVal });
         }
     });
     
@@ -6347,9 +6580,43 @@ window.saveTonaseData = async () => {
             body: JSON.stringify({ date, mill, entries })
         });
         const data = await res.json();
-        if (data.success) {
+        
+        let efbSuccess = true;
+        if (window.tonaseMode === 'plan') {
+            const efbInputs = document.querySelectorAll('.efb-target-input');
+            if (efbInputs.length > 0) {
+                const efbEntries = [];
+                efbInputs.forEach(inp => {
+                    const est = inp.getAttribute('data-estate');
+                    let targetVal = parseFloat(inp.value);
+                    if (isNaN(targetVal)) targetVal = 0;
+                    efbEntries.push({ estate: est, target: targetVal });
+                });
+                
+                if (efbEntries.length > 0) {
+                    const efbRes = await fetch(`${API_URL}/daily-monitor/efb`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ date, mill, entries: efbEntries })
+                    });
+                    const efbData = await efbRes.json();
+                    if (!efbData.success) efbSuccess = false;
+                }
+            }
+        }
+        
+        if (data.success && efbSuccess) {
             alert('Data berhasil disimpan!');
             document.getElementById('tonase-modal').style.display = 'none';
+            if (window.tonaseMode === 'realization') {
+                const selectedHour = document.getElementById('t-hour').value;
+                if (selectedHour) {
+                    const dashboardHourSelect = document.getElementById('monitor-tonase-hour');
+                    if (dashboardHourSelect) {
+                        dashboardHourSelect.value = selectedHour;
+                    }
+                }
+            }
             loadTonaseChartData();
         } else {
             alert('Gagal menyimpan data.');
@@ -6461,13 +6728,16 @@ window.renderTonaseMonitorTable = async (isHistorical = false) => {
             mill = 'Bunga Tanjung Mill';
         }
         
-        const [masterRes, tonaseRes] = await Promise.all([
+        const [masterRes, tonaseRes, dmRes] = await Promise.all([
             fetch(`${API_URL}/master/${mill}`),
-            fetch(`${API_URL}/tonase/${mill}/${date}`)
+            fetch(`${API_URL}/tonase/${mill}/${date}`),
+            fetch(`${API_URL}/daily-monitor/${mill}/${date}`)
         ]);
         
         const masterData = await masterRes.json();
         const tonaseData = await window.parseTonaseResponse(tonaseRes);
+        const dmData = await dmRes.json();
+        const lfData = dmData.lf || [];
         
         const supplyChain = masterData.supply_chain.map(s => s.estate);
         
@@ -6480,35 +6750,56 @@ window.renderTonaseMonitorTable = async (isHistorical = false) => {
         const hourIdx = hour ? hours.indexOf(hour) : -1;
         
         let html = `
-            <table class="data-table" style="min-width: 800px; text-align: center;">
-                <thead style="background-color: #333; color: white;">
+            <table class="data-table" style="min-width: 500px; text-align: right;">
+                <thead style="background-color: #333; color: white; text-align: center; font-size: 13px;">
                     <tr>
-                        <th rowspan="2" style="position: sticky; left: 0; background-color: #000; color: #fff; z-index: 10;">ESTATE</th>
-                        <th colspan="2" style="background-color: #000; color: #fff;">FFB RECEIVED (Ton)</th>
-                        <th rowspan="2" style="background-color: #ffe600; color: #000;">ACTUAL AKUMULASI (Ton)</th>
-                        <th rowspan="2" style="background-color: #87ceeb; color: #000;">PLAN / JAM (Ton)</th>
-                        <th rowspan="2" style="background-color: #90ee90; color: #000;">% ACT VS PLAN PER JAM</th>
-                        <th rowspan="2" style="background-color: #87ceeb; color: #000;">TODAY PLAN (Ton)</th>
-                        <th rowspan="2" style="background-color: #ffe600; color: #000;">% REALISASI VS TODAY PLAN</th>
+                        <th colspan="8" style="background-color: #dcfce7; color: #166534; border-bottom: 2px solid #ccc; font-weight: bold; padding: 6px;">FRESH FRUIT BUNCH</th>
+                        <th colspan="2" style="background-color: #ffedd5; color: #9a3412; border-bottom: 2px solid #ccc; font-weight: bold; padding: 6px;">LOOSE FRUIT</th>
                     </tr>
                     <tr>
-                        <th style="background-color: #000; color: #fff;">ACTUAL PER JAM</th>
-                        <th style="background-color: #000; color: #fff;">ACTUAL TRIP</th>
+                        <th style="position: sticky; left: 0; background-color: #000; color: #fff; z-index: 10; text-align: left; width: 60px;">ESTATE</th>
+                        <th style="background-color: #000; color: #fff; width: 70px;">ACTUAL<br>PER JAM</th>
+                        <th style="background-color: #000; color: #fff; width: 60px;">ACTUAL<br>TRIP</th>
+                        <th style="background-color: #ffe600; color: #000; width: 80px;">ACT DTD<br>(TON)</th>
+                        <th style="background-color: #87ceeb; color: #000; width: 80px;">PLAN / JAM<br>(MT)</th>
+                        <th style="background-color: #90ee90; color: #000; width: 80px;">% ACT VS<br>PLAN PER JAM</th>
+                        <th style="background-color: #87ceeb; color: #000; width: 80px;">TODAY<br>PLAN (TON)</th>
+                        <th style="background-color: #ffe600; color: #000; width: 80px;">% REAL VS<br>PLAN</th>
+                        <th style="background-color: #000; color: #fff; width: 80px;">ACTUAL LF<br>ONLY</th>
+                        <th style="background-color: #000; color: #fff; width: 80px;">PERSENTASE<br>LF</th>
                     </tr>
                 </thead>
                 <tbody>
         `;
         
-        let totalActJam = 0, totalActAkumulasi = 0, totalPlanJam = 0, totalTodayPlan = 0;
+        let totalActJam = 0, totalActAkumulasi = 0, totalPlanJam = 0, totalTodayPlan = 0, totalActLf = 0, totalActTripAkumulasi = 0;
+        let estateFfbAkumulasiMap = {};
         
+        const abbrMap = {
+            'Bunga Tanjung Estate': 'BTEE',
+            'Air Bikuk Estate': 'ABKE',
+            'Air Buluh Estate': 'ABEE',
+            'Malin Deman Estate': 'MDEE',
+            'Sungai Teramang Estate': 'STGE',
+            'KMD': 'KMD',
+            'KHJLT': 'KHJLT',
+            'PLAB': 'PLAB',
+            'PLAM': 'PLAM',
+            'Small Holder': '3rd Prty'
+        };
+        const getAbbr = (estName) => abbrMap[estName] || estName.replace(' Estate', 'E');
+
         supplyChain.forEach(est => {
             const dataEst = tonaseData.filter(t => t.estate === est);
             
-            let actJam = 0, planJam = 0, actAkumulasi = 0, todayPlan = 0;
+            let actJam = 0, planJam = 0, actAkumulasi = 0, todayPlan = 0, actTripAkumulasi = 0;
             
             if (isHistorical) {
                 // Actual akumulasi for the whole day
-                dataEst.forEach(t => actAkumulasi += ((parseFloat(t.realized_kg) || 0) / 1000));
+                dataEst.forEach(t => {
+                    actAkumulasi += ((parseFloat(t.realized_kg) || 0) / 1000);
+                    actTripAkumulasi += (parseInt(t.realized_trip) || 0);
+                });
                 
                 // Today plan for the whole day
                 dataEst.forEach(t => todayPlan += ((parseFloat(t.target_kg) || 0) / 1000));
@@ -6520,7 +6811,10 @@ window.renderTonaseMonitorTable = async (isHistorical = false) => {
                 // Actual akumulasi (from 06:00 up to selected hour)
                 for (let i = 0; i <= hourIdx; i++) {
                     const r = dataEst.find(t => t.time_hour === hours[i]);
-                    if (r) actAkumulasi += ((parseFloat(r.realized_kg) || 0) / 1000);
+                    if (r) {
+                        actAkumulasi += ((parseFloat(r.realized_kg) || 0) / 1000);
+                        actTripAkumulasi += (parseInt(r.realized_trip) || 0);
+                    }
                 }
                 
                 // Plan per jam
@@ -6539,33 +6833,44 @@ window.renderTonaseMonitorTable = async (isHistorical = false) => {
             totalActAkumulasi += actAkumulasi;
             totalPlanJam += planJam;
             totalTodayPlan += todayPlan;
+            totalActTripAkumulasi += actTripAkumulasi;
+            estateFfbAkumulasiMap[est] = actAkumulasi;
+            
+            const lRow = lfData.find(x => x.estate === est);
+            const actLf = lRow ? (parseFloat(lRow.actual_lf_tonase) || 0) : 0;
+            const pctLf = actAkumulasi > 0 ? (actLf / actAkumulasi * 100) : 0;
+            totalActLf += actLf;
             
             if (isHistorical) {
                 html += `
                     <tr>
-                        <td style="position: sticky; left: 0; background-color: #f1f5f9; font-weight: bold;">${est}</td>
+                        <td style="position: sticky; left: 0; background-color: #fff; text-align: left;">${getAbbr(est)}</td>
                         <td>-</td>
-                        <td>-</td>
-                        <td style="background-color: #fffacd;">${actAkumulasi > 0 ? actAkumulasi.toLocaleString('id-ID') : '-'}</td>
+                        <td>${actTripAkumulasi > 0 ? actTripAkumulasi : '-'}</td>
+                        <td style="background-color: #fffacd;">${actAkumulasi > 0 ? actAkumulasi.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
                         <td style="background-color: #e0f7fa;">-</td>
-                        <td style="background-color: #f1f5f9; font-weight: bold;">-</td>
-                        <td style="background-color: #e0f7fa;">${todayPlan > 0 ? todayPlan.toLocaleString('id-ID') : '-'}</td>
+                        <td style="background-color: #fff;">-</td>
+                        <td style="background-color: #e0f7fa;">${todayPlan > 0 ? todayPlan.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
                         <td style="background-color: #fffacd;">${pctActVsTodayPlan === Infinity ? '∞' : pctActVsTodayPlan.toFixed(2) + '%'}</td>
+                        <td style="background-color: #fff;">${actLf > 0 ? actLf.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                        <td style="background-color: #fff;">${actLf > 0 ? pctLf.toFixed(2) + '%' : '0.00%'}</td>
                     </tr>
                 `;
             } else {
                 html += `
                     <tr>
-                        <td style="position: sticky; left: 0; background-color: #f1f5f9; font-weight: bold;">${est}</td>
-                        <td>${actJam > 0 ? actJam.toLocaleString('id-ID') : '-'}</td>
-                        <td>-</td>
-                        <td style="background-color: #fffacd;">${actAkumulasi > 0 ? actAkumulasi.toLocaleString('id-ID') : '-'}</td>
-                        <td style="background-color: #e0f7fa;">${planJam > 0 ? planJam.toLocaleString('id-ID') : '-'}</td>
-                        <td style="background-color: ${pctActVsPlanJam >= 100 ? '#90ee90' : (pctActVsPlanJam === 0 ? '#90ee90' : '#ffcccb')}; color: ${pctActVsPlanJam >= 100 ? '#000' : (pctActVsPlanJam === 0 ? '#000' : 'red')}; font-weight: bold;">
+                        <td style="position: sticky; left: 0; background-color: #fff; text-align: left;">${getAbbr(est)}</td>
+                        <td>${actJam > 0 ? actJam.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                        <td>${actTripAkumulasi > 0 ? actTripAkumulasi : '-'}</td>
+                        <td style="background-color: #fffacd;">${actAkumulasi > 0 ? actAkumulasi.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                        <td style="background-color: #e0f7fa;">${planJam > 0 ? planJam.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                        <td style="background-color: ${pctActVsPlanJam >= 100 ? '#90ee90' : (pctActVsPlanJam === 0 ? '#90ee90' : '#ff0000')}; color: #000;">
                             ${pctActVsPlanJam === Infinity ? '∞' : pctActVsPlanJam.toFixed(2) + '%'}
                         </td>
-                        <td style="background-color: #e0f7fa;">${todayPlan > 0 ? todayPlan.toLocaleString('id-ID') : '-'}</td>
+                        <td style="background-color: #e0f7fa;">${todayPlan > 0 ? todayPlan.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
                         <td style="background-color: #fffacd;">${pctActVsTodayPlan === Infinity ? '∞' : pctActVsTodayPlan.toFixed(2) + '%'}</td>
+                        <td style="background-color: #fff;">${actLf > 0 ? actLf.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                        <td style="background-color: #fff;">${actLf > 0 ? pctLf.toFixed(2) + '%' : '0.00%'}</td>
                     </tr>
                 `;
             }
@@ -6574,34 +6879,39 @@ window.renderTonaseMonitorTable = async (isHistorical = false) => {
         // Total row
         const totalPctActVsPlanJam = (!isHistorical && totalPlanJam > 0) ? (totalActJam / totalPlanJam * 100) : ((!isHistorical && totalActJam > 0) ? Infinity : 0);
         const totalPctActVsTodayPlan = totalTodayPlan > 0 ? (totalActAkumulasi / totalTodayPlan * 100) : (totalActAkumulasi > 0 ? Infinity : 0);
+        const totalPctLf = totalActAkumulasi > 0 ? (totalActLf / totalActAkumulasi * 100) : 0;
         
         if (isHistorical) {
             html += `
-                    <tr style="font-weight: bold; background-color: #f8cbad;">
-                        <td style="position: sticky; left: 0; background-color: #f8cbad;">TOTAL FFB</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td style="background-color: #ffe600;">${totalActAkumulasi.toLocaleString('id-ID')}</td>
+                    <tr style="font-weight: bold;">
+                        <td style="position: sticky; left: 0; background-color: #f8cbad; text-align: left;">TOTAL</td>
+                        <td style="background-color: #fff;">-</td>
+                        <td style="background-color: #fff;">${totalActTripAkumulasi > 0 ? totalActTripAkumulasi : '-'}</td>
+                        <td style="background-color: #ffe600;">${totalActAkumulasi > 0 ? totalActAkumulasi.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'}</td>
                         <td style="background-color: #87ceeb;">-</td>
-                        <td style="background-color: #f8cbad;">-</td>
-                        <td style="background-color: #87ceeb;">${totalTodayPlan.toLocaleString('id-ID')}</td>
+                        <td style="background-color: #90ee90;">-</td>
+                        <td style="background-color: #87ceeb;">${totalTodayPlan > 0 ? totalTodayPlan.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'}</td>
                         <td style="background-color: #ffe600;">${totalPctActVsTodayPlan === Infinity ? '∞' : totalPctActVsTodayPlan.toFixed(2) + '%'}</td>
+                        <td style="background-color: #fff;">${totalActLf > 0 ? totalActLf.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'}</td>
+                        <td style="background-color: #fff;">${totalActLf > 0 ? totalPctLf.toFixed(2) + '%' : '0.00%'}</td>
                     </tr>
                 </tbody></table>
             `;
         } else {
             html += `
-                    <tr style="font-weight: bold; background-color: #f8cbad;">
-                        <td style="position: sticky; left: 0; background-color: #f8cbad;">TOTAL FFB</td>
-                        <td>${totalActJam.toLocaleString('id-ID')}</td>
-                        <td>-</td>
-                        <td style="background-color: #ffe600;">${totalActAkumulasi.toLocaleString('id-ID')}</td>
-                        <td style="background-color: #87ceeb;">${totalPlanJam.toLocaleString('id-ID')}</td>
-                        <td style="background-color: ${totalPctActVsPlanJam >= 100 ? '#90ee90' : (totalPctActVsPlanJam === 0 ? '#90ee90' : '#ff0000')}; color: ${totalPctActVsPlanJam >= 100 ? '#000' : (totalPctActVsPlanJam === 0 ? '#000' : '#fff')};">
+                    <tr style="font-weight: bold;">
+                        <td style="position: sticky; left: 0; background-color: #f8cbad; text-align: left;">TOTAL</td>
+                        <td style="background-color: #fff;">${totalActJam > 0 ? totalActJam.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'}</td>
+                        <td style="background-color: #fff;">${totalActTripAkumulasi > 0 ? totalActTripAkumulasi : '-'}</td>
+                        <td style="background-color: #ffe600;">${totalActAkumulasi > 0 ? totalActAkumulasi.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'}</td>
+                        <td style="background-color: #87ceeb;">${totalPlanJam > 0 ? totalPlanJam.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'}</td>
+                        <td style="background-color: ${totalPctActVsPlanJam >= 100 ? '#90ee90' : (totalPctActVsPlanJam === 0 ? '#90ee90' : '#ff0000')}; color: #000;">
                             ${totalPctActVsPlanJam === Infinity ? '∞' : totalPctActVsPlanJam.toFixed(2) + '%'}
                         </td>
-                        <td style="background-color: #87ceeb;">${totalTodayPlan.toLocaleString('id-ID')}</td>
+                        <td style="background-color: #87ceeb;">${totalTodayPlan > 0 ? totalTodayPlan.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'}</td>
                         <td style="background-color: #ffe600;">${totalPctActVsTodayPlan === Infinity ? '∞' : totalPctActVsTodayPlan.toFixed(2) + '%'}</td>
+                        <td style="background-color: #fff;">${totalActLf > 0 ? totalActLf.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'}</td>
+                        <td style="background-color: #fff;">${totalActLf > 0 ? totalPctLf.toFixed(2) + '%' : '0.00%'}</td>
                     </tr>
                 </tbody></table>
             `;
@@ -6609,13 +6919,36 @@ window.renderTonaseMonitorTable = async (isHistorical = false) => {
         
         container.innerHTML = html;
         
+        // Update summary info
+        const dateInput = document.getElementById('monitor-tonase-date');
+        const hourInput = document.getElementById('monitor-tonase-hour');
+        
+        if (dateInput && dateInput.value) {
+            const parts = dateInput.value.split('-');
+            if (parts.length === 3) {
+                document.getElementById('summary-tanggal').innerText = `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+        }
+        if (hourInput && hourInput.value) {
+            document.getElementById('summary-jam').innerText = hourInput.value;
+        }
+        const st = document.getElementById('summary-total');
+        if (st) {
+            st.innerText = totalActAkumulasi.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        if (typeof window.loadPrimeTimeChart === 'function') {
+            window.loadPrimeTimeChart();
+        }
+        
+        // Call render daily monitor tables
+        if (!isHistorical && typeof window.renderDailyMonitorTables === 'function') {
+            window.renderDailyMonitorTables(mill, date, supplyChain, totalActAkumulasi, estateFfbAkumulasiMap);
+        }
+        
     } catch(e) {
         console.error(e);
         container.innerHTML = '<div style="text-align:center; padding: 20px; color:red;">Gagal memuat tabel monitoring.</div>';
-    }
-    
-    if (typeof window.loadPrimeTimeChart === 'function') {
-        window.loadPrimeTimeChart();
     }
 };
 
@@ -7096,4 +7429,516 @@ window.renderUpkeepMonthlyTable = (data, month, selectedType) => {
     
     html += `</tbody></table>`;
     container.innerHTML = html;
+};
+
+// ==============================================
+// DAILY MONITOR (LF, JJK, DESPATCH)
+// ==============================================
+
+window.openDailyMonitorModal = () => {
+    document.getElementById('daily-monitor-modal').style.display = 'flex';
+    document.getElementById('dm-date').value = window.getLocalDate();
+    window.loadDailyMonitorInputData();
+};
+
+window.loadDailyMonitorInputData = async () => {
+    const date = document.getElementById('dm-date').value;
+    if(!date) return;
+    
+    let mill = currentUser.estate;
+    if(!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
+    
+    document.getElementById('dm-lf-list').innerHTML = 'Memuat...';
+    document.getElementById('dm-efb-list').innerHTML = 'Memuat...';
+    document.getElementById('dm-despatch-list').innerHTML = 'Memuat...';
+    
+    try {
+        const [masterRes, dmRes] = await Promise.all([
+            fetch(`${API_URL}/master/${mill}`),
+            fetch(`${API_URL}/daily-monitor/${mill}/${date}`)
+        ]);
+        
+        const master = await masterRes.json();
+        const dm = await dmRes.json();
+        
+        const config = dm.config || {};
+        const lfData = dm.lf || [];
+        const efbData = dm.efb || [];
+        const despatchData = dm.despatch || [];
+        
+        // Fill Config
+        let efbRatio = config.efb_ratio;
+        let sisaKemarin = config.sisa_kemarin_jjk;
+
+        if (efbRatio === undefined || sisaKemarin === undefined) {
+            const prevDateObj = new Date(date);
+            prevDateObj.setDate(prevDateObj.getDate() - 1);
+            const prevDateStr = prevDateObj.toISOString().split('T')[0];
+            
+            try {
+                const [prevDmRes, prevTonaseRes] = await Promise.all([
+                    fetch(`${API_URL}/daily-monitor/${mill}/${prevDateStr}`),
+                    fetch(`${API_URL}/tonase/${mill}/${prevDateStr}`)
+                ]);
+                
+                const prevDm = await prevDmRes.json();
+                const prevTonase = await prevTonaseRes.json();
+                const prevConfig = prevDm.config || {};
+                
+                if (efbRatio === undefined) {
+                    efbRatio = prevConfig.efb_ratio !== undefined ? prevConfig.efb_ratio : "";
+                }
+                
+                if (sisaKemarin === undefined) {
+                    const pEfbRatio = parseFloat(prevConfig.efb_ratio) || 0;
+                    const pSisaKemarin = parseFloat(prevConfig.sisa_kemarin_jjk) || 0;
+                    const pIsProcessing = prevConfig.is_processing !== undefined ? prevConfig.is_processing : 1;
+                    
+                    let pTotalFfb = 0;
+                    prevTonase.forEach(t => pTotalFfb += (parseFloat(t.realized_kg) || 0) / 1000);
+                    
+                    const pJjkProduksi = pIsProcessing == 1 ? pTotalFfb * (pEfbRatio / 100) : 0;
+                    
+                    let pTotalEfbEvakuasi = 0;
+                    (prevDm.efb || []).forEach(e => pTotalEfbEvakuasi += parseFloat(e.tonase) || 0);
+                    
+                    sisaKemarin = pSisaKemarin + pJjkProduksi - pTotalEfbEvakuasi;
+                    if (sisaKemarin < 0) sisaKemarin = 0;
+                }
+            } catch (e) {
+                console.warn('Could not auto-fill from previous day:', e);
+            }
+        }
+
+        document.getElementById('dm-is-processing').value = config.is_processing !== undefined ? config.is_processing : "1";
+        document.getElementById('dm-efb-ratio').value = efbRatio !== undefined && efbRatio !== "" ? efbRatio : "";
+        document.getElementById('dm-sisa-kemarin').value = sisaKemarin !== undefined && sisaKemarin !== "" ? (typeof sisaKemarin === 'number' ? sisaKemarin.toFixed(2) : sisaKemarin) : "";
+        
+        const isLocked = config.is_locked === 1;
+        const canLock = ['Admin', 'Manager Mill', 'Supervisor Mill', 'Manager', 'Askep'].includes(currentUser.role);
+        const isKraniMill = currentUser.role === 'Krani Mill';
+        
+        document.getElementById('dm-is-processing').disabled = isLocked && !canLock;
+        document.getElementById('dm-efb-ratio').disabled = isKraniMill || (isLocked && !canLock);
+        document.getElementById('dm-sisa-kemarin').disabled = isKraniMill || (isLocked && !canLock);
+        document.getElementById('btn-lock-mill-config').style.display = canLock ? 'inline-block' : 'none';
+        
+        if (isKraniMill) {
+            document.getElementById('mill-config-status').innerText = isLocked ? "Terkunci" : "Ratio & Sisa JJK dilock untuk Krani Mill";
+        } else {
+            document.getElementById('mill-config-status').innerText = isLocked ? "Terkunci (Anda memiliki akses)" : "Belum dilock";
+        }        
+        // Render LF Form
+        let lfHtml = '<table class="data-table" style="width:100%; font-size:0.8rem;"><thead><tr><th>Estate</th><th>Actual LF Only (Ton)</th></tr></thead><tbody>';
+        master.supply_chain.forEach(sc => {
+            const eData = lfData.find(x => x.estate === sc.estate) || { actual_lf_tonase: '' };
+            lfHtml += `<tr>
+                <td>${sc.estate}</td>
+                <td><input type="number" step="0.01" class="form-control inp-lf-act" data-estate="${sc.estate}" value="${eData.actual_lf_tonase}" onpaste="window.handleTablePaste(event, this)"></td>
+            </tr>`;
+        });
+        lfHtml += '</tbody></table>';
+        document.getElementById('dm-lf-list').innerHTML = lfHtml;
+        
+        // Render EFB Transport Form
+        let efbHtml = '<table class="data-table" style="width:100%; font-size:0.8rem;"><thead><tr><th>Estate</th><th>Tonase (Ton)</th><th>Trip</th></tr></thead><tbody>';
+        master.supply_chain.forEach(sc => {
+            const eData = efbData.find(x => x.estate === sc.estate) || { tonase: '', trip: '' };
+            efbHtml += `<tr>
+                <td>${sc.estate}</td>
+                <td><input type="number" step="0.01" class="form-control inp-efb-ton" data-estate="${sc.estate}" value="${eData.tonase}" onpaste="window.handleTablePaste(event, this)"></td>
+                <td><input type="number" class="form-control inp-efb-trip" data-estate="${sc.estate}" value="${eData.trip}" onpaste="window.handleTablePaste(event, this)"></td>
+            </tr>`;
+        });
+        efbHtml += '</tbody></table>';
+        document.getElementById('dm-efb-list').innerHTML = efbHtml;
+        
+        // Render Despatch Form
+        const products = ['CPO', 'PK', 'CANGKANG'];
+        let dHtml = '<table class="data-table" style="width:100%; font-size:0.8rem;"><thead><tr><th>Product</th><th>Actual Trip</th><th>Tonase (MT)</th></tr></thead><tbody>';
+        products.forEach(p => {
+            const pData = despatchData.find(x => x.product === p) || { trip: '', tonase: '' };
+            dHtml += `<tr>
+                <td>${p}</td>
+                <td><input type="number" class="form-control inp-dsp-trip" data-prod="${p}" value="${pData.trip}" onpaste="window.handleTablePaste(event, this)"></td>
+                <td><input type="number" step="0.01" class="form-control inp-dsp-ton" data-prod="${p}" value="${pData.tonase}" onpaste="window.handleTablePaste(event, this)"></td>
+            </tr>`;
+        });
+        dHtml += '</tbody></table>';
+        document.getElementById('dm-despatch-list').innerHTML = dHtml;
+        
+    } catch(e) {
+        console.error(e);
+        alert('Gagal memuat data harian');
+    }
+};
+
+window.saveMillConfig = async () => {
+    const date = document.getElementById('dm-date').value;
+    if(!date) return;
+    let mill = currentUser.estate;
+    if(!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
+    
+    const is_processing = parseInt(document.getElementById('dm-is-processing').value) || 0;
+    const efb_ratio = parseFloat(document.getElementById('dm-efb-ratio').value) || 0;
+    const sisa_kemarin_jjk = parseFloat(document.getElementById('dm-sisa-kemarin').value) || 0;
+    
+    try {
+        await fetch(`${API_URL}/daily-monitor/config`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                date, mill, is_processing, efb_ratio, sisa_kemarin_jjk, is_locked: true
+            })
+        });
+        document.getElementById('mill-config-status').innerText = 'Berhasil dilock!';
+        window.renderTonaseMonitorTable(); // Refresh tabel
+    } catch(e) {
+        alert('Gagal simpan config');
+    }
+};
+
+window.saveDailyMonitorData = async () => {
+    const date = document.getElementById('dm-date').value;
+    if(!date) return alert("Pilih tanggal");
+    let mill = currentUser.estate;
+    if(!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
+    
+    // Collect LF
+    const lfEntries = [];
+    document.querySelectorAll('.inp-lf-act').forEach((el, i) => {
+        const est = el.getAttribute('data-estate');
+        const act = el.value;
+        lfEntries.push({ estate: est, actual_lf_tonase: parseFloat(act)||0, actual_ffb_tonase: 0 });
+    });
+    
+    // Collect EFB
+    const efbEntries = [];
+    document.querySelectorAll('.inp-efb-ton').forEach((el, i) => {
+        const est = el.getAttribute('data-estate');
+        const ton = el.value;
+        const trip = document.querySelectorAll('.inp-efb-trip')[i].value;
+        efbEntries.push({ estate: est, tonase: parseFloat(ton)||0, trip: parseInt(trip)||0 });
+    });
+    
+    // Collect Despatch
+    const dspEntries = [];
+    document.querySelectorAll('.inp-dsp-trip').forEach((el, i) => {
+        const p = el.getAttribute('data-prod');
+        const trip = el.value;
+        const ton = document.querySelectorAll('.inp-dsp-ton')[i].value;
+        dspEntries.push({ product: p, trip: parseInt(trip)||0, tonase: parseFloat(ton)||0 });
+    });
+    
+    try {
+        await Promise.all([
+            fetch(`${API_URL}/daily-monitor/lf`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({date, mill, entries: lfEntries}) }),
+            fetch(`${API_URL}/daily-monitor/efb`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({date, mill, entries: efbEntries}) }),
+            fetch(`${API_URL}/daily-monitor/despatch`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({date, mill, entries: dspEntries}) }),
+        ]);
+        alert("Realisasi harian berhasil disimpan");
+        document.getElementById('daily-monitor-modal').style.display = 'none';
+        if (typeof window.renderTonaseMonitorTable === 'function') window.renderTonaseMonitorTable();
+    } catch(e) {
+        console.error(e);
+        alert("Gagal menyimpan data harian");
+    }
+};
+
+window.handleTablePaste = (e, cell) => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    if (!text) return;
+    
+    const rows = text.split(/\r?\n/).filter(r => r.trim() !== '');
+    
+    const tr = cell.closest('tr');
+    const tbody = cell.closest('tbody');
+    if (!tr || !tbody) return;
+    
+    const allRows = Array.from(tbody.querySelectorAll('tr'));
+    const startRowIdx = allRows.indexOf(tr);
+    
+    const td = cell.closest('td');
+    const allTds = Array.from(tr.querySelectorAll('td'));
+    const startColIdx = allTds.indexOf(td);
+    
+    rows.forEach((rowStr, rOffset) => {
+        const cols = rowStr.split(/\t/);
+        const targetRow = allRows[startRowIdx + rOffset];
+        if (targetRow) {
+            const targetTds = targetRow.querySelectorAll('td');
+            cols.forEach((colStr, cOffset) => {
+                const targetTd = targetTds[startColIdx + cOffset];
+                if (targetTd) {
+                    const input = targetTd.querySelector('input');
+                    if (input) {
+                        let val = colStr.replace(/,/g, '').trim();
+                        if (!isNaN(val) && val !== '') {
+                            input.value = val;
+                        }
+                    }
+                }
+            });
+        }
+    });
+};
+
+window.renderDailyMonitorTables = async (mill, date, supplyChain, totalFfb, estateFfbAkumulasiMap = {}) => {
+    const dContainer = document.getElementById('despatch-monitor-table-container');
+    const lfContainer = document.getElementById('lf-monitor-table-container');
+    const jContainer = document.getElementById('jjk-monitor-table-container');
+    if (!dContainer || !jContainer || !lfContainer) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/daily-monitor/${mill}/${date}`);
+        const dm = await res.json();
+        
+        const lfData = dm.lf || [];
+        const efbData = dm.efb || [];
+        const despatchData = dm.despatch || [];
+        const config = dm.config || { is_processing: 0, efb_ratio: 0, sisa_kemarin_jjk: 0 };
+        
+        const abbrMap = {
+            'Bunga Tanjung Estate': 'BTEE',
+            'Air Bikuk Estate': 'ABKE',
+            'Air Buluh Estate': 'ABEE',
+            'Malin Deman Estate': 'MDEE',
+            'Sungai Teramang Estate': 'STGE',
+            'KMD': 'KMD',
+            'KHJLT': 'KHJLT',
+            'PLAB': 'PLAB',
+            'PLAM': 'PLAM',
+            'Small Holder': '3rd Prty'
+        };
+        const getAbbr = (estName) => abbrMap[estName] || estName.replace(' Estate', 'E');
+        
+        // Render Despatch Table
+        try {
+            let dHtml = `
+            <table class="data-table" style="text-align: right; width: 100%;">
+                <thead>
+                    <tr>
+                        <th style="background-color: #000; color: #fff; text-align: left;">PRODUCT</th>
+                        <th style="background-color: #000; color: #fff;">ACTUAL TRIP</th>
+                        <th style="background-color: #000; color: #fff;">TONASE<br>(MT)</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        ['CPO', 'PK', 'CANGKANG'].forEach(p => {
+            const dRow = despatchData.find(x => x.product === p) || { trip: '-', tonase: '-' };
+            dHtml += `<tr>
+                <td style="text-align: left; font-weight: bold; background-color: #f1f5f9;">${p}</td>
+                <td style="background-color: #fff;">${dRow.trip !== '-' ? dRow.trip : '-'}</td>
+                <td style="background-color: #fff;">${dRow.tonase !== '-' ? parseFloat(dRow.tonase).toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+            </tr>`;
+        });
+        dHtml += `</tbody></table>`;
+        dContainer.innerHTML = dHtml;
+        
+        // Render LF Table
+        if (lfContainer) {
+            lfContainer.innerHTML = '';
+            lfContainer.style.display = 'none';
+        }
+    } catch (err) { console.error('Error rendering Despatch/LF:', err); }
+        
+        // 2. Render JJK Table in right side container
+        try {
+            let jjkProduksi = 0;
+        if (config.is_processing === 1) {
+            jjkProduksi = totalFfb * (config.efb_ratio / 100);
+        }
+        const sisaKemarin = parseFloat(config.sisa_kemarin_jjk) || 0;
+        
+        const efbMtdData = dm.efb_mtd || [];
+        
+        let jHtml = `
+            <div style="background: #e2e8f0; padding: 10px; margin-bottom: 10px; font-family: monospace; font-size: 14px;">
+                <div style="display: flex; justify-content: space-between; width: 300px; margin-bottom: 5px;">
+                    <span style="font-weight: bold;">JJK SISA KEMARIN</span>
+                    <strong style="font-size: 1.1em;">${sisaKemarin.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TON</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; width: 300px;">
+                    <span style="font-weight: bold;">JJK PRODUKSI</span>
+                    <strong style="font-size: 1.1em;">${jjkProduksi.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TON</strong>
+                </div>
+            </div>
+            <table class="data-table" style="text-align: right; width: 100%;">
+                <thead>
+                    <tr>
+                        <th style="background-color: #000; color: #fff; text-align: left;">ESTATE</th>
+                        <th style="background-color: #000; color: #fff;">ACTUAL<br>TONASE</th>
+                        <th style="background-color: #000; color: #fff;">ACT MTD</th>
+                        <th style="background-color: #000; color: #fff;">TRIP</th>
+                        <th style="background-color: #e2e8f0; color: #000;">TARGET</th>
+                        <th style="background-color: #e2e8f0; color: #000;">TARGET MTD</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        let tEfbTon = 0, tEfbTonMtd = 0, tEfbTrip = 0, tEfbTarget = 0, tEfbTargetMtd = 0;
+            supplyChain.forEach(est => {
+                const eRow = efbData.find(x => x.estate === est);
+                const eMtd = efbMtdData.find(x => x.estate === est);
+                
+                const ton = eRow ? (parseFloat(eRow.tonase) || 0) : 0;
+                const trip = eRow ? (parseInt(eRow.trip) || 0) : 0;
+                const target = eRow ? (parseFloat(eRow.target) || 0) : 0;
+                const tonMtd = eMtd ? (parseFloat(eMtd.tonase_mtd) || 0) : 0;
+                const targetMtd = eMtd ? (parseFloat(eMtd.target_mtd) || 0) : 0;
+                
+                tEfbTon += ton;
+                tEfbTrip += trip;
+                tEfbTarget += target;
+                tEfbTonMtd += tonMtd;
+                tEfbTargetMtd += targetMtd;
+                
+                jHtml += `<tr>
+                    <td style="text-align: left; background-color: #fff;">${getAbbr(est)}</td>
+                    <td style="background-color: #fff;">${ton > 0 ? ton.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'}</td>
+                    <td style="background-color: #fff;">${tonMtd > 0 ? tonMtd.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'}</td>
+                    <td style="background-color: #fff;">${trip > 0 ? trip : '0'}</td>
+                    <td style="background-color: #f1f5f9; font-weight: bold;">${target > 0 ? target.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                    <td style="background-color: #f1f5f9; font-weight: bold;">${targetMtd > 0 ? targetMtd.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                </tr>`;
+            });
+            
+            const sisaSekarang = sisaKemarin + jjkProduksi - tEfbTon;
+            
+            jHtml += `
+                <tr style="background-color: #f8cbad; font-weight: bold;">
+                    <td style="background-color: #f8cbad; text-align: left;">TOTAL</td>
+                    <td style="background-color: #f8cbad;">${tEfbTon.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td style="background-color: #f8cbad;">${tEfbTonMtd.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td style="background-color: #f8cbad;">${tEfbTrip}</td>
+                    <td style="background-color: #f8cbad;">${tEfbTarget > 0 ? tEfbTarget.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                    <td style="background-color: #f8cbad;">${tEfbTargetMtd > 0 ? tEfbTargetMtd.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                </tr>
+                <tr style="background-color: #f8cbad; font-weight: bold; font-size: 1.1em;">
+                    <td colspan="3" style="background-color: #f8cbad; text-align: left;">SISA JJK SEKARANG</td>
+                    <td colspan="3" style="background-color: #f8cbad; text-align: right;">${sisaSekarang.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TON</td>
+                </tr>
+            </tbody></table>`;
+            
+            jContainer.innerHTML = jHtml;
+        } catch (err) {
+            console.error('Error rendering JJK:', err);
+            jContainer.innerHTML = '<div style="color:red; padding:10px;">Gagal memuat JJK / EFB</div>';
+        }
+        
+    } catch(e) {
+        console.error("renderDailyMonitorTables error:", e);
+        alert("Error loading daily monitor tables: " + e.message);
+    }
+};
+
+// ==============================================
+// DRAGGABLE MODALS (Global Event Delegation)
+// ==============================================
+let activeDragModal = null;
+let isDragging = false;
+let startX, startY, initialX, initialY;
+
+document.addEventListener('mousedown', (e) => {
+    const header = e.target.closest('.modal-header');
+    if (!header) return;
+    if (e.target.closest('.modal-close') || e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    
+    const modal = header.closest('.modal-content');
+    if (!modal) return;
+    
+    activeDragModal = modal;
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    
+    const style = window.getComputedStyle(modal);
+    const matrix = new WebKitCSSMatrix(style.transform);
+    initialX = matrix.m41;
+    initialY = matrix.m42;
+    
+    modal.style.transition = 'none';
+    e.preventDefault();
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (!isDragging || !activeDragModal) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    activeDragModal.style.transform = `translate(${initialX + dx}px, ${initialY + dy}px)`;
+});
+
+document.addEventListener('mouseup', () => {
+    if (isDragging && activeDragModal) {
+        isDragging = false;
+        activeDragModal.style.transition = 'opacity 0.3s ease';
+        activeDragModal = null;
+    }
+});
+
+window.exportDashboard = function() {
+    const container = document.getElementById('export-dashboard-wrapper');
+    if(!container) return;
+    
+    const controls = container.querySelector('div[style*="justify-content: flex-end"]');
+    if(controls) controls.style.display = 'none';
+    
+    const glassCards = container.querySelectorAll('.glass-card');
+    const originalStyles = [];
+    glassCards.forEach(card => {
+        originalStyles.push({
+            bg: card.style.backgroundColor,
+            filter: card.style.backdropFilter,
+            shadow: card.style.boxShadow,
+            border: card.style.border
+        });
+        card.style.backgroundColor = '#ffffff';
+        card.style.backdropFilter = 'none';
+        card.style.boxShadow = 'none';
+        card.style.border = '1px solid #cbd5e1';
+    });
+    
+    const dateInput = document.getElementById('monitor-tonase-date').value;
+    const hourInput = document.getElementById('monitor-tonase-hour').value;
+    
+    let formattedDate = "";
+    if(dateInput) {
+        const d = new Date(dateInput);
+        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        formattedDate = `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    }
+    
+    const fileName = `monitoring FFB dan EFB pukul ${hourInput || '00:00'} ${formattedDate}.png`;
+    
+    html2canvas(container, {
+        scale: 1.5,
+        useCORS: true,
+        backgroundColor: '#f8fafc',
+        logging: false
+    }).then(canvas => {
+        if(controls) controls.style.display = 'flex';
+        glassCards.forEach((card, idx) => {
+            card.style.backgroundColor = originalStyles[idx].bg;
+            card.style.backdropFilter = originalStyles[idx].filter;
+            card.style.boxShadow = originalStyles[idx].shadow;
+            card.style.border = originalStyles[idx].border;
+        });
+        
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = canvas.toDataURL('image/png', 1.0);
+        link.click();
+    }).catch(err => {
+        console.error('Export error:', err);
+        if(controls) controls.style.display = 'flex';
+        glassCards.forEach((card, idx) => {
+            card.style.backgroundColor = originalStyles[idx].bg;
+            card.style.backdropFilter = originalStyles[idx].filter;
+            card.style.boxShadow = originalStyles[idx].shadow;
+            card.style.border = originalStyles[idx].border;
+        });
+        alert('Gagal menyimpan gambar dashboard');
+    });
 };
