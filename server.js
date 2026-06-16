@@ -344,6 +344,27 @@ app.put('/api/users/:id', async (req, res) => {
     }
 });
 
+app.put('/api/users/:id/password', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const { oldPassword, newPassword } = req.body;
+        
+        const userCheck = await pool.query('SELECT password FROM users WHERE id = $1', [id]);
+        if (userCheck.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'User tidak ditemukan' });
+        }
+        
+        if (userCheck.rows[0].password !== oldPassword) {
+            return res.status(401).json({ success: false, message: 'Password lama salah!' });
+        }
+        
+        await pool.query('UPDATE users SET password = $1 WHERE id = $2', [newPassword, id]);
+        res.json({ success: true, message: 'Password berhasil diubah' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.delete('/api/users/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);

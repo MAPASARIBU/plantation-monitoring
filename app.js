@@ -7947,3 +7947,54 @@ window.exportDashboard = function() {
         alert('Gagal menyimpan gambar dashboard');
     });
 };
+
+window.handleChangePassword = async function(e) {
+    e.preventDefault();
+    const oldPass = document.getElementById('cp-old').value;
+    const newPass = document.getElementById('cp-new').value;
+    const confirmPass = document.getElementById('cp-confirm').value;
+    const errorEl = document.getElementById('cp-error');
+    const submitBtn = document.getElementById('btn-submit-cp');
+    
+    errorEl.style.display = 'none';
+    
+    if (newPass !== confirmPass) {
+        errorEl.innerText = 'Konfirmasi password tidak cocok!';
+        errorEl.style.display = 'block';
+        return;
+    }
+    
+    if (newPass.length < 4) {
+        errorEl.innerText = 'Password baru minimal 4 karakter.';
+        errorEl.style.display = 'block';
+        return;
+    }
+    
+    submitBtn.disabled = true;
+    submitBtn.innerText = 'Loading...';
+    
+    try {
+        const res = await fetch(`${API_URL}/users/${currentUser.id}/password`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ oldPassword: oldPass, newPassword: newPass })
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+            alert('Password berhasil diubah! Silakan login kembali dengan password baru Anda.');
+            localStorage.removeItem('user');
+            window.location.reload();
+        } else {
+            errorEl.innerText = data.message || 'Gagal mengubah password.';
+            errorEl.style.display = 'block';
+        }
+    } catch (err) {
+        console.error(err);
+        errorEl.innerText = 'Terjadi kesalahan sistem.';
+        errorEl.style.display = 'block';
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Update Password';
+    }
+};
