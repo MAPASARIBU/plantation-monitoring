@@ -987,6 +987,27 @@ app.get('/api/daily-monitor/:mill/:date', async (req, res) => {
     }
 });
 
+app.get('/api/daily-monitor/:mill/latest-efb-target', async (req, res) => {
+    try {
+        const { mill } = req.params;
+        const date = req.query.date;
+        const query = `
+            SELECT estate, target 
+            FROM efb_transport_daily e1
+            WHERE mill = $1 AND date < $2
+            AND date = (
+                SELECT MAX(date) 
+                FROM efb_transport_daily e2 
+                WHERE e2.mill = e1.mill AND e2.estate = e1.estate AND e2.target IS NOT NULL AND e2.target > 0 AND e2.date < $2
+            )
+        `;
+        const result = await pool.query(query, [mill, date]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/daily-monitor/lf', async (req, res) => {
     try {
         const { date, mill, entries } = req.body;

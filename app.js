@@ -6437,6 +6437,30 @@ window.loadTonaseInputData = async () => {
                 efbData = dmData.efb || [];
             }
             
+            let hasTargets = false;
+            if (efbData.length > 0) {
+                hasTargets = efbData.some(e => e.target && parseFloat(e.target) > 0);
+            }
+            
+            if (!hasTargets) {
+                try {
+                    const latestRes = await fetch(`${API_URL}/daily-monitor/${mill}/latest-efb-target?date=${date}`);
+                    if (latestRes.ok) {
+                        const latestData = await latestRes.json();
+                        latestData.forEach(latestEfb => {
+                            let existing = efbData.find(e => e.estate === latestEfb.estate);
+                            if (existing) {
+                                existing.target = latestEfb.target;
+                            } else {
+                                efbData.push({ estate: latestEfb.estate, target: latestEfb.target });
+                            }
+                        });
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch latest efb target", err);
+                }
+            }
+            
             html += `<h4 style="margin-top: 25px; margin-bottom: 10px; color: var(--primary-color);">TARGET EFB (TONASE HARIAN)</h4>`;
             html += `<div style="overflow-x: auto; max-width: 100%; padding-bottom: 10px; border: 1px solid #cbd5e1; border-radius: 4px;">
             <table class="data-table" style="min-width: 600px; border-collapse: collapse; width: 100%;">
