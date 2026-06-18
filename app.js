@@ -4856,15 +4856,25 @@ window.renderMasterTables = () => {
                 'Talang Petai Estate', 'Sungai Kiang Estate', 'Air Majunto Estate',
                 'Small Holder'
             ];
-            const currentSC = (masterData.supply_chain || []).map(sc => sc.estate);
+            const currentSC = masterData.supply_chain || [];
             
             let scHtml = '';
             allEstates.forEach(est => {
-                const checked = currentSC.includes(est) ? 'checked' : '';
+                const scEntry = currentSC.find(sc => sc.estate === est);
+                const isFfb = scEntry ? scEntry.is_ffb : false;
+                const isEfb = scEntry ? scEntry.is_efb : false;
+                
                 scHtml += `
-                    <div style="display:flex; align-items:center; gap:10px; background:var(--background-color); padding:10px; border-radius:8px; border:1px solid var(--border-color);">
-                        <input type="checkbox" class="sc-checkbox" value="${est}" id="sc-${est.replace(/\s+/g, '-')}" ${checked} style="width:20px; height:20px;">
-                        <label for="sc-${est.replace(/\s+/g, '-')}" style="cursor:pointer; margin:0; font-weight:bold;">${est}</label>
+                    <div style="display:flex; flex-direction:column; gap:5px; background:var(--background-color); padding:10px; border-radius:8px; border:1px solid var(--border-color);">
+                        <strong style="margin:0;">${est}</strong>
+                        <div style="display:flex; gap:15px; margin-top:5px;">
+                            <label style="cursor:pointer; display:flex; align-items:center; gap:5px; font-weight:normal;">
+                                <input type="checkbox" class="sc-ffb-checkbox" data-estate="${est}" ${isFfb ? 'checked' : ''} style="width:18px; height:18px;"> FFB
+                            </label>
+                            <label style="cursor:pointer; display:flex; align-items:center; gap:5px; font-weight:normal;">
+                                <input type="checkbox" class="sc-efb-checkbox" data-estate="${est}" ${isEfb ? 'checked' : ''} style="width:18px; height:18px;"> EFB
+                            </label>
+                        </div>
                     </div>
                 `;
             });
@@ -5249,8 +5259,19 @@ window.addMasterBulk = async (type) => {
 
 
 window.saveSupplyChain = async () => {
-    const checkboxes = document.querySelectorAll('.sc-checkbox:checked');
-    const estates = Array.from(checkboxes).map(cb => cb.value);
+    const estatesMap = new Map();
+    document.querySelectorAll('.sc-ffb-checkbox').forEach(cb => {
+        const est = cb.getAttribute('data-estate');
+        if (!estatesMap.has(est)) estatesMap.set(est, { estate: est, is_ffb: false, is_efb: false });
+        estatesMap.get(est).is_ffb = cb.checked;
+    });
+    document.querySelectorAll('.sc-efb-checkbox').forEach(cb => {
+        const est = cb.getAttribute('data-estate');
+        if (!estatesMap.has(est)) estatesMap.set(est, { estate: est, is_ffb: false, is_efb: false });
+        estatesMap.get(est).is_efb = cb.checked;
+    });
+    
+    const estates = Array.from(estatesMap.values()).filter(e => e.is_ffb || e.is_efb);
     
     try {
         const res = await fetch(`${API_URL}/master/supply_chain/save`, {
@@ -6341,7 +6362,9 @@ window.loadTonaseInputData = async () => {
         }
         const masterRes = await fetch(`${API_URL}/master/${mill}`);
         const masterData = await masterRes.json();
-        const supplyChain = masterData.supply_chain.map(s => s.estate);
+        const supplyChainFFB = masterData.supply_chain.filter(s => s.is_ffb !== false).map(s => s.estate);
+        const supplyChainEFB = masterData.supply_chain.filter(s => s.is_efb !== false).map(s => s.estate);
+        const supplyChain = supplyChainFFB;
         
         if (supplyChain.length === 0) {
             container.innerHTML = '<div style="text-align:center; padding: 20px; color:red;">Belum ada supply chain yang diatur untuk Mill ini di Master Data.</div>';
@@ -6467,7 +6490,7 @@ window.loadTonaseInputData = async () => {
                 <thead>
                     <tr>
                         <th style="min-width: 60px; background: #f8cbad; border-bottom: 2px solid #ddd; padding: 8px;">TARGET</th>`;
-            supplyChain.forEach(est => {
+            supplyChainEFB.forEach(est => {
                 html += `<th style="background: #f8cbad; min-width: 100px; border-bottom: 2px solid #ddd; padding: 8px; font-size: 0.8rem;">${est.toUpperCase()}</th>`;
             });
             html += `</tr></thead><tbody><tr>`;
@@ -6476,7 +6499,7 @@ window.loadTonaseInputData = async () => {
             const canEditEfb = currentUser && ['Admin', 'Office Assistant Mill', 'Supervisor Mill', 'Manager Mill'].includes(currentUser.role);
             const disableAttrEfb = canEditEfb ? '' : 'disabled title="Akses ditolak. Hanya Office Assistant Mill, Supervisor Mill, dan Manager Mill yang dapat mengisi ini."';
 
-            supplyChain.forEach(est => {
+            supplyChainEFB.forEach(est => {
                 const existingEfb = efbData.find(e => e.estate === est);
                 let valEfb = '';
                 if (existingEfb && existingEfb.target) {
@@ -6740,7 +6763,9 @@ window.renderTonaseMonitorTable = async (isHistorical = false) => {
         const dmData = await dmRes.json();
         const lfData = dmData.lf || [];
         
-        const supplyChain = masterData.supply_chain.map(s => s.estate);
+        const supplyChainFFB = masterData.supply_chain.filter(s => s.is_ffb !== false).map(s => s.estate);
+        const supplyChainEFB = masterData.supply_chain.filter(s => s.is_efb !== false).map(s => s.estate);
+        const supplyChain = supplyChainFFB;
         
         if (supplyChain.length === 0) {
             container.innerHTML = '<div style="text-align:center; padding: 20px; color:red;">Belum ada supply chain.</div>';
@@ -6944,7 +6969,7 @@ window.renderTonaseMonitorTable = async (isHistorical = false) => {
         
         // Call render daily monitor tables
         if (!isHistorical && typeof window.renderDailyMonitorTables === 'function') {
-            window.renderDailyMonitorTables(mill, date, supplyChain, totalActAkumulasi, estateFfbAkumulasiMap);
+            window.renderDailyMonitorTables(mill, date, supplyChain, totalActAkumulasi, estateFfbAkumulasiMap, supplyChainEFB);
         }
         
     } catch(e) {
@@ -7685,7 +7710,8 @@ window.handleTablePaste = (e, cell) => {
     });
 };
 
-window.renderDailyMonitorTables = async (mill, date, supplyChain, totalFfb, estateFfbAkumulasiMap = {}) => {
+window.renderDailyMonitorTables = async (mill, date, supplyChain, totalFfb, estateFfbAkumulasiMap = {}, supplyChainEFB = null) => {
+    if (!supplyChainEFB) supplyChainEFB = supplyChain;
     const dContainer = document.getElementById('despatch-monitor-table-container');
     const lfContainer = document.getElementById('lf-monitor-table-container');
     const jContainer = document.getElementById('jjk-monitor-table-container');
@@ -7780,7 +7806,7 @@ window.renderDailyMonitorTables = async (mill, date, supplyChain, totalFfb, esta
                 <tbody>
         `;
         let tEfbTon = 0, tEfbTonMtd = 0, tEfbTrip = 0, tEfbTarget = 0, tEfbTargetMtd = 0;
-            supplyChain.forEach(est => {
+            supplyChainEFB.forEach(est => {
                 const eRow = efbData.find(x => x.estate === est);
                 const eMtd = efbMtdData.find(x => x.estate === est);
                 

@@ -162,7 +162,9 @@ async function initDB() {
         try { await pool.query("ALTER TABLE master_blok ADD COLUMN total_stand REAL DEFAULT 0"); } catch(e) {}
         await pool.query(`CREATE TABLE IF NOT EXISTS master_truk (id SERIAL PRIMARY KEY, estate TEXT, plate_number TEXT, supir TEXT)`);
         await pool.query(`CREATE TABLE IF NOT EXISTS master_supir (id SERIAL PRIMARY KEY, estate TEXT, name TEXT)`);
-        await pool.query(`CREATE TABLE IF NOT EXISTS master_supply_chain (id SERIAL PRIMARY KEY, mill TEXT, estate TEXT)`);
+        await pool.query(`CREATE TABLE IF NOT EXISTS master_supply_chain (id SERIAL PRIMARY KEY, mill TEXT, estate TEXT, is_ffb BOOLEAN DEFAULT TRUE, is_efb BOOLEAN DEFAULT TRUE)`);
+        try { await pool.query("ALTER TABLE master_supply_chain ADD COLUMN is_ffb BOOLEAN DEFAULT TRUE"); } catch(e) {}
+        try { await pool.query("ALTER TABLE master_supply_chain ADD COLUMN is_efb BOOLEAN DEFAULT TRUE"); } catch(e) {}
         await pool.query(`CREATE TABLE IF NOT EXISTS tonase_hourly (
             id SERIAL PRIMARY KEY,
             date TEXT,
@@ -610,7 +612,10 @@ app.post('/api/master/supply_chain/save', async (req, res) => {
         await pool.query('BEGIN');
         await pool.query('DELETE FROM master_supply_chain WHERE mill = $1', [mill]);
         for (const est of estates) {
-            await pool.query('INSERT INTO master_supply_chain (mill, estate) VALUES ($1, $2)', [mill, est]);
+            let estName = typeof est === 'string' ? est : est.estate;
+            let is_ffb = typeof est === 'string' ? true : (est.is_ffb !== undefined ? est.is_ffb : true);
+            let is_efb = typeof est === 'string' ? true : (est.is_efb !== undefined ? est.is_efb : true);
+            await pool.query('INSERT INTO master_supply_chain (mill, estate, is_ffb, is_efb) VALUES ($1, $2, $3, $4)', [mill, estName, is_ffb, is_efb]);
         }
         await pool.query('COMMIT');
         res.json({ success: true });
