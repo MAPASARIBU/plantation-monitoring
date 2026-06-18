@@ -7846,15 +7846,16 @@ window.renderDailyMonitorTables = async (mill, date, supplyChain, totalFfb, esta
                     <tr>
                         <th style="background-color: #000; color: #fff; text-align: left;">ESTATE</th>
                         <th style="background-color: #000; color: #fff;">ACTUAL<br>TONASE</th>
-                        <th style="background-color: #000; color: #fff;">ACT MTD</th>
-                        <th style="background-color: #000; color: #fff;">TRIP</th>
                         <th style="background-color: #e2e8f0; color: #000;">TARGET</th>
+                        <th style="background-color: #000; color: #fff;">TRIP</th>
+                        <th style="background-color: #000; color: #fff;">ACT MTD</th>
                         <th style="background-color: #e2e8f0; color: #000;">TARGET MTD</th>
+                        <th style="background-color: #000; color: #fff;">TRIP MTD</th>
                     </tr>
                 </thead>
                 <tbody>
         `;
-        let tEfbTon = 0, tEfbTonMtd = 0, tEfbTrip = 0, tEfbTarget = 0, tEfbTargetMtd = 0;
+        let tEfbTon = 0, tEfbTonMtd = 0, tEfbTrip = 0, tEfbTarget = 0, tEfbTargetMtd = 0, tEfbTripMtd = 0;
             supplyChainEFB.forEach(est => {
                 const eRow = efbData.find(x => x.estate === est);
                 const eMtd = efbMtdData.find(x => x.estate === est);
@@ -7864,20 +7865,23 @@ window.renderDailyMonitorTables = async (mill, date, supplyChain, totalFfb, esta
                 const target = eRow ? (parseFloat(eRow.target) || 0) : 0;
                 const tonMtd = eMtd ? (parseFloat(eMtd.tonase_mtd) || 0) : 0;
                 const targetMtd = eMtd ? (parseFloat(eMtd.target_mtd) || 0) : 0;
+                const tripMtd = eMtd ? (parseInt(eMtd.trip_mtd) || 0) : 0;
                 
                 tEfbTon += ton;
                 tEfbTrip += trip;
                 tEfbTarget += target;
                 tEfbTonMtd += tonMtd;
                 tEfbTargetMtd += targetMtd;
+                tEfbTripMtd += tripMtd;
                 
                 jHtml += `<tr>
                     <td style="text-align: left; background-color: #fff;">${getAbbr(est)}</td>
                     <td style="background-color: #fff;">${ton > 0 ? ton.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'}</td>
-                    <td style="background-color: #fff;">${tonMtd > 0 ? tonMtd.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'}</td>
-                    <td style="background-color: #fff;">${trip > 0 ? trip : '0'}</td>
                     <td style="background-color: #f1f5f9; font-weight: bold;">${target > 0 ? target.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                    <td style="background-color: #fff;">${trip > 0 ? trip : '0'}</td>
+                    <td style="background-color: #fff;">${tonMtd > 0 ? tonMtd.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'}</td>
                     <td style="background-color: #f1f5f9; font-weight: bold;">${targetMtd > 0 ? targetMtd.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                    <td style="background-color: #fff;">${tripMtd > 0 ? tripMtd : '0'}</td>
                 </tr>`;
             });
             
@@ -7887,13 +7891,14 @@ window.renderDailyMonitorTables = async (mill, date, supplyChain, totalFfb, esta
                 <tr style="background-color: #f8cbad; font-weight: bold;">
                     <td style="background-color: #f8cbad; text-align: left;">TOTAL</td>
                     <td style="background-color: #f8cbad;">${tEfbTon.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                    <td style="background-color: #f8cbad;">${tEfbTonMtd.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                    <td style="background-color: #f8cbad;">${tEfbTrip}</td>
                     <td style="background-color: #f8cbad;">${tEfbTarget > 0 ? tEfbTarget.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                    <td style="background-color: #f8cbad;">${tEfbTrip}</td>
+                    <td style="background-color: #f8cbad;">${tEfbTonMtd.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                     <td style="background-color: #f8cbad;">${tEfbTargetMtd > 0 ? tEfbTargetMtd.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                    <td style="background-color: #f8cbad;">${tEfbTripMtd}</td>
                 </tr>
                 <tr style="background-color: #f8cbad; font-weight: bold; font-size: 1.1em;">
-                    <td colspan="3" style="background-color: #f8cbad; text-align: left;">SISA JJK SEKARANG</td>
+                    <td colspan="4" style="background-color: #f8cbad; text-align: left;">SISA JJK SEKARANG</td>
                     <td colspan="3" style="background-color: #f8cbad; text-align: right;">${sisaSekarang.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TON</td>
                 </tr>
             </tbody></table>`;

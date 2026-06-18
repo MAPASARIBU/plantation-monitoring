@@ -1020,7 +1020,7 @@ app.get('/api/daily-monitor/:mill/:date', async (req, res) => {
         const despatch = await pool.query('SELECT * FROM despatch_daily WHERE mill=$1 AND date=$2', [mill, date]);
         const config = await pool.query('SELECT * FROM mill_daily_config WHERE mill=$1 AND date=$2', [mill, date]);
         
-        const efb_mtd = await pool.query("SELECT estate, SUM(tonase) as tonase_mtd, SUM(target) as target_mtd FROM efb_transport_daily WHERE mill=$1 AND date LIKE $2 || '%' AND date <= $3 GROUP BY estate", [mill, month, date]);
+        const efb_mtd = await pool.query("SELECT estate, SUM(tonase) as tonase_mtd, SUM(target) as target_mtd, SUM(trip) as trip_mtd FROM efb_transport_daily WHERE mill=$1 AND date LIKE $2 || '%' AND date <= $3 GROUP BY estate", [mill, month, date]);
         
         res.json({
             lf: lf.rows,
