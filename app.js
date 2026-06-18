@@ -4266,8 +4266,13 @@ const initDashboardChart = async () => {
         const dateObj = new Date();
         const date = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
         
-        const res = await fetch(`${API_URL}/tonase/${mill}/${date}`);
+        const [res, masterRes] = await Promise.all([
+            fetch(`${API_URL}/tonase/${mill}/${date}`),
+            fetch(`${API_URL}/master/${mill}`)
+        ]);
         let resData = await window.parseTonaseResponse(res);
+        const masterData = await masterRes.json();
+        const supplyChainFFB = (masterData.supply_chain || []).filter(s => s.is_ffb !== false).map(s => s.estate);
         
         // Filter by estate if user is not a Mill
         const isMill = currentUser.estate && currentUser.estate.endsWith('Mill');
@@ -4280,6 +4285,13 @@ const initDashboardChart = async () => {
         let totalTonase = 0;
         let estateProgress = {};
         
+        // Initialize only FFB estates
+        supplyChainFFB.forEach(est => {
+            if (isMill || currentUser.estate === 'Semua Estate (Khusus Admin)' || currentUser.estate === est) {
+                estateProgress[est] = { target: 0, realized: 0 };
+            }
+        });
+        
         resData.forEach(item => {
             const hIdx = hours.indexOf(item.time_hour);
             const val = (parseFloat(item.realized_kg) || 0) / 1000;
@@ -4291,9 +4303,10 @@ const initDashboardChart = async () => {
             totalTonase += val;
             
             const est = item.estate || 'Unknown Estate';
-            if (!estateProgress[est]) estateProgress[est] = { target: 0, realized: 0 };
-            estateProgress[est].realized += val;
-            estateProgress[est].target += targetVal;
+            if (estateProgress[est]) {
+                estateProgress[est].realized += val;
+                estateProgress[est].target += targetVal;
+            }
         });
         
         const progressContainer = document.getElementById('dashboard-progress-panen-container');
