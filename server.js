@@ -165,6 +165,34 @@ async function initDB() {
         await pool.query(`CREATE TABLE IF NOT EXISTS master_supply_chain (id SERIAL PRIMARY KEY, mill TEXT, estate TEXT, is_ffb BOOLEAN DEFAULT TRUE, is_efb BOOLEAN DEFAULT TRUE)`);
         try { await pool.query("ALTER TABLE master_supply_chain ADD COLUMN is_ffb BOOLEAN DEFAULT TRUE"); } catch(e) {}
         try { await pool.query("ALTER TABLE master_supply_chain ADD COLUMN is_efb BOOLEAN DEFAULT TRUE"); } catch(e) {}
+        
+        await pool.query(`CREATE TABLE IF NOT EXISTS master_supply_chain_list (id SERIAL PRIMARY KEY, name TEXT UNIQUE, abbr TEXT)`);
+        const scListCount = await pool.query('SELECT count(*) FROM master_supply_chain_list');
+        if (parseInt(scListCount.rows[0].count) === 0) {
+            const seedData = [
+                ['Bunga Tanjung Estate', 'BTEE'],
+                ['Sungai Teramang Estate', 'STGE'],
+                ['Air Bikuk Estate', 'ABKE'],
+                ['Batu Kuda Estate', 'BKDE'],
+                ['Air Buluh Estate', 'ABEE'],
+                ['Malin Deman Estate', 'MDEE'],
+                ['Tanah Rekah Estate', 'TREE'],
+                ['Muko Muko Estate', 'MMEE'],
+                ['Sei Jerinjing Estate', 'SJEE'],
+                ['Talang Petai Estate', 'TPEE'],
+                ['Sungai Kiang Estate', 'SKGE'],
+                ['Air Majunto Estate', 'AMJE'],
+                ['Small Holder', '3rd Prty'],
+                ['PIHAK KE-3 MILL BUNGA TANJUNG', '3rd Prty'],
+                ['KMD', 'KMD'],
+                ['KHJLT', 'KHJLT'],
+                ['PLAB', 'PLAB'],
+                ['PLAM', 'PLAM']
+            ];
+            for (const item of seedData) {
+                await pool.query('INSERT INTO master_supply_chain_list (name, abbr) VALUES ($1, $2) ON CONFLICT DO NOTHING', [item[0], item[1]]);
+            }
+        }
         await pool.query(`CREATE TABLE IF NOT EXISTS tonase_hourly (
             id SERIAL PRIMARY KEY,
             date TEXT,
@@ -407,14 +435,28 @@ app.get('/api/master/:estate', async (req, res) => {
             supply_chain = await pool.query('SELECT * FROM master_supply_chain WHERE mill = $1', [estate]);
         }
         
+        const supply_chain_list = await pool.query('SELECT * FROM master_supply_chain_list ORDER BY id ASC');
+        
         res.json({
             divisi: divisi.rows,
             blok: blok.rows,
             truk: truk.rows,
             pupuk: pupuk.rows,
             supir: supir.rows,
-            supply_chain: supply_chain.rows
+            supply_chain: supply_chain.rows,
+            supply_chain_list: supply_chain_list.rows
         });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/master/supply_chain_list', async (req, res) => {
+    try {
+        const { name, abbr } = req.body;
+        if (!name || !abbr) return res.status(400).json({ error: 'Name and Abbreviation are required' });
+        await pool.query('INSERT INTO master_supply_chain_list (name, abbr) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET abbr = $2', [name, abbr]);
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

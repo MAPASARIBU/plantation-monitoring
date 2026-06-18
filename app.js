@@ -1232,9 +1232,12 @@ const views = {
                 <div class="glass-card master-mill-card" id="card-master-supply-chain" style="display:none; grid-column: 1 / -1;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h3>Master Supply Chain</h3>
-                        <button type="button" class="btn btn-primary" onclick="saveSupplyChain()"><i class="fa-solid fa-save"></i> Simpan</button>
+                        <div style="display:flex; gap:10px;">
+                            <button type="button" class="btn" style="background:#64748b; color:#fff;" onclick="addSupplyChainMaster()"><i class="fa-solid fa-plus"></i> Tambah Supply Chain</button>
+                            <button type="button" class="btn btn-primary" onclick="saveSupplyChain()"><i class="fa-solid fa-save"></i> Simpan</button>
+                        </div>
                     </div>
-                    <div id="container-master-supply-chain" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; margin-top: 15px; width: 100%;"></div>
+                    <div id="container-master-supply-chain" style="margin-top: 15px; width: 100%; overflow-x: auto;"></div>
                 </div>
             </div>
         </div>
@@ -4849,35 +4852,44 @@ window.renderMasterTables = () => {
     if (isMill) {
         const scContainer = document.getElementById('container-master-supply-chain');
         if (scContainer) {
-            const allEstates = [
-                'Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bikuk Estate',
-                'Batu Kuda Estate', 'Air Buluh Estate', 'Malin Deman Estate',
-                'Tanah Rekah Estate', 'Muko Muko Estate', 'Sei Jerinjing Estate',
-                'Talang Petai Estate', 'Sungai Kiang Estate', 'Air Majunto Estate',
-                'Small Holder'
-            ];
+            const allEstates = masterData.supply_chain_list || [];
             const currentSC = masterData.supply_chain || [];
             
-            let scHtml = '';
-            allEstates.forEach(est => {
+            let scHtml = `
+            <table class="data-table" style="width:100%; border-collapse:collapse; text-align:left;">
+                <thead>
+                    <tr>
+                        <th style="background:#000; color:#fff; width: 50px; padding: 10px;">NO</th>
+                        <th style="background:#000; color:#fff; padding: 10px;">NAMA</th>
+                        <th style="background:#000; color:#fff; padding: 10px;">KODE (SINGKATAN)</th>
+                        <th style="background:#000; color:#fff; text-align:center; width: 80px; padding: 10px;">FFB</th>
+                        <th style="background:#000; color:#fff; text-align:center; width: 80px; padding: 10px;">EFB</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            allEstates.forEach((estObj, idx) => {
+                const est = estObj.name;
+                const abbr = estObj.abbr;
                 const scEntry = currentSC.find(sc => sc.estate === est);
                 const isFfb = scEntry ? scEntry.is_ffb : false;
                 const isEfb = scEntry ? scEntry.is_efb : false;
                 
                 scHtml += `
-                    <div style="display:flex; flex-direction:column; gap:5px; background:var(--background-color); padding:10px; border-radius:8px; border:1px solid var(--border-color);">
-                        <strong style="margin:0;">${est}</strong>
-                        <div style="display:flex; gap:15px; margin-top:5px;">
-                            <label style="cursor:pointer; display:flex; align-items:center; gap:5px; font-weight:normal;">
-                                <input type="checkbox" class="sc-ffb-checkbox" data-estate="${est}" ${isFfb ? 'checked' : ''} style="width:18px; height:18px;"> FFB
-                            </label>
-                            <label style="cursor:pointer; display:flex; align-items:center; gap:5px; font-weight:normal;">
-                                <input type="checkbox" class="sc-efb-checkbox" data-estate="${est}" ${isEfb ? 'checked' : ''} style="width:18px; height:18px;"> EFB
-                            </label>
-                        </div>
-                    </div>
+                    <tr>
+                        <td style="padding: 10px;">${idx + 1}</td>
+                        <td style="padding: 10px; font-weight:bold;">${est.toUpperCase()}</td>
+                        <td style="padding: 10px;">${abbr}</td>
+                        <td style="padding: 10px; text-align:center;">
+                            <input type="checkbox" class="sc-ffb-checkbox" data-estate="${est}" ${isFfb ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer;">
+                        </td>
+                        <td style="padding: 10px; text-align:center;">
+                            <input type="checkbox" class="sc-efb-checkbox" data-estate="${est}" ${isEfb ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer;">
+                        </td>
+                    </tr>
                 `;
             });
+            scHtml += `</tbody></table>`;
             scContainer.innerHTML = scHtml;
         }
     }
@@ -5256,7 +5268,53 @@ window.addMasterBulk = async (type) => {
     } catch(err) { console.error(err); }
 };
 
+window.addSupplyChainMaster = () => {
+    let html = `
+        <div id="modal-add-sc-master" class="modal-overlay">
+            <div class="modal-content animate-fade-in" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h3>Tambah Supply Chain Master</h3>
+                    <button type="button" class="modal-close" onclick="document.getElementById('modal-add-sc-master').remove();">&times;</button>
+                </div>
+                <div style="margin-top: 15px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:bold;">Nama Estate / Pihak ke-3:</label>
+                    <input type="text" id="add-sc-name" class="form-control" placeholder="Contoh: Pihak Ke-3 Test">
+                    
+                    <label style="display:block; margin-top:15px; margin-bottom:5px; font-weight:bold;">Kode (Singkatan):</label>
+                    <input type="text" id="add-sc-abbr" class="form-control" placeholder="Contoh: 3rd Test">
+                    
+                    <button class="btn btn-primary" style="margin-top:20px; width:100%;" onclick="submitAddSupplyChainMaster()"><i class="fa-solid fa-save"></i> Simpan ke Master Data</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
 
+window.submitAddSupplyChainMaster = async () => {
+    const name = document.getElementById('add-sc-name').value.trim();
+    const abbr = document.getElementById('add-sc-abbr').value.trim();
+    if (!name || !abbr) return alert('Nama dan Kode harus diisi!');
+    
+    try {
+        const res = await fetch(`${API_URL}/master/supply_chain_list`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, abbr })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            document.getElementById('modal-add-sc-master').remove();
+            alert('Supply Chain Master berhasil ditambahkan!');
+            await loadMasterData();
+        } else {
+            alert(data.error || 'Gagal menambahkan Supply Chain Master');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Gagal menghubungi server.');
+    }
+};
 
 window.saveSupplyChain = async () => {
     const estatesMap = new Map();
@@ -6801,18 +6859,12 @@ window.renderTonaseMonitorTable = async (isHistorical = false) => {
         let totalActJam = 0, totalActAkumulasi = 0, totalPlanJam = 0, totalTodayPlan = 0, totalActLf = 0, totalActTripAkumulasi = 0;
         let estateFfbAkumulasiMap = {};
         
-        const abbrMap = {
-            'Bunga Tanjung Estate': 'BTEE',
-            'Air Bikuk Estate': 'ABKE',
-            'Air Buluh Estate': 'ABEE',
-            'Malin Deman Estate': 'MDEE',
-            'Sungai Teramang Estate': 'STGE',
-            'KMD': 'KMD',
-            'KHJLT': 'KHJLT',
-            'PLAB': 'PLAB',
-            'PLAM': 'PLAM',
-            'Small Holder': '3rd Prty'
-        };
+        const abbrMap = {};
+        if (masterData && masterData.supply_chain_list) {
+            masterData.supply_chain_list.forEach(item => {
+                abbrMap[item.name] = item.abbr;
+            });
+        }
         const getAbbr = (estName) => abbrMap[estName] || estName.replace(' Estate', 'E');
 
         supplyChain.forEach(est => {
@@ -7726,18 +7778,15 @@ window.renderDailyMonitorTables = async (mill, date, supplyChain, totalFfb, esta
         const despatchData = dm.despatch || [];
         const config = dm.config || { is_processing: 0, efb_ratio: 0, sisa_kemarin_jjk: 0 };
         
-        const abbrMap = {
-            'Bunga Tanjung Estate': 'BTEE',
-            'Air Bikuk Estate': 'ABKE',
-            'Air Buluh Estate': 'ABEE',
-            'Malin Deman Estate': 'MDEE',
-            'Sungai Teramang Estate': 'STGE',
-            'KMD': 'KMD',
-            'KHJLT': 'KHJLT',
-            'PLAB': 'PLAB',
-            'PLAM': 'PLAM',
-            'Small Holder': '3rd Prty'
-        };
+        const masterRes = await fetch(`${API_URL}/master/${mill}`);
+        const masterData = await masterRes.json();
+        
+        const abbrMap = {};
+        if (masterData && masterData.supply_chain_list) {
+            masterData.supply_chain_list.forEach(item => {
+                abbrMap[item.name] = item.abbr;
+            });
+        }
         const getAbbr = (estName) => abbrMap[estName] || estName.replace(' Estate', 'E');
         
         // Render Despatch Table
