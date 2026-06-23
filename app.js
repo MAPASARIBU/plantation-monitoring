@@ -6567,8 +6567,8 @@ window.loadTonaseInputData = async () => {
             html += `</tr></thead><tbody><tr>`;
             html += `<td style="font-weight:bold; background: #fff;">TONASE</td>`;
             
-            const canEditEfb = currentUser && ['Admin', 'Office Assistant Mill', 'Supervisor Mill', 'Manager Mill'].includes(currentUser.role);
-            const disableAttrEfb = canEditEfb ? '' : 'disabled title="Akses ditolak. Hanya Office Assistant Mill, Supervisor Mill, dan Manager Mill yang dapat mengisi ini."';
+            const canEditEfb = currentUser && ['Admin', 'Office Assistant Mill', 'Supervisor Mill', 'Manager Mill', 'Krani Mill'].includes(currentUser.role);
+            const disableAttrEfb = canEditEfb ? '' : 'disabled title="Akses ditolak. Hanya Office Assistant Mill, Supervisor Mill, Manager Mill, dan Krani Mill yang dapat mengisi ini."';
 
             supplyChainEFB.forEach(est => {
                 const existingEfb = efbData.find(e => e.estate === est);
@@ -7606,19 +7606,18 @@ window.loadDailyMonitorInputData = async () => {
         document.getElementById('dm-sisa-kemarin').value = sisaKemarin !== undefined && sisaKemarin !== "" ? (typeof sisaKemarin === 'number' ? sisaKemarin.toFixed(2) : sisaKemarin) : "";
         
         const isLocked = config.is_locked === 1;
-        const canLock = ['Admin', 'Manager Mill', 'Supervisor Mill', 'Manager', 'Askep'].includes(currentUser.role);
-        const isKraniMill = currentUser.role === 'Krani Mill';
+        const canLock = ['Admin', 'Manager Mill', 'Supervisor Mill', 'Manager', 'Askep', 'Krani Mill'].includes(currentUser.role);
         
         document.getElementById('dm-is-processing').disabled = isLocked && !canLock;
-        document.getElementById('dm-efb-ratio').disabled = isKraniMill || (isLocked && !canLock);
-        document.getElementById('dm-sisa-kemarin').disabled = isKraniMill || (isLocked && !canLock);
+        document.getElementById('dm-efb-ratio').disabled = isLocked && !canLock;
+        document.getElementById('dm-sisa-kemarin').disabled = isLocked && !canLock;
         document.getElementById('btn-lock-mill-config').style.display = canLock ? 'inline-block' : 'none';
         
-        if (isKraniMill) {
-            document.getElementById('mill-config-status').innerText = isLocked ? "Terkunci" : "Ratio & Sisa JJK dilock untuk Krani Mill";
+        if (isLocked) {
+            document.getElementById('mill-config-status').innerText = canLock ? "Terkunci (Anda memiliki akses)" : "Terkunci";
         } else {
-            document.getElementById('mill-config-status').innerText = isLocked ? "Terkunci (Anda memiliki akses)" : "Belum dilock";
-        }        
+            document.getElementById('mill-config-status').innerText = "Belum dilock";
+        }
         // Render LF Form
         let lfHtml = '<table class="data-table" style="width:100%; font-size:0.8rem;"><thead><tr><th>Estate</th><th>Actual LF Only (Ton)</th></tr></thead><tbody>';
         master.supply_chain.forEach(sc => {
