@@ -6285,7 +6285,10 @@ window.openTonaseModal = (mode) => {
         const planMode = document.getElementById('t-plan-mode') ? document.getElementById('t-plan-mode').value : 'single';
         document.getElementById('container-t-hour').style.display = planMode === 'grid' ? 'none' : 'block';
         document.getElementById('t-btn-label').innerText = 'Simpan Plan (Target)';
-        if (document.getElementById('t-btn-reset')) document.getElementById('t-btn-reset').style.display = 'inline-block';
+        if (document.getElementById('t-btn-reset')) {
+            const isKraniMill = currentUser && currentUser.role === 'Krani Mill';
+            document.getElementById('t-btn-reset').style.display = isKraniMill ? 'none' : 'inline-block';
+        }
     } else {
         document.getElementById('tonase-form-title').innerText = 'Input Realisasi Tonase';
         if (document.getElementById('container-plan-mode')) document.getElementById('container-plan-mode').style.display = 'none';
