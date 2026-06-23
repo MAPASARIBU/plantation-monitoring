@@ -4282,6 +4282,7 @@ const initDashboardChart = async () => {
         
         const hours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
         const actualData = new Array(hours.length).fill(0);
+        const planData = new Array(hours.length).fill(0);
         let totalTonase = 0;
         let estateProgress = {};
         
@@ -4299,6 +4300,7 @@ const initDashboardChart = async () => {
             
             if (hIdx !== -1) {
                 actualData[hIdx] += val;
+                planData[hIdx] += targetVal;
             }
             totalTonase += val;
             
@@ -4382,26 +4384,38 @@ const initDashboardChart = async () => {
             type: 'line',
             data: {
                 labels: hours,
-                datasets: [{
-                    label: 'Tonase Masuk (Ton)',
-                    data: actualData,
-                    borderColor: '#0d8b4e',
-                    backgroundColor: 'rgba(13, 139, 78, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
+                datasets: [
+                    {
+                        label: 'Target Plan (Ton)',
+                        data: planData,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        fill: false,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Tonase Masuk (Ton)',
+                        data: actualData,
+                        borderColor: '#0d8b4e',
+                        backgroundColor: 'rgba(13, 139, 78, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
             },
             plugins: [ChartDataLabels],
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { 
-                    legend: { display: false },
+                    legend: { display: true, position: 'bottom' },
                     datalabels: {
                         display: true,
                         align: 'end',
                         anchor: 'end',
-                        color: '#0d8b4e',
+                        color: function(context) {
+                            return context.dataset.borderColor;
+                        },
                         font: { weight: 'bold' },
                         formatter: function(value) {
                             return value > 0 ? value.toFixed(1) : '';
