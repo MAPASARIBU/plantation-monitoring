@@ -4564,16 +4564,19 @@ window.loadDashboardHistoricalChart = async () => {
         
         const hours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
         const actualData = new Array(hours.length).fill(0);
+        const planData = new Array(hours.length).fill(0);
         
         tonaseData.forEach(item => {
             const hIdx = hours.indexOf(item.time_hour);
             if (hIdx !== -1) {
                 actualData[hIdx] += parseFloat(item.realized_kg) || 0;
+                planData[hIdx] += parseFloat(item.target_kg) || 0;
             }
         });
         
         for (let i = 0; i < actualData.length; i++) {
             actualData[i] = actualData[i] / 1000;
+            planData[i] = planData[i] / 1000;
         }
         
         const ctx = document.getElementById('dashboardHistoricalChartCanvas');
@@ -4583,30 +4586,48 @@ window.loadDashboardHistoricalChart = async () => {
         
         if (dashboardHistoricalChartInstance) dashboardHistoricalChartInstance.destroy();
         
+        const datasets = [];
+        const hasPlan = planData.some(v => v > 0);
+        
+        if (hasPlan) {
+            datasets.push({
+                label: 'Target Plan (Ton)',
+                data: planData,
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                fill: false,
+                tension: 0.4
+            });
+        }
+        
+        datasets.push({
+            label: 'Tonase Masuk (Ton)',
+            data: actualData,
+            borderColor: '#0d8b4e',
+            backgroundColor: 'rgba(13, 139, 78, 0.1)',
+            fill: true,
+            tension: 0.4
+        });
+        
         dashboardHistoricalChartInstance = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: hours,
-                datasets: [{
-                    label: 'Tonase Masuk (Ton)',
-                    data: actualData,
-                    borderColor: '#0d8b4e',
-                    backgroundColor: 'rgba(13, 139, 78, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
+                datasets: datasets
             },
             plugins: [ChartDataLabels],
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { 
-                    legend: { display: false },
+                    legend: { display: true, position: 'bottom' },
                     datalabels: {
                         display: true,
                         align: 'end',
                         anchor: 'end',
-                        color: '#0d8b4e',
+                        color: function(context) {
+                            return context.dataset.borderColor;
+                        },
                         font: { weight: 'bold' },
                         formatter: function(value) {
                             return value > 0 ? value.toFixed(1) : '';
