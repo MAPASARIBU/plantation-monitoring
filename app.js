@@ -4380,28 +4380,34 @@ const initDashboardChart = async () => {
         
         if (dashboardTonaseChartInstance) dashboardTonaseChartInstance.destroy();
         
+        const datasets = [];
+        const hasPlan = planData.some(v => v > 0);
+        
+        if (hasPlan) {
+            datasets.push({
+                label: 'Target Plan (Ton)',
+                data: planData,
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                fill: false,
+                tension: 0.4
+            });
+        }
+        
+        datasets.push({
+            label: 'Tonase Masuk (Ton)',
+            data: actualData,
+            borderColor: '#0d8b4e',
+            backgroundColor: 'rgba(13, 139, 78, 0.1)',
+            fill: true,
+            tension: 0.4
+        });
+
         dashboardTonaseChartInstance = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: hours,
-                datasets: [
-                    {
-                        label: 'Target Plan (Ton)',
-                        data: planData,
-                        borderColor: '#ef4444',
-                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                        fill: false,
-                        tension: 0.4
-                    },
-                    {
-                        label: 'Tonase Masuk (Ton)',
-                        data: actualData,
-                        borderColor: '#0d8b4e',
-                        backgroundColor: 'rgba(13, 139, 78, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }
-                ]
+                datasets: datasets
             },
             plugins: [ChartDataLabels],
             options: {
@@ -6794,21 +6800,28 @@ window.loadTonaseChartData = async () => {
             tonaseChartInstance.destroy();
         }
         
+        const datasets = [{
+            label: 'Realisasi Tonase Masuk (Ton)',
+            data: realized.map(v => v / 1000),
+            backgroundColor: '#f7a01d',
+            borderRadius: 4
+        }];
+        
+        const hasTargets = targets.some(v => v > 0);
+        if (hasTargets) {
+            datasets.push({
+                label: 'Target Tonase (Ton)',
+                data: targets.map(v => v / 1000),
+                backgroundColor: 'rgba(203, 213, 225, 0.5)',
+                borderRadius: 4
+            });
+        }
+
         tonaseChartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labels,
-                datasets: [{
-                    label: 'Realisasi Tonase Masuk (Ton)',
-                    data: realized.map(v => v / 1000),
-                    backgroundColor: '#f7a01d',
-                    borderRadius: 4
-                }, {
-                    label: 'Target Tonase (Ton)',
-                    data: targets.map(v => v / 1000),
-                    backgroundColor: 'rgba(203, 213, 225, 0.5)',
-                    borderRadius: 4
-                }]
+                datasets: datasets
             },
             options: {
                 responsive: true,
