@@ -6529,9 +6529,9 @@ window.loadTonaseInputData = async () => {
                 let disabledAttrPlan = '';
                 if (window.tonaseMode === 'plan') {
                     const isPlanLocked = window.tonaseDataCache.some(t => t.target_kg !== null && t.target_kg !== undefined && parseFloat(t.target_kg) > 0);
-                    const canEditLockedPlan = currentUser && ['Admin', 'Office Assistant Mill', 'Manager Mill', 'Askep'].includes(currentUser.role);
+                    const canEditLockedPlan = currentUser && ['Admin', 'Office Assistant Mill', 'Manager Mill', 'Askep', 'Krani Mill'].includes(currentUser.role);
                     if (isPlanLocked && !canEditLockedPlan) {
-                        disabledAttrPlan = 'disabled title="Plan sudah dilock. Hanya Office Assistant Mill, Manager Mill, atau Askep yang dapat mengubahnya."';
+                        disabledAttrPlan = 'disabled title="Plan sudah dilock. Hanya Office Assistant Mill, Manager Mill, Askep, atau Krani Mill yang dapat mengubahnya."';
                     }
                 }
                 
@@ -6624,9 +6624,9 @@ window.loadTonaseInputData = async () => {
             let disableAttrEfb = canEditEfb ? '' : 'disabled title="Akses ditolak. Hanya Office Assistant Mill, Supervisor Mill, Manager Mill, dan Krani Mill yang dapat mengisi ini."';
             
             if (hasTargets) {
-                canEditEfb = currentUser && ['Admin', 'Office Assistant Mill', 'Manager Mill', 'Askep'].includes(currentUser.role);
+                canEditEfb = currentUser && ['Admin', 'Office Assistant Mill', 'Manager Mill', 'Askep', 'Krani Mill'].includes(currentUser.role);
                 if (!canEditEfb) {
-                    disableAttrEfb = 'disabled title="Plan EFB sudah dilock. Hanya Office Assistant Mill, Manager Mill, atau Askep yang dapat mengubahnya."';
+                    disableAttrEfb = 'disabled title="Plan EFB sudah dilock. Hanya Office Assistant Mill, Manager Mill, Askep, atau Krani Mill yang dapat mengubahnya."';
                 }
             }
 
@@ -6722,9 +6722,9 @@ window.saveTonaseData = async () => {
     
     if (hasExisting) {
         if (window.tonaseMode === 'plan') {
-            const canEditLockedPlan = currentUser && ['Admin', 'Office Assistant Mill', 'Manager Mill', 'Askep'].includes(currentUser.role);
+            const canEditLockedPlan = currentUser && ['Admin', 'Office Assistant Mill', 'Manager Mill', 'Askep', 'Krani Mill'].includes(currentUser.role);
             if (!canEditLockedPlan) {
-                alert("Plan sudah dilock karena sudah pernah diinput. Hanya level Office Assistant Mill, Manager Mill, atau Askep yang dapat mengubah plan.");
+                alert("Plan sudah dilock karena sudah pernah diinput. Hanya level Office Assistant Mill, Manager Mill, Askep, atau Krani Mill yang dapat mengubah plan.");
                 return;
             }
         }
