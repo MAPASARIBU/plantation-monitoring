@@ -1154,7 +1154,10 @@ const views = {
             <!-- Prime Time Chart -->
             <div class="glass-card table-wrapper" style="margin-top: 20px;">
                 <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                    <h2 style="margin:0;">Prime Time Monitoring</h2>
+                    <h2 style="margin:0; display:flex; align-items:center; gap: 10px;">
+                        Prime Time Monitoring
+                        <button class="btn btn-primary btn-sm" onclick="openHistoricalPlanning()">Historical Planning</button>
+                    </h2>
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <label style="font-weight: bold; font-size: 0.9em; color: var(--text-secondary);">Estate:</label>
                         <select id="prime-estate" class="form-control" style="width: auto; min-width: 200px;" onchange="loadPrimeTimeChart()">
@@ -7296,6 +7299,183 @@ window.loadPrimeTimeChart = async () => {
         }
     } catch(e) {
         console.error('Error loading prime time chart:', e);
+    }
+};
+
+let historicalPlanningChartInstance = null;
+
+window.openHistoricalPlanning = () => {
+    let modal = document.getElementById('modal-historical-planning');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-historical-planning';
+        modal.className = 'modal-overlay';
+        modal.style.zIndex = '1000';
+        modal.innerHTML = `
+            <div class="modal-content" style="width: 900px; max-width: 95vw; height: 80vh; display:flex; flex-direction:column; overflow:hidden;">
+                <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding: 15px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+                    <h3 style="margin:0;"><i class="fa-solid fa-chart-column"></i> Historical Planning</h3>
+                    <button type="button" class="modal-close" onclick="document.getElementById('modal-historical-planning').style.display='none';">&times;</button>
+                </div>
+                <div style="padding: 15px; display:flex; gap:10px; align-items:center; background:white; border-bottom:1px solid #e2e8f0;">
+                    <label style="font-weight:bold;">Pilih Bulan:</label>
+                    <input type="month" id="historical-planning-month" class="form-control" style="width:auto;" value="${window.getLocalDate().substring(0, 7)}" onchange="loadHistoricalPlanningChart()">
+                    <button class="btn btn-primary" onclick="loadHistoricalPlanningChart()">Tampilkan</button>
+                </div>
+                <div style="flex:1; padding: 15px; background: white; overflow: hidden; display:flex; flex-direction:column;">
+                    <div style="flex:1; width:100%; position:relative;">
+                        <canvas id="historicalPlanningChartCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    modal.style.display = 'flex';
+    setTimeout(loadHistoricalPlanningChart, 100);
+};
+
+window.loadHistoricalPlanningChart = async () => {
+    const monthInput = document.getElementById('historical-planning-month');
+    if (!monthInput || !monthInput.value) return;
+    const month = monthInput.value; // YYYY-MM
+    
+    try {
+        let mill = currentUser.estate;
+        if (!mill || !mill.endsWith('Mill')) {
+            mill = 'Bunga Tanjung Mill';
+        }
+        
+        const primeSel = document.getElementById('prime-estate');
+        const selectedEstate = primeSel ? primeSel.value : 'ALL';
+        
+        const year = parseInt(month.split('-')[0]);
+        const m = parseInt(month.split('-')[1]);
+        const daysInMonth = new Date(year, m, 0).getDate();
+        
+        const dailyData = {};
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dStr = `${month}-${i.toString().padStart(2, '0')}`;
+            dailyData[dStr] = 0;
+        }
+        
+        const allPlans = db.harvesting_daily || [];
+        allPlans.forEach(item => {
+            if (!item.date || !item.date.startsWith(month)) return;
+            // Planning can be for estate, so we check if item.estate matches selectedEstate if it's not ALL
+            // However, harvesting_daily has item.estate.
+            if (selectedEstate !== 'ALL' && item.estate !== selectedEstate) return;
+            
+            const dStr = typeof item.date === 'string' && item.date.includes('T') ? item.date.split('T')[0] : item.date;
+            if (dailyData[dStr] !== undefined) {
+                dailyData[dStr] += (parseFloat(item.est_kg) || 0);
+            }
+        });
+        
+        const labels = [];
+        const primePct = [];
+        const middlePct = [];
+        const lastPct = [];
+        
+        const primeRaw = [];
+        const middleRaw = [];
+        const lastRaw = [];
+        
+        for (let i = 1; i <= daysInMonth; i++) {
+            labels.push(i.toString());
+            const dStr = `${month}-${i.toString().padStart(2, '0')}`;
+            const total = dailyData[dStr] || 0;
+            
+            if (total > 0) {
+                const part = total / 3;
+                primePct.push(33.33);
+                middlePct.push(33.33);
+                lastPct.push(33.34);
+                
+                primeRaw.push(part);
+                middleRaw.push(part);
+                lastRaw.push(part);
+            } else {
+                primePct.push(0);
+                middlePct.push(0);
+                lastPct.push(0);
+                
+                primeRaw.push(0);
+                middleRaw.push(0);
+                lastRaw.push(0);
+            }
+        }
+        
+        const ctx = document.getElementById('historicalPlanningChartCanvas');
+        if (!ctx) return;
+        
+        if (historicalPlanningChartInstance) {
+            historicalPlanningChartInstance.destroy();
+        }
+        
+        historicalPlanningChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Prime Time (06:00 - 12:00) Plan',
+                        data: primePct,
+                        rawTonase: primeRaw,
+                        backgroundColor: '#1d4ed8', // Blue
+                    },
+                    {
+                        label: 'Middle Time (13:00 - 18:00) Plan',
+                        data: middlePct,
+                        rawTonase: middleRaw,
+                        backgroundColor: '#22c55e', // Green
+                    },
+                    {
+                        label: 'Last Time (19:00 - 24:00) Plan',
+                        data: lastPct,
+                        rawTonase: lastRaw,
+                        backgroundColor: '#eab308', // Yellow
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const ds = context.dataset;
+                                const rawKg = ds.rawTonase ? ds.rawTonase[context.dataIndex] : 0;
+                                const rawTon = (rawKg / 1000).toFixed(2);
+                                return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + '% (' + rawTon + ' Ton)';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        title: { display: true, text: 'TANGGAL' }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        max: 100,
+                        title: { display: true, text: 'PERSENTASE (%)' },
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+    } catch(e) {
+        console.error('Error loading historical planning chart:', e);
     }
 };
 
