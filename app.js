@@ -7349,6 +7349,9 @@ window.loadHistoricalPlanningChart = async () => {
         const primeSel = document.getElementById('prime-estate');
         const selectedEstate = primeSel ? primeSel.value : 'ALL';
         
+        const res = await fetch(`${API_URL}/tonase/${mill}/month/${month}`);
+        const data = await window.parseTonaseResponse(res);
+        
         const year = parseInt(month.split('-')[0]);
         const m = parseInt(month.split('-')[1]);
         const daysInMonth = new Date(year, m, 0).getDate();
@@ -7356,19 +7359,29 @@ window.loadHistoricalPlanningChart = async () => {
         const dailyData = {};
         for (let i = 1; i <= daysInMonth; i++) {
             const dStr = `${month}-${i.toString().padStart(2, '0')}`;
-            dailyData[dStr] = 0;
+            dailyData[dStr] = { prime: 0, middle: 0, last: 0, total: 0 };
         }
         
-        const allPlans = db.harvesting_daily || [];
-        allPlans.forEach(item => {
-            if (!item.date || !item.date.startsWith(month)) return;
-            // Planning can be for estate, so we check if item.estate matches selectedEstate if it's not ALL
-            // However, harvesting_daily has item.estate.
+        const primeHours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00'];
+        const middleHours = ['13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+        const lastHours = ['19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
+        
+        data.forEach(item => {
             if (selectedEstate !== 'ALL' && item.estate !== selectedEstate) return;
             
-            const dStr = typeof item.date === 'string' && item.date.includes('T') ? item.date.split('T')[0] : item.date;
-            if (dailyData[dStr] !== undefined) {
-                dailyData[dStr] += (parseFloat(item.est_kg) || 0);
+            const d = item.date.split('T')[0];
+            if (!dailyData[d]) dailyData[d] = { prime: 0, middle: 0, last: 0, total: 0 };
+            
+            const kg = parseFloat(item.target_kg) || 0; // Use target_kg for planning
+            if (kg > 0) {
+                if (primeHours.includes(item.time_hour)) {
+                    dailyData[d].prime += kg;
+                } else if (middleHours.includes(item.time_hour)) {
+                    dailyData[d].middle += kg;
+                } else if (lastHours.includes(item.time_hour)) {
+                    dailyData[d].last += kg;
+                }
+                dailyData[d].total += kg;
             }
         });
         
@@ -7384,26 +7397,21 @@ window.loadHistoricalPlanningChart = async () => {
         for (let i = 1; i <= daysInMonth; i++) {
             labels.push(i.toString());
             const dStr = `${month}-${i.toString().padStart(2, '0')}`;
-            const total = dailyData[dStr] || 0;
+            const dayRecord = dailyData[dStr];
             
-            if (total > 0) {
-                const part = total / 3;
-                primePct.push(33.33);
-                middlePct.push(33.33);
-                lastPct.push(33.34);
-                
-                primeRaw.push(part);
-                middleRaw.push(part);
-                lastRaw.push(part);
+            if (dayRecord.total > 0) {
+                primePct.push( (dayRecord.prime / dayRecord.total) * 100 );
+                middlePct.push( (dayRecord.middle / dayRecord.total) * 100 );
+                lastPct.push( (dayRecord.last / dayRecord.total) * 100 );
             } else {
                 primePct.push(0);
                 middlePct.push(0);
                 lastPct.push(0);
-                
-                primeRaw.push(0);
-                middleRaw.push(0);
-                lastRaw.push(0);
             }
+            
+            primeRaw.push(dayRecord.prime);
+            middleRaw.push(dayRecord.middle);
+            lastRaw.push(dayRecord.last);
         }
         
         const ctx = document.getElementById('historicalPlanningChartCanvas');
