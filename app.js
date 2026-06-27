@@ -7380,6 +7380,12 @@ window.loadHistoricalPlanningChart = async () => {
                     dailyData[d].middle += kg;
                 } else if (lastHours.includes(item.time_hour)) {
                     dailyData[d].last += kg;
+                } else {
+                    // Jika target diinput secara harian tanpa jam spesifik, bagi rata ke 3 bagian
+                    const third = kg / 3;
+                    dailyData[d].prime += third;
+                    dailyData[d].middle += third;
+                    dailyData[d].last += third;
                 }
                 dailyData[d].total += kg;
             }
