@@ -941,8 +941,11 @@ const views = {
                 
                 <!-- JJK -->
                 <div class="glass-card table-wrapper" style="padding: 10px; flex: 1.5 1 450px;">
-                    <div style="margin-bottom: 8px;">
+                    <div style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
                         <span style="background: #e2e8f0; padding: 4px 10px; font-weight: bold; text-decoration: underline;">MONITORING EVAKUASI EFB</span>
+                        <button class="btn btn-primary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="openEfbHistoricalModal()">
+                            <i class="fa-solid fa-clock-rotate-left"></i> Historical
+                        </button>
                     </div>
                     <div id="jjk-monitor-table-container" style="overflow-x: auto;"></div>
                 </div>
@@ -995,6 +998,32 @@ const views = {
                 </div>
             </div>
             
+            <!-- Modal Historical EFB -->
+            <div class="modal-overlay" id="efb-historical-modal" style="display:none; z-index: 1000;">
+                <div class="modal-content" style="max-width: 95%; width: 1000px; max-height: 90vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h2>Historical Evakuasi EFB</h2>
+                        <button type="button" class="modal-close" onclick="document.getElementById('efb-historical-modal').style.display = 'none'">&times;</button>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
+                            <label>Dari Tanggal:</label>
+                            <input type="date" id="efb-historical-start-date" class="form-control">
+                            <label>Sampai Tanggal:</label>
+                            <input type="date" id="efb-historical-end-date" class="form-control">
+                            <label>Estate:</label>
+                            <select id="efb-historical-estate" class="form-control" onchange="loadEfbHistoricalChartData()">
+                                <option value="ALL">All Estate (Gabungan)</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="loadEfbHistoricalChartData()">OK</button>
+                        </div>
+                        <div style="height: 400px; width: 100%;">
+                            <canvas id="efbHistoricalChartCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Modal Tonase -->
             <div class="modal-overlay" id="tonase-modal" style="display:none; z-index: 1000;">
                 <div class="modal-content" style="width: 95%; max-width: 1200px; max-height: 90vh; overflow-y: auto; overflow-x: hidden;">
@@ -6293,6 +6322,126 @@ window.loadHistoricalChartData = async () => {
                 maintainAspectRatio: false,
                 plugins: {
                     title: { display: true, text: `Komparasi Target vs Realisasi Tonase Per Jam (${date}) - ${selectedEstate === 'ALL' ? 'All Estate' : selectedEstate}` }
+                },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+        
+    } catch(e) {
+        console.error(e);
+    }
+};
+
+let efbHistoricalChartInstance = null;
+
+window.openEfbHistoricalModal = async () => {
+    document.getElementById('efb-historical-modal').style.display = 'flex';
+    const today = window.getLocalDate();
+    const firstDay = today.substring(0, 8) + '01';
+    document.getElementById('efb-historical-start-date').value = firstDay;
+    document.getElementById('efb-historical-end-date').value = today;
+    
+    // Populate estate dropdown
+    let mill = currentUser.estate;
+    if (!mill || !mill.endsWith('Mill')) {
+        mill = 'Bunga Tanjung Mill';
+    }
+    try {
+        const masterRes = await fetch(`${API_URL}/master/${mill}`);
+        const masterData = await masterRes.json();
+        const sel = document.getElementById('efb-historical-estate');
+        sel.innerHTML = '<option value="ALL">All Estate (Gabungan)</option>';
+        masterData.supply_chain.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.estate;
+            opt.innerText = s.estate;
+            sel.appendChild(opt);
+        });
+    } catch(e) { console.error(e); }
+    
+    loadEfbHistoricalChartData();
+};
+
+window.loadEfbHistoricalChartData = async () => {
+    let mill = currentUser.estate;
+    if (!mill || !mill.endsWith('Mill')) {
+        mill = 'Bunga Tanjung Mill';
+    }
+    const startDate = document.getElementById('efb-historical-start-date').value;
+    const endDate = document.getElementById('efb-historical-end-date').value;
+    if (!startDate || !endDate) {
+        alert('Pilih rentang tanggal terlebih dahulu');
+        return;
+    }
+    
+    try {
+        const res = await fetch(`${API_URL}/efb-historical/${mill}/${startDate}/${endDate}`);
+        const data = await res.json();
+        
+        const selectedEstate = document.getElementById('efb-historical-estate').value;
+        
+        // Group data by date
+        const dateMap = {};
+        
+        // generate date range labels
+        let current = new Date(startDate);
+        const end = new Date(endDate);
+        const labels = [];
+        while (current <= end) {
+            const d = current.toISOString().split('T')[0];
+            labels.push(d);
+            dateMap[d] = { target: 0, actual: 0 };
+            current.setDate(current.getDate() + 1);
+        }
+        
+        data.forEach(item => {
+            if (selectedEstate !== 'ALL' && item.estate !== selectedEstate) return;
+            
+            // Format item date as YYYY-MM-DD to match the labels
+            let d;
+            if (item.date) {
+                // if it's already YYYY-MM-DD
+                if (item.date.length === 10) d = item.date;
+                // if it's an ISO string
+                else d = new Date(item.date).toISOString().split('T')[0];
+            }
+            if (d && dateMap[d]) {
+                dateMap[d].target += parseFloat(item.target) || 0;
+                dateMap[d].actual += parseFloat(item.actual) || 0;
+            }
+        });
+        
+        const targets = labels.map(l => dateMap[l].target);
+        const realized = labels.map(l => dateMap[l].actual);
+        
+        const ctx = document.getElementById('efbHistoricalChartCanvas');
+        if (!ctx) return;
+        
+        if (efbHistoricalChartInstance) {
+            efbHistoricalChartInstance.destroy();
+        }
+        
+        efbHistoricalChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Realisasi Evakuasi (Ton)',
+                    data: realized,
+                    backgroundColor: '#8b5cf6',
+                    borderRadius: 4
+                }, {
+                    label: 'Target Evakuasi (Ton)',
+                    data: targets,
+                    backgroundColor: 'rgba(203, 213, 225, 0.5)',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: true, text: `Komparasi Target vs Realisasi Evakuasi EFB (${startDate} s/d ${endDate}) - ${selectedEstate === 'ALL' ? 'All Estate' : selectedEstate}` }
                 },
                 scales: { y: { beginAtZero: true } }
             }

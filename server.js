@@ -1034,6 +1034,22 @@ app.get('/api/daily-monitor/:mill/:date', async (req, res) => {
     }
 });
 
+app.get('/api/efb-historical/:mill/:startDate/:endDate', async (req, res) => {
+    try {
+        const { mill, startDate, endDate } = req.params;
+        const result = await pool.query(`
+            SELECT date, estate, SUM(tonase) as actual, SUM(target) as target
+            FROM efb_transport_daily 
+            WHERE mill=$1 AND date >= $2 AND date <= $3 
+            GROUP BY date, estate
+            ORDER BY date ASC
+        `, [mill, startDate, endDate]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/api/daily-monitor/:mill/latest-efb-target', async (req, res) => {
     try {
         const { mill } = req.params;
