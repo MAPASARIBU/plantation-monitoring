@@ -56,12 +56,12 @@
                 </div>
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" id="login-password" class="form-control" placeholder="Masukkan password..." autocomplete="new-password" required>
+                    <input type="text" style="-webkit-text-security: disc;" id="login-sandi" class="form-control" placeholder="Masukkan password..." autocomplete="new-password" required>
                 </div>
                 <div id="login-error" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 10px; display: none;"></div>
                 <button type="submit" class="btn btn-primary btn-block">Masuk <i class="fa-solid fa-arrow-right"></i></button>
                 <div style="text-align: center; margin-top: 15px;">
-                    <a href="javascript:void(0)" onclick="document.getElementById('cp-old').value = document.getElementById('login-password').value; document.getElementById('cp-hidden-username').value = document.getElementById('login-username').value; document.getElementById('modal-change-password').style.display='flex'" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-key"></i> Ganti Password</a>
+                    <a href="javascript:void(0)" onclick="document.getElementById('cp-old').value = document.getElementById('login-sandi').value; document.getElementById('cp-hidden-username').value = document.getElementById('login-username').value; document.getElementById('modal-change-password').style.display='flex'" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-key"></i> Ganti Password</a>
                 </div>
             </form>
         </div>
@@ -103,6 +103,19 @@
                         <i class="fa-solid fa-basket-shopping"></i>
                         <span>Harvesting</span>
                     </li>
+                    <li class="nav-item" data-view="processing" onclick="switchModule('processing')">
+                        <i class="fa-solid fa-flask"></i>
+                        <span>Processing</span>
+                    </li>
+                    <li class="nav-item" data-view="water" onclick="switchModule('water')">
+                        <i class="fa-solid fa-water"></i>
+                        <span>Water Analysis</span>
+                    </li>
+                    <li class="nav-item" data-view="ffb_quality" onclick="switchModule('ffb_quality')">
+                        <i class="fa-solid fa-magnifying-glass-chart"></i>
+                        <span>FFB Quality</span>
+                    </li>
+                    
                     <li class="nav-item" data-view="master" onclick="switchModule('master')">
                         <i class="fa-solid fa-database"></i>
                         <span>Master Data</span>
@@ -175,15 +188,15 @@
 
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label style="display:block; margin-bottom:5px;">Password Lama</label>
-                    <input type="password" id="cp-old" class="form-control" placeholder="Masukkan password saat ini" autocomplete="new-password">
+                    <input type="text" style="-webkit-text-security: disc;" id="cp-old" class="form-control" placeholder="Masukkan password saat ini" autocomplete="new-password">
                 </div>
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label style="display:block; margin-bottom:5px;">Password Baru</label>
-                    <input type="password" id="cp-new" class="form-control" placeholder="Masukkan password baru" autocomplete="new-password">
+                    <input type="text" style="-webkit-text-security: disc;" id="cp-new" class="form-control" placeholder="Masukkan password baru" autocomplete="new-password">
                 </div>
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label style="display:block; margin-bottom:5px;">Konfirmasi Password Baru</label>
-                    <input type="password" id="cp-confirm" class="form-control" placeholder="Ulangi password baru" autocomplete="new-password">
+                    <input type="text" style="-webkit-text-security: disc;" id="cp-confirm" class="form-control" placeholder="Ulangi password baru" autocomplete="new-password">
                     <div id="cp-error" style="color: #ef4444; display: none; margin-top: 5px; font-size: 0.85rem;"></div>
                 </div>
                 <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 20px;">
@@ -197,6 +210,7 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.2"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     
     <!-- Auto Redirect & Cache Busting -->
@@ -208,5 +222,6 @@
     
     <!-- Custom JS -->
     <script src="app.js?v=77"></script>
+    <script src="mill_modules.js?v=32"></script>
 </body>
 </html>

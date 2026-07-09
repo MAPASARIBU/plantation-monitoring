@@ -239,23 +239,23 @@ const applyRBAC = () => {
     };
     
     if (role === 'Admin') {
-        showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'users', 'master']);
+        showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'users', 'master', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
     } else if (role === 'Senior Field Manager' || role === 'Manager') {
         showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'master']);
     } else if (role === 'Estate Manager' || role === 'Asisten Kepala' || role === 'Division Manager' || role === 'Assistant') {
         showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting']);
     } else if (role === 'Manager Mill') {
-        showViews(['dashboard', 'vehicle', 'tonase', 'master']);
+        showViews(['dashboard', 'vehicle', 'tonase', 'master', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
     } else if (role === 'Askep' || role === 'Office Assistant (OAA)') {
         showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'master']);
     } else if (role === 'Office Assistant Mill') {
-        showViews(['dashboard', 'vehicle', 'tonase', 'master']);
+        showViews(['dashboard', 'vehicle', 'tonase', 'master', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
     } else if (role === 'Supervisor Mill') {
-        showViews(['dashboard', 'vehicle', 'tonase']);
+        showViews(['dashboard', 'vehicle', 'tonase', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
     } else if (role === 'Mandor' || role === 'Krani Divisi') {
         showViews(['vehicle', 'pemupukan', 'upkeep', 'harvesting']);
     } else if (role === 'Krani Mill') {
-        showViews(['dashboard', 'tonase']);
+        showViews(['dashboard', 'tonase', 'processing', 'water', 'ffb_quality']);
     } else if (role === 'Supir') {
         showViews(['vehicle', 'harvesting']);
     } else if (role === 'Security' || role === 'Security Mill') {
@@ -356,8 +356,137 @@ const views = {
                     </div>
                 </div>
             </div>
+
+            
+<!-- Dashboard Extra Sections (Processing & Water) -->
+<div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; border-top: 2px solid #e2e8f0; padding-top: 20px;">
+    <div style="display: flex; flex-direction: column;">
+        <h2 style="margin: 0;">Processing & Water Analysis</h2>
+        <span id="dash-extra-date-label" style="font-size: 0.9em; color: var(--text-secondary); font-weight: bold;">Data Hari Ini</span>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="document.getElementById('dashboard-extra-date-modal').style.display='flex';"><i class="fa-solid fa-clock-rotate-left"></i> Historical Pop Up</button>
+</div>
+
+<div class="glass-card" style="margin-top: 15px;">
+    <h3>Liquid Monitoring Historical Grafik</h3>
+    <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+        <div class="chart-container" style="position: relative; height:300px; width:100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px; background: white;">
+            <canvas id="chart-oil-cot-cst"></canvas>
         </div>
-    `,
+        <div class="chart-container" style="position: relative; height:300px; width:100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px; background: white;">
+            <canvas id="chart-cst-ketebalan"></canvas>
+        </div>
+        <div class="chart-container" style="position: relative; height:300px; width:100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px; background: white;">
+            <canvas id="chart-temp-cot-cst"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="glass-card" style="margin-top: 20px;">
+    <h3>Chart Monitoring FFA Today</h3>
+    <div class="chart-container" style="position: relative; height:300px; width:100%; max-width: 600px; margin: 0 auto;">
+        <canvas id="chart-ffa-today"></canvas>
+    </div>
+</div>
+
+<div class="glass-card" style="margin-top: 20px;">
+    <h3>Korelasi FFB Quality vs FFA Washing Plant (Bulan Berjalan)</h3>
+    <div class="chart-container" style="position: relative; height:350px; width:100%; max-width: 800px; margin: 0 auto;">
+        <canvas id="chart-ffb-ffa-correlation"></canvas>
+    </div>
+    
+    <h3 style="margin-top: 30px;">Tabel Data Bulanan</h3>
+    <div class="table-responsive" style="overflow-x: auto; padding-bottom: 15px;">
+        <table class="data-table" id="table-ffb-ffa-correlation-body">
+            <thead>
+                <tr>
+                    <th style="min-width: 30px;">No</th>
+                    <th style="min-width: 150px;">Parameter</th>
+                    <!-- Hari 1-31 akan di-generate oleh JS -->
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="33" class="text-center">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="dashboard-grid" style="grid-template-columns: 35% 65%; gap: 15px; margin-top: 20px;">
+    <div class="glass-card" style="overflow-x: auto;">
+        <h3>1.1 Analisa Air Sebelum Proses</h3>
+        <div class="table-responsive">
+            <table class="data-table" id="dash-table-water-sebelum">
+                <tbody>
+                    <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>=> RAW WATER</strong></td></tr>
+                    <tr><td style="width:75%;">PH</td><td id="td_raw_ph"></td></tr>
+                    <tr><td>Tds</td><td id="td_raw_tds"></td></tr>
+                    <tr><td>T.hardness</td><td id="td_raw_thardness"></td></tr>
+                    <tr><td>Silica/Sio2</td><td id="td_raw_silica"></td></tr>
+                    <tr><td>Turbidity</td><td id="td_raw_turbidity"></td></tr>
+                    <tr><td>Cloride</td><td id="td_raw_cloride"></td></tr>
+                    
+                    <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>=> WTP / clarifier</strong></td></tr>
+                    <tr><td>PH</td><td id="td_wtp_ph"></td></tr>
+                    <tr><td>Tds</td><td id="td_wtp_tds"></td></tr>
+                    <tr><td>Turbidity(&lt;10)</td><td id="td_wtp_turbidity"></td></tr>
+                    <tr><td>Cloride</td><td id="td_wtp_cloride"></td></tr>
+                    
+                    <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>=> Sand Filter</strong></td></tr>
+                    <tr><td>PH</td><td id="td_sand_ph"></td></tr>
+                    <tr><td>Tds</td><td id="td_sand_tds"></td></tr>
+                    <tr><td>Turbidity(&lt;10)</td><td id="td_sand_turbidity"></td></tr>
+                    <tr><td>Cloride</td><td id="td_sand_cloride"></td></tr>
+                    
+                    <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>Demin plant no.1 atau no.2 (pilihan)</strong></td></tr>
+                    <tr style="background-color: #f8fafc;"><td colspan="2"><strong>=> CATION</strong></td></tr>
+                    <tr><td>PH(&lt;5.5)</td><td id="td_cation_ph"></td></tr>
+                    <tr><td>Tds</td><td id="td_cation_tds"></td></tr>
+                    <tr><td>T.hardness(Trace)</td><td id="td_cation_thardness"></td></tr>
+                    
+                    <tr style="background-color: #f8fafc;"><td colspan="2"><strong>=> ANION</strong></td></tr>
+                    <tr><td>PH(6.5 - 9.5)</td><td id="td_anion_ph"></td></tr>
+                    <tr><td>Tds(&lt;100)</td><td id="td_anion_tds"></td></tr>
+                    <tr><td>SiO2/silica(&lt;2.5)</td><td id="td_anion_silica"></td></tr>
+                    
+                    <tr style="background-color: #f8fafc;"><td colspan="2"><strong>=> FEED TANK</strong></td></tr>
+                    <tr><td>PH(6.5 - 9.5)</td><td id="td_feed_ph"></td></tr>
+                    <tr><td>Tds(&lt;100)</td><td id="td_feed_tds"></td></tr>
+                    <tr><td>T.hardness(Trace)</td><td id="td_feed_thardness"></td></tr>
+                    <tr><td>Silica/SiO2(&lt;5)</td><td id="td_feed_silica"></td></tr>
+                    <tr><td>Cloride</td><td id="td_feed_cloride"></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="glass-card" style="overflow-x: auto;">
+        <h3>1.2 Analisa Air Boiler (Rata-rata)</h3>
+        <div class="table-responsive">
+            <table class="data-table" id="dash-table-water-boiler">
+                <thead></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Extra Date Picker Modal -->
+<div class="modal-overlay" id="dashboard-extra-date-modal" style="display:none; z-index: 1000;">
+    <div class="modal-content" style="width: 400px; max-width: 90%;">
+        <div class="modal-header">
+            <h3 style="margin: 0;">Pilih Tanggal Historical</h3>
+            <button type="button" class="modal-close" onclick="document.getElementById('dashboard-extra-date-modal').style.display = 'none'">&times;</button>
+        </div>
+        <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+            <input type="date" id="dash-extra-date-input" class="form-control">
+            <button class="btn btn-primary" onclick="loadDashboardExtraData(document.getElementById('dash-extra-date-input').value); document.getElementById('dashboard-extra-date-modal').style.display='none';">Load Data</button>
+        </div>
+    </div>
+</div>
+
+            
+`,
     vehicle: `
         <div id="vehicle-module-layout" class="animate-fade-in" style="padding-top: 10px;">
             <div id="modal-vehicle-input" class="modal-overlay" style="display:none;"><div class="modal-content animate-fade-in"><div class="modal-header"><h3>Input Pergerakan</h3><button type="button" class="modal-close" onclick="document.getElementById('modal-vehicle-input').style.display='none';">&times;</button></div>
@@ -4751,7 +4880,10 @@ const navigate = (viewId) => {
         pemupukan: 'Pemupukan Monitoring',
         tonase: 'Tonase Monitoring',
         harvesting: 'Harvesting Monitoring',
-        users: 'Master User Management'
+        users: 'Master User Management',
+        processing: 'Processing Monitoring',
+        water: 'Water Analysis',
+        ffb_quality: 'FFB Quality'
     };
     const baseTitle = titles[viewId] || 'Dashboard';
     title.innerText = currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)'
@@ -4760,11 +4892,19 @@ const navigate = (viewId) => {
     container.innerHTML = views[viewId] || views.dashboard;
     populateSelects();
     
-    if(viewId === 'dashboard') initDashboardChart();
+    if(viewId === 'dashboard') {
+        initDashboardChart();
+        if(window.loadDashboardExtraData) window.loadDashboardExtraData();
+    }
     if(viewId === 'vehicle') { renderVehicleTable(); bindForms(); }
     if(viewId === 'upkeep') { renderUpkeepTable(); bindForms(); }
     if(viewId === 'pemupukan') { renderPemupukanTable(); bindForms(); }
     if(viewId === 'harvesting') { renderHarvestingTable(); bindForms(); }
+    if(viewId === 'processing') { if(window.renderProcessingView) window.renderProcessingView(); }
+    if(viewId === 'water') { if(window.renderWaterView) window.renderWaterView(); }
+    if(viewId === 'ffb_quality') { if(window.renderFFBQualityView) window.renderFFBQualityView(); }
+    
+    
     if(viewId === 'master') {
         if (currentUser && (currentUser.role === 'Senior Field Manager' || currentUser.role === 'Manager')) {
             const masterGrid = document.querySelector('.master-grid');
@@ -4874,7 +5014,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const username = document.getElementById('login-username').value.trim();
-            const password = document.getElementById('login-password').value.trim();
+            const password = document.getElementById('login-sandi').value.trim();
             const estateEl = document.getElementById('login-estate');
             const estate = estateEl ? estateEl.value : null;
             login(username, password, estate);
@@ -8545,7 +8685,7 @@ window.handleChangePassword = async function(e) {
             errorEl.innerText = 'Berhasil! Mengalihkan...';
             errorEl.style.display = 'block';
             
-            const loginPassEl = document.getElementById('login-password');
+            const loginPassEl = document.getElementById('login-sandi');
             if (loginPassEl) loginPassEl.value = newPass;
             
             document.getElementById('modal-change-password').style.display = 'none';

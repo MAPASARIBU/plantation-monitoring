@@ -167,7 +167,7 @@ async function initDB() {
         try { await pool.query("ALTER TABLE master_supply_chain ADD COLUMN is_efb BOOLEAN DEFAULT TRUE"); } catch(e) {}
         
         await pool.query(`CREATE TABLE IF NOT EXISTS master_supply_chain_list (id SERIAL PRIMARY KEY, name TEXT UNIQUE, abbr TEXT)`);
-        const scListCount = await pool.query('SELECT count(*) FROM master_supply_chain_list');
+        const scListCount = await pool.query('SELECT count(*) AS count FROM master_supply_chain_list');
         if (parseInt(scListCount.rows[0].count) === 0) {
             const seedData = [
                 ['Bunga Tanjung Estate', 'BTEE'],
@@ -190,7 +190,7 @@ async function initDB() {
                 ['PLAM', 'PLAM']
             ];
             for (const item of seedData) {
-                await pool.query('INSERT INTO master_supply_chain_list (name, abbr) VALUES ($1, $2) ON CONFLICT DO NOTHING', [item[0], item[1]]);
+                await pool.query('INSERT INTO master_supply_chain_list (name, abbr) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING', [item[0], item[1]]);
             }
         }
         await pool.query(`CREATE TABLE IF NOT EXISTS tonase_hourly (
@@ -240,6 +240,63 @@ async function initDB() {
             is_locked INTEGER DEFAULT 0
         )`);
 
+
+        await pool.query(`CREATE TABLE IF NOT EXISTS processing_liquid (
+            id SERIAL PRIMARY KEY,
+            date TEXT, mill TEXT, time_hour TEXT,
+            cot_oil REAL, cot_water REAL, cot_temp REAL, cot_sludge REAL, cot_solid REAL,
+            cst1_oil REAL, cst1_water REAL, cst1_temp REAL, cst1_sludge REAL, cst1_solid REAL, cst1_level_minyak REAL,
+            sludge_tank_oil REAL, sludge_tank_water REAL, sludge_tank_temp REAL, sludge_tank_sludge REAL, sludge_tank_solid REAL
+        )`);
+
+        await pool.query(`CREATE TABLE IF NOT EXISTS processing_ffa (
+            id SERIAL PRIMARY KEY,
+            date TEXT, mill TEXT, time_hour TEXT,
+            ffa REAL, moist REAL
+        )`);
+        
+        // Alter table for new ffa parameters (Before & After Washing Plant)
+        const alterCols = [
+            'ffa_b REAL', 'moist_b REAL', 'dirt_b REAL',
+            'ffa_a REAL', 'moist_a REAL', 'dirt_a REAL'
+        ];
+        for (let col of alterCols) {
+            try {
+                await pool.query(`ALTER TABLE processing_ffa ADD COLUMN ${col}`);
+            } catch (e) {
+                // Ignore if column already exists (SQLite duplicate column error)
+            }
+        }
+
+        await pool.query(`CREATE TABLE IF NOT EXISTS water_analysis (
+            id SERIAL PRIMARY KEY,
+            date TEXT, mill TEXT,
+            raw_ph REAL, raw_tds REAL, raw_thardness REAL, raw_silica REAL, raw_turbidity REAL, raw_cloride REAL,
+            wtp_ph REAL, wtp_tds REAL, wtp_turbidity REAL, wtp_cloride REAL,
+            sand_ph REAL, sand_tds REAL, sand_turbidity REAL, sand_cloride REAL,
+            cation_ph REAL, cation_tds REAL, cation_thardness REAL,
+            anion_ph REAL, anion_tds REAL, anion_silica REAL,
+            feed_ph REAL, feed_tds REAL, feed_thardness REAL, feed_silica REAL, feed_cloride REAL,
+            boiler2j_ph REAL, boiler2j_tds REAL, boiler2j_palkanity REAL, boiler2j_malkanity REAL, boiler2j_oalkanity REAL, boiler2j_thardness REAL, boiler2j_silica REAL, boiler2j_phospate REAL, boiler2j_sulfite REAL, boiler2j_chloride REAL,
+            boiler_proses_ph REAL, boiler_proses_tds REAL, boiler_proses_phospate REAL, boiler_proses_sulfite REAL
+        )`);
+
+        await pool.query(`CREATE TABLE IF NOT EXISTS water_boiler_hourly (
+            id SERIAL PRIMARY KEY,
+            date TEXT, mill TEXT, time_hour TEXT,
+            ph REAL, tds REAL, palkanity REAL, malkanity REAL, oalkanity REAL,
+            thardness REAL, silica REAL, phospate REAL, sulfite REAL, chloride REAL
+        )`);
+
+        await pool.query(`CREATE TABLE IF NOT EXISTS ffb_quality (
+            id SERIAL PRIMARY KEY,
+            date TEXT, mill TEXT, estate TEXT, divisi TEXT, no_truck TEXT,
+            bg_gram REAL,
+            bd_gram REAL, bd_percent REAL,
+            t_segar_gram REAL, t_segar_percent REAL,
+            busuk_gram REAL, busuk_percent REAL,
+            sampah_gram REAL, sampah_percent REAL
+        )`);
 
         try {
             await pool.query(`ALTER TABLE master_truk ADD COLUMN supir TEXT`);
@@ -1148,6 +1205,292 @@ app.post('/api/daily-monitor/config', async (req, res) => {
             await pool.query('INSERT INTO mill_daily_config (date, mill, is_processing, efb_ratio, sisa_kemarin_jjk, is_locked) VALUES ($1,$2,$3,$4,$5,$6)', [date, mill, is_processing || 0, efb_ratio || 0, sisa_kemarin_jjk || 0, is_locked ? 1 : 0]);
         }
         res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
+// --- NEW MODULES: PROCESSING, WATER, FFB QUALITY ---
+
+// PROCESSING LIQUID
+app.get('/api/processing/liquid/:mill/:date', async (req, res) => {
+    try {
+        const { mill, date } = req.params;
+        const result = await pool.query('SELECT * FROM processing_liquid WHERE mill = $1 AND date = $2', [mill, date]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/processing/liquid', async (req, res) => {
+    try {
+        const { date, mill, entries } = req.body;
+        for (let item of entries) {
+            const check = await pool.query('SELECT id FROM processing_liquid WHERE date=$1 AND mill=$2 AND time_hour=$3', [date, mill, item.time_hour]);
+            if (check.rows.length > 0) {
+                await pool.query(`UPDATE processing_liquid SET 
+                    cot_oil=$1, cot_water=$2, cot_temp=$3, cot_sludge=$4, cot_solid=$5,
+                    cst1_oil=$6, cst1_water=$7, cst1_temp=$8, cst1_sludge=$9, cst1_solid=$10, cst1_level_minyak=$11,
+                    sludge_tank_oil=$12, sludge_tank_water=$13, sludge_tank_temp=$14, sludge_tank_sludge=$15, sludge_tank_solid=$16
+                    WHERE date=$17 AND mill=$18 AND time_hour=$19`, 
+                    [item.cot_oil, item.cot_water, item.cot_temp, item.cot_sludge, item.cot_solid,
+                     item.cst1_oil, item.cst1_water, item.cst1_temp, item.cst1_sludge, item.cst1_solid, item.cst1_level_minyak,
+                     item.sludge_tank_oil, item.sludge_tank_water, item.sludge_tank_temp, item.sludge_tank_sludge, item.sludge_tank_solid,
+                     date, mill, item.time_hour]);
+            } else {
+                await pool.query(`INSERT INTO processing_liquid (
+                    date, mill, time_hour,
+                    cot_oil, cot_water, cot_temp, cot_sludge, cot_solid,
+                    cst1_oil, cst1_water, cst1_temp, cst1_sludge, cst1_solid, cst1_level_minyak,
+                    sludge_tank_oil, sludge_tank_water, sludge_tank_temp, sludge_tank_sludge, sludge_tank_solid
+                ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`, 
+                    [date, mill, item.time_hour,
+                     item.cot_oil, item.cot_water, item.cot_temp, item.cot_sludge, item.cot_solid,
+                     item.cst1_oil, item.cst1_water, item.cst1_temp, item.cst1_sludge, item.cst1_solid, item.cst1_level_minyak,
+                     item.sludge_tank_oil, item.sludge_tank_water, item.sludge_tank_temp, item.sludge_tank_sludge, item.sludge_tank_solid]);
+            }
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// PROCESSING FFA
+app.get('/api/processing/ffa/:mill/:date', async (req, res) => {
+    try {
+        const { mill, date } = req.params;
+        const result = await pool.query('SELECT * FROM processing_ffa WHERE mill = $1 AND date = $2', [mill, date]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/processing/ffa', async (req, res) => {
+    try {
+        const { date, mill, entries } = req.body;
+        for (let item of entries) {
+            const check = await pool.query('SELECT id FROM processing_ffa WHERE date=$1 AND mill=$2 AND time_hour=$3', [date, mill, item.time_hour]);
+            if (check.rows.length > 0) {
+                await pool.query(`UPDATE processing_ffa SET ffa=$1, moist=$2, ffa_b=$3, moist_b=$4, dirt_b=$5, ffa_a=$6, moist_a=$7, dirt_a=$8 WHERE date=$9 AND mill=$10 AND time_hour=$11`, 
+                    [item.ffa, item.moist, item.ffa_b, item.moist_b, item.dirt_b, item.ffa_a, item.moist_a, item.dirt_a, date, mill, item.time_hour]);
+            } else {
+                await pool.query(`INSERT INTO processing_ffa (date, mill, time_hour, ffa, moist, ffa_b, moist_b, dirt_b, ffa_a, moist_a, dirt_a) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, 
+                    [date, mill, item.time_hour, item.ffa, item.moist, item.ffa_b, item.moist_b, item.dirt_b, item.ffa_a, item.moist_a, item.dirt_a]);
+            }
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// WATER ANALYSIS
+app.get('/api/water/:mill/:date', async (req, res) => {
+    try {
+        const { mill, date } = req.params;
+        const result = await pool.query('SELECT * FROM water_analysis WHERE mill = $1 AND date = $2', [mill, date]);
+        res.json(result.rows[0] || null);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// WATER BOILER HOURLY
+app.get('/api/water_boiler/:mill/:date', async (req, res) => {
+    try {
+        const { mill, date } = req.params;
+        const result = await pool.query('SELECT * FROM water_boiler_hourly WHERE mill = $1 AND date = $2 ORDER BY time_hour ASC', [mill, date]);
+        
+        // Calculate averages
+        let avg = {
+            ph: 0, tds: 0, palkanity: 0, malkanity: 0, oalkanity: 0,
+            thardness: 0, silica: 0, phospate: 0, sulfite: 0, chloride: 0
+        };
+        let count = {
+            ph: 0, tds: 0, palkanity: 0, malkanity: 0, oalkanity: 0,
+            thardness: 0, silica: 0, phospate: 0, sulfite: 0, chloride: 0
+        };
+        
+        result.rows.forEach(row => {
+            Object.keys(avg).forEach(k => {
+                if (row[k] !== null && !isNaN(row[k])) {
+                    avg[k] += parseFloat(row[k]);
+                    count[k]++;
+                }
+            });
+        });
+        
+        Object.keys(avg).forEach(k => {
+            avg[k] = count[k] > 0 ? (avg[k] / count[k]).toFixed(2) : null;
+        });
+
+        res.json({
+            hourly: result.rows,
+            average: avg
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/water_boiler', async (req, res) => {
+    try {
+        const { date, mill, time_hour, data } = req.body;
+        
+        const check = await pool.query('SELECT id FROM water_boiler_hourly WHERE date=$1 AND mill=$2 AND time_hour=$3', [date, mill, time_hour]);
+        if (check.rows.length > 0) {
+            await pool.query(`UPDATE water_boiler_hourly SET 
+                ph=$1, tds=$2, palkanity=$3, malkanity=$4, oalkanity=$5,
+                thardness=$6, silica=$7, phospate=$8, sulfite=$9, chloride=$10
+                WHERE date=$11 AND mill=$12 AND time_hour=$13`, 
+                [data.ph, data.tds, data.palkanity, data.malkanity, data.oalkanity,
+                 data.thardness, data.silica, data.phospate, data.sulfite, data.chloride,
+                 date, mill, time_hour]);
+        } else {
+            await pool.query(`INSERT INTO water_boiler_hourly (
+                date, mill, time_hour,
+                ph, tds, palkanity, malkanity, oalkanity,
+                thardness, silica, phospate, sulfite, chloride
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+            [date, mill, time_hour,
+             data.ph, data.tds, data.palkanity, data.malkanity, data.oalkanity,
+             data.thardness, data.silica, data.phospate, data.sulfite, data.chloride]);
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/water', async (req, res) => {
+    try {
+        const { date, mill, data } = req.body;
+        const check = await pool.query('SELECT id FROM water_analysis WHERE date=$1 AND mill=$2', [date, mill]);
+        if (check.rows.length > 0) {
+            await pool.query(`UPDATE water_analysis SET 
+                raw_ph=$1, raw_tds=$2, raw_thardness=$3, raw_silica=$4, raw_turbidity=$5, raw_cloride=$6,
+                wtp_ph=$7, wtp_tds=$8, wtp_turbidity=$9, wtp_cloride=$10,
+                sand_ph=$11, sand_tds=$12, sand_turbidity=$13, sand_cloride=$14,
+                cation_ph=$15, cation_tds=$16, cation_thardness=$17,
+                anion_ph=$18, anion_tds=$19, anion_silica=$20,
+                feed_ph=$21, feed_tds=$22, feed_thardness=$23, feed_silica=$24, feed_cloride=$25,
+                boiler2j_ph=$26, boiler2j_tds=$27, boiler2j_palkanity=$28, boiler2j_malkanity=$29, boiler2j_oalkanity=$30, boiler2j_thardness=$31, boiler2j_silica=$32, boiler2j_phospate=$33, boiler2j_sulfite=$34, boiler2j_chloride=$35,
+                boiler_proses_ph=$36, boiler_proses_tds=$37, boiler_proses_phospate=$38, boiler_proses_sulfite=$39
+                WHERE date=$40 AND mill=$41`, 
+                [data.raw_ph, data.raw_tds, data.raw_thardness, data.raw_silica, data.raw_turbidity, data.raw_cloride,
+                 data.wtp_ph, data.wtp_tds, data.wtp_turbidity, data.wtp_cloride,
+                 data.sand_ph, data.sand_tds, data.sand_turbidity, data.sand_cloride,
+                 data.cation_ph, data.cation_tds, data.cation_thardness,
+                 data.anion_ph, data.anion_tds, data.anion_silica,
+                 data.feed_ph, data.feed_tds, data.feed_thardness, data.feed_silica, data.feed_cloride,
+                 data.boiler2j_ph, data.boiler2j_tds, data.boiler2j_palkanity, data.boiler2j_malkanity, data.boiler2j_oalkanity, data.boiler2j_thardness, data.boiler2j_silica, data.boiler2j_phospate, data.boiler2j_sulfite, data.boiler2j_chloride,
+                 data.boiler_proses_ph, data.boiler_proses_tds, data.boiler_proses_phospate, data.boiler_proses_sulfite,
+                 date, mill]);
+        } else {
+            await pool.query(`INSERT INTO water_analysis (
+                date, mill,
+                raw_ph, raw_tds, raw_thardness, raw_silica, raw_turbidity, raw_cloride,
+                wtp_ph, wtp_tds, wtp_turbidity, wtp_cloride,
+                sand_ph, sand_tds, sand_turbidity, sand_cloride,
+                cation_ph, cation_tds, cation_thardness,
+                anion_ph, anion_tds, anion_silica,
+                feed_ph, feed_tds, feed_thardness, feed_silica, feed_cloride,
+                boiler2j_ph, boiler2j_tds, boiler2j_palkanity, boiler2j_malkanity, boiler2j_oalkanity, boiler2j_thardness, boiler2j_silica, boiler2j_phospate, boiler2j_sulfite, boiler2j_chloride,
+                boiler_proses_ph, boiler_proses_tds, boiler_proses_phospate, boiler_proses_sulfite
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41)`, 
+                [date, mill,
+                 data.raw_ph, data.raw_tds, data.raw_thardness, data.raw_silica, data.raw_turbidity, data.raw_cloride,
+                 data.wtp_ph, data.wtp_tds, data.wtp_turbidity, data.wtp_cloride,
+                 data.sand_ph, data.sand_tds, data.sand_turbidity, data.sand_cloride,
+                 data.cation_ph, data.cation_tds, data.cation_thardness,
+                 data.anion_ph, data.anion_tds, data.anion_silica,
+                 data.feed_ph, data.feed_tds, data.feed_thardness, data.feed_silica, data.feed_cloride,
+                 data.boiler2j_ph, data.boiler2j_tds, data.boiler2j_palkanity, data.boiler2j_malkanity, data.boiler2j_oalkanity, data.boiler2j_thardness, data.boiler2j_silica, data.boiler2j_phospate, data.boiler2j_sulfite, data.boiler2j_chloride,
+                 data.boiler_proses_ph, data.boiler_proses_tds, data.boiler_proses_phospate, data.boiler_proses_sulfite]);
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// FFB QUALITY
+app.get('/api/ffb_quality/:mill/:date', async (req, res) => {
+    try {
+        const { mill, date } = req.params;
+        const result = await pool.query('SELECT * FROM ffb_quality WHERE mill = $1 AND date = $2 ORDER BY id ASC', [mill, date]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/ffb_quality/month/:mill/:month', async (req, res) => {
+    try {
+        const { mill, month } = req.params;
+        const result = await pool.query("SELECT * FROM ffb_quality WHERE mill = $1 AND date LIKE $2 || '%' ORDER BY date ASC", [mill, month]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/ffb_quality', async (req, res) => {
+    try {
+        const { date, mill, entries } = req.body;
+        
+        // We will just replace all entries for this date & mill for simplicity, or we can update by ID.
+        // Easiest is delete and insert.
+        await pool.query('BEGIN');
+        await pool.query('DELETE FROM ffb_quality WHERE mill=$1 AND date=$2', [mill, date]);
+        
+        for (let item of entries) {
+            if (item.estate) { // only save valid rows
+                await pool.query(`INSERT INTO ffb_quality (
+                    date, mill, estate, divisi, no_truck,
+                    bg_gram, bd_gram, bd_percent,
+                    t_segar_gram, t_segar_percent,
+                    busuk_gram, busuk_percent,
+                    sampah_gram, sampah_percent
+                ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`, 
+                [date, mill, item.estate, item.divisi, item.no_truck,
+                 item.bg_gram, item.bd_gram, item.bd_percent,
+                 item.t_segar_gram, item.t_segar_percent,
+                 item.busuk_gram, item.busuk_percent,
+                 item.sampah_gram, item.sampah_percent]);
+            }
+        }
+        await pool.query('COMMIT');
+        res.json({ success: true });
+    } catch (err) {
+        await pool.query('ROLLBACK');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// MILL DASHBOARD DATA (Combined for today)
+app.get('/api/mill_dashboard/:mill/:date', async (req, res) => {
+    try {
+        const { mill, date } = req.params;
+        const month = date.substring(0, 7);
+        
+        const ffa_today = await pool.query('SELECT * FROM processing_ffa WHERE mill=$1 AND date=$2 ORDER BY time_hour ASC', [mill, date]);
+        const ffa_month = await pool.query("SELECT * FROM processing_ffa WHERE mill=$1 AND date LIKE $2 || '%' ORDER BY date, time_hour ASC", [mill, month]);
+        
+        const cst_today = await pool.query('SELECT * FROM processing_liquid WHERE mill=$1 AND date=$2 ORDER BY time_hour ASC', [mill, date]);
+        const cst_month = await pool.query("SELECT * FROM processing_liquid WHERE mill=$1 AND date LIKE $2 || '%' ORDER BY date, time_hour ASC", [mill, month]);
+        
+        res.json({
+            ffa_today: ffa_today.rows,
+            ffa_month: ffa_month.rows,
+            cst_today: cst_today.rows,
+            cst_month: cst_month.rows
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
