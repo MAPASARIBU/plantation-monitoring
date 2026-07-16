@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3007;
+const PORT = process.env.PORT || 3006;
 
 // Middleware
 app.use((req, res, next) => {
@@ -1331,6 +1331,56 @@ app.get('/api/water_boiler/:mill/:date', async (req, res) => {
         res.json({
             hourly: result.rows,
             average: avg
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+// DASHBOARD MONTHLY WATER
+app.get('/api/water/dashboard/month/:mill/:month', async (req, res) => {
+    try {
+        const { mill, month } = req.params;
+        
+        // 1. Get water_analysis for the whole month
+        const waterAnalysisResult = await pool.query("SELECT * FROM water_analysis WHERE mill = $1 AND date LIKE $2 || '%' ORDER BY date ASC", [mill, month]);
+        
+        // 2. Get water_boiler_hourly for the whole month
+        const boilerResult = await pool.query("SELECT * FROM water_boiler_hourly WHERE mill = $1 AND date LIKE $2 || '%' ORDER BY date ASC", [mill, month]);
+        
+        // 3. Process boiler to get daily averages
+        const boilerDaily = {};
+        boilerResult.rows.forEach(row => {
+            const d = row.date;
+            if(!boilerDaily[d]) {
+                boilerDaily[d] = {
+                    ph: 0, tds: 0, palkanity: 0, malkanity: 0, oalkanity: 0,
+                    thardness: 0, silica: 0, phospate: 0, sulfite: 0, chloride: 0,
+                    count: { ph: 0, tds: 0, palkanity: 0, malkanity: 0, oalkanity: 0, thardness: 0, silica: 0, phospate: 0, sulfite: 0, chloride: 0 }
+                };
+            }
+            
+            const params = ['ph', 'tds', 'palkanity', 'malkanity', 'oalkanity', 'thardness', 'silica', 'phospate', 'sulfite', 'chloride'];
+            params.forEach(p => {
+                let v = parseFloat(row[p]);
+                if (!isNaN(v) && v !== null && row[p] !== '') {
+                    boilerDaily[d][p] += v;
+                    boilerDaily[d].count[p]++;
+                }
+            });
+        });
+        
+        const boilerAverages = {};
+        Object.keys(boilerDaily).forEach(d => {
+            boilerAverages[d] = {};
+            const params = ['ph', 'tds', 'palkanity', 'malkanity', 'oalkanity', 'thardness', 'silica', 'phospate', 'sulfite', 'chloride'];
+            params.forEach(p => {
+                boilerAverages[d][p] = boilerDaily[d].count[p] > 0 ? (boilerDaily[d][p] / boilerDaily[d].count[p]).toFixed(2) : '-';
+            });
+        });
+        
+        res.json({
+            water_analysis: waterAnalysisResult.rows,
+            boiler_averages: boilerAverages
         });
     } catch (err) {
         res.status(500).json({ error: err.message });

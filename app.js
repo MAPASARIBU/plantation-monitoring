@@ -255,7 +255,11 @@ const applyRBAC = () => {
     } else if (role === 'Mandor' || role === 'Krani Divisi') {
         showViews(['vehicle', 'pemupukan', 'upkeep', 'harvesting']);
     } else if (role === 'Krani Mill') {
-        showViews(['dashboard', 'tonase', 'processing', 'water', 'ffb_quality']);
+        showViews(['dashboard', 'tonase']);
+    } else if (role === 'Grading') {
+        showViews(['dashboard', 'ffb_quality']);
+    } else if (role === 'Analis') {
+        showViews(['dashboard', 'processing', 'water']);
     } else if (role === 'Supir') {
         showViews(['vehicle', 'harvesting']);
     } else if (role === 'Security' || role === 'Security Mill') {
@@ -412,57 +416,20 @@ const views = {
     </div>
 </div>
 
-<div class="dashboard-grid" style="grid-template-columns: 35% 65%; gap: 15px; margin-top: 20px;">
-    <div class="glass-card" style="overflow-x: auto;">
+<div class="dashboard-grid" style="grid-template-columns: minmax(0, 1fr); gap: 15px; margin-top: 20px;">
+    <div class="glass-card" style="overflow: hidden;">
         <h3>1.1 Analisa Air Sebelum Proses</h3>
-        <div class="table-responsive">
+        <div class="table-responsive" style="overflow-x: auto;">
             <table class="data-table" id="dash-table-water-sebelum">
-                <tbody>
-                    <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>=> RAW WATER</strong></td></tr>
-                    <tr><td style="width:75%;">PH</td><td id="td_raw_ph"></td></tr>
-                    <tr><td>Tds</td><td id="td_raw_tds"></td></tr>
-                    <tr><td>T.hardness</td><td id="td_raw_thardness"></td></tr>
-                    <tr><td>Silica/Sio2</td><td id="td_raw_silica"></td></tr>
-                    <tr><td>Turbidity</td><td id="td_raw_turbidity"></td></tr>
-                    <tr><td>Cloride</td><td id="td_raw_cloride"></td></tr>
-                    
-                    <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>=> WTP / clarifier</strong></td></tr>
-                    <tr><td>PH</td><td id="td_wtp_ph"></td></tr>
-                    <tr><td>Tds</td><td id="td_wtp_tds"></td></tr>
-                    <tr><td>Turbidity(&lt;10)</td><td id="td_wtp_turbidity"></td></tr>
-                    <tr><td>Cloride</td><td id="td_wtp_cloride"></td></tr>
-                    
-                    <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>=> Sand Filter</strong></td></tr>
-                    <tr><td>PH</td><td id="td_sand_ph"></td></tr>
-                    <tr><td>Tds</td><td id="td_sand_tds"></td></tr>
-                    <tr><td>Turbidity(&lt;10)</td><td id="td_sand_turbidity"></td></tr>
-                    <tr><td>Cloride</td><td id="td_sand_cloride"></td></tr>
-                    
-                    <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>Demin plant no.1 atau no.2 (pilihan)</strong></td></tr>
-                    <tr style="background-color: #f8fafc;"><td colspan="2"><strong>=> CATION</strong></td></tr>
-                    <tr><td>PH(&lt;5.5)</td><td id="td_cation_ph"></td></tr>
-                    <tr><td>Tds</td><td id="td_cation_tds"></td></tr>
-                    <tr><td>T.hardness(Trace)</td><td id="td_cation_thardness"></td></tr>
-                    
-                    <tr style="background-color: #f8fafc;"><td colspan="2"><strong>=> ANION</strong></td></tr>
-                    <tr><td>PH(6.5 - 9.5)</td><td id="td_anion_ph"></td></tr>
-                    <tr><td>Tds(&lt;100)</td><td id="td_anion_tds"></td></tr>
-                    <tr><td>SiO2/silica(&lt;2.5)</td><td id="td_anion_silica"></td></tr>
-                    
-                    <tr style="background-color: #f8fafc;"><td colspan="2"><strong>=> FEED TANK</strong></td></tr>
-                    <tr><td>PH(6.5 - 9.5)</td><td id="td_feed_ph"></td></tr>
-                    <tr><td>Tds(&lt;100)</td><td id="td_feed_tds"></td></tr>
-                    <tr><td>T.hardness(Trace)</td><td id="td_feed_thardness"></td></tr>
-                    <tr><td>Silica/SiO2(&lt;5)</td><td id="td_feed_silica"></td></tr>
-                    <tr><td>Cloride</td><td id="td_feed_cloride"></td></tr>
-                </tbody>
+                <thead></thead>
+                <tbody></tbody>
             </table>
         </div>
     </div>
 
-    <div class="glass-card" style="overflow-x: auto;">
+    <div class="glass-card" style="overflow: hidden;">
         <h3>1.2 Analisa Air Boiler (Rata-rata)</h3>
-        <div class="table-responsive">
+        <div class="table-responsive" style="overflow-x: auto;">
             <table class="data-table" id="dash-table-water-boiler">
                 <thead></thead>
                 <tbody></tbody>
@@ -1434,6 +1401,8 @@ const views = {
                                 <option>Mandor</option>
                                 <option>Krani Divisi</option>
                                 <option>Krani Mill</option>
+                                <option>Grading</option>
+                                <option>Analis</option>
                                 <option>Supir</option>
                                 <option>Security</option>
                                 <option>Admin</option>
@@ -2843,6 +2812,8 @@ window.promptEditUser = (id) => {
                         <option value="Mandor" ${user.role === 'Mandor' ? 'selected' : ''}>Mandor</option>
                         <option value="Krani Divisi" ${user.role === 'Krani Divisi' ? 'selected' : ''}>Krani Divisi</option>
                         <option value="Krani Mill" ${user.role === 'Krani Mill' ? 'selected' : ''}>Krani Mill</option>
+                        <option value="Grading" ${user.role === 'Grading' ? 'selected' : ''}>Grading</option>
+                        <option value="Analis" ${user.role === 'Analis' ? 'selected' : ''}>Analis</option>
                         <option value="Security" ${user.role === 'Security' ? 'selected' : ''}>Security</option>
                         <option value="Security Mill" ${user.role === 'Security Mill' ? 'selected' : ''}>Security Mill</option>
                         <option value="Supir" ${user.role === 'Supir' ? 'selected' : ''}>Supir</option>

@@ -249,6 +249,12 @@ window.renderProcessingView = function() {
         document.getElementById('p-date').value = window.getLocalDate();
     }
     window.loadProcessingData();
+    
+    // Disable inputs for read-only roles
+    const readOnlyRoles = ['Manager Mill', 'Supervisor Mill', 'Office Assistant Mill'];
+    if (window.currentUser && readOnlyRoles.includes(window.currentUser.role)) {
+        document.querySelectorAll('#view-container .btn-success').forEach(el => el.style.display = 'none');
+    }
 };
 
 window.openLiquidModal = function() {
@@ -989,6 +995,12 @@ window.renderWaterView = function() {
         document.getElementById('w-date').value = window.getLocalDate();
     }
     window.loadWaterData();
+    
+    // Disable inputs for read-only roles
+    const readOnlyRoles = ['Manager Mill', 'Supervisor Mill', 'Office Assistant Mill'];
+    if (window.currentUser && readOnlyRoles.includes(window.currentUser.role)) {
+        document.querySelectorAll('#view-container .btn-success').forEach(el => el.style.display = 'none');
+    }
 };
 
 window.loadWaterData = async function() {
@@ -1329,6 +1341,12 @@ window.renderFFBQualityView = function() {
         document.getElementById('fq-date').value = window.getLocalDate();
     }
     window.loadFFBQuality();
+
+    // Disable inputs for read-only roles
+    const readOnlyRoles = ['Manager Mill', 'Supervisor Mill', 'Office Assistant Mill'];
+    if (window.currentUser && readOnlyRoles.includes(window.currentUser.role)) {
+        document.querySelectorAll('#view-container .btn-success').forEach(el => el.style.display = 'none');
+    }
 };
 
 window.calculateFFBAverages = function() {
@@ -1616,57 +1634,20 @@ views.mill_dashboard = `
     </div>
 </div>
 
-<div class="dashboard-grid" style="grid-template-columns: 35% 65%; gap: 15px; margin-top: 20px;">
-    <div class="glass-card" style="overflow-x: auto;">
+<div class="dashboard-grid" style="grid-template-columns: minmax(0, 1fr); gap: 15px; margin-top: 20px;">
+    <div class="glass-card" style="overflow: hidden;">
         <h3>1.1 Analisa Air Sebelum Proses</h3>
-        <div class="table-responsive">
+        <div class="table-responsive" style="overflow-x: auto;">
             <table class="data-table" id="dash-table-water-sebelum">
-                <tbody>
-                    <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>=> RAW WATER</strong></td></tr>
-                    <tr><td style="width:75%;">PH</td><td id="td_raw_ph"></td></tr>
-                    <tr><td>Tds</td><td id="td_raw_tds"></td></tr>
-                    <tr><td>T.hardness</td><td id="td_raw_thardness"></td></tr>
-                    <tr><td>Silica/Sio2</td><td id="td_raw_silica"></td></tr>
-                    <tr><td>Turbidity</td><td id="td_raw_turbidity"></td></tr>
-                    <tr><td>Cloride</td><td id="td_raw_cloride"></td></tr>
-                    
-                    <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>=> WTP / clarifier</strong></td></tr>
-                    <tr><td>PH</td><td id="td_wtp_ph"></td></tr>
-                    <tr><td>Tds</td><td id="td_wtp_tds"></td></tr>
-                    <tr><td>Turbidity(&lt;10)</td><td id="td_wtp_turbidity"></td></tr>
-                    <tr><td>Cloride</td><td id="td_wtp_cloride"></td></tr>
-                    
-                    <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>=> Sand Filter</strong></td></tr>
-                    <tr><td>PH</td><td id="td_sand_ph"></td></tr>
-                    <tr><td>Tds</td><td id="td_sand_tds"></td></tr>
-                    <tr><td>Turbidity(&lt;10)</td><td id="td_sand_turbidity"></td></tr>
-                    <tr><td>Cloride</td><td id="td_sand_cloride"></td></tr>
-                    
-                    <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>Demin plant no.1 atau no.2 (pilihan)</strong></td></tr>
-                    <tr style="background-color: #f8fafc;"><td colspan="2"><strong>=> CATION</strong></td></tr>
-                    <tr><td>PH(&lt;5.5)</td><td id="td_cation_ph"></td></tr>
-                    <tr><td>Tds</td><td id="td_cation_tds"></td></tr>
-                    <tr><td>T.hardness(Trace)</td><td id="td_cation_thardness"></td></tr>
-                    
-                    <tr style="background-color: #f8fafc;"><td colspan="2"><strong>=> ANION</strong></td></tr>
-                    <tr><td>PH(6.5 - 9.5)</td><td id="td_anion_ph"></td></tr>
-                    <tr><td>Tds(&lt;100)</td><td id="td_anion_tds"></td></tr>
-                    <tr><td>SiO2/silica(&lt;2.5)</td><td id="td_anion_silica"></td></tr>
-                    
-                    <tr style="background-color: #f8fafc;"><td colspan="2"><strong>=> FEED TANK</strong></td></tr>
-                    <tr><td>PH(6.5 - 9.5)</td><td id="td_feed_ph"></td></tr>
-                    <tr><td>Tds(&lt;100)</td><td id="td_feed_tds"></td></tr>
-                    <tr><td>T.hardness(Trace)</td><td id="td_feed_thardness"></td></tr>
-                    <tr><td>Silica/SiO2(&lt;5)</td><td id="td_feed_silica"></td></tr>
-                    <tr><td>Cloride</td><td id="td_feed_cloride"></td></tr>
-                </tbody>
+                <thead></thead>
+                <tbody></tbody>
             </table>
         </div>
     </div>
 
-    <div class="glass-card" style="overflow-x: auto;">
+    <div class="glass-card" style="overflow: hidden;">
         <h3>1.2 Analisa Air Boiler (Rata-rata)</h3>
-        <div class="table-responsive">
+        <div class="table-responsive" style="overflow-x: auto;">
             <table class="data-table" id="dash-table-water-boiler">
                 <thead></thead>
                 <tbody></tbody>
@@ -1722,17 +1703,17 @@ window.loadDashboardExtraData = async function(dateOverride) {
                ? window.currentUser.estate 
                : 'Bunga Tanjung Mill';
                
+    const dashMonth = date.substring(0, 7);
+    
     let pL = fetch(`/api/processing/liquid/${mill}/${date}`);
     let pF = fetch(`/api/processing/ffa/${mill}/${date}`);
-    let pW = fetch(`/api/water/${mill}/${date}`);
-    let pB = fetch(`/api/water_boiler/${mill}/${date}`);
+    let pWMonth = fetch(`/api/water/dashboard/month/${mill}/${dashMonth}`);
     
-    let [resL, resF, resW, resB] = await Promise.all([pL, pF, pW, pB].map(p => p.catch(e => null)));
+    let [resL, resF, resWMonth] = await Promise.all([pL, pF, pWMonth].map(p => p.catch(e => null)));
     
     let liquidData = resL && resL.ok ? await resL.json() : [];
     let ffaData = resF && resF.ok ? await resF.json() : [];
-    let waterData = resW && resW.ok ? await resW.json() : {};
-    let boilerData = resB && resB.ok ? await resB.json() : {};
+    let monthlyWaterData = resWMonth && resWMonth.ok ? await resWMonth.json() : { water_analysis: [], boiler_averages: {} };
     
     // Sort Liquid and FFA data
     let sortFn = (a,b) => {
@@ -1745,64 +1726,129 @@ window.loadDashboardExtraData = async function(dateOverride) {
     liquidData.sort(sortFn);
     ffaData.sort(sortFn);
     
-    // Fill Water Tables
-    const fieldsSebelum = [
-        'raw_ph', 'raw_tds', 'raw_thardness', 'raw_silica', 'raw_turbidity', 'raw_cloride',
-        'wtp_ph', 'wtp_tds', 'wtp_turbidity', 'wtp_cloride',
-        'sand_ph', 'sand_tds', 'sand_turbidity', 'sand_cloride',
-        'cation_ph', 'cation_tds', 'cation_thardness',
-        'anion_ph', 'anion_tds', 'anion_silica',
-        'feed_ph', 'feed_tds', 'feed_thardness', 'feed_silica', 'feed_cloride'
-    ];
-    fieldsSebelum.forEach(f => {
-        let el = document.getElementById('td_' + f);
-        if(el) el.innerText = waterData && waterData[f] !== null ? waterData[f] : '-';
-    });
+    // Helper to get days in month
+    const parts = date.split('-');
+    const daysInMonth = new Date(parts[0], parts[1], 0).getDate();
+    const daysArray = Array.from({length: daysInMonth}, (_, i) => i + 1);
+
+    // 1. Fill Water Sebelum Proses (Monthly)
+    let dashWaterSebelumTable = document.getElementById('dash-table-water-sebelum');
+    if (dashWaterSebelumTable) {
+        let thead = dashWaterSebelumTable.querySelector('thead');
+        let tbody = dashWaterSebelumTable.querySelector('tbody');
+        
+        // Map data by date (YYYY-MM-DD)
+        const waterSebelumMap = {};
+        if (monthlyWaterData.water_analysis) {
+            monthlyWaterData.water_analysis.forEach(w => {
+                waterSebelumMap[w.date] = w;
+            });
+        }
+
+        // Header
+        let headRow = `<tr><th style="min-width: 200px; position: sticky; left: 0; background-color: #fff; z-index: 1;">PARAMETER</th>`;
+        daysArray.forEach(d => {
+            headRow += `<th style="min-width: 50px; text-align: center;">${d}</th>`;
+        });
+        headRow += `</tr>`;
+        thead.innerHTML = headRow;
+
+        const fieldsSebelum = [
+            { label: '=> RAW WATER', isHeader: true, bg: '#f1f5f9' },
+            { id: 'raw_ph', label: 'PH' },
+            { id: 'raw_tds', label: 'Tds' },
+            { id: 'raw_thardness', label: 'T.hardness' },
+            { id: 'raw_silica', label: 'Silica/Sio2' },
+            { id: 'raw_turbidity', label: 'Turbidity' },
+            { id: 'raw_cloride', label: 'Cloride' },
+            { label: '=> WTP / clarifier', isHeader: true, bg: '#f1f5f9' },
+            { id: 'wtp_ph', label: 'PH' },
+            { id: 'wtp_tds', label: 'Tds' },
+            { id: 'wtp_turbidity', label: 'Turbidity(<10)' },
+            { id: 'wtp_cloride', label: 'Cloride' },
+            { label: '=> Sand Filter', isHeader: true, bg: '#f1f5f9' },
+            { id: 'sand_ph', label: 'PH' },
+            { id: 'sand_tds', label: 'Tds' },
+            { id: 'sand_turbidity', label: 'Turbidity(<10)' },
+            { id: 'sand_cloride', label: 'Cloride' },
+            { label: 'Demin plant no.1 atau no.2 (pilihan)', isHeader: true, bg: '#f1f5f9' },
+            { label: '=> CATION', isHeader: true, bg: '#f8fafc' },
+            { id: 'cation_ph', label: 'PH(<5.5)' },
+            { id: 'cation_tds', label: 'Tds' },
+            { id: 'cation_thardness', label: 'T.hardness(Trace)' },
+            { label: '=> ANION', isHeader: true, bg: '#f8fafc' },
+            { id: 'anion_ph', label: 'PH(6.5 - 9.5)' },
+            { id: 'anion_tds', label: 'Tds(<100)' },
+            { id: 'anion_silica', label: 'SiO2/silica(<2.5)' },
+            { label: '=> FEED TANK', isHeader: true, bg: '#f8fafc' },
+            { id: 'feed_ph', label: 'PH(6.5 - 9.5)' },
+            { id: 'feed_tds', label: 'Tds(<100)' },
+            { id: 'feed_thardness', label: 'T.hardness(Trace)' },
+            { id: 'feed_silica', label: 'Silica/SiO2(<5)' },
+            { id: 'feed_cloride', label: 'Cloride' }
+        ];
+
+        let bodyHtml = '';
+        fieldsSebelum.forEach(f => {
+            if (f.isHeader) {
+                bodyHtml += `<tr style="background-color: ${f.bg};"><td colspan="${daysArray.length + 1}" style="position: sticky; left: 0; z-index: 1;"><strong>${f.label}</strong></td></tr>`;
+            } else {
+                let rowHtml = `<tr><td style="position: sticky; left: 0; background-color: #fff; z-index: 1;">${f.label}</td>`;
+                daysArray.forEach(d => {
+                    const dateKey = `${parts[0]}-${parts[1]}-${String(d).padStart(2, '0')}`;
+                    let val = waterSebelumMap[dateKey] && waterSebelumMap[dateKey][f.id] !== null && waterSebelumMap[dateKey][f.id] !== undefined ? waterSebelumMap[dateKey][f.id] : '-';
+                    if (val !== '-' && !f.id.endsWith('_ph')) {
+                        let num = parseFloat(val);
+                        if (!isNaN(num)) val = Math.round(num);
+                    }
+                    rowHtml += `<td style="text-align: center;">${val}</td>`;
+                });
+                rowHtml += `</tr>`;
+                bodyHtml += rowHtml;
+            }
+        });
+        tbody.innerHTML = bodyHtml;
+    }
     
-    // Boiler dynamic
+    // 2. Boiler dynamic (Monthly)
     let dashBoilerTable = document.getElementById('dash-table-water-boiler');
     if (dashBoilerTable) {
         let thead = dashBoilerTable.querySelector('thead');
         let tbody = dashBoilerTable.querySelector('tbody');
         
-        let hourlyData = boilerData && boilerData.hourly ? [...boilerData.hourly] : [];
-        hourlyData.sort((a, b) => a.time_hour.localeCompare(b.time_hour));
-        
-        let headRow = `<tr><th style="width:30%;">PARAMETER</th>`;
-        hourlyData.forEach(h => { headRow += `<th>${h.time_hour}</th>`; });
-        headRow += `<th style="width:15%;">Rata-rata</th></tr>`;
+        let headRow = `<tr><th style="min-width: 200px; position: sticky; left: 0; background-color: #fff; z-index: 1;">PARAMETER</th>`;
+        daysArray.forEach(d => {
+            headRow += `<th style="min-width: 50px; text-align: center;">${d}</th>`;
+        });
+        headRow += `</tr>`;
         thead.innerHTML = headRow;
         
         let bodyHtml = '';
         const params = [
-            { id: 'ph', label: 'PH(10.5-11.5)', extra: false },
-            { id: 'tds', label: 'Tds(<1800)', extra: false },
-            { id: 'palkanity', label: 'P.alkanity(300 - 700)', extra: true },
-            { id: 'malkanity', label: 'M.alkanity(<1300)', extra: true },
-            { id: 'oalkanity', label: 'O.alkanity(>2.5xsilica)', extra: true },
-            { id: 'thardness', label: 'T.hardness', extra: true },
-            { id: 'silica', label: 'Silica/SiO2(<125)', extra: true },
-            { id: 'phospate', label: 'Phospate/PO4(30 - 70)', extra: true },
-            { id: 'sulfite', label: 'Sulfite/SO3(30 - 70)', extra: true },
-            { id: 'chloride', label: 'Chloride', extra: true }
+            { id: 'ph', label: 'PH(10.5-11.5)' },
+            { id: 'tds', label: 'Tds(<1800)' },
+            { id: 'palkanity', label: 'P.alkanity(300 - 700)' },
+            { id: 'malkanity', label: 'M.alkanity(<1300)' },
+            { id: 'oalkanity', label: 'O.alkanity(>2.5xsilica)' },
+            { id: 'thardness', label: 'T.hardness' },
+            { id: 'silica', label: 'Silica/SiO2(<125)' },
+            { id: 'phospate', label: 'Phospate/PO4(30 - 70)' },
+            { id: 'sulfite', label: 'Sulfite/SO3(30 - 70)' },
+            { id: 'chloride', label: 'Chloride' }
         ];
         
         params.forEach(p => {
-            let rowHtml = `<tr><td>${p.label}</td>`;
-            if (p.extra) {
-                let avgVal = boilerData && boilerData.average && boilerData.average[p.id] !== null && boilerData.average[p.id] !== undefined ? boilerData.average[p.id] : '-';
-                if (hourlyData.length > 0) {
-                    rowHtml += `<td colspan="${hourlyData.length}"></td>`;
+            let rowHtml = `<tr><td style="position: sticky; left: 0; background-color: #fff; z-index: 1;">${p.label}</td>`;
+            daysArray.forEach(d => {
+                const dateKey = `${parts[0]}-${parts[1]}-${String(d).padStart(2, '0')}`;
+                const boilerAvg = monthlyWaterData.boiler_averages ? monthlyWaterData.boiler_averages[dateKey] : null;
+                let val = boilerAvg && boilerAvg[p.id] !== undefined ? boilerAvg[p.id] : '-';
+                if (val !== '-' && p.id !== 'ph') {
+                    let num = parseFloat(val);
+                    if (!isNaN(num)) val = Math.round(num);
                 }
-                rowHtml += `<td>${avgVal}</td>`;
-            } else {
-                hourlyData.forEach(h => {
-                    let val = h[p.id] !== null && h[p.id] !== undefined ? h[p.id] : '-';
-                    rowHtml += `<td>${val}</td>`;
-                });
-                let avgVal = boilerData && boilerData.average && boilerData.average[p.id] !== null && boilerData.average[p.id] !== undefined ? boilerData.average[p.id] : '-';
-                rowHtml += `<td>${avgVal}</td>`;
-            }
+                rowHtml += `<td style="text-align: center;">${val}</td>`;
+            });
             rowHtml += `</tr>`;
             bodyHtml += rowHtml;
         });
