@@ -8996,7 +8996,7 @@ window.loadDashboardProgressHistoricalChart = async () => {
         if (!mill || !mill.endsWith('Mill')) {
             mill = 'Bunga Tanjung Mill';
         }
-        const res = await fetch(`${API_URL}/tonase/${mill}/date/${selectedDate}`);
+        const res = await fetch(`${API_URL}/tonase/${mill}/${selectedDate}`);
         const data = await window.parseTonaseResponse(res);
         
         let bands = [0, 0, 0, 0, 0, 0];
