@@ -352,7 +352,10 @@ const views = {
                 </div>
                 <div class="glass-card">
                     <div class="view-header" style="flex-direction: column; align-items: flex-start; gap: 5px;">
-                        <h2 style="margin: 0;">Progres Penerimaan TBS Hari Ini</h2>
+                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                            <h2 style="margin: 0;">Progres Penerimaan TBS Hari Ini</h2>
+                            <button class="btn btn-primary btn-sm" onclick="document.getElementById('dashboard-progress-historical-modal').style.display='flex';"><i class="fa-solid fa-clock-rotate-left"></i> Historical</button>
+                        </div>
                         <span id="dashboard-progress-time" style="font-size: 0.9em; color: var(--text-secondary); font-weight: bold;"></span>
                     </div>
                     <div id="dashboard-progress-panen-container" style="margin-top: 20px;">
@@ -362,7 +365,28 @@ const views = {
             </div>
 
             
+<!-- Dashboard Progress Historical Modal -->
+<div class="modal-overlay" id="dashboard-progress-historical-modal" style="display:none; z-index: 1000;">
+    <div class="modal-content" style="width: 800px; max-width: 95%; overflow-y: auto; display: flex; flex-direction: column;">
+        <div class="modal-header" id="dashboard-progress-historical-modal-header" style="cursor: move; background-color: #f1f5f9; padding: 15px; border-bottom: 1px solid #e2e8f0;">
+            <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-arrows-up-down-left-right"></i> FFB Received % by Time Band</h2>
+            <button type="button" class="modal-close" onclick="document.getElementById('dashboard-progress-historical-modal').style.display = 'none'">&times;</button>
+        </div>
+        <div style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
+            <div style="display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 20px;">
+                <label style="font-weight: bold;">Pilih Tanggal:</label>
+                <input type="date" id="dashboard-progress-historical-date" class="form-control" style="width: auto;">
+                <button class="btn" style="background-color: #e2e8f0; color: #333;" onclick="document.getElementById('dashboard-progress-historical-modal').style.display='none'">No</button>
+                <button class="btn btn-primary" onclick="loadDashboardProgressHistoricalChart()">OK</button>
+            </div>
+            <div id="dashboard-progress-historical-chart-container" style="flex: 1; width: 100%; display: none; min-height: 400px; position: relative;">
+                <canvas id="dashboardProgressHistoricalChartCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- Dashboard Extra Sections (Processing & Water) -->
+<div id="dashboard-mill-sections">
 <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; border-top: 2px solid #e2e8f0; padding-top: 20px;">
     <div style="display: flex; flex-direction: column;">
         <h2 style="margin: 0;">Processing & Water Analysis</h2>
@@ -436,6 +460,8 @@ const views = {
             </table>
         </div>
     </div>
+</div>
+
 </div>
 
 <!-- Dashboard Extra Date Picker Modal -->
@@ -1282,6 +1308,7 @@ const views = {
                     <h2 style="margin:0; display:flex; align-items:center; gap: 10px;">
                         Prime Time Monitoring
                         <button class="btn btn-primary btn-sm" onclick="openHistoricalPlanning()">Historical Planning</button>
+                        <button class="btn btn-primary btn-sm" onclick="openHistoricalActual()">Historical Actual</button>
                     </h2>
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <label style="font-weight: bold; font-size: 0.9em; color: var(--text-secondary);">Estate:</label>
@@ -1322,6 +1349,41 @@ const views = {
             </div>
             
         </div>
+        
+<!-- Historical Actual Modal -->
+<div class="modal-overlay" id="modal-historical-actual" style="display:none; z-index: 1000;">
+    <div class="modal-content" style="width: 1200px; max-width: 95vw; height: 90vh; display:flex; flex-direction:column; overflow:hidden;">
+        <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding: 15px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+            <h3 style="margin:0;"><i class="fa-solid fa-chart-column"></i> Historical Actual</h3>
+            <button type="button" class="modal-close" onclick="document.getElementById('modal-historical-actual').style.display='none';">&times;</button>
+        </div>
+        <div style="padding: 15px; display:flex; gap:10px; align-items:center; background:white; border-bottom:1px solid #e2e8f0;">
+            <label style="font-weight:bold;">Tipe Akumulasi:</label>
+            <select id="historical-actual-type" class="form-control" style="width:auto;" onchange="window.toggleHistoricalActualInputs()">
+                <option value="bulanan">Bulanan</option>
+                <option value="harian">Harian</option>
+            </select>
+            
+            <label id="lbl-historical-actual-month" style="font-weight:bold; margin-left:10px;">Pilih Bulan:</label>
+            <input type="month" id="historical-actual-month" class="form-control" style="width:auto;" value="${window.getLocalDate().substring(0, 7)}" onchange="loadHistoricalActualChart()">
+            
+            <label id="lbl-historical-actual-date" style="font-weight:bold; margin-left:10px; display:none;">Pilih Tanggal:</label>
+            <input type="date" id="historical-actual-date" class="form-control" style="width:auto; display:none;" value="${window.getLocalDate()}" onchange="loadHistoricalActualChart()">
+            
+            <button class="btn btn-primary" style="margin-left:10px;" onclick="loadHistoricalActualChart()">Tampilkan</button>
+        </div>
+        <div style="flex:1; padding: 15px; background: white; overflow-y: auto; display:flex; flex-direction:column; gap: 20px;">
+            <div style="width:100%; position:relative; min-height: 400px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <h4 style="text-align: center; margin-top: 0;">Prime Time Actual Monitoring</h4>
+                <canvas id="historicalActualPrimeChartCanvas"></canvas>
+            </div>
+            <div style="width:50%; margin: 0 auto; position:relative; min-height: 400px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <h4 style="text-align: center; margin-top: 0;">Cumulative FFB Received by Time Band</h4>
+                <canvas id="cumulativeFFBTimeBandChartCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
     `,
     master: `
         <div class="animate-fade-in">
@@ -4866,6 +4928,12 @@ const navigate = (viewId) => {
     if(viewId === 'dashboard') {
         initDashboardChart();
         if(window.loadDashboardExtraData) window.loadDashboardExtraData();
+        
+        // Hide mill sections for estate users
+        if (currentUser && currentUser.estate && !currentUser.estate.toLowerCase().includes('mill') && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+            const millSec = document.getElementById('dashboard-mill-sections');
+            if (millSec) millSec.style.display = 'none';
+        }
     }
     if(viewId === 'vehicle') { renderVehicleTable(); bindForms(); }
     if(viewId === 'upkeep') { renderUpkeepTable(); bindForms(); }
@@ -8681,5 +8749,334 @@ window.handleChangePassword = async function(e) {
         errorEl.style.display = 'block';
         submitBtn.disabled = false;
         submitBtn.innerText = 'Update Password';
+    }
+};
+
+window.openHistoricalActual = () => {
+    document.getElementById('modal-historical-actual').style.display = 'flex';
+    setTimeout(loadHistoricalActualChart, 100);
+};
+
+window.toggleHistoricalActualInputs = () => {
+    const type = document.getElementById('historical-actual-type').value;
+    if (type === 'bulanan') {
+        document.getElementById('lbl-historical-actual-month').style.display = 'block';
+        document.getElementById('historical-actual-month').style.display = 'block';
+        document.getElementById('lbl-historical-actual-date').style.display = 'none';
+        document.getElementById('historical-actual-date').style.display = 'none';
+    } else {
+        document.getElementById('lbl-historical-actual-month').style.display = 'none';
+        document.getElementById('historical-actual-month').style.display = 'none';
+        document.getElementById('lbl-historical-actual-date').style.display = 'block';
+        document.getElementById('historical-actual-date').style.display = 'block';
+    }
+};
+
+let historicalActualPrimeChartInstance = null;
+let cumulativeFFBTimeBandChartInstance = null;
+
+window.loadHistoricalActualChart = async () => {
+    const type = document.getElementById('historical-actual-type') ? document.getElementById('historical-actual-type').value : 'bulanan';
+    const monthInput = document.getElementById('historical-actual-month');
+    const dateInput = document.getElementById('historical-actual-date');
+    if (type === 'bulanan' && (!monthInput || !monthInput.value)) return;
+    if (type === 'harian' && (!dateInput || !dateInput.value)) return;
+    
+    const month = type === 'bulanan' ? monthInput.value : dateInput.value.substring(0, 7);
+    const selectedDate = type === 'harian' ? dateInput.value : null;
+    
+    try {
+        let mill = currentUser.estate;
+        if (!mill || !mill.endsWith('Mill')) {
+            mill = 'Bunga Tanjung Mill';
+        }
+        
+        const primeSel = document.getElementById('prime-estate');
+        const selectedEstate = primeSel ? primeSel.value : 'ALL';
+        
+        const res = await fetch(`${API_URL}/tonase/${mill}/month/${month}`);
+        const data = await window.parseTonaseResponse(res);
+        
+        const year = parseInt(month.split('-')[0]);
+        const m = parseInt(month.split('-')[1]);
+        const daysInMonth = new Date(year, m, 0).getDate();
+        
+        const dailyData = {};
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dStr = `${month}-${i.toString().padStart(2, '0')}`;
+            dailyData[dStr] = { prime: 0, middle: 0, last: 0, total: 0 };
+        }
+        
+        const primeHours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00'];
+        const middleHours = ['13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+        const lastHours = ['19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
+        
+        let bands = [0, 0, 0, 0, 0, 0];
+        let totalMonth = 0;
+        
+        data.forEach(item => {
+            if (selectedEstate !== 'ALL' && item.estate !== selectedEstate) return;
+            const kg = parseFloat(item.realized_kg) || 0;
+            if (kg > 0) {
+                const d = item.date.split('T')[0];
+                if (dailyData[d]) {
+                    if (primeHours.includes(item.time_hour)) dailyData[d].prime += kg;
+                    else if (middleHours.includes(item.time_hour)) dailyData[d].middle += kg;
+                    else if (lastHours.includes(item.time_hour)) dailyData[d].last += kg;
+                    else {
+                        const third = kg / 3;
+                        dailyData[d].prime += third;
+                        dailyData[d].middle += third;
+                        dailyData[d].last += third;
+                    }
+                    dailyData[d].total += kg;
+                }
+                
+                const hourStr = item.time_hour;
+                if (hourStr) {
+                    if (type === 'bulanan' || (type === 'harian' && item.date.startsWith(selectedDate))) {
+                        const hour = parseInt(hourStr.split(':')[0], 10);
+                        totalMonth += kg;
+                        if (hour > 6 && hour <= 10) bands[0] += kg;
+                        else if (hour > 10 && hour <= 12) bands[1] += kg;
+                        else if (hour > 12 && hour <= 14) bands[2] += kg;
+                        else if (hour > 14 && hour <= 16) bands[3] += kg;
+                        else if (hour > 16 && hour <= 18) bands[4] += kg;
+                        else if (hour > 18 || hour <= 6) bands[5] += kg;
+                    }
+                }
+            }
+        });
+        
+        const labels = [];
+        const primePct = [];
+        const middlePct = [];
+        const lastPct = [];
+        const primeRaw = [];
+        const middleRaw = [];
+        const lastRaw = [];
+        
+        for (let i = 1; i <= daysInMonth; i++) {
+            labels.push(i.toString());
+            const dStr = `${month}-${i.toString().padStart(2, '0')}`;
+            const dayRecord = dailyData[dStr];
+            if (dayRecord && dayRecord.total > 0) {
+                primePct.push((dayRecord.prime / dayRecord.total) * 100);
+                middlePct.push((dayRecord.middle / dayRecord.total) * 100);
+                lastPct.push((dayRecord.last / dayRecord.total) * 100);
+                primeRaw.push(dayRecord.prime);
+                middleRaw.push(dayRecord.middle);
+                lastRaw.push(dayRecord.last);
+            } else {
+                primePct.push(0); middlePct.push(0); lastPct.push(0);
+                primeRaw.push(0); middleRaw.push(0); lastRaw.push(0);
+            }
+        }
+        
+        const primeCtx = document.getElementById('historicalActualPrimeChartCanvas');
+        if (primeCtx) {
+            if (historicalActualPrimeChartInstance) historicalActualPrimeChartInstance.destroy();
+            historicalActualPrimeChartInstance = new Chart(primeCtx, {
+                type: 'bar',
+                plugins: [window.ChartDataLabels || ChartDataLabels],
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Prime Time (06:00 - 12:00)', data: primePct, rawTonase: primeRaw, backgroundColor: '#1d4ed8' },
+                        { label: 'Middle Time (13:00 - 18:00)', data: middlePct, rawTonase: middleRaw, backgroundColor: '#22c55e' },
+                        { label: 'Last Time (19:00 - 24:00)', data: lastPct, rawTonase: lastRaw, backgroundColor: '#eab308' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true, title: { display: true, text: 'TANGGAL' } },
+                        y: { stacked: true, min: 0, max: 100, title: { display: true, text: 'PERSENTASE (%)' }, ticks: { callback: v => v + '%' } }
+                    },
+                    plugins: {
+                        datalabels: {
+                            display: true,
+                            color: 'white',
+                            font: { weight: 'bold', size: 10 },
+                            formatter: (value, context) => {
+                                if (value < 5) return '';
+                                const raw = context.dataset.rawTonase[context.dataIndex];
+                                const mt = (raw / 1000).toFixed(1) + ' MT';
+                                return `${value.toFixed(1)}%\n${mt}`;
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.raw || 0;
+                                    const raw = context.dataset.rawTonase[context.dataIndex];
+                                    const mt = (raw / 1000).toFixed(2);
+                                    return `${context.dataset.label}: ${val.toFixed(2)}% (${mt} MT)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        const cumulativePct = [];
+        let acc = 0;
+        for (let i = 0; i < bands.length; i++) {
+            acc += bands[i];
+            cumulativePct.push(totalMonth > 0 ? (acc / totalMonth) * 100 : 0);
+        }
+        
+        const cumCtx = document.getElementById('cumulativeFFBTimeBandChartCanvas');
+        if (cumCtx) {
+            if (cumulativeFFBTimeBandChartInstance) cumulativeFFBTimeBandChartInstance.destroy();
+            cumulativeFFBTimeBandChartInstance = new Chart(cumCtx, {
+                type: 'line',
+                plugins: [window.ChartDataLabels || ChartDataLabels],
+                data: {
+                    labels: ['7am to\n10am', '10am to\n12pm', '12pm to\n2pm', '2pm to\n4pm', '4pm to\n6pm', 'After 6pm'],
+                    datasets: [{
+                        label: 'Cumulative FFB Received %',
+                        data: cumulativePct,
+                        borderColor: '#eab308',
+                        backgroundColor: '#eab308',
+                        tension: 0.1,
+                        pointRadius: 6,
+                        borderWidth: 3,
+                        segment: {
+                            borderColor: ctx => {
+                                const idx = ctx.p1DataIndex;
+                                const colors = ['#166534', '#22c55e', '#4ade80', '#facc15', '#b45309', '#ef4444'];
+                                return colors[idx] || '#eab308';
+                            }
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { title: { display: true, text: 'Time Period', color: '#1e3a8a', font: { weight: 'bold' } }, ticks: { callback: function(val) { return this.getLabelForValue(val).split('\n'); } } },
+                        y: { title: { display: true, text: 'FFB Received %', color: '#1e3a8a', font: { weight: 'bold' } }, min: 0, max: 100, ticks: { stepSize: 50, callback: v => v + '%' } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            display: true,
+                            align: 'top',
+                            color: (context) => {
+                                const colors = ['#166534', '#22c55e', '#4ade80', '#facc15', '#b45309', '#ef4444'];
+                                return colors[context.dataIndex] || '#000';
+                            },
+                            font: { weight: 'bold', size: 12 },
+                            formatter: value => value.toFixed(2) + '%'
+                        },
+                        tooltip: { callbacks: { label: function(context) { return `Cumulative: ${context.raw.toFixed(2)}%`; } } }
+                    }
+                }
+            });
+        }
+    } catch(e) {
+        console.error(e);
+        alert('Gagal memuat data historical actual.');
+    }
+};
+
+let dashboardProgressHistoricalChartInstance = null;
+window.loadDashboardProgressHistoricalChart = async () => {
+    const dInput = document.getElementById('dashboard-progress-historical-date');
+    if (!dInput || !dInput.value) return;
+    const selectedDate = dInput.value;
+    
+    document.getElementById('dashboard-progress-historical-chart-container').style.display = 'block';
+    
+    try {
+        let mill = currentUser.estate;
+        if (!mill || !mill.endsWith('Mill')) {
+            mill = 'Bunga Tanjung Mill';
+        }
+        const res = await fetch(`${API_URL}/tonase/${mill}/date/${selectedDate}`);
+        const data = await window.parseTonaseResponse(res);
+        
+        let bands = [0, 0, 0, 0, 0, 0];
+        let totalDay = 0;
+        
+        data.forEach(item => {
+            const kg = parseFloat(item.realized_kg) || 0;
+            if (kg > 0) {
+                totalDay += kg;
+                const hourStr = item.time_hour;
+                if (hourStr) {
+                    const hour = parseInt(hourStr.split(':')[0], 10);
+                    if (hour > 6 && hour <= 10) bands[0] += kg;
+                    else if (hour > 10 && hour <= 12) bands[1] += kg;
+                    else if (hour > 12 && hour <= 14) bands[2] += kg;
+                    else if (hour > 14 && hour <= 16) bands[3] += kg;
+                    else if (hour > 16 && hour <= 18) bands[4] += kg;
+                    else if (hour > 18 || hour <= 6) bands[5] += kg;
+                }
+            }
+        });
+        
+        const cumulativePct = [];
+        let acc = 0;
+        for (let i = 0; i < bands.length; i++) {
+            acc += bands[i];
+            cumulativePct.push(totalDay > 0 ? (acc / totalDay) * 100 : 0);
+        }
+        
+        const ctx = document.getElementById('dashboardProgressHistoricalChartCanvas');
+        if (ctx) {
+            if (dashboardProgressHistoricalChartInstance) dashboardProgressHistoricalChartInstance.destroy();
+            dashboardProgressHistoricalChartInstance = new Chart(ctx, {
+                type: 'line',
+                plugins: [window.ChartDataLabels || ChartDataLabels],
+                data: {
+                    labels: ['7am to\n10am', '10am to\n12pm', '12pm to\n2pm', '2pm to\n4pm', '4pm to\n6pm', 'After 6pm'],
+                    datasets: [{
+                        label: 'Cumulative FFB Received %',
+                        data: cumulativePct,
+                        borderColor: '#eab308',
+                        backgroundColor: '#eab308',
+                        tension: 0.1,
+                        pointRadius: 6,
+                        borderWidth: 3,
+                        segment: {
+                            borderColor: ctx => {
+                                const idx = ctx.p1DataIndex;
+                                const colors = ['#166534', '#22c55e', '#4ade80', '#facc15', '#b45309', '#ef4444'];
+                                return colors[idx] || '#eab308';
+                            }
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { title: { display: true, text: 'Time Period', color: '#1e3a8a', font: { weight: 'bold' } }, ticks: { callback: function(val) { return this.getLabelForValue(val).split('\n'); } } },
+                        y: { title: { display: true, text: 'FFB Received %', color: '#1e3a8a', font: { weight: 'bold' } }, min: 0, max: 100, ticks: { stepSize: 50, callback: v => v + '%' } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            display: true,
+                            align: 'top',
+                            color: (context) => {
+                                const colors = ['#166534', '#22c55e', '#4ade80', '#facc15', '#b45309', '#ef4444'];
+                                return colors[context.dataIndex] || '#000';
+                            },
+                            font: { weight: 'bold', size: 12 },
+                            formatter: value => value.toFixed(2) + '%'
+                        },
+                        tooltip: { callbacks: { label: function(context) { return `Cumulative: ${context.raw.toFixed(2)}%`; } } }
+                    }
+                }
+            });
+        }
+    } catch(e) {
+        console.error(e);
+        alert('Gagal memuat data.');
     }
 };
