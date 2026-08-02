@@ -9002,7 +9002,17 @@ window.loadDashboardProgressHistoricalChart = async () => {
         let bands = [0, 0, 0, 0, 0, 0];
         let totalDay = 0;
         
+        const isMillUser = currentUser && currentUser.estate && currentUser.estate.endsWith('Mill');
+        const primeSel = document.getElementById('prime-estate');
+        const selectedEstate = primeSel ? primeSel.value : 'ALL';
+        
         data.forEach(item => {
+            if (!isMillUser && currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+                if (item.estate !== currentUser.estate) return;
+            } else if (selectedEstate !== 'ALL') {
+                if (item.estate !== selectedEstate) return;
+            }
+            
             const kg = parseFloat(item.realized_kg) || 0;
             if (kg > 0) {
                 totalDay += kg;
