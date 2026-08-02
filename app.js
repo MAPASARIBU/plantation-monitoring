@@ -9019,58 +9019,71 @@ window.loadDashboardProgressHistoricalChart = async () => {
             }
         });
         
-        const cumulativePct = [];
-        let acc = 0;
-        for (let i = 0; i < bands.length; i++) {
-            acc += bands[i];
-            cumulativePct.push(totalDay > 0 ? (acc / totalDay) * 100 : 0);
-        }
+        const bandsPct = bands.map(b => totalDay > 0 ? (b / totalDay) * 100 : 0);
+        const bgColors = ['#d1d5db', '#d1d5db', '#4ade80', '#eab308', '#ca8a04', '#ef4444'];
         
         const ctx = document.getElementById('dashboardProgressHistoricalChartCanvas');
         if (ctx) {
             if (dashboardProgressHistoricalChartInstance) dashboardProgressHistoricalChartInstance.destroy();
             dashboardProgressHistoricalChartInstance = new Chart(ctx, {
-                type: 'line',
+                type: 'bar',
                 plugins: [window.ChartDataLabels || ChartDataLabels],
                 data: {
                     labels: ['7am to\n10am', '10am to\n12pm', '12pm to\n2pm', '2pm to\n4pm', '4pm to\n6pm', 'After 6pm'],
                     datasets: [{
-                        label: 'Cumulative FFB Received %',
-                        data: cumulativePct,
-                        borderColor: '#eab308',
-                        backgroundColor: '#eab308',
-                        tension: 0.1,
-                        pointRadius: 6,
-                        borderWidth: 3,
-                        segment: {
-                            borderColor: ctx => {
-                                const idx = ctx.p1DataIndex;
-                                const colors = ['#166534', '#22c55e', '#4ade80', '#facc15', '#b45309', '#ef4444'];
-                                return colors[idx] || '#eab308';
-                            }
-                        }
+                        label: 'FFB Received %',
+                        data: bandsPct,
+                        backgroundColor: bgColors,
+                        borderWidth: 0,
+                        barPercentage: 0.7
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        x: { title: { display: true, text: 'Time Period', color: '#1e3a8a', font: { weight: 'bold' } }, ticks: { callback: function(val) { return this.getLabelForValue(val).split('\n'); } } },
-                        y: { title: { display: true, text: 'FFB Received %', color: '#1e3a8a', font: { weight: 'bold' } }, min: 0, max: 100, ticks: { stepSize: 50, callback: v => v + '%' } }
+                        x: { 
+                            title: { display: true, text: 'Time Band', color: '#1e3a8a', font: { weight: 'bold' } }, 
+                            ticks: { callback: function(val) { return this.getLabelForValue(val).split('\n'); } },
+                            grid: { display: false }
+                        },
+                        y: { 
+                            title: { display: true, text: 'FFB Received %', color: '#1e3a8a', font: { weight: 'bold' } }, 
+                            min: 0, 
+                            suggestedMax: 50, 
+                            ticks: { stepSize: 50, callback: v => v + '%' },
+                            border: { display: false },
+                            grid: { borderDash: [4, 4], color: '#e5e7eb' }
+                        }
                     },
                     plugins: {
                         legend: { display: false },
                         datalabels: {
                             display: true,
-                            align: 'top',
-                            color: (context) => {
-                                const colors = ['#166534', '#22c55e', '#4ade80', '#facc15', '#b45309', '#ef4444'];
-                                return colors[context.dataIndex] || '#000';
+                            anchor: 'end',
+                            align: 'bottom',
+                            color: '#fff',
+                            textAlign: 'center',
+                            backgroundColor: (context) => {
+                                const val = context.dataset.data[context.dataIndex];
+                                // If value is very small, we might want to place it outside, but the screenshot has it inside the background box
+                                return bgColors[context.dataIndex];
                             },
-                            font: { weight: 'bold', size: 12 },
-                            formatter: value => value.toFixed(2) + '%'
+                            borderRadius: 4,
+                            padding: 4,
+                            font: { size: 10, weight: 'bold' },
+                            formatter: (value, context) => {
+                                const tonase = (bands[context.dataIndex] / 1000).toFixed(2);
+                                return value.toFixed(2) + '%\n' + tonase;
+                            }
                         },
-                        tooltip: { callbacks: { label: function(context) { return `Cumulative: ${context.raw.toFixed(2)}%`; } } }
+                        tooltip: { 
+                            callbacks: { 
+                                label: function(context) { 
+                                    return `${context.raw.toFixed(2)}% (${(bands[context.dataIndex]/1000).toFixed(2)} Ton)`; 
+                                } 
+                            } 
+                        }
                     }
                 }
             });
