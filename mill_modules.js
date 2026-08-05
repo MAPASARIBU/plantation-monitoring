@@ -1656,6 +1656,26 @@ views.mill_dashboard = `
     </div>
 </div>
 
+<div class="glass-card" id="ffb-received-card" style="margin-top: 20px; display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
+        <h3 style="margin: 0;">FFB Received After <span id="ffb-received-time-label">6pm</span> by Estates</h3>
+        <select id="ffb-received-time-select" class="form-control" style="width: auto;" onchange="if(window.renderFfbReceivedChart) window.renderFfbReceivedChart()">
+            <option value="12:00">12:00</option>
+            <option value="13:00">13:00</option>
+            <option value="14:00">14:00</option>
+            <option value="15:00">15:00</option>
+            <option value="16:00">16:00</option>
+            <option value="17:00">17:00</option>
+            <option value="18:00" selected>18:00</option>
+            <option value="19:00">19:00</option>
+            <option value="20:00">20:00</option>
+        </select>
+    </div>
+    <div style="position: relative; height: 300px; width: 100%;">
+        <canvas id="chart-ffb-received"></canvas>
+    </div>
+</div>
+
 <!-- Dashboard Extra Date Picker Modal -->
 <div class="modal-overlay" id="dashboard-extra-date-modal" style="display:none; z-index: 1000;">
     <div class="modal-content" style="width: 400px; max-width: 90%;">
@@ -2192,5 +2212,265 @@ window.renderDashboardProcessingCharts = function(liquidData, ffaData) {
                 } 
             }
         });
+    }
+};
+window.toggleFfbReceivedInputs = function() {
+    const period = document.getElementById('ffb-received-period-select')?.value;
+    const dateLabel = document.getElementById('ffb-received-date-label');
+    const dateInput = document.getElementById('ffb-received-date-input');
+    const monthLabel = document.getElementById('ffb-received-month-label');
+    const monthInput = document.getElementById('ffb-received-month-input');
+    
+    if (period === 'monthly') {
+        if (dateLabel) dateLabel.style.display = 'none';
+        if (dateInput) dateInput.style.display = 'none';
+        if (monthLabel) monthLabel.style.display = 'block';
+        if (monthInput) monthInput.style.display = 'block';
+    } else {
+        if (dateLabel) dateLabel.style.display = 'block';
+        if (dateInput) dateInput.style.display = 'block';
+        if (monthLabel) monthLabel.style.display = 'none';
+        if (monthInput) monthInput.style.display = 'none';
+    }
+};
+
+window.renderFfbReceivedChart = async function() {
+    const cardEl = document.getElementById('ffb-received-card');
+    if (!cardEl) return;
+
+    if (!window.currentUser || !window.currentUser.role) {
+        cardEl.style.display = 'none';
+        return;
+    }
+
+    const allowedRoles = [
+        'Senior Field Manager', 'Manager', 'Askep', 'Assistant', 
+        'Krani Divisi', 'Manager Mill', 'Manager MIll', 
+        'supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Admin'
+    ];
+    
+    if (!allowedRoles.includes(window.currentUser.role)) {
+        cardEl.style.display = 'none';
+        return;
+    } else {
+        cardEl.style.display = 'block';
+    }
+
+    const timeSelect = document.getElementById('ffb-received-time-select');
+    const timeLabel = document.getElementById('ffb-received-time-label');
+    const selectedTime = timeSelect.value || '18:00';
+    
+    if (timeLabel) timeLabel.innerText = selectedTime;
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const defaultDate = `${yyyy}-${mm}-${dd}`;
+    const defaultMonth = `${yyyy}-${mm}`;
+
+    const periodSelect = document.getElementById('ffb-received-period-select');
+    const period = periodSelect ? periodSelect.value : 'daily';
+
+    const dateInput = document.getElementById('ffb-received-date-input');
+    const monthInput = document.getElementById('ffb-received-month-input');
+
+    let date = dateInput?.value;
+    let month = monthInput?.value;
+
+    // Fallbacks if empty
+    if (!date) {
+        date = document.getElementById('dash-date')?.value || document.getElementById('dash-extra-date-input')?.value || defaultDate;
+        if (dateInput) dateInput.value = date;
+    }
+    if (!month) {
+        month = date.substring(0, 7);
+        if (monthInput) monthInput.value = month;
+    }
+    
+    let mill = 'Bunga Tanjung Mill';
+    if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+        mill = window.currentUser.estate;
+    }
+
+    let apiUrl = `/api/tonase/${mill}/${date}`;
+    if (period === 'monthly') {
+        apiUrl = `/api/tonase/${mill}/month/${month}`;
+    }
+
+    try {
+        const res = await fetch(apiUrl);
+        if (!res.ok) throw new Error('Network response was not ok');
+        const data = await res.json();
+        
+        const estateTotals = {};
+        const estateAfterTime = {};
+        
+        data.forEach(row => {
+            if (!row.estate || row.estate.trim() === '') return;
+            const estate = row.estate;
+            
+            if (!estateTotals[estate]) estateTotals[estate] = 0;
+            if (!estateAfterTime[estate]) estateAfterTime[estate] = 0;
+            
+            const kg = parseFloat(row.realized_kg) || 0;
+            estateTotals[estate] += kg;
+            
+            if (row.time_hour) {
+                const t1 = parseInt(row.time_hour.replace(':',''));
+                const t2 = parseInt(selectedTime.replace(':',''));
+                if (t1 <= t2) {
+                    estateAfterTime[estate] += kg;
+                }
+            }
+        });
+        
+        const chartData = [];
+        for (const estate in estateTotals) {
+            const total = estateTotals[estate];
+            if (total > 0) {
+                const afterTime = estateAfterTime[estate];
+                const percentage = (afterTime / total) * 100;
+                const acronymMap = {
+                    'Bunga Tanjung Estate': 'BTEE',
+                    'Sungai Teramang Estate': 'STGE',
+                    'Air Bikuk Estate': 'ABKE',
+                    'Air Buluh Estate': 'ABEE',
+                    'Malin Deman Estate': 'MDEE',
+                    'Small Holder': 'SH'
+                };
+                let acronym = acronymMap[estate];
+                if (!acronym) {
+                    const words = estate.split(' ');
+                    if (words.length > 1 && estate.toLowerCase().includes('estate')) {
+                        acronym = words.map(w => w[0]).join('').toUpperCase();
+                    } else if (words.length > 1) {
+                        acronym = words.map(w => w[0]).join('').toUpperCase();
+                    } else {
+                        acronym = estate;
+                    }
+                }
+                chartData.push({ estate: acronym, fullName: estate, percentage: percentage, tonase: afterTime, totalTonase: total });
+            }
+        }
+        
+        chartData.sort((a, b) => a.percentage - b.percentage);
+        
+        const labels = chartData.map(d => d.estate);
+        const dataPoints = chartData.map(d => d.percentage);
+        
+        const ctx = document.getElementById('chart-ffb-received');
+        if (!ctx) return;
+        
+        if (window.millCharts.ffbReceived) {
+            window.millCharts.ffbReceived.destroy();
+        }
+        
+        if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
+        
+        const bgColors = dataPoints.map((val, idx) => {
+            const ratio = dataPoints.length > 1 ? idx / (dataPoints.length - 1) : 1;
+            const r = Math.round(59 - (59 - 30) * ratio);
+            const g = Math.round(130 - (130 - 58) * ratio);
+            const b = Math.round(246 - (246 - 138) * ratio);
+            return `rgb(${r}, ${g}, ${b})`;
+        });
+
+        window.millCharts.ffbReceived = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'FFB Received %',
+                    data: dataPoints,
+                    backgroundColor: bgColors,
+                    borderWidth: 0,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) { return value + '%' }
+                        },
+                        grid: {
+                            color: '#e2e8f0',
+                            drawBorder: false,
+                            borderDash: [5, 5]
+                        }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: (context) => {
+                                const idx = context[0].dataIndex;
+                                return chartData[idx].fullName;
+                            },
+                            label: (context) => {
+                                const idx = context.dataIndex;
+                                const amount = (chartData[idx].tonase / 1000).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+                                const total = (chartData[idx].totalTonase / 1000).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+                                return `FFB Received: ${context.parsed.y.toFixed(2)}% (${amount} / ${total} Ton)`;
+                            }
+                        }
+                    },
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'top',
+                        formatter: function(value, context) {
+                            const idx = context.dataIndex;
+                            const amount = (chartData[idx].tonase / 1000).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+                            return value.toFixed(1) + '% | ' + amount + ' Ton';
+                        },
+                        font: {
+                            weight: 'bold',
+                            size: 11
+                        },
+                        color: '#1e293b',
+                        rotation: -90,
+                        offset: 4
+                    }
+                }
+            },
+            plugins: [ChartDataLabels]
+        });
+        
+    } catch (err) {
+        console.error("Failed to load FFB Received data:", err);
+    }
+};
+
+const originalLoadDashboardExtraData = window.loadDashboardExtraData;
+window.loadDashboardExtraData = async function(dateOverride) {
+    if (originalLoadDashboardExtraData) {
+        await originalLoadDashboardExtraData(dateOverride);
+    }
+    
+    if (window.currentUser) {
+        const role = window.currentUser.role;
+        const allowedRoles = ['Manager', 'Assistant', 'Askep', 'Supervisor Mill', 'Senior Field Manager', 'Senior Manager Estate', 'Krani Mill', 'Analis', 'Grading'];
+        const card = document.getElementById('ffb-received-card');
+        if (card) {
+            if (allowedRoles.includes(role)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        }
+    }
+
+    if (window.renderFfbReceivedChart) {
+        window.renderFfbReceivedChart();
     }
 };

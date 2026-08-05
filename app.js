@@ -87,6 +87,7 @@ const checkAuth = () => {
     const savedUser = localStorage.getItem('agrimonitor_user');
     if(savedUser) {
         currentUser = JSON.parse(savedUser);
+        window.currentUser = currentUser;
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('app-container').style.display = 'flex';
         applyRBAC();
@@ -168,6 +169,7 @@ const login = async (username, password, estate) => {
             errorEl.style.display = 'none';
             dbUser.assignedEstates = assignedEstates;
             currentUser = dbUser;
+            window.currentUser = currentUser;
             if (estate) currentUser.estate = estate;
             localStorage.setItem('agrimonitor_user', JSON.stringify(currentUser));
             document.getElementById('login-form').reset();
@@ -185,6 +187,7 @@ const login = async (username, password, estate) => {
 const logout = () => {
     localStorage.removeItem('agrimonitor_user');
     currentUser = null;
+    window.currentUser = null;
     checkAuth();
 };
 
@@ -461,8 +464,47 @@ const views = {
         </div>
     </div>
 </div>
+</div> <!-- Close dashboard-mill-sections -->
 
+<div class="glass-card" id="ffb-received-card" style="margin-top: 20px; display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
+        <h3 style="margin: 0;">FFB Received S/D Jam <span id="ffb-received-time-label">18:00</span> by Estates</h3>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <select id="ffb-received-period-select" class="form-control" style="width: auto;" onchange="if(window.toggleFfbReceivedInputs) window.toggleFfbReceivedInputs()">
+                <option value="daily" selected>Harian</option>
+                <option value="monthly">Bulanan</option>
+            </select>
+            
+            <label id="ffb-received-date-label" style="font-weight: bold; margin-bottom: 0;">Pilih Tanggal:</label>
+            <input type="date" id="ffb-received-date-input" class="form-control" style="width: auto;">
+            
+            <label id="ffb-received-month-label" style="font-weight: bold; margin-bottom: 0; display: none;">Pilih Bulan:</label>
+            <input type="month" id="ffb-received-month-input" class="form-control" style="width: auto; display: none;">
+            
+            <select id="ffb-received-time-select" class="form-control" style="width: auto;">
+                <option value="12:00">12:00</option>
+                <option value="13:00">13:00</option>
+                <option value="14:00">14:00</option>
+                <option value="15:00">15:00</option>
+                <option value="16:00">16:00</option>
+                <option value="17:00">17:00</option>
+                <option value="18:00" selected>18:00</option>
+                <option value="19:00">19:00</option>
+                <option value="20:00">20:00</option>
+                <option value="21:00">21:00</option>
+                <option value="22:00">22:00</option>
+                <option value="23:00">23:00</option>
+                <option value="24:00">24:00</option>
+            </select>
+            
+            <button class="btn btn-success" onclick="if(window.renderFfbReceivedChart) window.renderFfbReceivedChart()">Tampilkan</button>
+        </div>
+    </div>
+    <div style="position: relative; height: 300px; width: 60%;">
+        <canvas id="chart-ffb-received"></canvas>
+    </div>
 </div>
+
 
 <!-- Dashboard Extra Date Picker Modal -->
 <div class="modal-overlay" id="dashboard-extra-date-modal" style="display:none; z-index: 1000;">
