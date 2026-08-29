@@ -458,6 +458,7 @@ const views = {
             <thead>
                 <tr>
                     <th rowspan="2">ESTATE</th>
+                    <th rowspan="2">TBS<br><span style="font-size:0.75rem; font-weight:normal;">(JJG)</span></th>
                     <th colspan="1">UN RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
                     <th colspan="1">UNDER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 3%)</span></th>
                     <th colspan="1">RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Min. 90%)</span></th>
@@ -480,6 +481,7 @@ const views = {
             <tfoot>
                 <tr style="background-color: #f1f5f9; font-weight: bold;">
                     <td style="text-align: right;">TOTAL:</td>
+                    <td id="dash-fqc-tot-janjang">0</td>
                     <td id="dash-fqc-avg-unripe">0.0</td>
                     <td id="dash-fqc-avg-under">0.0</td>
                     <td id="dash-fqc-avg-normal">0.0</td>

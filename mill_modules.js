@@ -1396,6 +1396,7 @@ views.ffb_quality = `
                 <thead>
                     <tr>
                         <th rowspan="2">ESTATE</th>
+                        <th rowspan="2">TOTAL JANJANG</th>
                         <th colspan="1">UN RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
                         <th colspan="1">UNDER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 3%)</span></th>
                         <th colspan="1">RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Min. 90%)</span></th>
@@ -1417,6 +1418,7 @@ views.ffb_quality = `
                 <tfoot>
                     <tr style="background-color: #f1f5f9; font-weight: bold;">
                         <td style="text-align: right;">TOTAL:</td>
+                        <td id="fqc-sum-tot-jjg">0</td>
                         <td id="fqc-sum-unripe">0.00</td>
                         <td id="fqc-sum-under">0.00</td>
                         <td id="fqc-sum-normal">0.00</td>
@@ -1915,6 +1917,7 @@ window.renderFFBCropTable = function(isSingleDay = true) {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="text-align:left;">${est}</td>
+                <td style="font-weight:600;">${d.tot.toLocaleString('id-ID')}</td>
                 <td style="${p_unripe > 0 ? 'color:red; font-weight:bold;' : ''}">${p_unripe.toFixed(2)}</td>
                 <td style="${p_under > 3 ? 'color:red; font-weight:bold;' : ''}">${p_under.toFixed(2)}</td>
                 <td style="${p_normal < 90 ? 'color:red; font-weight:bold;' : ''}">${p_normal.toFixed(2)}</td>
@@ -1932,6 +1935,9 @@ window.renderFFBCropTable = function(isSingleDay = true) {
         const pt_empty = t_tot > 0 ? (t_empty / t_tot * 100) : 0;
         const pt_long = t_tot > 0 ? (t_long / t_tot * 100) : 0;
         
+        const sumTotJjgEl = document.getElementById('fqc-sum-tot-jjg');
+        if (sumTotJjgEl) sumTotJjgEl.innerText = t_tot.toLocaleString('id-ID');
+
         document.getElementById('fqc-sum-unripe').innerText = pt_unripe.toFixed(2);
         document.getElementById('fqc-sum-under').innerText = pt_under.toFixed(2);
         document.getElementById('fqc-sum-normal').innerText = pt_normal.toFixed(2);
@@ -2849,7 +2855,7 @@ window.renderDashFfbCropQuality = async function() {
     cardEl.style.display = 'block';
 
     const tbody = document.querySelector('#dash-ffb-crop-table tbody');
-    if (tbody) tbody.innerHTML = '<tr><td colspan="7">Loading...</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="8">Loading...</td></tr>';
 
     let mill = 'Bunga Tanjung Mill';
     if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
@@ -2911,6 +2917,7 @@ window.renderDashFfbCropQuality = async function() {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${getAbbr(est)}</td>
+                <td style="font-weight: 600;">${tot.toLocaleString('id-ID')}</td>
                 <td style="color: ${parseFloat(p_u) > 0 ? 'red' : 'inherit'}">${p_u}</td>
                 <td style="color: ${parseFloat(p_un) > 3 ? 'red' : 'inherit'}">${p_un}</td>
                 <td style="color: ${parseFloat(p_n) < 90 ? 'red' : 'inherit'}">${p_n}</td>
@@ -2929,6 +2936,9 @@ window.renderDashFfbCropQuality = async function() {
         const p_te = t_tot > 0 ? (t_e / t_tot * 100).toFixed(2) : '0.00';
         const p_tl = t_tot > 0 ? (t_l / t_tot * 100).toFixed(2) : '0.00';
 
+        const totJjgEl = document.getElementById('dash-fqc-tot-janjang');
+        if (totJjgEl) totJjgEl.innerText = t_tot.toLocaleString('id-ID');
+
         document.getElementById('dash-fqc-avg-unripe').innerText = p_tu;
         document.getElementById('dash-fqc-avg-under').innerText = p_tun;
         document.getElementById('dash-fqc-avg-normal').innerText = p_tn;
@@ -2944,7 +2954,7 @@ window.renderDashFfbCropQuality = async function() {
         document.getElementById('dash-fqc-avg-long').style.color = parseFloat(p_tl) >= 2 ? 'red' : 'inherit';
     } catch(err) {
         console.error(err);
-        if (tbody) tbody.innerHTML = '<tr><td colspan="7">Error loading data.</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="8">Error loading data.</td></tr>';
     }
 };
 
