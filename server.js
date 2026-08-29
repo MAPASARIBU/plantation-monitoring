@@ -1022,6 +1022,17 @@ app.get('/api/tonase/:mill/month/:month', async (req, res) => {
     }
 });
 
+// TONASE RANGE
+app.get('/api/tonase/range/:mill/:startDate/:endDate', async (req, res) => {
+    try {
+        const { mill, startDate, endDate } = req.params;
+        const result = await pool.query("SELECT * FROM tonase_hourly WHERE mill = $1 AND date >= $2 AND date <= $3 ORDER BY date ASC, time_hour ASC", [mill, startDate, endDate]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/tonase/plan', async (req, res) => {
     try {
         const { date, mill, entries } = req.body;

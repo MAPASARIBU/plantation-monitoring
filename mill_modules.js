@@ -1396,7 +1396,7 @@ views.ffb_quality = `
                 <thead>
                     <tr>
                         <th rowspan="2">ESTATE</th>
-                        <th rowspan="2">TOTAL JANJANG</th>
+                        <th rowspan="2">TONASE FFB<br><span style="font-size:0.75rem; font-weight:normal;">(TON)</span></th>
                         <th colspan="1">UN RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
                         <th colspan="1">UNDER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 3%)</span></th>
                         <th colspan="1">RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Min. 90%)</span></th>
@@ -1418,7 +1418,7 @@ views.ffb_quality = `
                 <tfoot>
                     <tr style="background-color: #f1f5f9; font-weight: bold;">
                         <td style="text-align: right;">TOTAL:</td>
-                        <td id="fqc-sum-tot-jjg">0</td>
+                        <td id="fqc-sum-tot-tonase">0.00</td>
                         <td id="fqc-sum-unripe">0.00</td>
                         <td id="fqc-sum-under">0.00</td>
                         <td id="fqc-sum-normal">0.00</td>
@@ -1802,6 +1802,21 @@ window.loadFFBCropQuality = async function(start, end) {
             res = await fetch(`/api/ffb_crop_quality/range/${mill}/${start}/${end}`);
         }
         window.ffbCropQualityData = await res.json();
+
+        // Fetch tonase range
+        try {
+            const tonaseRes = await fetch(`/api/tonase/range/${encodeURIComponent(mill)}/${encodeURIComponent(start)}/${encodeURIComponent(end)}`);
+            const rawTonase = tonaseRes.ok ? await tonaseRes.json() : [];
+            window.tonaseByEstCrop = {};
+            rawTonase.forEach(row => {
+                const e = row.estate || 'Unknown';
+                const ton = (parseFloat(row.realized_kg) || 0) / 1000;
+                window.tonaseByEstCrop[e] = (window.tonaseByEstCrop[e] || 0) + ton;
+            });
+        } catch(errTonase) {
+            console.error('Error fetching tonase range for ffb crop', errTonase);
+            window.tonaseByEstCrop = {};
+        }
     } catch(e) {
         console.error(e);
         window.ffbCropQualityData = [];
@@ -1829,20 +1844,20 @@ window.renderFFBCropTable = function(isSingleDay = true) {
     const sumTable = document.getElementById('ffb-crop-summary-table');
     if (!rawTable || !sumTable) return;
     
+    let abbrMap = {};
+    if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
+        masterData.supply_chain_list.forEach(item => {
+            abbrMap[item.name] = item.abbr;
+        });
+    }
+    const getAbbr = (estName) => abbrMap[estName] || estName.replace(' Estate', 'E');
+
     if (isSingleDay) {
         rawTable.style.display = 'table';
         sumTable.style.display = 'none';
         
         const tbody = rawTable.querySelector('tbody');
         tbody.innerHTML = '';
-        
-        let abbrMap = {};
-        if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
-            masterData.supply_chain_list.forEach(item => {
-                abbrMap[item.name] = item.abbr;
-            });
-        }
-        const getAbbr = (estName) => abbrMap[estName] || estName.replace(' Estate', 'E');
         
         window.ffbCropQualityData.forEach((data, index) => {
             const tr = document.createElement('tr');
@@ -1896,6 +1911,7 @@ window.renderFFBCropTable = function(isSingleDay = true) {
         });
         
         let t_tot = 0, t_unripe = 0, t_under = 0, t_normal = 0, t_over = 0, t_empty = 0, t_long = 0;
+        let totalTonaseSum = 0;
         
         for (let est in estateAgg) {
             let d = estateAgg[est];
@@ -1914,10 +1930,24 @@ window.renderFFBCropTable = function(isSingleDay = true) {
             const p_empty = d.tot > 0 ? (d.empty / d.tot * 100) : 0;
             const p_long = d.tot > 0 ? (d.long / d.tot * 100) : 0;
             
+            let estTonase = 0;
+            if (window.tonaseByEstCrop) {
+                estTonase = window.tonaseByEstCrop[est] || 0;
+                if (!estTonase) {
+                    for (let k in window.tonaseByEstCrop) {
+                        if (getAbbr(k) === getAbbr(est) || k.toLowerCase() === est.toLowerCase()) {
+                            estTonase = window.tonaseByEstCrop[k];
+                            break;
+                        }
+                    }
+                }
+            }
+            totalTonaseSum += estTonase;
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="text-align:left;">${est}</td>
-                <td style="font-weight:600;">${d.tot.toLocaleString('id-ID')}</td>
+                <td style="font-weight:600;">${estTonase.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                 <td style="${p_unripe > 0 ? 'color:red; font-weight:bold;' : ''}">${p_unripe.toFixed(2)}</td>
                 <td style="${p_under > 3 ? 'color:red; font-weight:bold;' : ''}">${p_under.toFixed(2)}</td>
                 <td style="${p_normal < 90 ? 'color:red; font-weight:bold;' : ''}">${p_normal.toFixed(2)}</td>
@@ -1935,8 +1965,8 @@ window.renderFFBCropTable = function(isSingleDay = true) {
         const pt_empty = t_tot > 0 ? (t_empty / t_tot * 100) : 0;
         const pt_long = t_tot > 0 ? (t_long / t_tot * 100) : 0;
         
-        const sumTotJjgEl = document.getElementById('fqc-sum-tot-jjg');
-        if (sumTotJjgEl) sumTotJjgEl.innerText = t_tot.toLocaleString('id-ID');
+        const sumTotTonaseEl = document.getElementById('fqc-sum-tot-tonase');
+        if (sumTotTonaseEl) sumTotTonaseEl.innerText = totalTonaseSum.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
         document.getElementById('fqc-sum-unripe').innerText = pt_unripe.toFixed(2);
         document.getElementById('fqc-sum-under').innerText = pt_under.toFixed(2);
@@ -2863,11 +2893,24 @@ window.renderDashFfbCropQuality = async function() {
     }
 
     try {
-        const res = await fetch(`/api/ffb_crop_quality/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`);
-        if (!res.ok) throw new Error('Network error fetching ffb crop quality');
-        const rawData = await res.json();
+        const [ffbRes, tonaseRes] = await Promise.all([
+            fetch(`/api/ffb_crop_quality/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`),
+            fetch(`/api/tonase/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`)
+        ]);
 
-        // Aggregate by estate
+        if (!ffbRes.ok) throw new Error('Network error fetching ffb crop quality');
+        const rawData = await ffbRes.json();
+        const rawTonase = tonaseRes.ok ? await tonaseRes.json() : [];
+
+        // Aggregate tonase from tonase_hourly by estate (realized_kg / 1000 = TON)
+        const tonaseByEst = {};
+        rawTonase.forEach(row => {
+            const e = row.estate || 'Unknown';
+            const ton = (parseFloat(row.realized_kg) || 0) / 1000;
+            tonaseByEst[e] = (tonaseByEst[e] || 0) + ton;
+        });
+
+        // Aggregate FFB Quality by estate
         const estData = {};
         rawData.forEach(row => {
             const e = row.estate || 'Unknown';
@@ -2893,6 +2936,7 @@ window.renderDashFfbCropQuality = async function() {
 
         if (tbody) tbody.innerHTML = '';
         let t_tot = 0, t_u = 0, t_un = 0, t_n = 0, t_o = 0, t_e = 0, t_l = 0;
+        let totalAllEstTonase = 0;
 
         let abbrMap = {};
         if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
@@ -2901,6 +2945,16 @@ window.renderDashFfbCropQuality = async function() {
             });
         }
         const getAbbr = (estName) => abbrMap[estName] || estName.replace(' Estate', 'E');
+
+        const getEstateTonase = (estName) => {
+            if (tonaseByEst[estName] !== undefined) return tonaseByEst[estName];
+            for (let k in tonaseByEst) {
+                if (getAbbr(k) === getAbbr(estName) || k.toLowerCase() === estName.toLowerCase()) {
+                    return tonaseByEst[k];
+                }
+            }
+            return 0;
+        };
 
         Object.keys(estData).forEach(est => {
             const d = estData[est];
@@ -2914,10 +2968,13 @@ window.renderDashFfbCropQuality = async function() {
             const p_e = tot > 0 ? (d.empty_bunch / tot * 100).toFixed(2) : '0.00';
             const p_l = tot > 0 ? (d.long_stalk / tot * 100).toFixed(2) : '0.00';
 
+            const estTonase = getEstateTonase(est);
+            totalAllEstTonase += estTonase;
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${getAbbr(est)}</td>
-                <td style="font-weight: 600;">${tot.toLocaleString('id-ID')}</td>
+                <td style="font-weight: 600;">${estTonase.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                 <td style="color: ${parseFloat(p_u) > 0 ? 'red' : 'inherit'}">${p_u}</td>
                 <td style="color: ${parseFloat(p_un) > 3 ? 'red' : 'inherit'}">${p_un}</td>
                 <td style="color: ${parseFloat(p_n) < 90 ? 'red' : 'inherit'}">${p_n}</td>
@@ -2936,8 +2993,8 @@ window.renderDashFfbCropQuality = async function() {
         const p_te = t_tot > 0 ? (t_e / t_tot * 100).toFixed(2) : '0.00';
         const p_tl = t_tot > 0 ? (t_l / t_tot * 100).toFixed(2) : '0.00';
 
-        const totJjgEl = document.getElementById('dash-fqc-tot-janjang');
-        if (totJjgEl) totJjgEl.innerText = t_tot.toLocaleString('id-ID');
+        const totTonaseEl = document.getElementById('dash-fqc-tot-tonase');
+        if (totTonaseEl) totTonaseEl.innerText = totalAllEstTonase.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
         document.getElementById('dash-fqc-avg-unripe').innerText = p_tu;
         document.getElementById('dash-fqc-avg-under').innerText = p_tun;
