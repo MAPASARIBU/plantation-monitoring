@@ -1224,8 +1224,8 @@ window.saveWaterData = async function(type) {
 views.ffb_quality = `
 <div class="content-header">
     <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-        <input type="date" id="fq-date" class="form-control" style="width: auto;" onchange="loadFFBQuality()">
-        <button class="btn btn-primary" onclick="loadFFBQuality()"><i class="fa-solid fa-rotate"></i> Load</button>
+        <button class="btn btn-primary" onclick="openFqRangeModal('loose')"><i class="fa-solid fa-rotate"></i> Load Data</button>
+        <button class="btn btn-secondary" onclick="printTable('ffb-quality-table', 'Laporan FFB Quality Fruit Loose Analysis')"><i class="fa-solid fa-print"></i> Print</button>
         <button class="btn btn-success" onclick="openFFBModal()"><i class="fa-solid fa-plus"></i> Tambah input Loose Fruit Quality</button>
     </div>
 </div>
@@ -1241,6 +1241,7 @@ views.ffb_quality = `
             <table class="data-table" id="ffb-quality-table" style="font-size: 0.8rem; width: 100%;">
                 <thead>
                     <tr>
+                        <th rowspan="2">Tanggal</th>
                         <th rowspan="2">Estate</th>
                         <th rowspan="2">Divisi</th>
                         <th rowspan="2">No. Truck</th>
@@ -1264,7 +1265,7 @@ views.ffb_quality = `
                 </tbody>
                 <tfoot>
                     <tr style="background-color: #f1f5f9; font-weight: bold;">
-                        <td colspan="3" style="text-align: right;">RATA-RATA / TOTAL:</td>
+                        <td colspan="4" style="text-align: right;">RATA-RATA / TOTAL:</td>
                         <td id="fq-tot-bg">0</td>
                         <td id="fq-tot-bd">0</td>
                         <td id="fq-avg-bd">0.0</td>
@@ -1332,15 +1333,197 @@ views.ffb_quality = `
         </div>
     </div>
 </div>
+
+<div class="dashboard-grid" style="grid-template-columns: 1fr; margin-top: 20px;">
+    <div class="glass-card" style="overflow-x: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="margin:0;">Daily FFB Crop Quality</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="openFqRangeModal('crop')"><i class="fa-solid fa-rotate"></i> Load Data</button>
+                <button class="btn btn-secondary" onclick="printTable('ffb-crop-wrapper', 'Laporan Daily FFB Crop Quality')"><i class="fa-solid fa-print"></i> Print</button>
+                <button class="btn btn-success" onclick="openFFBCropModal()"><i class="fa-solid fa-plus"></i> Tambah input FFB Crop Quality</button>
+            </div>
+        </div>
+        <div id="ffb-crop-wrapper" class="table-responsive">
+            <style>
+                #ffb-crop-table th, #ffb-crop-table td, #ffb-crop-summary-table th, #ffb-crop-summary-table td {
+                    padding: 4px 8px !important;
+                }
+            </style>
+            <table class="data-table" id="ffb-crop-table" style="font-size: 0.8rem; width: 100%; text-align: center;">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Estate</th>
+                        <th rowspan="2">Divisi</th>
+                        <th rowspan="2">Blok</th>
+                        <th rowspan="2">No. Truck</th>
+                        <th rowspan="2">Total Janjang</th>
+                        <th colspan="2">Unripe</th>
+                        <th colspan="2">Underripe</th>
+                        <th colspan="2">Normal Ripe</th>
+                        <th colspan="2">Over Ripe</th>
+                        <th colspan="2">Empty Bunch</th>
+                        <th colspan="2">Long Stalk</th>
+                        <th rowspan="2">Aksi</th>
+                    </tr>
+                    <tr>
+                        <th>(Jjg)</th><th>(%)</th>
+                        <th>(Jjg)</th><th>(%)</th>
+                        <th>(Jjg)</th><th>(%)</th>
+                        <th>(Jjg)</th><th>(%)</th>
+                        <th>(Jjg)</th><th>(%)</th>
+                        <th>(Jjg)</th><th>(%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Generated via JS -->
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #f1f5f9; font-weight: bold;">
+                        <td colspan="4" style="text-align: right;">TOTAL / AVERAGE:</td>
+                        <td id="fqc-tot-jjg">0</td>
+                        <td id="fqc-tot-unripe">0</td><td id="fqc-avg-unripe">0.0</td>
+                        <td id="fqc-tot-under">0</td><td id="fqc-avg-under">0.0</td>
+                        <td id="fqc-tot-normal">0</td><td id="fqc-avg-normal">0.0</td>
+                        <td id="fqc-tot-over">0</td><td id="fqc-avg-over">0.0</td>
+                        <td id="fqc-tot-empty">0</td><td id="fqc-avg-empty">0.0</td>
+                        <td id="fqc-tot-long">0</td><td id="fqc-avg-long">0.0</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+            <table class="data-table" id="ffb-crop-summary-table" style="font-size: 0.8rem; width: 100%; text-align: center; display: none; border-collapse: collapse; margin-top: 20px;">
+                <thead>
+                    <tr>
+                        <th rowspan="2">ESTATE</th>
+                        <th colspan="1">UN RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
+                        <th colspan="1">UNDER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 3%)</span></th>
+                        <th colspan="1">RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Min. 90%)</span></th>
+                        <th colspan="1">OVER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 7%)</span></th>
+                        <th colspan="1">EMPTY BUNCH<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
+                        <th colspan="1">LONGSTALK<br><span style="font-size:0.75rem; font-weight:normal;">(&lt; 2%)</span></th>
+                    </tr>
+                    <tr>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #f1f5f9; font-weight: bold;">
+                        <td style="text-align: right;">TOTAL:</td>
+                        <td id="fqc-sum-unripe">0.00</td>
+                        <td id="fqc-sum-under">0.00</td>
+                        <td id="fqc-sum-normal">0.00</td>
+                        <td id="fqc-sum-over">0.00</td>
+                        <td id="fqc-sum-empty">0.00</td>
+                        <td id="fqc-sum-long">0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Input FFB Crop Quality -->
+<div class="modal-overlay" id="modal-ffb-crop-quality" style="display:none; z-index: 1000;">
+    <div class="modal-content" style="width: 500px; max-width: 90%;">
+        <div class="modal-header">
+            <h3 style="margin: 0;">Tambah input FFB Crop Quality</h3>
+            <button type="button" class="modal-close" onclick="document.getElementById('modal-ffb-crop-quality').style.display='none'">&times;</button>
+        </div>
+        <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+            <div class="form-group">
+                <label>Tanggal</label>
+                <input type="date" id="fqc-modal-date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Pilihan Supply Chain</label>
+                <select id="fqc-modal-estate" class="form-control" required onchange="window.onFFBCropModalEstateChange(this.value)"></select>
+            </div>
+            <div class="form-group">
+                <label>Divisi (Opsional)</label>
+                <div id="fqc-modal-divisi-container">
+                    <input type="text" id="fqc-modal-divisi" class="form-control" placeholder="(Optional)">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Blok (Opsional)</label>
+                <div id="fqc-modal-blok-container">
+                    <input type="text" id="fqc-modal-blok" class="form-control" placeholder="(Optional)">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Nomor Truk</label>
+                <input type="text" id="fqc-modal-truck" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Total Janjang</label>
+                <input type="number" id="fqc-modal-total" class="form-control" required oninput="calculateFFBCropModal()">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div class="form-group">
+                    <label>Unripe (Jjg)</label>
+                    <input type="number" id="fqc-modal-unripe" class="form-control" required oninput="calculateFFBCropModal()">
+                </div>
+                <div class="form-group">
+                    <label>Underripe (Jjg)</label>
+                    <input type="number" id="fqc-modal-underripe" class="form-control" required oninput="calculateFFBCropModal()">
+                </div>
+                <div class="form-group">
+                    <label>Normal Ripe (Otomatis)</label>
+                    <input type="number" id="fqc-modal-normal" class="form-control" readonly style="background-color: #f1f5f9;">
+                </div>
+                <div class="form-group">
+                    <label>Over Ripe (Jjg)</label>
+                    <input type="number" id="fqc-modal-over" class="form-control" required oninput="calculateFFBCropModal()">
+                </div>
+                <div class="form-group">
+                    <label>Empty Bunch (Jjg)</label>
+                    <input type="number" id="fqc-modal-empty" class="form-control" required oninput="calculateFFBCropModal()">
+                </div>
+                <div class="form-group">
+                    <label>Long Stalk (Jjg)</label>
+                    <input type="number" id="fqc-modal-long" class="form-control" required oninput="calculateFFBCropModal()">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="submitFFBCropModal()" style="width:100%; justify-content:center; margin-top:10px;">Simpan</button>
+        </div>
+    </div>
+</div>
+<div class="modal-overlay" id="modal-fq-range" style="display:none; z-index: 1000;">
+    <div class="modal-content" style="width: 400px; max-width: 90%;">
+        <div class="modal-header">
+            <h3 style="margin: 0;">Pilih Rentang Tanggal</h3>
+            <button type="button" class="modal-close" onclick="document.getElementById('modal-fq-range').style.display='none'">&times;</button>
+        </div>
+        <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+            <input type="hidden" id="fq-range-target">
+            <div class="form-group">
+                <label>Dari Tanggal</label>
+                <input type="date" id="fq-range-start" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Hingga Tanggal</label>
+                <input type="date" id="fq-range-end" class="form-control" required>
+            </div>
+            <button class="btn btn-primary" onclick="submitFqRangeModal()" style="width:100%; justify-content:center; margin-top:10px;">Tampilkan</button>
+        </div>
+    </div>
+</div>
 `;
 
 window.ffbQualityData = [];
+window.ffbCropQualityData = [];
 
 window.renderFFBQualityView = function() {
-    if (!document.getElementById('fq-date').value) {
-        document.getElementById('fq-date').value = window.getLocalDate();
-    }
     window.loadFFBQuality();
+    if(window.loadFFBCropQuality) window.loadFFBCropQuality();
 
     // Disable inputs for read-only roles
     const readOnlyRoles = ['Manager Mill', 'Supervisor Mill', 'Office Assistant Mill'];
@@ -1379,7 +1562,7 @@ window.calculateFFBAverages = function() {
     }
 };
 
-window.renderFFBTable = function() {
+window.renderFFBTable = function(isSingleDay = true) {
     const tbody = document.querySelector('#ffb-quality-table tbody');
     tbody.innerHTML = '';
     
@@ -1394,6 +1577,7 @@ window.renderFFBTable = function() {
     window.ffbQualityData.forEach((data, index) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
+            <td>${data.date}</td>
             <td>${getAbbr(data.estate)}</td>
             <td>${data.divisi}</td>
             <td>${data.no_truck}</td>
@@ -1406,7 +1590,7 @@ window.renderFFBTable = function() {
             <td>${parseFloat(data.busuk_percent).toFixed(1)}</td>
             <td>${parseFloat(data.sampah_gram).toFixed(0)}</td>
             <td>${parseFloat(data.sampah_percent).toFixed(1)}</td>
-            <td><button class="btn btn-danger" style="padding: 4px 8px;" onclick="deleteFFBRow(${index})"><i class="fa-solid fa-trash"></i></button></td>
+            <td>${isSingleDay ? `<button class="btn btn-danger" style="padding: 4px 8px;" onclick="deleteFFBRow(${index})"><i class="fa-solid fa-trash"></i></button>` : '-'}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -1422,8 +1606,10 @@ window.deleteFFBRow = async function(index) {
     }
 };
 
-window.loadFFBQuality = async function() {
-    const date = document.getElementById('fq-date').value;
+window.loadFFBQuality = async function(start, end) {
+    if (!start) start = window.getLocalDate();
+    if (!end) end = start;
+
     let mill = window.currentUser ? window.currentUser.estate : null; 
     if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
     if(!mill) return;
@@ -1433,17 +1619,22 @@ window.loadFFBQuality = async function() {
     }
     
     try {
-        let res = await fetch(`/api/ffb_quality/${mill}/${date}`);
+        let res;
+        if (start === end) {
+            res = await fetch(`/api/ffb_quality/${mill}/${start}`);
+        } else {
+            res = await fetch(`/api/ffb_quality/range/${mill}/${start}/${end}`);
+        }
         window.ffbQualityData = await res.json();
     } catch(e) {
         console.error(e);
         window.ffbQualityData = [];
     }
-    window.renderFFBTable();
+    window.renderFFBTable(start === end);
 };
 
 window.saveFFBQuality = async function() {
-    const date = document.getElementById('fq-date').value;
+    const date = document.getElementById('fq-modal-date').value || window.getLocalDate();
     let mill = window.currentUser ? window.currentUser.estate : null; 
     if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
     
@@ -1478,6 +1669,22 @@ window.onFFBModalEstateChange = async function(estate) {
         } else {
             container.innerHTML = `<input type="text" id="fq-modal-divisi" class="form-control" placeholder="(Optional)">`;
         }
+
+        const truckInput = document.getElementById('fq-modal-truck');
+        if (truckInput) {
+            let truckDatalist = document.getElementById('fq-truck-list');
+            if (!truckDatalist) {
+                truckInput.setAttribute('list', 'fq-truck-list');
+                truckDatalist = document.createElement('datalist');
+                truckDatalist.id = 'fq-truck-list';
+                truckInput.parentNode.appendChild(truckDatalist);
+            }
+            if (data && data.truk) {
+                truckDatalist.innerHTML = data.truk.map(t => `<option value="${t.plate_number || t.name || t.no_polisi || t.truck}"></option>`).join('');
+            } else {
+                truckDatalist.innerHTML = '';
+            }
+        }
     } catch(e) {
         console.error(e);
         container.innerHTML = `<input type="text" id="fq-modal-divisi" class="form-control" placeholder="(Optional)">`;
@@ -1485,8 +1692,7 @@ window.onFFBModalEstateChange = async function(estate) {
 };
 
 window.openFFBModal = function() {
-    const date = document.getElementById('fq-date').value;
-    document.getElementById('fq-modal-date').value = date;
+    document.getElementById('fq-modal-date').value = window.getLocalDate();
     
     let estatesOpts = typeof masterData !== 'undefined' && masterData.supply_chain 
         ? masterData.supply_chain.filter(s => s.is_ffb !== false).map(s => `<option value="${s.estate}">${s.estate}</option>`).join('')
@@ -1520,10 +1726,11 @@ window.calculateFFBModal = function() {
 
 window.submitFFBModal = async function() {
     const modalDate = document.getElementById('fq-modal-date').value;
-    const mainDate = document.getElementById('fq-date').value;
+    const fqDateElem = document.getElementById('fq-date');
+    const mainDate = fqDateElem ? fqDateElem.value : null;
     
-    if (modalDate && modalDate !== mainDate) {
-        document.getElementById('fq-date').value = modalDate;
+    if (modalDate && fqDateElem && modalDate !== mainDate) {
+        fqDateElem.value = modalDate;
         await window.loadFFBQuality();
     }
 
@@ -1554,6 +1761,7 @@ window.submitFFBModal = async function() {
     }
     
     const data = {
+        date: modalDate || mainDate || window.getLocalDate(),
         estate: estate,
         divisi: divisi,
         no_truck: truck,
@@ -1574,6 +1782,374 @@ window.submitFFBModal = async function() {
     window.renderFFBTable();
     await window.saveFFBQuality();
 };
+
+
+window.loadFFBCropQuality = async function(start, end) {
+    if (!start) start = window.getLocalDate();
+    if (!end) end = start;
+
+    let mill = window.currentUser ? window.currentUser.estate : null; 
+    if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
+    if(!mill) return;
+    
+    try {
+        let res;
+        if (start === end) {
+            res = await fetch(`/api/ffb_crop_quality/${mill}/${start}`);
+        } else {
+            res = await fetch(`/api/ffb_crop_quality/range/${mill}/${start}/${end}`);
+        }
+        window.ffbCropQualityData = await res.json();
+    } catch(e) {
+        console.error(e);
+        window.ffbCropQualityData = [];
+    }
+    if (window.renderFFBCropTable) window.renderFFBCropTable(start === end);
+};
+
+window.saveFFBCropQuality = async function() {
+    const date = window.ffbCropQualityData.length > 0 ? window.ffbCropQualityData[0].date : window.getLocalDate();
+    let mill = window.currentUser ? window.currentUser.estate : null; 
+    if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
+    
+    try {
+        await fetch('/api/ffb_crop_quality', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date, mill, entries: window.ffbCropQualityData })
+        });
+    } catch(e) {
+        console.error('Gagal auto-save FFB Crop Quality', e);
+    }
+};
+
+window.renderFFBCropTable = function(isSingleDay = true) {
+    const rawTable = document.getElementById('ffb-crop-table');
+    const sumTable = document.getElementById('ffb-crop-summary-table');
+    if (!rawTable || !sumTable) return;
+    
+    if (isSingleDay) {
+        rawTable.style.display = 'table';
+        sumTable.style.display = 'none';
+        
+        const tbody = rawTable.querySelector('tbody');
+        tbody.innerHTML = '';
+        
+        let abbrMap = {};
+        if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
+            masterData.supply_chain_list.forEach(item => {
+                abbrMap[item.name] = item.abbr;
+            });
+        }
+        const getAbbr = (estName) => abbrMap[estName] || estName.replace(' Estate', 'E');
+        
+        window.ffbCropQualityData.forEach((data, index) => {
+            const tr = document.createElement('tr');
+            const tot = parseInt(data.total_janjang) || 0;
+            const p_unripe = tot > 0 ? (parseInt(data.unripe) / tot * 100).toFixed(1) : '0.0';
+            const p_under = tot > 0 ? (parseInt(data.underripe) / tot * 100).toFixed(1) : '0.0';
+            const p_normal = tot > 0 ? (parseInt(data.normal_ripe) / tot * 100).toFixed(1) : '0.0';
+            const p_over = tot > 0 ? (parseInt(data.over_ripe) / tot * 100).toFixed(1) : '0.0';
+            const p_empty = tot > 0 ? (parseInt(data.empty_bunch) / tot * 100).toFixed(1) : '0.0';
+            const p_long = tot > 0 ? (parseInt(data.long_stalk) / tot * 100).toFixed(1) : '0.0';
+            
+            tr.innerHTML = `
+                <td>${getAbbr(data.estate)}</td>
+                <td>${data.divisi || '-'}</td>
+                <td>${data.blok || '-'}</td>
+                <td>${data.no_truck}</td>
+                <td>${tot}</td>
+                <td>${data.unripe || 0}</td><td>${p_unripe}</td>
+                <td>${data.underripe || 0}</td><td>${p_under}</td>
+                <td>${data.normal_ripe || 0}</td><td>${p_normal}</td>
+                <td>${data.over_ripe || 0}</td><td>${p_over}</td>
+                <td>${data.empty_bunch || 0}</td><td>${p_empty}</td>
+                <td>${data.long_stalk || 0}</td><td>${p_long}</td>
+                <td><button class="btn btn-danger" style="padding: 4px 8px;" onclick="deleteFFBCropRow(${index})"><i class="fa-solid fa-trash"></i></button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+        
+        window.calculateFFBCropAverages();
+    } else {
+        rawTable.style.display = 'none';
+        sumTable.style.display = 'table';
+        
+        const tbody = sumTable.querySelector('tbody');
+        tbody.innerHTML = '';
+        
+        // aggregate by estate
+        let estateAgg = {};
+        window.ffbCropQualityData.forEach(d => {
+            let est = d.estate;
+            if (!estateAgg[est]) {
+                estateAgg[est] = { tot:0, unripe:0, under:0, normal:0, over:0, empty:0, long:0 };
+            }
+            estateAgg[est].tot += parseInt(d.total_janjang) || 0;
+            estateAgg[est].unripe += parseInt(d.unripe) || 0;
+            estateAgg[est].under += parseInt(d.underripe) || 0;
+            estateAgg[est].normal += parseInt(d.normal_ripe) || 0;
+            estateAgg[est].over += parseInt(d.over_ripe) || 0;
+            estateAgg[est].empty += parseInt(d.empty_bunch) || 0;
+            estateAgg[est].long += parseInt(d.long_stalk) || 0;
+        });
+        
+        let t_tot = 0, t_unripe = 0, t_under = 0, t_normal = 0, t_over = 0, t_empty = 0, t_long = 0;
+        
+        for (let est in estateAgg) {
+            let d = estateAgg[est];
+            t_tot += d.tot;
+            t_unripe += d.unripe;
+            t_under += d.under;
+            t_normal += d.normal;
+            t_over += d.over;
+            t_empty += d.empty;
+            t_long += d.long;
+            
+            const p_unripe = d.tot > 0 ? (d.unripe / d.tot * 100) : 0;
+            const p_under = d.tot > 0 ? (d.under / d.tot * 100) : 0;
+            const p_normal = d.tot > 0 ? (d.normal / d.tot * 100) : 0;
+            const p_over = d.tot > 0 ? (d.over / d.tot * 100) : 0;
+            const p_empty = d.tot > 0 ? (d.empty / d.tot * 100) : 0;
+            const p_long = d.tot > 0 ? (d.long / d.tot * 100) : 0;
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="text-align:left;">${est}</td>
+                <td style="${p_unripe > 0 ? 'color:red; font-weight:bold;' : ''}">${p_unripe.toFixed(2)}</td>
+                <td style="${p_under > 3 ? 'color:red; font-weight:bold;' : ''}">${p_under.toFixed(2)}</td>
+                <td style="${p_normal < 90 ? 'color:red; font-weight:bold;' : ''}">${p_normal.toFixed(2)}</td>
+                <td style="${p_over > 7 ? 'color:red; font-weight:bold;' : ''}">${p_over.toFixed(2)}</td>
+                <td style="${p_empty > 0 ? 'color:red; font-weight:bold;' : ''}">${p_empty.toFixed(2)}</td>
+                <td style="${p_long >= 2 ? 'color:red; font-weight:bold;' : ''}">${p_long.toFixed(2)}</td>
+            `;
+            tbody.appendChild(tr);
+        }
+        
+        const pt_unripe = t_tot > 0 ? (t_unripe / t_tot * 100) : 0;
+        const pt_under = t_tot > 0 ? (t_under / t_tot * 100) : 0;
+        const pt_normal = t_tot > 0 ? (t_normal / t_tot * 100) : 0;
+        const pt_over = t_tot > 0 ? (t_over / t_tot * 100) : 0;
+        const pt_empty = t_tot > 0 ? (t_empty / t_tot * 100) : 0;
+        const pt_long = t_tot > 0 ? (t_long / t_tot * 100) : 0;
+        
+        document.getElementById('fqc-sum-unripe').innerText = pt_unripe.toFixed(2);
+        document.getElementById('fqc-sum-under').innerText = pt_under.toFixed(2);
+        document.getElementById('fqc-sum-normal').innerText = pt_normal.toFixed(2);
+        document.getElementById('fqc-sum-over').innerText = pt_over.toFixed(2);
+        document.getElementById('fqc-sum-empty').innerText = pt_empty.toFixed(2);
+        document.getElementById('fqc-sum-long').innerText = pt_long.toFixed(2);
+    }
+};
+
+window.calculateFFBCropAverages = function() {
+    let t_tot = 0, t_unripe = 0, t_under = 0, t_normal = 0, t_over = 0, t_empty = 0, t_long = 0;
+    window.ffbCropQualityData.forEach(d => {
+        t_tot += parseInt(d.total_janjang) || 0;
+        t_unripe += parseInt(d.unripe) || 0;
+        t_under += parseInt(d.underripe) || 0;
+        t_normal += parseInt(d.normal_ripe) || 0;
+        t_over += parseInt(d.over_ripe) || 0;
+        t_empty += parseInt(d.empty_bunch) || 0;
+        t_long += parseInt(d.long_stalk) || 0;
+    });
+
+    const elTotJjg = document.getElementById('fqc-tot-jjg');
+    if (elTotJjg) {
+        elTotJjg.innerText = t_tot;
+        document.getElementById('fqc-tot-unripe').innerText = t_unripe;
+        document.getElementById('fqc-tot-under').innerText = t_under;
+        document.getElementById('fqc-tot-normal').innerText = t_normal;
+        document.getElementById('fqc-tot-over').innerText = t_over;
+        document.getElementById('fqc-tot-empty').innerText = t_empty;
+        document.getElementById('fqc-tot-long').innerText = t_long;
+
+        if (t_tot > 0) {
+            document.getElementById('fqc-avg-unripe').innerText = ((t_unripe / t_tot) * 100).toFixed(1);
+            document.getElementById('fqc-avg-under').innerText = ((t_under / t_tot) * 100).toFixed(1);
+            document.getElementById('fqc-avg-normal').innerText = ((t_normal / t_tot) * 100).toFixed(1);
+            document.getElementById('fqc-avg-over').innerText = ((t_over / t_tot) * 100).toFixed(1);
+            document.getElementById('fqc-avg-empty').innerText = ((t_empty / t_tot) * 100).toFixed(1);
+            document.getElementById('fqc-avg-long').innerText = ((t_long / t_tot) * 100).toFixed(1);
+        } else {
+            document.getElementById('fqc-avg-unripe').innerText = '0.0';
+            document.getElementById('fqc-avg-under').innerText = '0.0';
+            document.getElementById('fqc-avg-normal').innerText = '0.0';
+            document.getElementById('fqc-avg-over').innerText = '0.0';
+            document.getElementById('fqc-avg-empty').innerText = '0.0';
+            document.getElementById('fqc-avg-long').innerText = '0.0';
+        }
+    }
+};
+
+window.deleteFFBCropRow = async function(index) {
+    if(confirm('Hapus baris ini?')) {
+        window.ffbCropQualityData.splice(index, 1);
+        window.renderFFBCropTable();
+        await window.saveFFBCropQuality();
+    }
+};
+
+window.onFFBCropModalDivisiChange = function(divisiName) {
+    const blokDatalist = document.getElementById('fqc-blok-list');
+    const data = window.currentFFBCropEstateData;
+    if (blokDatalist && data && data.blok) {
+        let filteredBloks = data.blok;
+        if (divisiName) {
+            filteredBloks = data.blok.filter(b => b.divisi === divisiName);
+        }
+        blokDatalist.innerHTML = filteredBloks.map(b => `<option value="${b.name || b.blok}"></option>`).join('');
+    }
+};
+
+window.onFFBCropModalEstateChange = async function(estate) {
+    const containerDiv = document.getElementById('fqc-modal-divisi-container');
+    const containerBlok = document.getElementById('fqc-modal-blok-container');
+    if (!containerDiv) return;
+    
+    containerDiv.innerHTML = '<input type="text" class="form-control" disabled value="Loading...">';
+    
+    try {
+        const res = await fetch(`${API_URL}/master/${encodeURIComponent(estate)}`);
+        const data = await res.json();
+        window.currentFFBCropEstateData = data;
+        
+        if (data && data.divisi && data.divisi.length > 0) {
+            let sel = `<select id="fqc-modal-divisi" class="form-control" onchange="window.onFFBCropModalDivisiChange(this.value)">`;
+            sel += `<option value="">-- Pilih Divisi --</option>`;
+            data.divisi.forEach(d => {
+                sel += `<option value="${d.name}">${d.name}</option>`;
+            });
+            sel += `</select>`;
+            containerDiv.innerHTML = sel;
+        } else {
+            containerDiv.innerHTML = `<input type="text" id="fqc-modal-divisi" class="form-control" placeholder="(Optional)" onchange="window.onFFBCropModalDivisiChange(this.value)">`;
+        }
+        
+        if(containerBlok) {
+            containerBlok.innerHTML = `
+                <input type="text" id="fqc-modal-blok" class="form-control" placeholder="(Optional)" list="fqc-blok-list">
+                <datalist id="fqc-blok-list"></datalist>
+            `;
+        }
+        
+        const truckInput = document.getElementById('fqc-modal-truck');
+        if (truckInput) {
+            let truckDatalist = document.getElementById('fqc-truck-list');
+            if (!truckDatalist) {
+                truckInput.setAttribute('list', 'fqc-truck-list');
+                truckDatalist = document.createElement('datalist');
+                truckDatalist.id = 'fqc-truck-list';
+                truckInput.parentNode.appendChild(truckDatalist);
+            }
+            if (data && data.truk) {
+                truckDatalist.innerHTML = data.truk.map(t => `<option value="${t.plate_number || t.name || t.no_polisi || t.truck}"></option>`).join('');
+            } else {
+                truckDatalist.innerHTML = '';
+            }
+        }
+        
+        window.onFFBCropModalDivisiChange('');
+        
+    } catch(e) {
+        console.error(e);
+        containerDiv.innerHTML = `<input type="text" id="fqc-modal-divisi" class="form-control" placeholder="(Optional)">`;
+        if(containerBlok) {
+            containerBlok.innerHTML = `<input type="text" id="fqc-modal-blok" class="form-control" placeholder="(Optional)">`;
+        }
+    }
+};
+
+window.openFFBCropModal = function() {
+    const fqDateElem = document.getElementById('fq-date');
+    const date = fqDateElem ? fqDateElem.value : window.getLocalDate();
+    document.getElementById('fqc-modal-date').value = date;
+    
+    let estatesOpts = typeof masterData !== 'undefined' && masterData.supply_chain 
+        ? masterData.supply_chain.filter(s => s.is_ffb !== false).map(s => `<option value="${s.estate}">${s.estate}</option>`).join('')
+        : '<option value="">Kosong / Belum Load</option>';
+    document.getElementById('fqc-modal-estate').innerHTML = estatesOpts;
+    
+    document.getElementById('fqc-modal-divisi-container').innerHTML = `<input type="text" id="fqc-modal-divisi" class="form-control" placeholder="(Optional)">`;
+    document.getElementById('fqc-modal-blok-container').innerHTML = `<input type="text" id="fqc-modal-blok" class="form-control" placeholder="(Optional)">`;
+    const currentEst = document.getElementById('fqc-modal-estate').value;
+    if (currentEst) {
+        window.onFFBCropModalEstateChange(currentEst);
+    }
+    document.getElementById('fqc-modal-truck').value = '';
+    document.getElementById('fqc-modal-unripe').value = '';
+    document.getElementById('fqc-modal-underripe').value = '';
+    document.getElementById('fqc-modal-normal').value = '';
+    document.getElementById('fqc-modal-over').value = '';
+    document.getElementById('fqc-modal-empty').value = '';
+    document.getElementById('fqc-modal-long').value = '';
+    document.getElementById('fqc-modal-total').value = '0';
+    
+    document.getElementById('modal-ffb-crop-quality').style.display = 'flex';
+};
+
+window.calculateFFBCropModal = function() {
+    const tot = parseInt(document.getElementById('fqc-modal-total').value) || 0;
+    const u = parseInt(document.getElementById('fqc-modal-unripe').value) || 0;
+    const un = parseInt(document.getElementById('fqc-modal-underripe').value) || 0;
+    const o = parseInt(document.getElementById('fqc-modal-over').value) || 0;
+    const e = parseInt(document.getElementById('fqc-modal-empty').value) || 0;
+    
+    let n = tot - (u + un + o + e);
+    if (n < 0) n = 0;
+    document.getElementById('fqc-modal-normal').value = n;
+};
+
+window.submitFFBCropModal = async function() {
+    const modalDate = document.getElementById('fqc-modal-date').value;
+    const fqDateElem = document.getElementById('fq-date');
+    const mainDate = fqDateElem ? fqDateElem.value : null;
+    
+    if (modalDate && fqDateElem && modalDate !== mainDate) {
+        fqDateElem.value = modalDate;
+        await window.loadFFBQuality();
+        if(window.loadFFBCropQuality) await window.loadFFBCropQuality();
+    }
+
+    const estate = document.getElementById('fqc-modal-estate').value;
+    const divisi = document.getElementById('fqc-modal-divisi') ? document.getElementById('fqc-modal-divisi').value : '';
+    const blok = document.getElementById('fqc-modal-blok') ? document.getElementById('fqc-modal-blok').value : '';
+    const truck = document.getElementById('fqc-modal-truck').value;
+    
+    const u = parseInt(document.getElementById('fqc-modal-unripe').value) || 0;
+    const un = parseInt(document.getElementById('fqc-modal-underripe').value) || 0;
+    const n = parseInt(document.getElementById('fqc-modal-normal').value) || 0;
+    const o = parseInt(document.getElementById('fqc-modal-over').value) || 0;
+    const e = parseInt(document.getElementById('fqc-modal-empty').value) || 0;
+    const l = parseInt(document.getElementById('fqc-modal-long').value) || 0;
+    const tot = parseInt(document.getElementById('fqc-modal-total').value) || 0;
+    
+    if (!estate || !truck) {
+        alert("Mohon isi form Estate dan Truk dengan benar.");
+        return;
+    }
+    
+    const data = {
+        date: modalDate || mainDate || window.getLocalDate(),
+        estate: estate,
+        divisi: divisi,
+        blok: blok,
+        no_truck: truck,
+        unripe: u,
+        underripe: un,
+        normal_ripe: n,
+        over_ripe: o,
+        empty_bunch: e,
+        long_stalk: l,
+        total_janjang: tot
+    };
+    
+    window.ffbCropQualityData.push(data);
+    document.getElementById('modal-ffb-crop-quality').style.display = 'none';
+    
+    window.renderFFBCropTable();
+    await window.saveFFBCropQuality();
+};
+
 
 
 // 4. MILL DASHBOARD
@@ -2234,6 +2810,263 @@ window.toggleFfbReceivedInputs = function() {
     }
 };
 
+window.renderDashFfbCropQuality = async function() {
+    const cardEl = document.getElementById('dash-ffb-crop-card');
+    if (!cardEl) return;
+
+    if (!window.currentUser || !window.currentUser.role) {
+        cardEl.style.display = 'none';
+        return;
+    }
+    const allowedRoles = [
+        'Senior Field Manager', 'Manager', 'Askep', 'Assistant', 
+        'Krani Divisi', 'Manager Mill', 'Manager MIll', 
+        'supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Admin'
+    ];
+    if (!allowedRoles.includes(window.currentUser.role)) {
+        cardEl.style.display = 'none';
+        return;
+    }
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const defaultDate = `${yyyy}-${mm}-${dd}`;
+
+    let startDate = document.getElementById('dash-ffb-crop-start-date')?.value;
+    let endDate = document.getElementById('dash-ffb-crop-end-date')?.value;
+
+    if (!startDate) {
+        startDate = defaultDate;
+        if (document.getElementById('dash-ffb-crop-start-date')) document.getElementById('dash-ffb-crop-start-date').value = startDate;
+    }
+    if (!endDate) {
+        endDate = defaultDate;
+        if (document.getElementById('dash-ffb-crop-end-date')) document.getElementById('dash-ffb-crop-end-date').value = endDate;
+    }
+
+    cardEl.style.display = 'block';
+
+    const tbody = document.querySelector('#dash-ffb-crop-table tbody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7">Loading...</td></tr>';
+
+    let mill = 'Bunga Tanjung Mill';
+    if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+        mill = window.currentUser.estate;
+    }
+
+    try {
+        const res = await fetch(`/api/ffb_crop_quality/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`);
+        if (!res.ok) throw new Error('Network error fetching ffb crop quality');
+        const rawData = await res.json();
+
+        // Aggregate by estate
+        const estData = {};
+        rawData.forEach(row => {
+            const e = row.estate || 'Unknown';
+            if (!estData[e]) {
+                estData[e] = {
+                    total_janjang: 0,
+                    unripe: 0,
+                    underripe: 0,
+                    normal_ripe: 0,
+                    over_ripe: 0,
+                    empty_bunch: 0,
+                    long_stalk: 0
+                };
+            }
+            estData[e].total_janjang += parseInt(row.total_janjang) || 0;
+            estData[e].unripe += parseInt(row.unripe) || 0;
+            estData[e].underripe += parseInt(row.underripe) || 0;
+            estData[e].normal_ripe += parseInt(row.normal_ripe) || 0;
+            estData[e].over_ripe += parseInt(row.over_ripe) || 0;
+            estData[e].empty_bunch += parseInt(row.empty_bunch) || 0;
+            estData[e].long_stalk += parseInt(row.long_stalk) || 0;
+        });
+
+        if (tbody) tbody.innerHTML = '';
+        let t_tot = 0, t_u = 0, t_un = 0, t_n = 0, t_o = 0, t_e = 0, t_l = 0;
+
+        let abbrMap = {};
+        if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
+            masterData.supply_chain_list.forEach(item => {
+                abbrMap[item.name] = item.abbr;
+            });
+        }
+        const getAbbr = (estName) => abbrMap[estName] || estName.replace(' Estate', 'E');
+
+        Object.keys(estData).forEach(est => {
+            const d = estData[est];
+            const tot = d.total_janjang;
+            t_tot += tot; t_u += d.unripe; t_un += d.underripe; t_n += d.normal_ripe; t_o += d.over_ripe; t_e += d.empty_bunch; t_l += d.long_stalk;
+            
+            const p_u = tot > 0 ? (d.unripe / tot * 100).toFixed(2) : '0.00';
+            const p_un = tot > 0 ? (d.underripe / tot * 100).toFixed(2) : '0.00';
+            const p_n = tot > 0 ? (d.normal_ripe / tot * 100).toFixed(2) : '0.00';
+            const p_o = tot > 0 ? (d.over_ripe / tot * 100).toFixed(2) : '0.00';
+            const p_e = tot > 0 ? (d.empty_bunch / tot * 100).toFixed(2) : '0.00';
+            const p_l = tot > 0 ? (d.long_stalk / tot * 100).toFixed(2) : '0.00';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${getAbbr(est)}</td>
+                <td style="color: ${parseFloat(p_u) > 0 ? 'red' : 'inherit'}">${p_u}</td>
+                <td style="color: ${parseFloat(p_un) > 3 ? 'red' : 'inherit'}">${p_un}</td>
+                <td style="color: ${parseFloat(p_n) < 90 ? 'red' : 'inherit'}">${p_n}</td>
+                <td style="color: ${parseFloat(p_o) > 7 ? 'red' : 'inherit'}">${p_o}</td>
+                <td style="color: ${parseFloat(p_e) > 0 ? 'red' : 'inherit'}">${p_e}</td>
+                <td style="color: ${parseFloat(p_l) >= 2 ? 'red' : 'inherit'}">${p_l}</td>
+            `;
+            if (tbody) tbody.appendChild(tr);
+        });
+
+        // Totals
+        const p_tu = t_tot > 0 ? (t_u / t_tot * 100).toFixed(2) : '0.00';
+        const p_tun = t_tot > 0 ? (t_un / t_tot * 100).toFixed(2) : '0.00';
+        const p_tn = t_tot > 0 ? (t_n / t_tot * 100).toFixed(2) : '0.00';
+        const p_to = t_tot > 0 ? (t_o / t_tot * 100).toFixed(2) : '0.00';
+        const p_te = t_tot > 0 ? (t_e / t_tot * 100).toFixed(2) : '0.00';
+        const p_tl = t_tot > 0 ? (t_l / t_tot * 100).toFixed(2) : '0.00';
+
+        document.getElementById('dash-fqc-avg-unripe').innerText = p_tu;
+        document.getElementById('dash-fqc-avg-under').innerText = p_tun;
+        document.getElementById('dash-fqc-avg-normal').innerText = p_tn;
+        document.getElementById('dash-fqc-avg-over').innerText = p_to;
+        document.getElementById('dash-fqc-avg-empty').innerText = p_te;
+        document.getElementById('dash-fqc-avg-long').innerText = p_tl;
+        
+        document.getElementById('dash-fqc-avg-unripe').style.color = parseFloat(p_tu) > 0 ? 'red' : 'inherit';
+        document.getElementById('dash-fqc-avg-under').style.color = parseFloat(p_tun) > 3 ? 'red' : 'inherit';
+        document.getElementById('dash-fqc-avg-normal').style.color = parseFloat(p_tn) < 90 ? 'red' : 'inherit';
+        document.getElementById('dash-fqc-avg-over').style.color = parseFloat(p_to) > 7 ? 'red' : 'inherit';
+        document.getElementById('dash-fqc-avg-empty').style.color = parseFloat(p_te) > 0 ? 'red' : 'inherit';
+        document.getElementById('dash-fqc-avg-long').style.color = parseFloat(p_tl) >= 2 ? 'red' : 'inherit';
+    } catch(err) {
+        console.error(err);
+        if (tbody) tbody.innerHTML = '<tr><td colspan="7">Error loading data.</td></tr>';
+    }
+};
+
+window.renderDashFfbFruitLooseAnalysis = async function() {
+    const cardEl = document.getElementById('dash-ffb-fruit-loose-card');
+    if (!cardEl) return;
+
+    if (!window.currentUser || !window.currentUser.role) {
+        cardEl.style.display = 'none';
+        return;
+    }
+    const allowedRoles = [
+        'Senior Field Manager', 'Manager', 'Askep', 'Assistant', 
+        'Krani Divisi', 'Manager Mill', 'Manager MIll', 
+        'supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Admin'
+    ];
+    if (!allowedRoles.includes(window.currentUser.role)) {
+        cardEl.style.display = 'none';
+        return;
+    }
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const defaultDate = `${yyyy}-${mm}-${dd}`;
+
+    let startDate = document.getElementById('dash-ffb-fruit-loose-start-date')?.value;
+    let endDate = document.getElementById('dash-ffb-fruit-loose-end-date')?.value;
+
+    if (!startDate) {
+        startDate = defaultDate;
+        if (document.getElementById('dash-ffb-fruit-loose-start-date')) document.getElementById('dash-ffb-fruit-loose-start-date').value = startDate;
+    }
+    if (!endDate) {
+        endDate = defaultDate;
+        if (document.getElementById('dash-ffb-fruit-loose-end-date')) document.getElementById('dash-ffb-fruit-loose-end-date').value = endDate;
+    }
+
+    cardEl.style.display = 'block';
+
+    const tbody = document.querySelector('#dash-ffb-fruit-loose-table tbody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
+
+    let mill = 'Bunga Tanjung Mill';
+    if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+        mill = window.currentUser.estate;
+    }
+
+    try {
+        const res = await fetch(`/api/ffb_quality/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`);
+        if (!res.ok) throw new Error('Network error fetching ffb quality fruit loose');
+        const rawData = await res.json();
+
+        const estData = {};
+        rawData.forEach(row => {
+            const e = row.estate || 'Unknown';
+            if (!estData[e]) {
+                estData[e] = { bg_gram: 0, bd_gram: 0, t_segar_gram: 0, busuk_gram: 0, sampah_gram: 0 };
+            }
+            estData[e].bg_gram += parseFloat(row.bg_gram) || 0;
+            estData[e].bd_gram += parseFloat(row.bd_gram) || 0;
+            estData[e].t_segar_gram += parseFloat(row.t_segar_gram) || 0;
+            estData[e].busuk_gram += parseFloat(row.busuk_gram) || 0;
+            estData[e].sampah_gram += parseFloat(row.sampah_gram) || 0;
+        });
+
+        if (tbody) tbody.innerHTML = '';
+        let t_bg = 0, t_bd = 0, t_ts = 0, t_bb = 0, t_sampah = 0;
+
+        let abbrMap = {};
+        if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
+            masterData.supply_chain_list.forEach(item => {
+                abbrMap[item.name] = item.abbr;
+            });
+        }
+        const getAbbr = (estName) => abbrMap[estName] || estName.replace(' Estate', 'E');
+
+        Object.keys(estData).forEach(est => {
+            const d = estData[est];
+            t_bg += d.bg_gram; t_bd += d.bd_gram; t_ts += d.t_segar_gram; t_bb += d.busuk_gram; t_sampah += d.sampah_gram;
+
+            const p_bd = d.bg_gram > 0 ? (d.bd_gram / d.bg_gram * 100).toFixed(2) : '0.00';
+            const p_ts = d.bg_gram > 0 ? (d.t_segar_gram / d.bg_gram * 100).toFixed(2) : '0.00';
+            const p_bb = d.bg_gram > 0 ? (d.busuk_gram / d.bg_gram * 100).toFixed(2) : '0.00';
+            const p_sampah = d.bg_gram > 0 ? (d.sampah_gram / d.bg_gram * 100).toFixed(2) : '0.00';
+
+            const bdColor = parseFloat(p_bd) < 70 ? 'red' : 'inherit';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${getAbbr(est)}</td>
+                <td style="color: ${bdColor}; font-weight: ${parseFloat(p_bd) < 70 ? 'bold' : 'normal'}">${p_bd}</td>
+                <td>${p_ts}</td>
+                <td>${p_bb}</td>
+                <td>${p_sampah}</td>
+            `;
+            if (tbody) tbody.appendChild(tr);
+        });
+
+        if (Object.keys(estData).length === 0) {
+            if (tbody) tbody.innerHTML = '<tr><td colspan="5">Tidak ada data.</td></tr>';
+        }
+
+        const avg_bd = t_bg > 0 ? (t_bd / t_bg * 100).toFixed(2) : '0.00';
+        const avg_ts = t_bg > 0 ? (t_ts / t_bg * 100).toFixed(2) : '0.00';
+        const avg_bb = t_bg > 0 ? (t_bb / t_bg * 100).toFixed(2) : '0.00';
+        const avg_sampah = t_bg > 0 ? (t_sampah / t_bg * 100).toFixed(2) : '0.00';
+
+        document.getElementById('dash-fql-avg-segar').innerText = avg_bd;
+        document.getElementById('dash-fql-avg-tsegar').innerText = avg_ts;
+        document.getElementById('dash-fql-avg-busuk').innerText = avg_bb;
+        document.getElementById('dash-fql-avg-sampah').innerText = avg_sampah;
+
+        document.getElementById('dash-fql-avg-segar').style.color = parseFloat(avg_bd) < 70 ? 'red' : 'inherit';
+
+    } catch(err) {
+        console.error(err);
+        if (tbody) tbody.innerHTML = '<tr><td colspan="5">Error loading data.</td></tr>';
+    }
+};
+
 window.renderFfbReceivedChart = async function() {
     const cardEl = document.getElementById('ffb-received-card');
     if (!cardEl) return;
@@ -2292,6 +3125,8 @@ window.renderFfbReceivedChart = async function() {
     if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
         mill = window.currentUser.estate;
     }
+
+
 
     let apiUrl = `/api/tonase/${mill}/${date}`;
     if (period === 'monthly') {
@@ -2473,4 +3308,75 @@ window.loadDashboardExtraData = async function(dateOverride) {
     if (window.renderFfbReceivedChart) {
         window.renderFfbReceivedChart();
     }
+    if (window.renderDashFfbCropQuality) {
+        window.renderDashFfbCropQuality();
+    }
+    if (window.renderDashFfbFruitLooseAnalysis) {
+        window.renderDashFfbFruitLooseAnalysis();
+    }
+};
+
+window.openFqRangeModal = function(target) {
+    document.getElementById('fq-range-target').value = target;
+    const today = window.getLocalDate();
+    document.getElementById('fq-range-start').value = today;
+    document.getElementById('fq-range-end').value = today;
+    document.getElementById('modal-fq-range').style.display = 'flex';
+};
+
+window.submitFqRangeModal = function() {
+    const target = document.getElementById('fq-range-target').value;
+    const start = document.getElementById('fq-range-start').value;
+    const end = document.getElementById('fq-range-end').value;
+    
+    if (!start || !end) {
+        alert("Pilih tanggal awal dan akhir.");
+        return;
+    }
+    if (start > end) {
+        alert("Tanggal awal tidak boleh lebih dari tanggal akhir.");
+        return;
+    }
+    
+    document.getElementById('modal-fq-range').style.display = 'none';
+    
+    if (target === 'loose') {
+        window.loadFFBQuality(start, end);
+    } else if (target === 'crop') {
+        window.loadFFBCropQuality(start, end);
+    }
+};
+
+window.printTable = function(wrapperId, title) {
+    const tableHtml = document.getElementById(wrapperId).innerHTML;
+    const w = window.open('', '_blank');
+    w.document.write(`
+        <html>
+        <head>
+            <title>${title}</title>
+            <style>
+                body { font-family: sans-serif; padding: 20px; }
+                h2 { text-align: center; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                th, td { border: 1px solid #000; padding: 4px 8px; text-align: center; }
+                th { background-color: #f1f5f9; }
+                .btn { display: none; } /* Hide buttons in print */
+                @media print {
+                    @page { size: landscape; }
+                }
+            </style>
+        </head>
+        <body>
+            <h2>${title}</h2>
+            ${tableHtml}
+            <script>
+                window.onload = function() {
+                    window.print();
+                    window.close();
+                }
+            </script>
+        </body>
+        </html>
+    `);
+    w.document.close();
 };

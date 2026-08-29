@@ -428,6 +428,128 @@ const views = {
     </div>
 </div>
 
+<div class="glass-card" id="dash-ffb-crop-card" style="margin-top: 20px; display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
+        <h3 style="margin: 0;">Daily FFB Crop Quality</h3>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <label style="font-weight: bold; margin-bottom: 0;">Dari Tanggal:</label>
+            <input type="date" id="dash-ffb-crop-start-date" class="form-control" style="width: auto;">
+            
+            <label style="font-weight: bold; margin-bottom: 0;">Hingga Tanggal:</label>
+            <input type="date" id="dash-ffb-crop-end-date" class="form-control" style="width: auto;">
+            
+            <button class="btn btn-success" onclick="if(window.renderDashFfbCropQuality) window.renderDashFfbCropQuality()">Tampilkan</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <style>
+            #dash-ffb-crop-table th, #dash-ffb-crop-table td {
+                padding: 6px 10px !important;
+                text-align: center;
+                border: 1px solid #e2e8f0;
+            }
+            #dash-ffb-crop-table th {
+                background-color: #f8fafc;
+                font-weight: bold;
+                color: #334155;
+            }
+        </style>
+        <table class="data-table" id="dash-ffb-crop-table" style="font-size: 0.85rem; width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th rowspan="2">ESTATE</th>
+                    <th colspan="1">UN RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
+                    <th colspan="1">UNDER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 3%)</span></th>
+                    <th colspan="1">RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Min. 90%)</span></th>
+                    <th colspan="1">OVER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 7%)</span></th>
+                    <th colspan="1">EMPTY BUNCH<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
+                    <th colspan="1">LONGSTALK<br><span style="font-size:0.75rem; font-weight:normal;">(&lt; 2%)</span></th>
+                </tr>
+                <tr>
+                    <th>(%)</th>
+                    <th>(%)</th>
+                    <th>(%)</th>
+                    <th>(%)</th>
+                    <th>(%)</th>
+                    <th>(%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows injected via JS -->
+            </tbody>
+            <tfoot>
+                <tr style="background-color: #f1f5f9; font-weight: bold;">
+                    <td style="text-align: right;">TOTAL:</td>
+                    <td id="dash-fqc-avg-unripe">0.0</td>
+                    <td id="dash-fqc-avg-under">0.0</td>
+                    <td id="dash-fqc-avg-normal">0.0</td>
+                    <td id="dash-fqc-avg-over">0.0</td>
+                    <td id="dash-fqc-avg-empty">0.0</td>
+                    <td id="dash-fqc-avg-long">0.0</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<div class="glass-card" id="dash-ffb-fruit-loose-card" style="margin-top: 20px; display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
+        <h3 style="margin: 0;">Daily FFB Quality Fruit Loose Analysis</h3>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <label style="font-weight: bold; margin-bottom: 0;">Dari Tanggal:</label>
+            <input type="date" id="dash-ffb-fruit-loose-start-date" class="form-control" style="width: auto;">
+            
+            <label style="font-weight: bold; margin-bottom: 0;">Hingga Tanggal:</label>
+            <input type="date" id="dash-ffb-fruit-loose-end-date" class="form-control" style="width: auto;">
+            
+            <button class="btn btn-success" onclick="if(window.renderDashFfbFruitLooseAnalysis) window.renderDashFfbFruitLooseAnalysis()">Tampilkan</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <style>
+            #dash-ffb-fruit-loose-table th, #dash-ffb-fruit-loose-table td {
+                padding: 6px 10px !important;
+                text-align: center;
+                border: 1px solid #e2e8f0;
+            }
+            #dash-ffb-fruit-loose-table th {
+                background-color: #f8fafc;
+                font-weight: bold;
+                color: #334155;
+            }
+        </style>
+        <table class="data-table" id="dash-ffb-fruit-loose-table" style="font-size: 0.85rem; width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th rowspan="2">ESTATE</th>
+                    <th colspan="1">BRON SEGAR</th>
+                    <th colspan="1">BRON TDK SEGAR</th>
+                    <th colspan="1">BRON BUSUK</th>
+                    <th colspan="1">SAMPAH</th>
+                </tr>
+                <tr>
+                    <th>(%)</th>
+                    <th>(%)</th>
+                    <th>(%)</th>
+                    <th>(%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows injected via JS -->
+            </tbody>
+            <tfoot>
+                <tr style="background-color: #f1f5f9; font-weight: bold;">
+                    <td style="text-align: right;">TOTAL:</td>
+                    <td id="dash-fql-avg-segar">0.00</td>
+                    <td id="dash-fql-avg-tsegar">0.00</td>
+                    <td id="dash-fql-avg-busuk">0.00</td>
+                    <td id="dash-fql-avg-sampah">0.00</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
 <!-- Dashboard Extra Sections (Processing & Water) -->
 <div id="dashboard-mill-sections">
 <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; border-top: 2px solid #e2e8f0; padding-top: 20px;">

@@ -298,6 +298,13 @@ async function initDB() {
             sampah_gram REAL, sampah_percent REAL
         )`);
 
+        await pool.query(`CREATE TABLE IF NOT EXISTS ffb_crop_quality (
+            id SERIAL PRIMARY KEY,
+            date TEXT, mill TEXT, estate TEXT, divisi TEXT, blok TEXT, no_truck TEXT,
+            unripe INTEGER, underripe INTEGER, normal_ripe INTEGER,
+            over_ripe INTEGER, empty_bunch INTEGER, long_stalk INTEGER, total_janjang INTEGER
+        )`);
+
         try {
             await pool.query(`ALTER TABLE master_truk ADD COLUMN supir TEXT`);
         } catch (e) {
@@ -1490,6 +1497,16 @@ app.get('/api/ffb_quality/month/:mill/:month', async (req, res) => {
     }
 });
 
+app.get('/api/ffb_quality/range/:mill/:startDate/:endDate', async (req, res) => {
+    try {
+        const { mill, startDate, endDate } = req.params;
+        const result = await pool.query("SELECT * FROM ffb_quality WHERE mill = $1 AND date >= $2 AND date <= $3 ORDER BY date ASC, id ASC", [mill, startDate, endDate]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/ffb_quality', async (req, res) => {
     try {
         const { date, mill, entries } = req.body;
@@ -1513,6 +1530,62 @@ app.post('/api/ffb_quality', async (req, res) => {
                  item.t_segar_gram, item.t_segar_percent,
                  item.busuk_gram, item.busuk_percent,
                  item.sampah_gram, item.sampah_percent]);
+            }
+        }
+        await pool.query('COMMIT');
+        res.json({ success: true });
+    } catch (err) {
+        await pool.query('ROLLBACK');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// FFB CROP QUALITY
+app.get('/api/ffb_crop_quality/:mill/:date', async (req, res) => {
+    try {
+        const { mill, date } = req.params;
+        const result = await pool.query('SELECT * FROM ffb_crop_quality WHERE mill = $1 AND date = $2 ORDER BY id ASC', [mill, date]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/ffb_crop_quality/month/:mill/:month', async (req, res) => {
+    try {
+        const { mill, month } = req.params;
+        const result = await pool.query("SELECT * FROM ffb_crop_quality WHERE mill = $1 AND date LIKE $2 || '%' ORDER BY date ASC", [mill, month]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/ffb_crop_quality/range/:mill/:startDate/:endDate', async (req, res) => {
+    try {
+        const { mill, startDate, endDate } = req.params;
+        const result = await pool.query("SELECT * FROM ffb_crop_quality WHERE mill = $1 AND date >= $2 AND date <= $3 ORDER BY date ASC, id ASC", [mill, startDate, endDate]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/ffb_crop_quality', async (req, res) => {
+    try {
+        const { date, mill, entries } = req.body;
+        
+        await pool.query('BEGIN');
+        await pool.query('DELETE FROM ffb_crop_quality WHERE mill=$1 AND date=$2', [mill, date]);
+        
+        for (let item of entries) {
+            if (item.estate) { // only save valid rows
+                await pool.query(`INSERT INTO ffb_crop_quality (
+                    date, mill, estate, divisi, blok, no_truck,
+                    unripe, underripe, normal_ripe, over_ripe, empty_bunch, long_stalk, total_janjang
+                ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`, 
+                [date, mill, item.estate, item.divisi, item.blok, item.no_truck,
+                 item.unripe, item.underripe, item.normal_ripe, item.over_ripe, item.empty_bunch, item.long_stalk, item.total_janjang]);
             }
         }
         await pool.query('COMMIT');
