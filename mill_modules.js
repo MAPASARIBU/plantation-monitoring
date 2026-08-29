@@ -1396,7 +1396,7 @@ views.ffb_quality = `
                 <thead>
                     <tr>
                         <th rowspan="2">ESTATE</th>
-                        <th rowspan="2">TONASE FFB<br><span style="font-size:0.75rem; font-weight:normal;">(TON)</span></th>
+                        <th rowspan="2">TOTAL JANJANG</th>
                         <th colspan="1">UN RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
                         <th colspan="1">UNDER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 3%)</span></th>
                         <th colspan="1">RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Min. 90%)</span></th>
@@ -1418,7 +1418,7 @@ views.ffb_quality = `
                 <tfoot>
                     <tr style="background-color: #f1f5f9; font-weight: bold;">
                         <td style="text-align: right;">TOTAL:</td>
-                        <td id="fqc-sum-tot-tonase">0.00</td>
+                        <td id="fqc-sum-tot-jjg">0</td>
                         <td id="fqc-sum-unripe">0.00</td>
                         <td id="fqc-sum-under">0.00</td>
                         <td id="fqc-sum-normal">0.00</td>
@@ -1929,25 +1929,11 @@ window.renderFFBCropTable = function(isSingleDay = true) {
             const p_over = d.tot > 0 ? (d.over / d.tot * 100) : 0;
             const p_empty = d.tot > 0 ? (d.empty / d.tot * 100) : 0;
             const p_long = d.tot > 0 ? (d.long / d.tot * 100) : 0;
-            
-            let estTonase = 0;
-            if (window.tonaseByEstCrop) {
-                estTonase = window.tonaseByEstCrop[est] || 0;
-                if (!estTonase) {
-                    for (let k in window.tonaseByEstCrop) {
-                        if (getAbbr(k) === getAbbr(est) || k.toLowerCase() === est.toLowerCase()) {
-                            estTonase = window.tonaseByEstCrop[k];
-                            break;
-                        }
-                    }
-                }
-            }
-            totalTonaseSum += estTonase;
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="text-align:left;">${est}</td>
-                <td style="font-weight:600;">${estTonase.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td style="font-weight:600;">${d.tot.toLocaleString('id-ID')}</td>
                 <td style="${p_unripe > 0 ? 'color:red; font-weight:bold;' : ''}">${p_unripe.toFixed(2)}</td>
                 <td style="${p_under > 3 ? 'color:red; font-weight:bold;' : ''}">${p_under.toFixed(2)}</td>
                 <td style="${p_normal < 90 ? 'color:red; font-weight:bold;' : ''}">${p_normal.toFixed(2)}</td>
@@ -1965,8 +1951,8 @@ window.renderFFBCropTable = function(isSingleDay = true) {
         const pt_empty = t_tot > 0 ? (t_empty / t_tot * 100) : 0;
         const pt_long = t_tot > 0 ? (t_long / t_tot * 100) : 0;
         
-        const sumTotTonaseEl = document.getElementById('fqc-sum-tot-tonase');
-        if (sumTotTonaseEl) sumTotTonaseEl.innerText = totalTonaseSum.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        const sumTotJjgEl = document.getElementById('fqc-sum-tot-jjg');
+        if (sumTotJjgEl) sumTotJjgEl.innerText = t_tot.toLocaleString('id-ID');
 
         document.getElementById('fqc-sum-unripe').innerText = pt_unripe.toFixed(2);
         document.getElementById('fqc-sum-under').innerText = pt_under.toFixed(2);
@@ -2935,7 +2921,12 @@ window.renderDashFfbCropQuality = async function() {
         });
 
         if (tbody) tbody.innerHTML = '';
-        let t_tot = 0, t_u = 0, t_un = 0, t_n = 0, t_o = 0, t_e = 0, t_l = 0;
+        let sumWeightedUnripe = 0;
+        let sumWeightedUnder = 0;
+        let sumWeightedRipe = 0;
+        let sumWeightedOver = 0;
+        let sumWeightedEmpty = 0;
+        let sumWeightedLong = 0;
         let totalAllEstTonase = 0;
 
         let abbrMap = {};
@@ -2961,15 +2952,29 @@ window.renderDashFfbCropQuality = async function() {
             const tot = d.total_janjang;
             t_tot += tot; t_u += d.unripe; t_un += d.underripe; t_n += d.normal_ripe; t_o += d.over_ripe; t_e += d.empty_bunch; t_l += d.long_stalk;
             
-            const p_u = tot > 0 ? (d.unripe / tot * 100).toFixed(2) : '0.00';
-            const p_un = tot > 0 ? (d.underripe / tot * 100).toFixed(2) : '0.00';
-            const p_n = tot > 0 ? (d.normal_ripe / tot * 100).toFixed(2) : '0.00';
-            const p_o = tot > 0 ? (d.over_ripe / tot * 100).toFixed(2) : '0.00';
-            const p_e = tot > 0 ? (d.empty_bunch / tot * 100).toFixed(2) : '0.00';
-            const p_l = tot > 0 ? (d.long_stalk / tot * 100).toFixed(2) : '0.00';
+            const p_u_num = tot > 0 ? (d.unripe / tot * 100) : 0;
+            const p_un_num = tot > 0 ? (d.underripe / tot * 100) : 0;
+            const p_n_num = tot > 0 ? (d.normal_ripe / tot * 100) : 0;
+            const p_o_num = tot > 0 ? (d.over_ripe / tot * 100) : 0;
+            const p_e_num = tot > 0 ? (d.empty_bunch / tot * 100) : 0;
+            const p_l_num = tot > 0 ? (d.long_stalk / tot * 100) : 0;
+
+            const p_u = p_u_num.toFixed(2);
+            const p_un = p_un_num.toFixed(2);
+            const p_n = p_n_num.toFixed(2);
+            const p_o = p_o_num.toFixed(2);
+            const p_e = p_e_num.toFixed(2);
+            const p_l = p_l_num.toFixed(2);
 
             const estTonase = getEstateTonase(est);
             totalAllEstTonase += estTonase;
+
+            sumWeightedUnripe += (estTonase * p_u_num);
+            sumWeightedUnder += (estTonase * p_un_num);
+            sumWeightedRipe += (estTonase * p_n_num);
+            sumWeightedOver += (estTonase * p_o_num);
+            sumWeightedEmpty += (estTonase * p_e_num);
+            sumWeightedLong += (estTonase * p_l_num);
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -2985,13 +2990,25 @@ window.renderDashFfbCropQuality = async function() {
             if (tbody) tbody.appendChild(tr);
         });
 
-        // Totals
-        const p_tu = t_tot > 0 ? (t_u / t_tot * 100).toFixed(2) : '0.00';
-        const p_tun = t_tot > 0 ? (t_un / t_tot * 100).toFixed(2) : '0.00';
-        const p_tn = t_tot > 0 ? (t_n / t_tot * 100).toFixed(2) : '0.00';
-        const p_to = t_tot > 0 ? (t_o / t_tot * 100).toFixed(2) : '0.00';
-        const p_te = t_tot > 0 ? (t_e / t_tot * 100).toFixed(2) : '0.00';
-        const p_tl = t_tot > 0 ? (t_l / t_tot * 100).toFixed(2) : '0.00';
+        // Weighted Totals by Tonase (Interpolasi: SUM(Tonase * %) / Total Tonase)
+        const p_tu = totalAllEstTonase > 0 
+            ? (sumWeightedUnripe / totalAllEstTonase).toFixed(2) 
+            : (t_tot > 0 ? (t_u / t_tot * 100).toFixed(2) : '0.00');
+        const p_tun = totalAllEstTonase > 0 
+            ? (sumWeightedUnder / totalAllEstTonase).toFixed(2) 
+            : (t_tot > 0 ? (t_un / t_tot * 100).toFixed(2) : '0.00');
+        const p_tn = totalAllEstTonase > 0 
+            ? (sumWeightedRipe / totalAllEstTonase).toFixed(2) 
+            : (t_tot > 0 ? (t_n / t_tot * 100).toFixed(2) : '0.00');
+        const p_to = totalAllEstTonase > 0 
+            ? (sumWeightedOver / totalAllEstTonase).toFixed(2) 
+            : (t_tot > 0 ? (t_o / t_tot * 100).toFixed(2) : '0.00');
+        const p_te = totalAllEstTonase > 0 
+            ? (sumWeightedEmpty / totalAllEstTonase).toFixed(2) 
+            : (t_tot > 0 ? (t_e / t_tot * 100).toFixed(2) : '0.00');
+        const p_tl = totalAllEstTonase > 0 
+            ? (sumWeightedLong / totalAllEstTonase).toFixed(2) 
+            : (t_tot > 0 ? (t_l / t_tot * 100).toFixed(2) : '0.00');
 
         const totTonaseEl = document.getElementById('dash-fqc-tot-tonase');
         if (totTonaseEl) totTonaseEl.innerText = totalAllEstTonase.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2});

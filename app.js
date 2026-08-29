@@ -458,7 +458,7 @@ const views = {
             <thead>
                 <tr>
                     <th rowspan="2">ESTATE</th>
-                    <th rowspan="2">TONASE FFB<br><span style="font-size:0.75rem; font-weight:normal;">(TON)</span></th>
+                    <th rowspan="2">FFB<br><span style="font-size:0.75rem; font-weight:normal;">(TON)</span></th>
                     <th colspan="1">UN RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
                     <th colspan="1">UNDER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 3%)</span></th>
                     <th colspan="1">RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Min. 90%)</span></th>
