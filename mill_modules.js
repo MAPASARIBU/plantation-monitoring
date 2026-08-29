@@ -2856,16 +2856,32 @@ window.renderDashFfbCropQuality = async function() {
     const dd = String(today.getDate()).padStart(2, '0');
     const defaultDate = `${yyyy}-${mm}-${dd}`;
 
-    let startDate = document.getElementById('dash-ffb-crop-start-date')?.value;
-    let endDate = document.getElementById('dash-ffb-crop-end-date')?.value;
+    const normalizeDateStr = (val, fallback) => {
+        if (!val) return fallback;
+        val = String(val).trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(val)) {
+            const p = val.split('/');
+            return `${p[2]}-${p[0].padStart(2, '0')}-${p[1].padStart(2, '0')}`;
+        }
+        if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(val)) {
+            const p = val.split('-');
+            return `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
+        }
+        return val || fallback;
+    };
 
-    if (!startDate) {
-        startDate = defaultDate;
-        if (document.getElementById('dash-ffb-crop-start-date')) document.getElementById('dash-ffb-crop-start-date').value = startDate;
+    let rawStartDate = document.getElementById('dash-ffb-crop-start-date')?.value;
+    let rawEndDate = document.getElementById('dash-ffb-crop-end-date')?.value;
+
+    let startDate = normalizeDateStr(rawStartDate, defaultDate);
+    let endDate = normalizeDateStr(rawEndDate, defaultDate);
+
+    if (document.getElementById('dash-ffb-crop-start-date') && !document.getElementById('dash-ffb-crop-start-date').value) {
+        document.getElementById('dash-ffb-crop-start-date').value = startDate;
     }
-    if (!endDate) {
-        endDate = defaultDate;
-        if (document.getElementById('dash-ffb-crop-end-date')) document.getElementById('dash-ffb-crop-end-date').value = endDate;
+    if (document.getElementById('dash-ffb-crop-end-date') && !document.getElementById('dash-ffb-crop-end-date').value) {
+        document.getElementById('dash-ffb-crop-end-date').value = endDate;
     }
 
     cardEl.style.display = 'block';
@@ -2874,53 +2890,98 @@ window.renderDashFfbCropQuality = async function() {
     if (tbody) tbody.innerHTML = '<tr><td colspan="8">Loading...</td></tr>';
 
     let mill = 'Bunga Tanjung Mill';
-    if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+    const headerDropdown = document.getElementById('header-estate-dropdown');
+    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill')) {
+        mill = headerDropdown.value;
+    } else if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
         mill = window.currentUser.estate;
     }
 
     try {
-        const [ffbRes, tonaseRes] = await Promise.all([
-            fetch(`/api/ffb_crop_quality/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`),
-            fetch(`/api/tonase/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`)
-        ]);
+        let rawData = [];
+        let rawTonase = [];
 
-        if (!ffbRes.ok) throw new Error('Network error fetching ffb crop quality');
-        const rawData = await ffbRes.json();
-        const rawTonase = tonaseRes.ok ? await tonaseRes.json() : [];
+        // Fetch FFB Crop Quality data
+        try {
+            const ffbUrl = (startDate === endDate)
+                ? `/api/ffb_crop_quality/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}`
+                : `/api/ffb_crop_quality/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`;
+            const ffbRes = await fetch(ffbUrl);
+            if (ffbRes.ok) {
+                rawData = await ffbRes.json();
+            } else {
+                console.warn('ffb_crop_quality response not ok:', ffbRes.status);
+            }
+        } catch(errFfb) {
+            console.error('Error fetching ffb_crop_quality:', errFfb);
+        }
+
+        // Fetch Tonase data
+        try {
+            const tonaseUrl = (startDate === endDate)
+                ? `/api/tonase/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}`
+                : `/api/tonase/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`;
+            const tonaseRes = await fetch(tonaseUrl);
+            if (tonaseRes.ok) {
+                rawTonase = await tonaseRes.json();
+            } else {
+                console.warn('tonase response not ok:', tonaseRes.status);
+            }
+        } catch(errTonase) {
+            console.error('Error fetching tonase range:', errTonase);
+        }
 
         // Aggregate tonase from tonase_hourly by estate (realized_kg / 1000 = TON)
         const tonaseByEst = {};
-        rawTonase.forEach(row => {
-            const e = row.estate || 'Unknown';
-            const ton = (parseFloat(row.realized_kg) || 0) / 1000;
-            tonaseByEst[e] = (tonaseByEst[e] || 0) + ton;
-        });
+        if (Array.isArray(rawTonase)) {
+            rawTonase.forEach(row => {
+                const e = row.estate || 'Unknown';
+                const ton = (parseFloat(row.realized_kg) || 0) / 1000;
+                tonaseByEst[e] = (tonaseByEst[e] || 0) + ton;
+            });
+        }
 
         // Aggregate FFB Quality by estate
         const estData = {};
-        rawData.forEach(row => {
-            const e = row.estate || 'Unknown';
-            if (!estData[e]) {
-                estData[e] = {
-                    total_janjang: 0,
-                    unripe: 0,
-                    underripe: 0,
-                    normal_ripe: 0,
-                    over_ripe: 0,
-                    empty_bunch: 0,
-                    long_stalk: 0
-                };
-            }
-            estData[e].total_janjang += parseInt(row.total_janjang) || 0;
-            estData[e].unripe += parseInt(row.unripe) || 0;
-            estData[e].underripe += parseInt(row.underripe) || 0;
-            estData[e].normal_ripe += parseInt(row.normal_ripe) || 0;
-            estData[e].over_ripe += parseInt(row.over_ripe) || 0;
-            estData[e].empty_bunch += parseInt(row.empty_bunch) || 0;
-            estData[e].long_stalk += parseInt(row.long_stalk) || 0;
-        });
+        if (Array.isArray(rawData)) {
+            rawData.forEach(row => {
+                const e = row.estate || 'Unknown';
+                if (!estData[e]) {
+                    estData[e] = {
+                        total_janjang: 0,
+                        unripe: 0,
+                        underripe: 0,
+                        normal_ripe: 0,
+                        over_ripe: 0,
+                        empty_bunch: 0,
+                        long_stalk: 0
+                    };
+                }
+                estData[e].total_janjang += parseInt(row.total_janjang) || 0;
+                estData[e].unripe += parseInt(row.unripe) || 0;
+                estData[e].underripe += parseInt(row.underripe) || 0;
+                estData[e].normal_ripe += parseInt(row.normal_ripe) || 0;
+                estData[e].over_ripe += parseInt(row.over_ripe) || 0;
+                estData[e].empty_bunch += parseInt(row.empty_bunch) || 0;
+                estData[e].long_stalk += parseInt(row.long_stalk) || 0;
+            });
+        }
 
         if (tbody) tbody.innerHTML = '';
+
+        if (Object.keys(estData).length === 0) {
+            if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="color: #64748b; font-style: italic; text-align: center;">Tidak ada data.</td></tr>';
+            const totTonaseEl = document.getElementById('dash-fqc-tot-tonase');
+            if (totTonaseEl) totTonaseEl.innerText = '0.00';
+            document.getElementById('dash-fqc-avg-unripe').innerText = '0.0';
+            document.getElementById('dash-fqc-avg-under').innerText = '0.0';
+            document.getElementById('dash-fqc-avg-normal').innerText = '0.0';
+            document.getElementById('dash-fqc-avg-over').innerText = '0.0';
+            document.getElementById('dash-fqc-avg-empty').innerText = '0.0';
+            document.getElementById('dash-fqc-avg-long').innerText = '0.0';
+            return;
+        }
+
         let sumWeightedUnripe = 0;
         let sumWeightedUnder = 0;
         let sumWeightedRipe = 0;
@@ -2928,6 +2989,7 @@ window.renderDashFfbCropQuality = async function() {
         let sumWeightedEmpty = 0;
         let sumWeightedLong = 0;
         let totalAllEstTonase = 0;
+        let t_tot = 0, t_u = 0, t_un = 0, t_n = 0, t_o = 0, t_e = 0, t_l = 0;
 
         let abbrMap = {};
         if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
@@ -3028,7 +3090,7 @@ window.renderDashFfbCropQuality = async function() {
         document.getElementById('dash-fqc-avg-long').style.color = parseFloat(p_tl) >= 2 ? 'red' : 'inherit';
     } catch(err) {
         console.error(err);
-        if (tbody) tbody.innerHTML = '<tr><td colspan="8">Error loading data.</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="color: #ef4444; text-align: center;">Error loading data.</td></tr>';
     }
 };
 

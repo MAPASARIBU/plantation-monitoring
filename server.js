@@ -1025,7 +1025,23 @@ app.get('/api/tonase/:mill/month/:month', async (req, res) => {
 // TONASE RANGE
 app.get('/api/tonase/range/:mill/:startDate/:endDate', async (req, res) => {
     try {
-        const { mill, startDate, endDate } = req.params;
+        let { mill, startDate, endDate } = req.params;
+        const norm = (d) => {
+            if (!d) return '';
+            d = String(d).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(d)) {
+                const p = d.split('/');
+                return `${p[2]}-${p[0].padStart(2, '0')}-${p[1].padStart(2, '0')}`;
+            }
+            if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(d)) {
+                const p = d.split('-');
+                return `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
+            }
+            return d;
+        };
+        startDate = norm(startDate);
+        endDate = norm(endDate);
         const result = await pool.query("SELECT * FROM tonase_hourly WHERE mill = $1 AND date >= $2 AND date <= $3 ORDER BY date ASC, time_hour ASC", [mill, startDate, endDate]);
         res.json(result.rows);
     } catch (err) {
@@ -1574,7 +1590,23 @@ app.get('/api/ffb_crop_quality/month/:mill/:month', async (req, res) => {
 
 app.get('/api/ffb_crop_quality/range/:mill/:startDate/:endDate', async (req, res) => {
     try {
-        const { mill, startDate, endDate } = req.params;
+        let { mill, startDate, endDate } = req.params;
+        const norm = (d) => {
+            if (!d) return '';
+            d = String(d).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(d)) {
+                const p = d.split('/');
+                return `${p[2]}-${p[0].padStart(2, '0')}-${p[1].padStart(2, '0')}`;
+            }
+            if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(d)) {
+                const p = d.split('-');
+                return `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
+            }
+            return d;
+        };
+        startDate = norm(startDate);
+        endDate = norm(endDate);
         const result = await pool.query("SELECT * FROM ffb_crop_quality WHERE mill = $1 AND date >= $2 AND date <= $3 ORDER BY date ASC, id ASC", [mill, startDate, endDate]);
         res.json(result.rows);
     } catch (err) {
