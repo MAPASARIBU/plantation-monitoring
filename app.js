@@ -443,8 +443,14 @@ const views = {
     </div>
     <div class="table-responsive">
         <style>
+            #dash-ffb-crop-table {
+                width: 100%;
+                max-width: 820px;
+                font-size: 0.82rem;
+                border-collapse: collapse;
+            }
             #dash-ffb-crop-table th, #dash-ffb-crop-table td {
-                padding: 6px 10px !important;
+                padding: 4px 6px !important;
                 text-align: center;
                 border: 1px solid #e2e8f0;
             }
@@ -454,17 +460,17 @@ const views = {
                 color: #334155;
             }
         </style>
-        <table class="data-table" id="dash-ffb-crop-table" style="font-size: 0.85rem; width: 100%; border-collapse: collapse;">
+        <table class="data-table" id="dash-ffb-crop-table">
             <thead>
                 <tr>
-                    <th rowspan="2">ESTATE</th>
-                    <th rowspan="2">FFB<br><span style="font-size:0.75rem; font-weight:normal;">(TON)</span></th>
-                    <th colspan="1">UN RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
-                    <th colspan="1">UNDER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 3%)</span></th>
-                    <th colspan="1">RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Min. 90%)</span></th>
-                    <th colspan="1">OVER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 7%)</span></th>
-                    <th colspan="1">EMPTY BUNCH<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
-                    <th colspan="1">LONGSTALK<br><span style="font-size:0.75rem; font-weight:normal;">(&lt; 2%)</span></th>
+                    <th rowspan="2" style="width: 85px; min-width: 75px;">ESTATE</th>
+                    <th rowspan="2" style="width: 80px;">FFB<br><span style="font-size:0.75rem; font-weight:normal;">(TON)</span></th>
+                    <th colspan="1" style="width: 85px;">UN RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
+                    <th colspan="1" style="width: 95px;">UNDER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 3%)</span></th>
+                    <th colspan="1" style="width: 85px;">RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Min. 90%)</span></th>
+                    <th colspan="1" style="width: 85px;">OVER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 7%)</span></th>
+                    <th colspan="1" style="width: 95px;">EMPTY BUNCH<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
+                    <th colspan="1" style="width: 85px;">LONGSTALK<br><span style="font-size:0.75rem; font-weight:normal;">(&lt; 2%)</span></th>
                 </tr>
                 <tr>
                     <th>(%)</th>
@@ -509,8 +515,14 @@ const views = {
     </div>
     <div class="table-responsive">
         <style>
+            #dash-ffb-fruit-loose-table {
+                width: 100%;
+                max-width: 580px;
+                font-size: 0.82rem;
+                border-collapse: collapse;
+            }
             #dash-ffb-fruit-loose-table th, #dash-ffb-fruit-loose-table td {
-                padding: 6px 10px !important;
+                padding: 4px 6px !important;
                 text-align: center;
                 border: 1px solid #e2e8f0;
             }
@@ -520,14 +532,14 @@ const views = {
                 color: #334155;
             }
         </style>
-        <table class="data-table" id="dash-ffb-fruit-loose-table" style="font-size: 0.85rem; width: 100%; border-collapse: collapse;">
+        <table class="data-table" id="dash-ffb-fruit-loose-table">
             <thead>
                 <tr>
-                    <th rowspan="2">ESTATE</th>
-                    <th colspan="1">BRON SEGAR</th>
-                    <th colspan="1">BRON TDK SEGAR</th>
-                    <th colspan="1">BRON BUSUK</th>
-                    <th colspan="1">SAMPAH</th>
+                    <th rowspan="2" style="width: 90px; min-width: 80px;">ESTATE</th>
+                    <th colspan="1" style="width: 100px;">BRON SEGAR</th>
+                    <th colspan="1" style="width: 120px;">BRON TDK SEGAR</th>
+                    <th colspan="1" style="width: 100px;">BRON BUSUK</th>
+                    <th colspan="1" style="width: 80px;">SAMPAH</th>
                 </tr>
                 <tr>
                     <th>(%)</th>
