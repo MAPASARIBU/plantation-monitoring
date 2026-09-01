@@ -445,7 +445,7 @@ const views = {
         <style>
             #dash-ffb-crop-table {
                 width: auto !important;
-                max-width: 820px;
+                max-width: 900px;
                 font-size: 0.82rem;
                 border-collapse: collapse;
                 margin: 10px auto 5px auto !important;
@@ -464,16 +464,18 @@ const views = {
         <table class="data-table" id="dash-ffb-crop-table">
             <thead>
                 <tr>
-                    <th rowspan="2" style="width: 85px; min-width: 75px;">ESTATE</th>
-                    <th rowspan="2" style="width: 80px;">FFB<br><span style="font-size:0.75rem; font-weight:normal;">(TON)</span></th>
-                    <th colspan="1" style="width: 85px;">UN RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
-                    <th colspan="1" style="width: 95px;">UNDER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 3%)</span></th>
-                    <th colspan="1" style="width: 85px;">RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Min. 90%)</span></th>
-                    <th colspan="1" style="width: 85px;">OVER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 7%)</span></th>
-                    <th colspan="1" style="width: 95px;">EMPTY BUNCH<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
-                    <th colspan="1" style="width: 85px;">LONGSTALK<br><span style="font-size:0.75rem; font-weight:normal;">(&lt; 2%)</span></th>
+                    <th rowspan="2" style="width: 80px; min-width: 70px;">ESTATE</th>
+                    <th rowspan="2" style="width: 75px;">FFB<br><span style="font-size:0.75rem; font-weight:normal;">(TON)</span></th>
+                    <th colspan="1" style="width: 80px;">UN RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
+                    <th colspan="1" style="width: 90px;">UNDER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 3%)</span></th>
+                    <th colspan="1" style="width: 80px;">RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Min. 90%)</span></th>
+                    <th colspan="1" style="width: 80px;">OVER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 7%)</span></th>
+                    <th colspan="1" style="width: 90px;">EMPTY BUNCH<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
+                    <th colspan="1" style="width: 80px;">LONGSTALK<br><span style="font-size:0.75rem; font-weight:normal;">(&lt; 2%)</span></th>
+                    <th colspan="1" style="width: 85px;">RAT DAMAGE<br><span style="font-size:0.75rem; font-weight:normal;">(%)</span></th>
                 </tr>
                 <tr>
+                    <th>(%)</th>
                     <th>(%)</th>
                     <th>(%)</th>
                     <th>(%)</th>
@@ -495,6 +497,7 @@ const views = {
                     <td id="dash-fqc-avg-over">0.0</td>
                     <td id="dash-fqc-avg-empty">0.0</td>
                     <td id="dash-fqc-avg-long">0.0</td>
+                    <td id="dash-fqc-avg-rat">0.0</td>
                 </tr>
             </tfoot>
         </table>

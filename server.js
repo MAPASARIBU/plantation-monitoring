@@ -302,8 +302,14 @@ async function initDB() {
             id SERIAL PRIMARY KEY,
             date TEXT, mill TEXT, estate TEXT, divisi TEXT, blok TEXT, no_truck TEXT,
             unripe INTEGER, underripe INTEGER, normal_ripe INTEGER,
-            over_ripe INTEGER, empty_bunch INTEGER, long_stalk INTEGER, total_janjang INTEGER
+            over_ripe INTEGER, empty_bunch INTEGER, long_stalk INTEGER, rat_damage INTEGER DEFAULT 0, total_janjang INTEGER
         )`);
+
+        try {
+            await pool.query(`ALTER TABLE ffb_crop_quality ADD COLUMN rat_damage INTEGER DEFAULT 0`);
+        } catch (e) {
+            // Ignore if column already exists
+        }
 
         try {
             await pool.query(`ALTER TABLE master_truk ADD COLUMN supir TEXT`);
@@ -1625,10 +1631,10 @@ app.post('/api/ffb_crop_quality', async (req, res) => {
             if (item.estate) { // only save valid rows
                 await pool.query(`INSERT INTO ffb_crop_quality (
                     date, mill, estate, divisi, blok, no_truck,
-                    unripe, underripe, normal_ripe, over_ripe, empty_bunch, long_stalk, total_janjang
-                ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`, 
+                    unripe, underripe, normal_ripe, over_ripe, empty_bunch, long_stalk, rat_damage, total_janjang
+                ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`, 
                 [date, mill, item.estate, item.divisi, item.blok, item.no_truck,
-                 item.unripe, item.underripe, item.normal_ripe, item.over_ripe, item.empty_bunch, item.long_stalk, item.total_janjang]);
+                 item.unripe, item.underripe, item.normal_ripe, item.over_ripe, item.empty_bunch, item.long_stalk, item.rat_damage || 0, item.total_janjang]);
             }
         }
         await pool.query('COMMIT');

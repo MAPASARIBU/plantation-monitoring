@@ -1364,9 +1364,11 @@ views.ffb_quality = `
                         <th colspan="2">Over Ripe</th>
                         <th colspan="2">Empty Bunch</th>
                         <th colspan="2">Long Stalk</th>
+                        <th colspan="2">Rat Damage</th>
                         <th rowspan="2">Aksi</th>
                     </tr>
                     <tr>
+                        <th>(Jjg)</th><th>(%)</th>
                         <th>(Jjg)</th><th>(%)</th>
                         <th>(Jjg)</th><th>(%)</th>
                         <th>(Jjg)</th><th>(%)</th>
@@ -1388,6 +1390,7 @@ views.ffb_quality = `
                         <td id="fqc-tot-over">0</td><td id="fqc-avg-over">0.0</td>
                         <td id="fqc-tot-empty">0</td><td id="fqc-avg-empty">0.0</td>
                         <td id="fqc-tot-long">0</td><td id="fqc-avg-long">0.0</td>
+                        <td id="fqc-tot-rat">0</td><td id="fqc-avg-rat">0.0</td>
                         <td></td>
                     </tr>
                 </tfoot>
@@ -1403,8 +1406,10 @@ views.ffb_quality = `
                         <th colspan="1">OVER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 7%)</span></th>
                         <th colspan="1">EMPTY BUNCH<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
                         <th colspan="1">LONGSTALK<br><span style="font-size:0.75rem; font-weight:normal;">(&lt; 2%)</span></th>
+                        <th colspan="1">RAT DAMAGE<br><span style="font-size:0.75rem; font-weight:normal;">(%)</span></th>
                     </tr>
                     <tr>
+                        <th>(%)</th>
                         <th>(%)</th>
                         <th>(%)</th>
                         <th>(%)</th>
@@ -1425,6 +1430,7 @@ views.ffb_quality = `
                         <td id="fqc-sum-over">0.00</td>
                         <td id="fqc-sum-empty">0.00</td>
                         <td id="fqc-sum-long">0.00</td>
+                        <td id="fqc-sum-rat">0.00</td>
                     </tr>
                 </tfoot>
             </table>
@@ -1492,6 +1498,10 @@ views.ffb_quality = `
                 <div class="form-group">
                     <label>Long Stalk (Jjg)</label>
                     <input type="number" id="fqc-modal-long" class="form-control" required oninput="calculateFFBCropModal()">
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Rat Damage (Jjg)</label>
+                    <input type="number" id="fqc-modal-rat" class="form-control" placeholder="0" oninput="calculateFFBCropModal()">
                 </div>
             </div>
             <button class="btn btn-primary" onclick="submitFFBCropModal()" style="width:100%; justify-content:center; margin-top:10px;">Simpan</button>
@@ -1868,6 +1878,7 @@ window.renderFFBCropTable = function(isSingleDay = true) {
             const p_over = tot > 0 ? (parseInt(data.over_ripe) / tot * 100).toFixed(1) : '0.0';
             const p_empty = tot > 0 ? (parseInt(data.empty_bunch) / tot * 100).toFixed(1) : '0.0';
             const p_long = tot > 0 ? (parseInt(data.long_stalk) / tot * 100).toFixed(1) : '0.0';
+            const p_rat = tot > 0 ? (parseInt(data.rat_damage || 0) / tot * 100).toFixed(1) : '0.0';
             
             tr.innerHTML = `
                 <td>${getAbbr(data.estate)}</td>
@@ -1881,6 +1892,7 @@ window.renderFFBCropTable = function(isSingleDay = true) {
                 <td>${data.over_ripe || 0}</td><td>${p_over}</td>
                 <td>${data.empty_bunch || 0}</td><td>${p_empty}</td>
                 <td>${data.long_stalk || 0}</td><td>${p_long}</td>
+                <td>${data.rat_damage || 0}</td><td>${p_rat}</td>
                 <td><button class="btn btn-danger" style="padding: 4px 8px;" onclick="deleteFFBCropRow(${index})"><i class="fa-solid fa-trash"></i></button></td>
             `;
             tbody.appendChild(tr);
@@ -1899,7 +1911,7 @@ window.renderFFBCropTable = function(isSingleDay = true) {
         window.ffbCropQualityData.forEach(d => {
             let est = d.estate;
             if (!estateAgg[est]) {
-                estateAgg[est] = { tot:0, unripe:0, under:0, normal:0, over:0, empty:0, long:0 };
+                estateAgg[est] = { tot:0, unripe:0, under:0, normal:0, over:0, empty:0, long:0, rat:0 };
             }
             estateAgg[est].tot += parseInt(d.total_janjang) || 0;
             estateAgg[est].unripe += parseInt(d.unripe) || 0;
@@ -1908,9 +1920,10 @@ window.renderFFBCropTable = function(isSingleDay = true) {
             estateAgg[est].over += parseInt(d.over_ripe) || 0;
             estateAgg[est].empty += parseInt(d.empty_bunch) || 0;
             estateAgg[est].long += parseInt(d.long_stalk) || 0;
+            estateAgg[est].rat += parseInt(d.rat_damage) || 0;
         });
         
-        let t_tot = 0, t_unripe = 0, t_under = 0, t_normal = 0, t_over = 0, t_empty = 0, t_long = 0;
+        let t_tot = 0, t_unripe = 0, t_under = 0, t_normal = 0, t_over = 0, t_empty = 0, t_long = 0, t_rat = 0;
         let totalTonaseSum = 0;
         
         for (let est in estateAgg) {
@@ -1922,6 +1935,7 @@ window.renderFFBCropTable = function(isSingleDay = true) {
             t_over += d.over;
             t_empty += d.empty;
             t_long += d.long;
+            t_rat += d.rat;
             
             const p_unripe = d.tot > 0 ? (d.unripe / d.tot * 100) : 0;
             const p_under = d.tot > 0 ? (d.under / d.tot * 100) : 0;
@@ -1929,6 +1943,7 @@ window.renderFFBCropTable = function(isSingleDay = true) {
             const p_over = d.tot > 0 ? (d.over / d.tot * 100) : 0;
             const p_empty = d.tot > 0 ? (d.empty / d.tot * 100) : 0;
             const p_long = d.tot > 0 ? (d.long / d.tot * 100) : 0;
+            const p_rat = d.tot > 0 ? (d.rat / d.tot * 100) : 0;
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -1940,6 +1955,7 @@ window.renderFFBCropTable = function(isSingleDay = true) {
                 <td style="${p_over > 7 ? 'color:red; font-weight:bold;' : ''}">${p_over.toFixed(2)}</td>
                 <td style="${p_empty > 0 ? 'color:red; font-weight:bold;' : ''}">${p_empty.toFixed(2)}</td>
                 <td style="${p_long >= 2 ? 'color:red; font-weight:bold;' : ''}">${p_long.toFixed(2)}</td>
+                <td>${p_rat.toFixed(2)}</td>
             `;
             tbody.appendChild(tr);
         }
@@ -1950,6 +1966,7 @@ window.renderFFBCropTable = function(isSingleDay = true) {
         const pt_over = t_tot > 0 ? (t_over / t_tot * 100) : 0;
         const pt_empty = t_tot > 0 ? (t_empty / t_tot * 100) : 0;
         const pt_long = t_tot > 0 ? (t_long / t_tot * 100) : 0;
+        const pt_rat = t_tot > 0 ? (t_rat / t_tot * 100) : 0;
         
         const sumTotJjgEl = document.getElementById('fqc-sum-tot-jjg');
         if (sumTotJjgEl) sumTotJjgEl.innerText = t_tot.toLocaleString('id-ID');
@@ -1960,11 +1977,12 @@ window.renderFFBCropTable = function(isSingleDay = true) {
         document.getElementById('fqc-sum-over').innerText = pt_over.toFixed(2);
         document.getElementById('fqc-sum-empty').innerText = pt_empty.toFixed(2);
         document.getElementById('fqc-sum-long').innerText = pt_long.toFixed(2);
+        if (document.getElementById('fqc-sum-rat')) document.getElementById('fqc-sum-rat').innerText = pt_rat.toFixed(2);
     }
 };
 
 window.calculateFFBCropAverages = function() {
-    let t_tot = 0, t_unripe = 0, t_under = 0, t_normal = 0, t_over = 0, t_empty = 0, t_long = 0;
+    let t_tot = 0, t_unripe = 0, t_under = 0, t_normal = 0, t_over = 0, t_empty = 0, t_long = 0, t_rat = 0;
     window.ffbCropQualityData.forEach(d => {
         t_tot += parseInt(d.total_janjang) || 0;
         t_unripe += parseInt(d.unripe) || 0;
@@ -1973,6 +1991,7 @@ window.calculateFFBCropAverages = function() {
         t_over += parseInt(d.over_ripe) || 0;
         t_empty += parseInt(d.empty_bunch) || 0;
         t_long += parseInt(d.long_stalk) || 0;
+        t_rat += parseInt(d.rat_damage) || 0;
     });
 
     const elTotJjg = document.getElementById('fqc-tot-jjg');
@@ -1984,6 +2003,7 @@ window.calculateFFBCropAverages = function() {
         document.getElementById('fqc-tot-over').innerText = t_over;
         document.getElementById('fqc-tot-empty').innerText = t_empty;
         document.getElementById('fqc-tot-long').innerText = t_long;
+        if (document.getElementById('fqc-tot-rat')) document.getElementById('fqc-tot-rat').innerText = t_rat;
 
         if (t_tot > 0) {
             document.getElementById('fqc-avg-unripe').innerText = ((t_unripe / t_tot) * 100).toFixed(1);
@@ -1992,6 +2012,7 @@ window.calculateFFBCropAverages = function() {
             document.getElementById('fqc-avg-over').innerText = ((t_over / t_tot) * 100).toFixed(1);
             document.getElementById('fqc-avg-empty').innerText = ((t_empty / t_tot) * 100).toFixed(1);
             document.getElementById('fqc-avg-long').innerText = ((t_long / t_tot) * 100).toFixed(1);
+            if (document.getElementById('fqc-avg-rat')) document.getElementById('fqc-avg-rat').innerText = ((t_rat / t_tot) * 100).toFixed(1);
         } else {
             document.getElementById('fqc-avg-unripe').innerText = '0.0';
             document.getElementById('fqc-avg-under').innerText = '0.0';
@@ -1999,6 +2020,7 @@ window.calculateFFBCropAverages = function() {
             document.getElementById('fqc-avg-over').innerText = '0.0';
             document.getElementById('fqc-avg-empty').innerText = '0.0';
             document.getElementById('fqc-avg-long').innerText = '0.0';
+            if (document.getElementById('fqc-avg-rat')) document.getElementById('fqc-avg-rat').innerText = '0.0';
         }
     }
 };
@@ -2104,6 +2126,7 @@ window.openFFBCropModal = function() {
     document.getElementById('fqc-modal-over').value = '';
     document.getElementById('fqc-modal-empty').value = '';
     document.getElementById('fqc-modal-long').value = '';
+    if (document.getElementById('fqc-modal-rat')) document.getElementById('fqc-modal-rat').value = '';
     document.getElementById('fqc-modal-total').value = '0';
     
     document.getElementById('modal-ffb-crop-quality').style.display = 'flex';
@@ -2143,6 +2166,7 @@ window.submitFFBCropModal = async function() {
     const o = parseInt(document.getElementById('fqc-modal-over').value) || 0;
     const e = parseInt(document.getElementById('fqc-modal-empty').value) || 0;
     const l = parseInt(document.getElementById('fqc-modal-long').value) || 0;
+    const rat = parseInt(document.getElementById('fqc-modal-rat') ? document.getElementById('fqc-modal-rat').value : 0) || 0;
     const tot = parseInt(document.getElementById('fqc-modal-total').value) || 0;
     
     if (!estate || !truck) {
@@ -2162,6 +2186,7 @@ window.submitFFBCropModal = async function() {
         over_ripe: o,
         empty_bunch: e,
         long_stalk: l,
+        rat_damage: rat,
         total_janjang: tot
     };
     
@@ -2954,7 +2979,8 @@ window.renderDashFfbCropQuality = async function() {
                         normal_ripe: 0,
                         over_ripe: 0,
                         empty_bunch: 0,
-                        long_stalk: 0
+                        long_stalk: 0,
+                        rat_damage: 0
                     };
                 }
                 estData[e].total_janjang += parseInt(row.total_janjang) || 0;
@@ -2964,13 +2990,14 @@ window.renderDashFfbCropQuality = async function() {
                 estData[e].over_ripe += parseInt(row.over_ripe) || 0;
                 estData[e].empty_bunch += parseInt(row.empty_bunch) || 0;
                 estData[e].long_stalk += parseInt(row.long_stalk) || 0;
+                estData[e].rat_damage += parseInt(row.rat_damage) || 0;
             });
         }
 
         if (tbody) tbody.innerHTML = '';
 
         if (Object.keys(estData).length === 0) {
-            if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="color: #64748b; font-style: italic; text-align: center;">Tidak ada data.</td></tr>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="9" style="color: #64748b; font-style: italic; text-align: center;">Tidak ada data.</td></tr>';
             const totTonaseEl = document.getElementById('dash-fqc-tot-tonase');
             if (totTonaseEl) totTonaseEl.innerText = '0.00';
             document.getElementById('dash-fqc-avg-unripe').innerText = '0.0';
@@ -2979,6 +3006,7 @@ window.renderDashFfbCropQuality = async function() {
             document.getElementById('dash-fqc-avg-over').innerText = '0.0';
             document.getElementById('dash-fqc-avg-empty').innerText = '0.0';
             document.getElementById('dash-fqc-avg-long').innerText = '0.0';
+            if (document.getElementById('dash-fqc-avg-rat')) document.getElementById('dash-fqc-avg-rat').innerText = '0.0';
             return;
         }
 
@@ -2988,8 +3016,9 @@ window.renderDashFfbCropQuality = async function() {
         let sumWeightedOver = 0;
         let sumWeightedEmpty = 0;
         let sumWeightedLong = 0;
+        let sumWeightedRat = 0;
         let totalAllEstTonase = 0;
-        let t_tot = 0, t_u = 0, t_un = 0, t_n = 0, t_o = 0, t_e = 0, t_l = 0;
+        let t_tot = 0, t_u = 0, t_un = 0, t_n = 0, t_o = 0, t_e = 0, t_l = 0, t_rat = 0;
 
         let abbrMap = {};
         if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
@@ -3012,7 +3041,7 @@ window.renderDashFfbCropQuality = async function() {
         Object.keys(estData).forEach(est => {
             const d = estData[est];
             const tot = d.total_janjang;
-            t_tot += tot; t_u += d.unripe; t_un += d.underripe; t_n += d.normal_ripe; t_o += d.over_ripe; t_e += d.empty_bunch; t_l += d.long_stalk;
+            t_tot += tot; t_u += d.unripe; t_un += d.underripe; t_n += d.normal_ripe; t_o += d.over_ripe; t_e += d.empty_bunch; t_l += d.long_stalk; t_rat += d.rat_damage;
             
             const p_u_num = tot > 0 ? (d.unripe / tot * 100) : 0;
             const p_un_num = tot > 0 ? (d.underripe / tot * 100) : 0;
@@ -3020,6 +3049,7 @@ window.renderDashFfbCropQuality = async function() {
             const p_o_num = tot > 0 ? (d.over_ripe / tot * 100) : 0;
             const p_e_num = tot > 0 ? (d.empty_bunch / tot * 100) : 0;
             const p_l_num = tot > 0 ? (d.long_stalk / tot * 100) : 0;
+            const p_rat_num = tot > 0 ? (d.rat_damage / tot * 100) : 0;
 
             const p_u = p_u_num.toFixed(2);
             const p_un = p_un_num.toFixed(2);
@@ -3027,6 +3057,7 @@ window.renderDashFfbCropQuality = async function() {
             const p_o = p_o_num.toFixed(2);
             const p_e = p_e_num.toFixed(2);
             const p_l = p_l_num.toFixed(2);
+            const p_rat = p_rat_num.toFixed(2);
 
             const estTonase = getEstateTonase(est);
             totalAllEstTonase += estTonase;
@@ -3037,6 +3068,7 @@ window.renderDashFfbCropQuality = async function() {
             sumWeightedOver += (estTonase * p_o_num);
             sumWeightedEmpty += (estTonase * p_e_num);
             sumWeightedLong += (estTonase * p_l_num);
+            sumWeightedRat += (estTonase * p_rat_num);
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -3048,6 +3080,7 @@ window.renderDashFfbCropQuality = async function() {
                 <td style="color: ${parseFloat(p_o) > 7 ? 'red' : 'inherit'}">${p_o}</td>
                 <td style="color: ${parseFloat(p_e) > 0 ? 'red' : 'inherit'}">${p_e}</td>
                 <td style="color: ${parseFloat(p_l) >= 2 ? 'red' : 'inherit'}">${p_l}</td>
+                <td>${p_rat}</td>
             `;
             if (tbody) tbody.appendChild(tr);
         });
@@ -3071,6 +3104,9 @@ window.renderDashFfbCropQuality = async function() {
         const p_tl = totalAllEstTonase > 0 
             ? (sumWeightedLong / totalAllEstTonase).toFixed(2) 
             : (t_tot > 0 ? (t_l / t_tot * 100).toFixed(2) : '0.00');
+        const p_trat = totalAllEstTonase > 0 
+            ? (sumWeightedRat / totalAllEstTonase).toFixed(2) 
+            : (t_tot > 0 ? (t_rat / t_tot * 100).toFixed(2) : '0.00');
 
         const totTonaseEl = document.getElementById('dash-fqc-tot-tonase');
         if (totTonaseEl) totTonaseEl.innerText = totalAllEstTonase.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -3081,6 +3117,7 @@ window.renderDashFfbCropQuality = async function() {
         document.getElementById('dash-fqc-avg-over').innerText = p_to;
         document.getElementById('dash-fqc-avg-empty').innerText = p_te;
         document.getElementById('dash-fqc-avg-long').innerText = p_tl;
+        if (document.getElementById('dash-fqc-avg-rat')) document.getElementById('dash-fqc-avg-rat').innerText = p_trat;
         
         document.getElementById('dash-fqc-avg-unripe').style.color = parseFloat(p_tu) > 0 ? 'red' : 'inherit';
         document.getElementById('dash-fqc-avg-under').style.color = parseFloat(p_tun) > 3 ? 'red' : 'inherit';
