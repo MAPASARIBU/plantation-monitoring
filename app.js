@@ -441,13 +441,14 @@ const views = {
             <button class="btn btn-success" onclick="if(window.renderDashFfbCropQuality) window.renderDashFfbCropQuality()">Tampilkan</button>
         </div>
     </div>
-    <div class="table-responsive">
+    <div class="table-responsive" style="display: flex; justify-content: center; width: 100%; overflow-x: auto;">
         <style>
             #dash-ffb-crop-table {
-                width: 100%;
+                width: auto !important;
                 max-width: 820px;
                 font-size: 0.82rem;
                 border-collapse: collapse;
+                margin: 10px auto 5px auto !important;
             }
             #dash-ffb-crop-table th, #dash-ffb-crop-table td {
                 padding: 4px 6px !important;
@@ -513,13 +514,14 @@ const views = {
             <button class="btn btn-success" onclick="if(window.renderDashFfbFruitLooseAnalysis) window.renderDashFfbFruitLooseAnalysis()">Tampilkan</button>
         </div>
     </div>
-    <div class="table-responsive">
+    <div class="table-responsive" style="display: flex; justify-content: center; width: 100%; overflow-x: auto;">
         <style>
             #dash-ffb-fruit-loose-table {
-                width: 100%;
+                width: auto !important;
                 max-width: 580px;
                 font-size: 0.82rem;
                 border-collapse: collapse;
+                margin: 10px auto 5px auto !important;
             }
             #dash-ffb-fruit-loose-table th, #dash-ffb-fruit-loose-table td {
                 padding: 4px 6px !important;

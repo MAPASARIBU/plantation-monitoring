@@ -457,7 +457,7 @@ h1, h2, h3, h4, h5, h6 {
     max-width: 820px !important;
     font-size: 0.8rem !important;
     border-collapse: collapse !important;
-    margin-top: 10px !important;
+    margin: 15px auto 5px auto !important;
 }
 #dash-ffb-crop-table th, #dash-ffb-crop-table td {
     padding: 4px 8px !important;
@@ -476,7 +476,7 @@ h1, h2, h3, h4, h5, h6 {
     max-width: 580px !important;
     font-size: 0.8rem !important;
     border-collapse: collapse !important;
-    margin-top: 10px !important;
+    margin: 15px auto 5px auto !important;
 }
 #dash-ffb-fruit-loose-table th, #dash-ffb-fruit-loose-table td {
     padding: 4px 10px !important;
