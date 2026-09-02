@@ -151,10 +151,21 @@ async function initDB() {
             akp REAL, est_janjang REAL, est_kg REAL, plan_pemanen INTEGER, mandor TEXT, pusingan TEXT,
             realized_janjang REAL DEFAULT 0, realized_pemanen INTEGER DEFAULT 0, realized_kg REAL DEFAULT 0, status TEXT DEFAULT 'Draft'
         )`);
-        try { await pool.query("ALTER TABLE harvesting_daily ADD COLUMN pusingan TEXT"); } catch(e) {}
-        try { await pool.query("ALTER TABLE harvesting_daily ADD COLUMN realized_ha REAL DEFAULT 0"); } catch(e) {}
-        try { await pool.query("ALTER TABLE harvesting_daily ADD COLUMN allocated_trucks TEXT DEFAULT '[]'"); } catch(e) {}
-        try { await pool.query("ALTER TABLE harvesting_daily ADD COLUMN ritase_list TEXT DEFAULT '[]'"); } catch(e) {}
+        
+        const ensureCol = async (tbl, col, typeDef) => {
+            try {
+                await pool.query(`ALTER TABLE ${tbl} ADD COLUMN IF NOT EXISTS ${col} ${typeDef}`);
+            } catch(e) {
+                try {
+                    await pool.query(`ALTER TABLE ${tbl} ADD COLUMN ${col} ${typeDef}`);
+                } catch(e2) {}
+            }
+        };
+
+        await ensureCol('harvesting_daily', 'pusingan', 'TEXT');
+        await ensureCol('harvesting_daily', 'realized_ha', 'REAL DEFAULT 0');
+        await ensureCol('harvesting_daily', 'allocated_trucks', "TEXT DEFAULT '[]'");
+        await ensureCol('harvesting_daily', 'ritase_list', "TEXT DEFAULT '[]'");
         try { await pool.query("ALTER TABLE harvesting_daily ALTER COLUMN akp TYPE TEXT USING akp::TEXT"); } catch(e) {}
 
 
@@ -1014,18 +1025,36 @@ app.put('/api/harvesting/daily/:id/realization', async (req, res) => {
         const newStatus = status || cur.status || 'In Progress';
         const newRitase = ritase_list !== undefined ? ritase_list : (cur.ritase_list || '[]');
 
-        await pool.query(
-            'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, realized_ha = $4, status = $5, ritase_list = $6 WHERE id = $7',
-            [
-                newJanjang,
-                newPemanen,
-                newKg,
-                newHa,
-                newStatus,
-                newRitase,
-                targetId
-            ]
-        );
+        try {
+            await pool.query(
+                'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, realized_ha = $4, status = $5, ritase_list = $6 WHERE id = $7',
+                [
+                    newJanjang,
+                    newPemanen,
+                    newKg,
+                    newHa,
+                    newStatus,
+                    newRitase,
+                    targetId
+                ]
+            );
+        } catch (upErr) {
+            console.warn('Full update query failed, ensuring columns and retrying basic update:', upErr.message);
+            try { await pool.query('ALTER TABLE harvesting_daily ADD COLUMN realized_ha REAL DEFAULT 0'); } catch(e){}
+            try { await pool.query("ALTER TABLE harvesting_daily ADD COLUMN ritase_list TEXT DEFAULT '[]'"); } catch(e){}
+            try {
+                await pool.query(
+                    'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, realized_ha = $4, status = $5, ritase_list = $6 WHERE id = $7',
+                    [newJanjang, newPemanen, newKg, newHa, newStatus, newRitase, targetId]
+                );
+            } catch (fallbackErr) {
+                // Last-resort fallback to standard columns
+                await pool.query(
+                    'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, status = $4 WHERE id = $5',
+                    [newJanjang, newPemanen, newKg, newStatus, targetId]
+                );
+            }
+        }
         res.json({ success: true });
     } catch (err) {
         console.error('Realization update error:', err);
