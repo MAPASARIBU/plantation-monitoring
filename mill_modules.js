@@ -263,28 +263,63 @@ window.renderProcessingView = function() {
 };
 
 window.openLiquidModal = function() {
+    const modal = document.getElementById('modal-input-liquid');
+    if (modal) {
+        if (typeof document !== 'undefined' && document.body && modal.parentNode !== document.body) { document.body.appendChild(modal); }
+        modal.style.display = 'flex';
+    }
     const pDate = document.getElementById('p-date');
     const mainDate = (pDate && pDate.value) ? pDate.value : window.getLocalDate();
     const mlDate = document.getElementById('ml-date');
     if (mlDate) mlDate.value = mainDate;
-    const modal = document.getElementById('modal-input-liquid');
-    if (modal) modal.style.display = 'flex';
     try { if (typeof window.loadLiquidHour === 'function') window.loadLiquidHour(); } catch(e){ console.error(e); }
 };
 
 window.openFfaModal = function() {
+    const modal = document.getElementById('modal-input-ffa');
+    if (modal) {
+        if (typeof document !== 'undefined' && document.body && modal.parentNode !== document.body) { document.body.appendChild(modal); }
+        modal.style.display = 'flex';
+    }
     const pDate = document.getElementById('p-date');
     const mainDate = (pDate && pDate.value) ? pDate.value : window.getLocalDate();
     const mfDate = document.getElementById('mf-date');
     if (mfDate) mfDate.value = mainDate;
-    const modal = document.getElementById('modal-input-ffa');
-    if (modal) modal.style.display = 'flex';
     try { if (typeof window.loadFfaHour === 'function') window.loadFfaHour(); } catch(e){ console.error(e); }
 };
 
 window.openProcessingHistorical = function() {
     const modal = document.getElementById('modal-processing-hist');
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+        if (typeof document !== 'undefined' && document.body && modal.parentNode !== document.body) { document.body.appendChild(modal); }
+        modal.style.display = 'flex';
+    }
+};
+
+window.openWaterModal = function() {
+    const modal = document.getElementById('modal-water-sebelum');
+    if (modal) {
+        if (typeof document !== 'undefined' && document.body && modal.parentNode !== document.body) { document.body.appendChild(modal); }
+        modal.style.display = 'flex';
+    }
+    const wDate = document.getElementById('w-date');
+    const curDate = (wDate && wDate.value) ? wDate.value : window.getLocalDate();
+    const sebDate = document.getElementById('w_sebelum_date');
+    if (sebDate) sebDate.value = curDate;
+    try { if (typeof window.loadSebelumDataByDate === 'function') window.loadSebelumDataByDate(); } catch(e){ console.error(e); }
+};
+
+window.openBoilerModal = function() {
+    const modal = document.getElementById('modal-water-boiler');
+    if (modal) {
+        if (typeof document !== 'undefined' && document.body && modal.parentNode !== document.body) { document.body.appendChild(modal); }
+        modal.style.display = 'flex';
+    }
+    const wDate = document.getElementById('w-date');
+    const curDate = (wDate && wDate.value) ? wDate.value : window.getLocalDate();
+    const bDate = document.getElementById('w_boiler_date');
+    if (bDate) bDate.value = curDate;
+    try { if (typeof window.fetchBoilerHourlyByDate === 'function') window.fetchBoilerHourlyByDate(); } catch(e){ console.error(e); }
 };
 
 window.currentLiquidData = [];
@@ -1745,13 +1780,19 @@ window.switchFFBSubTab = function(tabId) {
     window.activeFFBSubTab = tabId;
     
     document.querySelectorAll('.subsheet-tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.subsheet-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.subsheet-content').forEach(c => {
+        c.classList.remove('active');
+        c.style.display = 'none';
+    });
     
     const activeBtn = document.getElementById(`tab-btn-${tabId}`);
     if (activeBtn) activeBtn.classList.add('active');
     
     const activeContent = document.getElementById(`ffb-subsheet-${tabId}`);
-    if (activeContent) activeContent.classList.add('active');
+    if (activeContent) {
+        activeContent.classList.add('active');
+        activeContent.style.display = 'block';
+    }
     
     try {
         if (tabId === 'loose') {
@@ -1936,6 +1977,12 @@ window.onFFBModalEstateChange = async function(estate) {
 };
 
 window.openFFBModal = function() {
+    const modal = document.getElementById('modal-ffb-quality');
+    if (modal) {
+        if (typeof document !== 'undefined' && document.body && modal.parentNode !== document.body) { document.body.appendChild(modal); }
+        modal.style.display = 'flex';
+    }
+    
     const dateEl = document.getElementById('fq-modal-date');
     if (dateEl) dateEl.value = window.getLocalDate();
     
@@ -1950,11 +1997,34 @@ window.openFFBModal = function() {
     const divCont = document.getElementById('fq-modal-divisi-container');
     if (divCont) divCont.innerHTML = `<input type="text" id="fq-modal-divisi" class="form-control" placeholder="(Optional)">`;
     
-    const modal = document.getElementById('modal-ffb-quality');
-    if (modal) modal.style.display = 'flex';
-    
     if (estEl && estEl.value) {
         try { window.onFFBModalEstateChange(estEl.value); } catch(e){ console.error(e); }
+    }
+};
+
+window.openFFBCropModal = function() {
+    const modal = document.getElementById('modal-ffb-crop-quality');
+    if (modal) {
+        if (typeof document !== 'undefined' && document.body && modal.parentNode !== document.body) { document.body.appendChild(modal); }
+        modal.style.display = 'flex';
+    }
+
+    const dateEl = document.getElementById('fq-crop-modal-date');
+    if (dateEl) dateEl.value = window.getLocalDate();
+    
+    let estatesOpts = typeof masterData !== 'undefined' && masterData.supply_chain 
+        ? masterData.supply_chain.filter(s => s.is_ffb !== false).map(s => `<option value="${s.estate}">${s.estate}</option>`).join('')
+        : '<option value="Bunga Tanjung Estate">Bunga Tanjung Estate</option>';
+    if (!estatesOpts) estatesOpts = '<option value="Bunga Tanjung Estate">Bunga Tanjung Estate</option>';
+    
+    const estEl = document.getElementById('fq-crop-modal-estate');
+    if (estEl) estEl.innerHTML = estatesOpts;
+    
+    const divCont = document.getElementById('fq-crop-modal-divisi-container');
+    if (divCont) divCont.innerHTML = `<input type="text" id="fq-crop-modal-divisi" class="form-control" placeholder="(Optional)">`;
+    
+    if (estEl && estEl.value) {
+        try { window.onFFBCropModalEstateChange(estEl.value); } catch(e){ console.error(e); }
     }
 };
 

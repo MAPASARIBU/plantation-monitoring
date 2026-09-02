@@ -1144,3 +1144,14 @@ h1, h2, h3, h4, h5, h6 {
         margin-bottom: 4px !important;
     }
 }
+
+
+/* Success Button */
+.btn-success {
+    background-color: #16a34a !important;
+    color: white !important;
+    border: none !important;
+}
+.btn-success:hover {
+    background-color: #15803d !important;
+}
