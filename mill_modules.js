@@ -1222,17 +1222,31 @@ window.saveWaterData = async function(type) {
 
 // 3. FFB QUALITY VIEW
 views.ffb_quality = `
-<div class="content-header">
-    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-        <button class="btn btn-primary" onclick="openFqRangeModal('loose')"><i class="fa-solid fa-rotate"></i> Load Data</button>
-        <button class="btn btn-secondary" onclick="printTable('ffb-quality-table', 'Laporan FFB Quality Fruit Loose Analysis')"><i class="fa-solid fa-print"></i> Print</button>
-        <button class="btn btn-success" onclick="openFFBModal()"><i class="fa-solid fa-plus"></i> Tambah input Loose Fruit Quality</button>
-    </div>
+<!-- Sub-Sheet Navigation Tabs -->
+<div class="subsheet-tab-bar">
+    <button class="subsheet-tab-btn active" id="tab-btn-loose" onclick="switchFFBSubTab('loose')">
+        <i class="fa-solid fa-seedling"></i> FFB Quality Fruit Loose Analysis
+    </button>
+    <button class="subsheet-tab-btn" id="tab-btn-crop" onclick="switchFFBSubTab('crop')">
+        <i class="fa-solid fa-wheat-awn"></i> Daily FFB Crop Quality
+    </button>
+    <button class="subsheet-tab-btn" id="tab-btn-monthly" onclick="switchFFBSubTab('monthly')">
+        <i class="fa-solid fa-calendar-check"></i> Summary Monthly Grading
+    </button>
 </div>
-<div class="dashboard-grid" style="grid-template-columns: 1fr;">
+
+<!-- 1. SUB-SHEET: LOOSE FRUIT ANALYSIS -->
+<div id="ffb-subsheet-loose" class="subsheet-content active">
+    <div class="content-header" style="margin-bottom: 15px;">
+        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="openFqRangeModal('loose')"><i class="fa-solid fa-rotate"></i> Load Data</button>
+            <button class="btn btn-secondary" onclick="printTable('ffb-quality-wrapper', 'Laporan FFB Quality Fruit Loose Analysis')"><i class="fa-solid fa-print"></i> Print</button>
+            <button class="btn btn-success" onclick="openFFBModal()"><i class="fa-solid fa-plus"></i> Tambah input Loose Fruit Quality</button>
+        </div>
+    </div>
     <div class="glass-card" style="overflow-x: auto;">
         <h3>FFB Quality Fruit Loose Analysis</h3>
-        <div class="table-responsive">
+        <div id="ffb-quality-wrapper" class="table-responsive">
             <style>
                 #ffb-quality-table th, #ffb-quality-table td {
                     padding: 4px 8px !important;
@@ -1283,60 +1297,10 @@ views.ffb_quality = `
     </div>
 </div>
 
-<!-- Modal Input FFB Quality -->
-<div class="modal-overlay" id="modal-ffb-quality" style="display:none; z-index: 1000;">
-    <div class="modal-content" style="width: 500px; max-width: 90%;">
-        <div class="modal-header">
-            <h3 style="margin: 0;">Tambah input Loose Fruit Quality</h3>
-            <button type="button" class="modal-close" onclick="document.getElementById('modal-ffb-quality').style.display='none'">&times;</button>
-        </div>
-        <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
-            <div class="form-group">
-                <label>Tanggal</label>
-                <input type="date" id="fq-modal-date" class="form-control">
-            </div>
-            <div class="form-group">
-                <label>Pilihan Supply Chain</label>
-                <select id="fq-modal-estate" class="form-control" required onchange="window.onFFBModalEstateChange(this.value)"></select>
-            </div>
-            <div class="form-group">
-                <label>Divisi (Opsional)</label>
-                <div id="fq-modal-divisi-container">
-                    <input type="text" id="fq-modal-divisi" class="form-control" placeholder="(Optional)">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Nomor Truk</label>
-                <input type="text" id="fq-modal-truck" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label>Berat Sample (gram)</label>
-                <input type="number" step="any" id="fq-modal-bg" class="form-control" required oninput="calculateFFBModal()">
-            </div>
-            <div class="form-group">
-                <label>Brondolan Segar (gram)</label>
-                <input type="number" step="any" id="fq-modal-bd" class="form-control" required oninput="calculateFFBModal()">
-            </div>
-            <div class="form-group">
-                <label>Brondolan Tidak Segar (gram)</label>
-                <input type="number" step="any" id="fq-modal-tsegar" class="form-control" required oninput="calculateFFBModal()">
-            </div>
-            <div class="form-group">
-                <label>Brondolan Busuk (gram)</label>
-                <input type="number" step="any" id="fq-modal-busuk" class="form-control" required oninput="calculateFFBModal()">
-            </div>
-            <div class="form-group">
-                <label>Sampah (gram) (Otomatis)</label>
-                <input type="number" step="any" id="fq-modal-sampah" class="form-control" readonly style="background-color: #f1f5f9;">
-            </div>
-            <button class="btn btn-primary" onclick="submitFFBModal()" style="width:100%; justify-content:center; margin-top:10px;">Simpan</button>
-        </div>
-    </div>
-</div>
-
-<div class="dashboard-grid" style="grid-template-columns: 1fr; margin-top: 20px;">
+<!-- 2. SUB-SHEET: DAILY FFB CROP QUALITY -->
+<div id="ffb-subsheet-crop" class="subsheet-content">
     <div class="glass-card" style="overflow-x: auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
             <h3 style="margin:0;">Daily FFB Crop Quality</h3>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button class="btn btn-primary" onclick="openFqRangeModal('crop')"><i class="fa-solid fa-rotate"></i> Load Data</button>
@@ -1438,6 +1402,216 @@ views.ffb_quality = `
     </div>
 </div>
 
+<!-- 3. SUB-SHEET: SUMMARY MONTHLY GRADING -->
+<div id="ffb-subsheet-monthly" class="subsheet-content">
+    <!-- Filter & Options Toolbar -->
+    <div class="grading-filter-bar">
+        <div class="grading-filter-group">
+            <div>
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;"><i class="fa-solid fa-sliders"></i> Parameter Kriteria Grading</label>
+                <select id="ffb-monthly-param" class="form-control" style="font-weight: 600; color: #1e293b; min-width: 290px;" onchange="window.onFFBMonthlyParamChange()">
+                    <optgroup label="-- Kualitas Janjang (Crop Quality) --">
+                        <option value="ripe" selected>Ripe / Buah Matang (%) [Standar Min. 90%]</option>
+                        <option value="unripe">Unripe / Buah Mentah (%) [Standar Max. 0%]</option>
+                        <option value="underripe">Under Ripe / Kurang Matang (%) [Standar Max. 3%]</option>
+                        <option value="over_ripe">Over Ripe / Lewat Matang (%) [Standar Max. 7%]</option>
+                        <option value="empty_bunch">Empty Bunch / Janjang Kosong (%) [Standar Max. 0%]</option>
+                        <option value="long_stalk">Long Stalk / Tangkai Panjang (%) [Standar &lt; 2%]</option>
+                        <option value="rat_damage">Rat Damage / Serangan Tikus (%)</option>
+                        <option value="total_janjang">Total Janjang Sampling (Janjang)</option>
+                    </optgroup>
+                    <optgroup label="-- Kualitas Brondolan (Loose Fruit) --">
+                        <option value="bd_percent">Brondolan Segar (%) [Standar Min. 85%]</option>
+                        <option value="t_segar_percent">Brondolan Tidak Segar (%) [Standar Max. 10%]</option>
+                        <option value="busuk_percent">Brondolan Busuk (%) [Standar Max. 5%]</option>
+                        <option value="sampah_percent">Sampah Brondolan (%) [Standar Max. 2%]</option>
+                        <option value="bg_gram">Total Berat Sample (gram)</option>
+                    </optgroup>
+                    <optgroup label="-- Executive Score --">
+                        <option value="quality_index">Overall Grading Quality Score / Indeks Mutu (0-100)</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;"><i class="fa-solid fa-calendar"></i> Tahun</label>
+                <select id="ffb-monthly-year" class="form-control" style="font-weight: 600; min-width: 100px;" onchange="window.loadFFBMonthlySummary()">
+                    <option value="2026" selected>2026</option>
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                    <option value="2027">2027</option>
+                </select>
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="window.loadFFBMonthlySummary()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+            <button class="btn btn-secondary" onclick="window.printMonthlyGrading()"><i class="fa-solid fa-print"></i> Cetak Laporan</button>
+            <button class="btn btn-success" onclick="window.exportMonthlyGradingCSV()"><i class="fa-solid fa-file-excel"></i> Export CSV</button>
+        </div>
+    </div>
+
+    <!-- Executive KPI Summary Cards -->
+    <div class="grading-kpi-grid">
+        <div class="grading-kpi-card">
+            <div class="grading-kpi-icon green">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div class="grading-kpi-info">
+                <h4>Top Performer Estate</h4>
+                <div class="kpi-val" id="ffb-kpi-top-estate">-</div>
+                <div class="kpi-sub" id="ffb-kpi-top-detail">Mutu terbaik tahun ini</div>
+            </div>
+        </div>
+        <div class="grading-kpi-card">
+            <div class="grading-kpi-icon red">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div class="grading-kpi-info">
+                <h4>Perlu Perhatian</h4>
+                <div class="kpi-val" id="ffb-kpi-worst-estate">-</div>
+                <div class="kpi-sub" id="ffb-kpi-worst-detail">Deviasi tertinggi dari standar</div>
+            </div>
+        </div>
+        <div class="grading-kpi-card">
+            <div class="grading-kpi-icon blue">
+                <i class="fa-solid fa-chart-pie"></i>
+            </div>
+            <div class="grading-kpi-info">
+                <h4>Rata-Rata Pabrik (YTD)</h4>
+                <div class="kpi-val" id="ffb-kpi-mill-avg">-</div>
+                <div class="kpi-sub" id="ffb-kpi-mill-target">Target: -</div>
+            </div>
+        </div>
+        <div class="grading-kpi-card">
+            <div class="grading-kpi-icon yellow">
+                <i class="fa-solid fa-bullseye"></i>
+            </div>
+            <div class="grading-kpi-info">
+                <h4>Tingkat Kepatuhan Standar</h4>
+                <div class="kpi-val" id="ffb-kpi-compliance">-</div>
+                <div class="kpi-sub" id="ffb-kpi-compliance-sub">Bulan lolos batas toleransi</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Summary Table Card -->
+    <div class="glass-card" style="overflow-x: auto; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h3 style="margin: 0;" id="ffb-monthly-table-title">Tabel Rekapitulasi Grading Bulanan 1 Tahun</h3>
+                <span id="ffb-monthly-table-subtitle" style="font-size: 0.8rem; color: var(--text-secondary);">Menampilkan capaian per estate untuk 12 bulan beserta rata-rata dan status toleransi.</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; font-size: 0.75rem;">
+                <span class="grading-badge good"><i class="fa-solid fa-check"></i> Sesuai Standar</span>
+                <span class="grading-badge warn"><i class="fa-solid fa-triangle-exclamation"></i> Waspada</span>
+                <span class="grading-badge danger"><i class="fa-solid fa-xmark"></i> Melebihi Toleransi</span>
+            </div>
+        </div>
+        <div id="ffb-monthly-table-wrapper" class="table-responsive">
+            <style>
+                #ffb-monthly-grading-table th, #ffb-monthly-grading-table td {
+                    padding: 6px 8px !important;
+                    text-align: center;
+                }
+                #ffb-monthly-grading-table th {
+                    white-space: nowrap;
+                }
+            </style>
+            <table class="data-table" id="ffb-monthly-grading-table" style="font-size: 0.8rem; width: 100%;">
+                <thead>
+                    <tr>
+                        <th style="width: 35px;">NO</th>
+                        <th style="text-align: left; min-width: 140px;">ESTATE</th>
+                        <th>JAN</th><th>FEB</th><th>MAR</th><th>APR</th>
+                        <th>MEI</th><th>JUN</th><th>JUL</th><th>AGU</th>
+                        <th>SEP</th><th>OKT</th><th>NOV</th><th>DES</th>
+                        <th style="background-color: #e2e8f0; font-weight: bold; min-width: 90px;">RATA-RATA</th>
+                        <th style="min-width: 100px;">TARGET</th>
+                        <th style="min-width: 120px;">EVALUASI & TREND</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Injected by JS -->
+                </tbody>
+                <tfoot>
+                    <!-- Injected by JS -->
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- Monthly Trend Chart Card -->
+    <div class="glass-card" style="margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h3 style="margin: 0;" id="ffb-monthly-chart-title">Grafik Trend Kualitas Bulanan (12 Bulan)</h3>
+                <span style="font-size: 0.8rem; color: var(--text-secondary);">Garis putus-putus menunjukkan batas standar toleransi. Klik legenda estate untuk menyembunyikan/menampilkan garis.</span>
+            </div>
+        </div>
+        <div style="position: relative; height: 350px; width: 100%;">
+            <canvas id="chart-ffb-monthly-trend"></canvas>
+        </div>
+    </div>
+
+    <!-- Smart Diagnostic & Operational Insights -->
+    <div class="grading-insight-box" id="ffb-monthly-insights-card">
+        <h4><i class="fa-solid fa-lightbulb"></i> Analisis & Rekomendasi Operasional Mutu:</h4>
+        <ul id="ffb-monthly-insights-list">
+            <!-- Injected by JS -->
+        </ul>
+    </div>
+</div>
+
+<!-- Modal Input FFB Quality (Loose Fruit) -->
+<div class="modal-overlay" id="modal-ffb-quality" style="display:none; z-index: 1000;">
+    <div class="modal-content" style="width: 500px; max-width: 90%;">
+        <div class="modal-header">
+            <h3 style="margin: 0;">Tambah input Loose Fruit Quality</h3>
+            <button type="button" class="modal-close" onclick="document.getElementById('modal-ffb-quality').style.display='none'">&times;</button>
+        </div>
+        <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+            <div class="form-group">
+                <label>Tanggal</label>
+                <input type="date" id="fq-modal-date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Pilihan Supply Chain</label>
+                <select id="fq-modal-estate" class="form-control" required onchange="window.onFFBModalEstateChange(this.value)"></select>
+            </div>
+            <div class="form-group">
+                <label>Divisi (Opsional)</label>
+                <div id="fq-modal-divisi-container">
+                    <input type="text" id="fq-modal-divisi" class="form-control" placeholder="(Optional)">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Nomor Truk</label>
+                <input type="text" id="fq-modal-truck" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Berat Sample (gram)</label>
+                <input type="number" step="any" id="fq-modal-bg" class="form-control" required oninput="calculateFFBModal()">
+            </div>
+            <div class="form-group">
+                <label>Brondolan Segar (gram)</label>
+                <input type="number" step="any" id="fq-modal-bd" class="form-control" required oninput="calculateFFBModal()">
+            </div>
+            <div class="form-group">
+                <label>Brondolan Tidak Segar (gram)</label>
+                <input type="number" step="any" id="fq-modal-tsegar" class="form-control" required oninput="calculateFFBModal()">
+            </div>
+            <div class="form-group">
+                <label>Brondolan Busuk (gram)</label>
+                <input type="number" step="any" id="fq-modal-busuk" class="form-control" required oninput="calculateFFBModal()">
+            </div>
+            <div class="form-group">
+                <label>Sampah (gram) (Otomatis)</label>
+                <input type="number" step="any" id="fq-modal-sampah" class="form-control" readonly style="background-color: #f1f5f9;">
+            </div>
+            <button class="btn btn-primary" onclick="submitFFBModal()" style="width:100%; justify-content:center; margin-top:10px;">Simpan</button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Input FFB Crop Quality -->
 <div class="modal-overlay" id="modal-ffb-crop-quality" style="display:none; z-index: 1000;">
     <div class="modal-content" style="width: 500px; max-width: 90%;">
@@ -1508,6 +1682,7 @@ views.ffb_quality = `
         </div>
     </div>
 </div>
+
 <div class="modal-overlay" id="modal-fq-range" style="display:none; z-index: 1000;">
     <div class="modal-content" style="width: 400px; max-width: 90%;">
         <div class="modal-header">
@@ -1532,10 +1707,31 @@ views.ffb_quality = `
 
 window.ffbQualityData = [];
 window.ffbCropQualityData = [];
+window.activeFFBSubTab = 'loose';
+
+window.switchFFBSubTab = function(tabId) {
+    window.activeFFBSubTab = tabId;
+    
+    document.querySelectorAll('.subsheet-tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.subsheet-content').forEach(c => c.classList.remove('active'));
+    
+    const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+    if (activeBtn) activeBtn.classList.add('active');
+    
+    const activeContent = document.getElementById(`ffb-subsheet-${tabId}`);
+    if (activeContent) activeContent.classList.add('active');
+    
+    if (tabId === 'loose') {
+        if (!window.ffbQualityData || window.ffbQualityData.length === 0) window.loadFFBQuality();
+    } else if (tabId === 'crop') {
+        if (!window.ffbCropQualityData || window.ffbCropQualityData.length === 0) window.loadFFBCropQuality();
+    } else if (tabId === 'monthly') {
+        window.loadFFBMonthlySummary();
+    }
+};
 
 window.renderFFBQualityView = function() {
-    window.loadFFBQuality();
-    if(window.loadFFBCropQuality) window.loadFFBCropQuality();
+    window.switchFFBSubTab(window.activeFFBSubTab || 'loose');
 
     // Disable inputs for read-only roles
     const readOnlyRoles = ['Manager Mill', 'Supervisor Mill', 'Office Assistant Mill'];
@@ -2196,6 +2392,894 @@ window.submitFFBCropModal = async function() {
     window.renderFFBCropTable();
     await window.saveFFBCropQuality();
 };
+
+// --- SUMMARY MONTHLY GRADING SYSTEM (12 BULAN PER ESTATE) ---
+
+window.FFB_MONTHLY_CONFIGS = {
+    // Crop Quality
+    ripe: {
+        category: 'crop',
+        label: 'Ripe / Buah Matang (%)',
+        unit: '%',
+        targetLabel: 'Min. 90%',
+        targetVal: 90,
+        isMin: true,
+        warnVal: 85,
+        decimals: 2,
+        getValue: (crop) => (crop && crop.tot > 0) ? (crop.normal / crop.tot * 100) : null
+    },
+    unripe: {
+        category: 'crop',
+        label: 'Unripe / Buah Mentah (%)',
+        unit: '%',
+        targetLabel: 'Max. 0%',
+        targetVal: 0,
+        isMin: false,
+        warnVal: 1.5,
+        decimals: 2,
+        getValue: (crop) => (crop && crop.tot > 0) ? (crop.unripe / crop.tot * 100) : null
+    },
+    underripe: {
+        category: 'crop',
+        label: 'Under Ripe / Kurang Matang (%)',
+        unit: '%',
+        targetLabel: 'Max. 3%',
+        targetVal: 3,
+        isMin: false,
+        warnVal: 4.5,
+        decimals: 2,
+        getValue: (crop) => (crop && crop.tot > 0) ? (crop.under / crop.tot * 100) : null
+    },
+    over_ripe: {
+        category: 'crop',
+        label: 'Over Ripe / Lewat Matang (%)',
+        unit: '%',
+        targetLabel: 'Max. 7%',
+        targetVal: 7,
+        isMin: false,
+        warnVal: 9.0,
+        decimals: 2,
+        getValue: (crop) => (crop && crop.tot > 0) ? (crop.over / crop.tot * 100) : null
+    },
+    empty_bunch: {
+        category: 'crop',
+        label: 'Empty Bunch / Janjang Kosong (%)',
+        unit: '%',
+        targetLabel: 'Max. 0%',
+        targetVal: 0,
+        isMin: false,
+        warnVal: 1.0,
+        decimals: 2,
+        getValue: (crop) => (crop && crop.tot > 0) ? (crop.empty / crop.tot * 100) : null
+    },
+    long_stalk: {
+        category: 'crop',
+        label: 'Long Stalk / Tangkai Panjang (%)',
+        unit: '%',
+        targetLabel: '< 2%',
+        targetVal: 2,
+        isMin: false,
+        warnVal: 3.5,
+        decimals: 2,
+        getValue: (crop) => (crop && crop.tot > 0) ? (crop.long / crop.tot * 100) : null
+    },
+    rat_damage: {
+        category: 'crop',
+        label: 'Rat Damage / Serangan Tikus (%)',
+        unit: '%',
+        targetLabel: 'Max. 2%',
+        targetVal: 2,
+        isMin: false,
+        warnVal: 3.5,
+        decimals: 2,
+        getValue: (crop) => (crop && crop.tot > 0) ? (crop.rat / crop.tot * 100) : null
+    },
+    total_janjang: {
+        category: 'crop',
+        label: 'Total Janjang Sampling (Janjang)',
+        unit: ' Jjg',
+        targetLabel: '-',
+        targetVal: null,
+        isMin: null,
+        decimals: 0,
+        getValue: (crop) => (crop && crop.tot > 0) ? crop.tot : null,
+        isSum: true
+    },
+    // Loose Fruit Quality
+    bd_percent: {
+        category: 'loose',
+        label: 'Brondolan Segar (%)',
+        unit: '%',
+        targetLabel: 'Min. 85%',
+        targetVal: 85,
+        isMin: true,
+        warnVal: 75,
+        decimals: 2,
+        getValue: (crop, loose) => (loose && loose.bg > 0) ? (loose.bd / loose.bg * 100) : null
+    },
+    t_segar_percent: {
+        category: 'loose',
+        label: 'Brondolan Tidak Segar (%)',
+        unit: '%',
+        targetLabel: 'Max. 10%',
+        targetVal: 10,
+        isMin: false,
+        warnVal: 15,
+        decimals: 2,
+        getValue: (crop, loose) => (loose && loose.bg > 0) ? (loose.ts / loose.bg * 100) : null
+    },
+    busuk_percent: {
+        category: 'loose',
+        label: 'Brondolan Busuk (%)',
+        unit: '%',
+        targetLabel: 'Max. 5%',
+        targetVal: 5,
+        isMin: false,
+        warnVal: 8,
+        decimals: 2,
+        getValue: (crop, loose) => (loose && loose.bg > 0) ? (loose.bb / loose.bg * 100) : null
+    },
+    sampah_percent: {
+        category: 'loose',
+        label: 'Sampah Brondolan (%)',
+        unit: '%',
+        targetLabel: 'Max. 2%',
+        targetVal: 2,
+        isMin: false,
+        warnVal: 4,
+        decimals: 2,
+        getValue: (crop, loose) => (loose && loose.bg > 0) ? (loose.sampah / loose.bg * 100) : null
+    },
+    bg_gram: {
+        category: 'loose',
+        label: 'Total Berat Sample (gram)',
+        unit: ' g',
+        targetLabel: '-',
+        targetVal: null,
+        isMin: null,
+        decimals: 0,
+        getValue: (crop, loose) => (loose && loose.bg > 0) ? loose.bg : null,
+        isSum: true
+    },
+    // Composite Quality Index
+    quality_index: {
+        category: 'composite',
+        label: 'Overall Grading Quality Score (0-100)',
+        unit: ' Pts',
+        targetLabel: 'Min. 85 Pts',
+        targetVal: 85,
+        isMin: true,
+        warnVal: 75,
+        decimals: 1,
+        getValue: (crop, loose) => {
+            if (!crop || crop.tot === 0) return null;
+            let ripeP = (crop.normal / crop.tot) * 100;
+            let unripeP = (crop.unripe / crop.tot) * 100;
+            let underP = (crop.under / crop.tot) * 100;
+            let overP = (crop.over / crop.tot) * 100;
+            let emptyP = (crop.empty / crop.tot) * 100;
+            let longP = (crop.long / crop.tot) * 100;
+            let score = 100 - (unripeP * 5) - (underP * 2) - (emptyP * 5) - (Math.max(0, overP - 7) * 1.5) - (Math.max(0, longP - 2) * 2);
+            if (loose && loose.bg > 0) {
+                let busukP = (loose.bb / loose.bg) * 100;
+                let sampahP = (loose.sampah / loose.bg) * 100;
+                score -= (Math.max(0, busukP - 5) * 2) + (Math.max(0, sampahP - 2) * 2);
+            }
+            return Math.max(0, Math.min(100, score));
+        }
+    }
+};
+
+window.ffbYearlyCropData = [];
+window.ffbYearlyLooseData = [];
+window.ffbMonthlySummaryResult = null;
+window.ffbMonthlyChartInstance = null;
+
+window.onFFBMonthlyParamChange = function() {
+    if (window.ffbMonthlySummaryResult) {
+        window.processAndRenderFFBMonthlySummary();
+    } else {
+        window.loadFFBMonthlySummary();
+    }
+};
+
+window.loadFFBMonthlySummary = async function() {
+    const yearSelect = document.getElementById('ffb-monthly-year');
+    const year = yearSelect ? yearSelect.value : '2026';
+    
+    let mill = window.currentUser ? window.currentUser.estate : null; 
+    if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
+    if (!mill) return;
+
+    if (typeof masterData === 'undefined' || !masterData.supply_chain) {
+        if (typeof loadMasterData === 'function') await loadMasterData();
+    }
+
+    const startDate = `${year}-01-01`;
+    const endDate = `${year}-12-31`;
+
+    try {
+        const [cropRes, looseRes] = await Promise.all([
+            fetch(`/api/ffb_crop_quality/range/${encodeURIComponent(mill)}/${startDate}/${endDate}`),
+            fetch(`/api/ffb_quality/range/${encodeURIComponent(mill)}/${startDate}/${endDate}`)
+        ]);
+
+        window.ffbYearlyCropData = cropRes.ok ? await cropRes.json() : [];
+        window.ffbYearlyLooseData = looseRes.ok ? await looseRes.json() : [];
+    } catch (e) {
+        console.error('Error loading yearly FFB data:', e);
+        window.ffbYearlyCropData = [];
+        window.ffbYearlyLooseData = [];
+    }
+
+    window.processAndRenderFFBMonthlySummary();
+};
+
+window.processAndRenderFFBMonthlySummary = function() {
+    const yearSelect = document.getElementById('ffb-monthly-year');
+    const year = yearSelect ? yearSelect.value : '2026';
+    const paramSelect = document.getElementById('ffb-monthly-param');
+    const paramKey = paramSelect ? paramSelect.value : 'ripe';
+    const cfg = window.FFB_MONTHLY_CONFIGS[paramKey] || window.FFB_MONTHLY_CONFIGS.ripe;
+
+    // Build estate list from supply chain + data
+    let estateSet = new Set();
+    if (typeof masterData !== 'undefined' && masterData.supply_chain) {
+        masterData.supply_chain.filter(s => s.is_ffb !== false).forEach(s => estateSet.add(s.estate));
+    }
+    window.ffbYearlyCropData.forEach(d => { if (d.estate) estateSet.add(d.estate); });
+    window.ffbYearlyLooseData.forEach(d => { if (d.estate) estateSet.add(d.estate); });
+
+    const estateList = Array.from(estateSet).sort();
+
+    // Data structures for aggregation
+    // estateMonthStats[estate][monthNum (1-12)] = { crop: {...}, loose: {...} }
+    let estateMonthStats = {};
+    let millMonthStats = {};
+    for (let m = 1; m <= 12; m++) {
+        millMonthStats[m] = {
+            crop: { tot:0, unripe:0, under:0, normal:0, over:0, empty:0, long:0, rat:0 },
+            loose: { bg:0, bd:0, ts:0, bb:0, sampah:0 }
+        };
+    }
+
+    estateList.forEach(est => {
+        estateMonthStats[est] = {};
+        for (let m = 1; m <= 12; m++) {
+            estateMonthStats[est][m] = {
+                crop: { tot:0, unripe:0, under:0, normal:0, over:0, empty:0, long:0, rat:0 },
+                loose: { bg:0, bd:0, ts:0, bb:0, sampah:0 }
+            };
+        }
+    });
+
+    // Populate Crop Data
+    window.ffbYearlyCropData.forEach(d => {
+        if (!d.date || !d.estate) return;
+        const est = d.estate;
+        if (!estateMonthStats[est]) {
+            estateMonthStats[est] = {};
+            for (let m = 1; m <= 12; m++) {
+                estateMonthStats[est][m] = {
+                    crop: { tot:0, unripe:0, under:0, normal:0, over:0, empty:0, long:0, rat:0 },
+                    loose: { bg:0, bd:0, ts:0, bb:0, sampah:0 }
+                };
+            }
+        }
+        const m = parseInt(d.date.split('-')[1], 10);
+        if (m >= 1 && m <= 12) {
+            const tot = parseInt(d.total_janjang) || 0;
+            const u = parseInt(d.unripe) || 0;
+            const under = parseInt(d.underripe) || 0;
+            const norm = parseInt(d.normal_ripe) || 0;
+            const over = parseInt(d.over_ripe) || 0;
+            const emp = parseInt(d.empty_bunch) || 0;
+            const long = parseInt(d.long_stalk) || 0;
+            const rat = parseInt(d.rat_damage) || 0;
+
+            estateMonthStats[est][m].crop.tot += tot;
+            estateMonthStats[est][m].crop.unripe += u;
+            estateMonthStats[est][m].crop.under += under;
+            estateMonthStats[est][m].crop.normal += norm;
+            estateMonthStats[est][m].crop.over += over;
+            estateMonthStats[est][m].crop.empty += emp;
+            estateMonthStats[est][m].crop.long += long;
+            estateMonthStats[est][m].crop.rat += rat;
+
+            millMonthStats[m].crop.tot += tot;
+            millMonthStats[m].crop.unripe += u;
+            millMonthStats[m].crop.under += under;
+            millMonthStats[m].crop.normal += norm;
+            millMonthStats[m].crop.over += over;
+            millMonthStats[m].crop.empty += emp;
+            millMonthStats[m].crop.long += long;
+            millMonthStats[m].crop.rat += rat;
+        }
+    });
+
+    // Populate Loose Fruit Data
+    window.ffbYearlyLooseData.forEach(d => {
+        if (!d.date || !d.estate) return;
+        const est = d.estate;
+        if (!estateMonthStats[est]) {
+            estateMonthStats[est] = {};
+            for (let m = 1; m <= 12; m++) {
+                estateMonthStats[est][m] = {
+                    crop: { tot:0, unripe:0, under:0, normal:0, over:0, empty:0, long:0, rat:0 },
+                    loose: { bg:0, bd:0, ts:0, bb:0, sampah:0 }
+                };
+            }
+        }
+        const m = parseInt(d.date.split('-')[1], 10);
+        if (m >= 1 && m <= 12) {
+            const bg = parseFloat(d.bg_gram) || 0;
+            const bd = parseFloat(d.bd_gram) || 0;
+            const ts = parseFloat(d.t_segar_gram) || 0;
+            const bb = parseFloat(d.busuk_gram) || 0;
+            const sampah = parseFloat(d.sampah_gram) || 0;
+
+            estateMonthStats[est][m].loose.bg += bg;
+            estateMonthStats[est][m].loose.bd += bd;
+            estateMonthStats[est][m].loose.ts += ts;
+            estateMonthStats[est][m].loose.bb += bb;
+            estateMonthStats[est][m].loose.sampah += sampah;
+
+            millMonthStats[m].loose.bg += bg;
+            millMonthStats[m].loose.bd += bd;
+            millMonthStats[m].loose.ts += ts;
+            millMonthStats[m].loose.bb += bb;
+            millMonthStats[m].loose.sampah += sampah;
+        }
+    });
+
+    // Helper to evaluate value against target
+    const evaluateVal = (val) => {
+        if (val === null || val === undefined || isNaN(val)) return 'none';
+        if (cfg.isMin === null) return 'neutral';
+        if (cfg.isMin === true) {
+            if (val >= cfg.targetVal) return 'good';
+            if (val >= cfg.warnVal) return 'warn';
+            return 'danger';
+        } else {
+            if (val <= cfg.targetVal) return 'good';
+            if (val <= cfg.warnVal) return 'warn';
+            return 'danger';
+        }
+    };
+
+    // Calculate processed values per estate
+    let estateRows = [];
+    estateList.forEach(est => {
+        let monthlyVals = [];
+        let totalWeight = 0;
+        let weightedSum = 0;
+        let simpleSum = 0;
+        let countActive = 0;
+
+        let annualCropAgg = { tot:0, unripe:0, under:0, normal:0, over:0, empty:0, long:0, rat:0 };
+        let annualLooseAgg = { bg:0, bd:0, ts:0, bb:0, sampah:0 };
+
+        for (let m = 1; m <= 12; m++) {
+            const c = estateMonthStats[est][m].crop;
+            const l = estateMonthStats[est][m].loose;
+
+            annualCropAgg.tot += c.tot;
+            annualCropAgg.unripe += c.unripe;
+            annualCropAgg.under += c.under;
+            annualCropAgg.normal += c.normal;
+            annualCropAgg.over += c.over;
+            annualCropAgg.empty += c.empty;
+            annualCropAgg.long += c.long;
+            annualCropAgg.rat += c.rat;
+
+            annualLooseAgg.bg += l.bg;
+            annualLooseAgg.bd += l.bd;
+            annualLooseAgg.ts += l.ts;
+            annualLooseAgg.bb += l.bb;
+            annualLooseAgg.sampah += l.sampah;
+
+            const val = cfg.getValue(c, l);
+            monthlyVals.push(val);
+
+            if (val !== null) {
+                countActive++;
+                simpleSum += val;
+            }
+        }
+
+        // Calculate annual average/sum
+        let annualVal = null;
+        if (cfg.isSum) {
+            annualVal = cfg.category === 'crop' ? annualCropAgg.tot : annualLooseAgg.bg;
+        } else {
+            annualVal = cfg.getValue(annualCropAgg, annualLooseAgg);
+        }
+
+        // Calculate trend (compare 2nd half or recent active vs earlier)
+        let trend = 'neutral';
+        let trendIcon = '➡️';
+        let trendText = 'Stabil';
+        let activeIndices = [];
+        monthlyVals.forEach((v, idx) => { if (v !== null) activeIndices.push({ idx, v }); });
+
+        if (activeIndices.length >= 2) {
+            const mid = Math.floor(activeIndices.length / 2);
+            const firstHalf = activeIndices.slice(0, mid);
+            const secondHalf = activeIndices.slice(mid);
+
+            const avg1 = firstHalf.reduce((s, x) => s + x.v, 0) / (firstHalf.length || 1);
+            const avg2 = secondHalf.reduce((s, x) => s + x.v, 0) / (secondHalf.length || 1);
+            const diff = avg2 - avg1;
+
+            if (cfg.isMin === true) {
+                if (diff >= 0.5) { trend = 'good'; trendIcon = '▲'; trendText = 'Membaik'; }
+                else if (diff <= -0.5) { trend = 'danger'; trendIcon = '▼'; trendText = 'Menurun'; }
+            } else if (cfg.isMin === false) {
+                if (diff <= -0.3) { trend = 'good'; trendIcon = '▲'; trendText = 'Membaik'; }
+                else if (diff >= 0.3) { trend = 'danger'; trendIcon = '▼'; trendText = 'Memburuk'; }
+            }
+        }
+
+        const annualEval = evaluateVal(annualVal);
+
+        estateRows.push({
+            estate: est,
+            monthlyVals,
+            annualVal,
+            annualEval,
+            trend,
+            trendIcon,
+            trendText,
+            countActive,
+            annualCropAgg,
+            annualLooseAgg
+        });
+    });
+
+    // Mill Average Row calculation
+    let millMonthlyVals = [];
+    let millAnnualCropAgg = { tot:0, unripe:0, under:0, normal:0, over:0, empty:0, long:0, rat:0 };
+    let millAnnualLooseAgg = { bg:0, bd:0, ts:0, bb:0, sampah:0 };
+
+    for (let m = 1; m <= 12; m++) {
+        const mc = millMonthStats[m].crop;
+        const ml = millMonthStats[m].loose;
+
+        millAnnualCropAgg.tot += mc.tot;
+        millAnnualCropAgg.unripe += mc.unripe;
+        millAnnualCropAgg.under += mc.under;
+        millAnnualCropAgg.normal += mc.normal;
+        millAnnualCropAgg.over += mc.over;
+        millAnnualCropAgg.empty += mc.empty;
+        millAnnualCropAgg.long += mc.long;
+        millAnnualCropAgg.rat += mc.rat;
+
+        millAnnualLooseAgg.bg += ml.bg;
+        millAnnualLooseAgg.bd += ml.bd;
+        millAnnualLooseAgg.ts += ml.ts;
+        millAnnualLooseAgg.bb += ml.bb;
+        millAnnualLooseAgg.sampah += ml.sampah;
+
+        const val = cfg.getValue(mc, ml);
+        millMonthlyVals.push(val);
+    }
+
+    let millAnnualVal = cfg.isSum 
+        ? (cfg.category === 'crop' ? millAnnualCropAgg.tot : millAnnualLooseAgg.bg)
+        : cfg.getValue(millAnnualCropAgg, millAnnualLooseAgg);
+    
+    let millAnnualEval = evaluateVal(millAnnualVal);
+
+    window.ffbMonthlySummaryResult = {
+        year,
+        paramKey,
+        cfg,
+        estateRows,
+        millMonthlyVals,
+        millAnnualVal,
+        millAnnualEval
+    };
+
+    // Render components
+    window.renderFFBMonthlySummaryTable();
+    window.renderFFBMonthlyKPIs();
+    window.renderFFBMonthlyTrendChart();
+    window.renderFFBMonthlyInsights();
+};
+
+window.renderFFBMonthlySummaryTable = function() {
+    const res = window.ffbMonthlySummaryResult;
+    if (!res) return;
+    const { cfg, estateRows, millMonthlyVals, millAnnualVal, millAnnualEval } = res;
+
+    const tbody = document.querySelector('#ffb-monthly-grading-table tbody');
+    const tfoot = document.querySelector('#ffb-monthly-grading-table tfoot');
+    if (!tbody || !tfoot) return;
+
+    tbody.innerHTML = '';
+    tfoot.innerHTML = '';
+
+    const formatVal = (v) => {
+        if (v === null || v === undefined || isNaN(v)) return '-';
+        if (cfg.decimals === 0) return Math.round(v).toLocaleString('id-ID');
+        return v.toFixed(cfg.decimals);
+    };
+
+    const getCellClass = (status) => {
+        if (status === 'good') return 'grading-cell-good';
+        if (status === 'warn') return 'grading-cell-warn';
+        if (status === 'danger') return 'grading-cell-danger';
+        return 'grading-cell-neutral';
+    };
+
+    const evaluateVal = (val) => {
+        if (val === null || val === undefined || isNaN(val)) return 'none';
+        if (cfg.isMin === null) return 'neutral';
+        if (cfg.isMin === true) {
+            if (val >= cfg.targetVal) return 'good';
+            if (val >= cfg.warnVal) return 'warn';
+            return 'danger';
+        } else {
+            if (val <= cfg.targetVal) return 'good';
+            if (val <= cfg.warnVal) return 'warn';
+            return 'danger';
+        }
+    };
+
+    // Abbr mapping for estate names
+    let abbrMap = {};
+    if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
+        masterData.supply_chain_list.forEach(item => {
+            abbrMap[item.name] = item.abbr;
+        });
+    }
+    const getAbbr = (estName) => abbrMap[estName] || estName.replace(' Estate', 'E');
+
+    estateRows.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        
+        let monthTds = '';
+        row.monthlyVals.forEach(v => {
+            const status = evaluateVal(v);
+            const cls = getCellClass(status);
+            monthTds += `<td class="${cls}">${formatVal(v)}</td>`;
+        });
+
+        const avgCls = getCellClass(row.annualEval);
+        const evalBadgeCls = row.annualEval === 'good' ? 'good' : (row.annualEval === 'warn' ? 'warn' : (row.annualEval === 'danger' ? 'danger' : 'neutral'));
+        
+        let trendBadgeCls = row.trend === 'good' ? 'good' : (row.trend === 'danger' ? 'danger' : 'neutral');
+
+        tr.innerHTML = `
+            <td style="color:var(--text-secondary); font-weight:500;">${idx + 1}</td>
+            <td style="text-align:left; font-weight:600;" title="${row.estate}">${getAbbr(row.estate)}</td>
+            ${monthTds}
+            <td class="${avgCls}" style="font-weight:bold; background-color:#f1f5f9;">${formatVal(row.annualVal)}</td>
+            <td><span class="grading-badge neutral">${cfg.targetLabel}</span></td>
+            <td>
+                <span class="grading-badge ${trendBadgeCls}" style="margin-right:2px;">${row.trendIcon} ${row.trendText}</span>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // Mill Average Footer Row
+    let millMonthTds = '';
+    millMonthlyVals.forEach(v => {
+        const status = evaluateVal(v);
+        const cls = getCellClass(status);
+        millMonthTds += `<td class="${cls}" style="font-weight:bold;">${formatVal(v)}</td>`;
+    });
+    const millAvgCls = getCellClass(millAnnualEval);
+
+    tfoot.innerHTML = `
+        <tr style="background-color: #f8fafc; font-weight: bold; border-top: 2px solid #cbd5e1;">
+            <td colspan="2" style="text-align: right; font-weight:bold; letter-spacing:0.5px;">RATA-RATA PABRIK:</td>
+            ${millMonthTds}
+            <td class="${millAvgCls}" style="font-weight:bold; font-size:0.85rem; background-color:#e2e8f0;">${formatVal(millAnnualVal)}</td>
+            <td><span class="grading-badge neutral">${cfg.targetLabel}</span></td>
+            <td><span class="grading-badge ${millAnnualEval === 'good' ? 'good' : 'warn'}">Pabrik (YTD)</span></td>
+        </tr>
+    `;
+};
+
+window.renderFFBMonthlyKPIs = function() {
+    const res = window.ffbMonthlySummaryResult;
+    if (!res) return;
+    const { cfg, estateRows, millAnnualVal, millAnnualEval } = res;
+
+    const elTop = document.getElementById('ffb-kpi-top-estate');
+    const elTopSub = document.getElementById('ffb-kpi-top-detail');
+    const elWorst = document.getElementById('ffb-kpi-worst-estate');
+    const elWorstSub = document.getElementById('ffb-kpi-worst-detail');
+    const elMill = document.getElementById('ffb-kpi-mill-avg');
+    const elMillSub = document.getElementById('ffb-kpi-mill-target');
+    const elComp = document.getElementById('ffb-kpi-compliance');
+    const elCompSub = document.getElementById('ffb-kpi-compliance-sub');
+
+    if (!elTop || !elWorst || !elMill || !elComp) return;
+
+    // Filter estates with valid annual value
+    const validRows = estateRows.filter(r => r.annualVal !== null);
+
+    if (validRows.length === 0) {
+        elTop.innerText = '-';
+        elTopSub.innerText = 'Belum ada data';
+        elWorst.innerText = '-';
+        elWorstSub.innerText = 'Belum ada data';
+        elMill.innerText = '-';
+        elMillSub.innerText = `Target: ${cfg.targetLabel}`;
+        elComp.innerText = '0%';
+        elCompSub.innerText = '0 bulan sampling';
+        return;
+    }
+
+    // Sort by best to worst
+    let sorted = [...validRows];
+    if (cfg.isMin === true) {
+        sorted.sort((a, b) => b.annualVal - a.annualVal);
+    } else if (cfg.isMin === false) {
+        sorted.sort((a, b) => a.annualVal - b.annualVal);
+    } else {
+        sorted.sort((a, b) => b.annualVal - a.annualVal);
+    }
+
+    const topPerformer = sorted[0];
+    const worstPerformer = sorted[sorted.length - 1];
+
+    const formatVal = (v) => {
+        if (v === null || isNaN(v)) return '-';
+        return cfg.decimals === 0 ? Math.round(v).toLocaleString('id-ID') : v.toFixed(cfg.decimals);
+    };
+
+    elTop.innerText = topPerformer.estate.replace(' Estate', '');
+    elTopSub.innerText = `${cfg.label.split('/')[0]}: ${formatVal(topPerformer.annualVal)}${cfg.unit}`;
+
+    if (sorted.length > 1 && worstPerformer.annualVal !== topPerformer.annualVal) {
+        elWorst.innerText = worstPerformer.estate.replace(' Estate', '');
+        elWorstSub.innerText = `${cfg.label.split('/')[0]}: ${formatVal(worstPerformer.annualVal)}${cfg.unit}`;
+    } else {
+        elWorst.innerText = 'N/A';
+        elWorstSub.innerText = 'Semua estate seragam';
+    }
+
+    elMill.innerText = `${formatVal(millAnnualVal)}${cfg.unit}`;
+    elMillSub.innerHTML = `Target: <strong>${cfg.targetLabel}</strong> (${millAnnualEval === 'good' ? '🟢 Tercapai' : '🔴 Perlu Peningkatan'})`;
+
+    // Compliance rate
+    let totalActiveMonths = 0;
+    let compliantMonths = 0;
+    validRows.forEach(r => {
+        r.monthlyVals.forEach(v => {
+            if (v !== null) {
+                totalActiveMonths++;
+                if (cfg.isMin === true && v >= cfg.targetVal) compliantMonths++;
+                else if (cfg.isMin === false && v <= cfg.targetVal) compliantMonths++;
+            }
+        });
+    });
+
+    const compRate = totalActiveMonths > 0 ? (compliantMonths / totalActiveMonths * 100).toFixed(1) : '100.0';
+    elComp.innerText = `${compRate}%`;
+    elCompSub.innerText = `${compliantMonths} dari ${totalActiveMonths} bulan memenuhi standar`;
+};
+
+window.renderFFBMonthlyTrendChart = function() {
+    const res = window.ffbMonthlySummaryResult;
+    if (!res) return;
+    const { cfg, estateRows, year } = res;
+
+    const canvas = document.getElementById('chart-ffb-monthly-trend');
+    if (!canvas) return;
+
+    if (window.ffbMonthlyChartInstance) {
+        window.ffbMonthlyChartInstance.destroy();
+        window.ffbMonthlyChartInstance = null;
+    }
+
+    const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+    const colors = [
+        '#0d8b4e', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899',
+        '#06b6d4', '#84cc16', '#e11d48', '#14b8a6', '#6366f1',
+        '#d97706', '#64748b'
+    ];
+
+    let datasets = [];
+
+    // Estate datasets
+    estateRows.forEach((row, i) => {
+        // Only include if has at least 1 month of data
+        if (row.countActive > 0) {
+            const color = colors[i % colors.length];
+            datasets.push({
+                label: row.estate.replace(' Estate', ''),
+                data: row.monthlyVals,
+                borderColor: color,
+                backgroundColor: color,
+                borderWidth: 2.5,
+                tension: 0.3,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                fill: false,
+                spanGaps: true
+            });
+        }
+    });
+
+    // Add Target Baseline Line if applicable
+    if (cfg.targetVal !== null) {
+        datasets.push({
+            label: `Batas Standar (${cfg.targetLabel})`,
+            data: Array(12).fill(cfg.targetVal),
+            borderColor: cfg.isMin ? '#10b981' : '#ef4444',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [6, 6],
+            pointRadius: 0,
+            pointHoverRadius: 0,
+            fill: false
+        });
+    }
+
+    const ctx = canvas.getContext('2d');
+    window.ffbMonthlyChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: monthLabels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        boxWidth: 14,
+                        font: { size: 11, family: 'Inter' }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) label += ': ';
+                            if (context.parsed.y !== null) {
+                                label += cfg.decimals === 0 ? Math.round(context.parsed.y).toLocaleString('id-ID') : context.parsed.y.toFixed(cfg.decimals);
+                                label += cfg.unit;
+                            }
+                            return label;
+                        }
+                    }
+                },
+                datalabels: {
+                    display: false // disable datalabels to keep chart clean
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: '#f1f5f9' },
+                    ticks: { font: { size: 11 } }
+                },
+                y: {
+                    grid: { color: '#f1f5f9' },
+                    ticks: {
+                        font: { size: 11 },
+                        callback: function(value) {
+                            return value + cfg.unit;
+                        }
+                    }
+                }
+            }
+        }
+    });
+};
+
+window.renderFFBMonthlyInsights = function() {
+    const res = window.ffbMonthlySummaryResult;
+    if (!res) return;
+    const { cfg, estateRows } = res;
+
+    const listEl = document.getElementById('ffb-monthly-insights-list');
+    if (!listEl) return;
+
+    const validRows = estateRows.filter(r => r.annualVal !== null);
+    if (validRows.length === 0) {
+        listEl.innerHTML = `<li><i class="fa-solid fa-info-circle"></i> Belum terdapat cukup data sampling pada tahun yang dipilih untuk menghasilkan analisis operasional.</li>`;
+        return;
+    }
+
+    let insights = [];
+
+    // 1. Top & Best Performers
+    const sorted = [...validRows];
+    if (cfg.isMin === true) sorted.sort((a, b) => b.annualVal - a.annualVal);
+    else if (cfg.isMin === false) sorted.sort((a, b) => a.annualVal - b.annualVal);
+
+    const top = sorted[0];
+    const formatVal = (v) => cfg.decimals === 0 ? Math.round(v).toLocaleString('id-ID') : v.toFixed(cfg.decimals);
+
+    insights.push(`<strong>Pencapaian Terbaik:</strong> Estate <strong>${top.estate}</strong> mencatatkan kinerja ${cfg.label} terbaik dengan rata-rata tahunan <strong>${formatVal(top.annualVal)}${cfg.unit}</strong> (${top.annualEval === 'good' ? 'memenuhi target' : 'mendekati target'}).`);
+
+    // 2. Trend & Momentum
+    const improvingEstates = validRows.filter(r => r.trend === 'good').map(r => r.estate.replace(' Estate', ''));
+    const worseningEstates = validRows.filter(r => r.trend === 'danger').map(r => r.estate.replace(' Estate', ''));
+
+    if (improvingEstates.length > 0) {
+        insights.push(`<strong>Tren Positif:</strong> Estate <strong>${improvingEstates.join(', ')}</strong> menunjukkan perbaikan mutu yang konsisten pada periode semester kedua dibanding awal tahun.`);
+    }
+    if (worseningEstates.length > 0) {
+        insights.push(`<strong>Perlu Evaluasi Lapangan:</strong> Estate <strong>${worseningEstates.join(', ')}</strong> mengalami penurunan performa pada parameter ini dalam beberapa bulan terakhir.`);
+    }
+
+    // 3. Operational Focus & Recommendations
+    if (cfg.category === 'crop') {
+        if (cfg.paramKey === 'unripe' || cfg.paramKey === 'underripe') {
+            insights.push(`<strong>Rekomendasi Pemanenan:</strong> Perketat seleksi kriteria matang panen di TPH (Tempat Pengumpulan Hasil) dan berikan sanksi denda pada pemanen buah mentah untuk mencegah penurunan OER di pabrik.`);
+        } else if (cfg.paramKey === 'long_stalk') {
+            insights.push(`<strong>Rekomendasi Pemotongan Tangkai:</strong> Pengawasan pemotongan tangkai panjang (V-cut / cangkul) harus ditingkatkan di ancak panen agar efisiensi pengangkutan dan proses perebusan (sterilizer) optimal.`);
+        } else {
+            insights.push(`<strong>Rekomendasi Operasional:</strong> Pastikan rotasi panen dijaga pada interval 7-10 hari untuk memaksimalkan persentase buah matang (Ripe %) di atas 90%.`);
+        }
+    } else {
+        insights.push(`<strong>Rekomendasi Kualitas Brondolan:</strong> Pastikan brondolan diangkut di hari yang sama dengan pemanenan (restan 0 hari) untuk mencegah kenaikan kadar asam lemak bebas (FFA) dan pembusukan.`);
+    }
+
+    listEl.innerHTML = insights.map(txt => `<li><i class="fa-solid fa-circle-check"></i> <div>${txt}</div></li>`).join('');
+};
+
+window.printMonthlyGrading = function() {
+    const res = window.ffbMonthlySummaryResult;
+    const title = `Laporan Rekapitulasi Summary Monthly Grading ${res ? res.cfg.label : ''} - Tahun ${res ? res.year : ''}`;
+    window.printTable('ffb-monthly-table-wrapper', title);
+};
+
+window.exportMonthlyGradingCSV = function() {
+    const res = window.ffbMonthlySummaryResult;
+    if (!res) return;
+    const { cfg, estateRows, millMonthlyVals, millAnnualVal, year } = res;
+
+    let csv = `REKAPITULASI SUMMARY MONTHLY GRADING - ${cfg.label} (${year})\n\n`;
+    csv += `No,Estate,Jan,Feb,Mar,Apr,Mei,Jun,Jul,Agu,Sep,Okt,Nov,Des,Rata-Rata,Target,Evaluasi & Trend\n`;
+
+    const formatVal = (v) => (v === null || isNaN(v)) ? '' : (cfg.decimals === 0 ? Math.round(v) : v.toFixed(cfg.decimals));
+
+    estateRows.forEach((r, idx) => {
+        let rowData = [
+            idx + 1,
+            `"${r.estate}"`,
+            ...r.monthlyVals.map(v => formatVal(v)),
+            formatVal(r.annualVal),
+            `"${cfg.targetLabel}"`,
+            `"${r.trendText}"`
+        ];
+        csv += rowData.join(',') + '\n';
+    });
+
+    let millRow = [
+        '',
+        '"RATA-RATA PABRIK"',
+        ...millMonthlyVals.map(v => formatVal(v)),
+        formatVal(millAnnualVal),
+        `"${cfg.targetLabel}"`,
+        '"Pabrik"'
+    ];
+    csv += millRow.join(',') + '\n';
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `Monthly_Grading_${cfg.category}_${year}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
 
 
 
