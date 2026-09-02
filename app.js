@@ -1,6 +1,35 @@
 // API Base URL
 const API_URL = window.location.protocol === 'file:' ? 'http://localhost:3006/api' : '/api';
 
+window.updateLocationList = function() {
+    const locationTypeEl = document.getElementById('login-location-type');
+    const estateDropdown = document.getElementById('login-estate');
+    if (!locationTypeEl || !estateDropdown) return;
+    
+    const type = (locationTypeEl.value || '').toUpperCase();
+    estateDropdown.innerHTML = '';
+    
+    if (type === 'MILL') {
+        estateDropdown.innerHTML = '<option value="" disabled selected>LIST MILL</option>' +
+            '<option>Bunga Tanjung Mill</option>' +
+            '<option>Muko Muko Mill</option>';
+    } else {
+        estateDropdown.innerHTML = '<option value="" disabled selected>LIST ESTATE</option>' +
+            '<option>Bunga Tanjung Estate</option>' +
+            '<option>Sungai Teramang Estate</option>' +
+            '<option>Air Bikuk Estate</option>' +
+            '<option>Batu Kuda Estate</option>' +
+            '<option>Air Buluh Estate</option>' +
+            '<option>Malin Deman Estate</option>' +
+            '<option>Tanah Rekah Estate</option>' +
+            '<option>Muko Muko Estate</option>' +
+            '<option>Sei Jerinjing Estate</option>' +
+            '<option>Talang Petai Estate</option>' +
+            '<option>Sungai Kiang Estate</option>' +
+            '<option>Air Majunto Estate</option>';
+    }
+};
+
 const originalFetch = window.fetch;
 window.fetch = async (...args) => {
     const response = await originalFetch(...args);

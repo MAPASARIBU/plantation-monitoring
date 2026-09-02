@@ -15,7 +15,36 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="styles.css?v=20260902_1840">
+    <link rel="stylesheet" href="styles.css?v=20260902_1928">
+    <!-- Inline Login Utilities -->
+    <script>
+        window.updateLocationList = function() {
+            var locationTypeEl = document.getElementById('login-location-type');
+            var estateDropdown = document.getElementById('login-estate');
+            if (!locationTypeEl || !estateDropdown) return;
+            var type = (locationTypeEl.value || '').toUpperCase();
+            estateDropdown.innerHTML = '';
+            if (type === 'MILL') {
+                estateDropdown.innerHTML = '<option value="" disabled selected>LIST MILL</option>' +
+                    '<option>Bunga Tanjung Mill</option>' +
+                    '<option>Muko Muko Mill</option>';
+            } else {
+                estateDropdown.innerHTML = '<option value="" disabled selected>LIST ESTATE</option>' +
+                    '<option>Bunga Tanjung Estate</option>' +
+                    '<option>Sungai Teramang Estate</option>' +
+                    '<option>Air Bikuk Estate</option>' +
+                    '<option>Batu Kuda Estate</option>' +
+                    '<option>Air Buluh Estate</option>' +
+                    '<option>Malin Deman Estate</option>' +
+                    '<option>Tanah Rekah Estate</option>' +
+                    '<option>Muko Muko Estate</option>' +
+                    '<option>Sei Jerinjing Estate</option>' +
+                    '<option>Talang Petai Estate</option>' +
+                    '<option>Sungai Kiang Estate</option>' +
+                    '<option>Air Majunto Estate</option>';
+            }
+        };
+    </script>
 </head>
 <body>
     <!-- Login Screen -->
@@ -28,9 +57,9 @@
                 <h2>AgriMonitor</h2>
                 <h3 style="font-size: 1rem; color: #1f2937; margin: 10px 0 5px; text-transform: uppercase;">PT Tolan Tiga - Region Bengkulu</h3>
             </div>
-            <form id="login-form" autocomplete="off" onsubmit="return window.handleLoginSubmit(event)">
+            <form id="login-form" autocomplete="off" onsubmit="event.preventDefault(); window.handleLoginSubmit(event); return false;">
                 <div class="form-group" style="display: flex; gap: 10px;">
-                    <select id="login-location-type" class="form-control" style="text-align: center; font-weight: bold; flex: 1;" onchange="updateLocationList()">
+                    <select id="login-location-type" class="form-control" style="text-align: center; font-weight: bold; flex: 1;" onchange="window.updateLocationList()">
                         <option value="Estate" selected>ESTATE</option>
                         <option value="Mill">MILL</option>
                     </select>
@@ -52,14 +81,14 @@
                 </div>
                 <div class="form-group">
                     <label>Nama Pengguna</label>
-                    <input type="text" id="login-username" class="form-control" placeholder="Masukkan nama..." autocomplete="off" required>
+                    <input type="text" id="login-username" class="form-control" placeholder="Masukkan nama..." autocomplete="off" required onkeydown="if(event.key==='Enter') { event.preventDefault(); window.handleLoginSubmit(event); }">
                 </div>
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="text" style="-webkit-text-security: disc;" id="login-sandi" class="form-control" placeholder="Masukkan password..." autocomplete="new-password" required>
+                    <input type="text" style="-webkit-text-security: disc;" id="login-sandi" class="form-control" placeholder="Masukkan password..." autocomplete="new-password" required onkeydown="if(event.key==='Enter') { event.preventDefault(); window.handleLoginSubmit(event); }">
                 </div>
                 <div id="login-error" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 10px; display: none;"></div>
-                <button type="submit" id="btn-login-submit" class="btn btn-primary btn-block">Masuk <i class="fa-solid fa-arrow-right"></i></button>
+                <button type="button" id="btn-login-submit" onclick="window.handleLoginSubmit(event)" class="btn btn-primary btn-block">Masuk <i class="fa-solid fa-arrow-right"></i></button>
                 <div style="text-align: center; margin-top: 15px;">
                     <a href="javascript:void(0)" onclick="document.getElementById('cp-old').value = document.getElementById('login-sandi').value; document.getElementById('cp-hidden-username').value = document.getElementById('login-username').value; document.getElementById('modal-change-password').style.display='flex'" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-key"></i> Ganti Password</a>
                 </div>
@@ -221,7 +250,7 @@
     </script>
     
     <!-- Custom JS -->
-    <script src="app.js?v=20260902_1840"></script>
-    <script src="mill_modules.js?v=20260902_1840"></script>
+    <script src="app.js?v=20260902_1928"></script>
+    <script src="mill_modules.js?v=20260902_1928"></script>
 </body>
 </html>
