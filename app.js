@@ -6408,16 +6408,24 @@ const bindForms = () => {
             realizedWorkers: parseInt(document.getElementById('pr-input-workers').value) || 0
         };
         try {
-            await fetch(`${API_URL}/pemupukan/${id}/add`, {
+            const res = await fetch(`${API_URL}/pemupukan/${id}/add`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                alert('Gagal menyimpan realisasi pemupukan: ' + (errData.error || 'Server error'));
+                return;
+            }
             formPemupukanRealization.reset();
             const modal = document.getElementById('modal-pemupukan-realization');
             if (modal) modal.style.display = 'none';
             await loadData();
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            console.error(e);
+            alert('Terjadi kesalahan jaringan saat menyimpan.');
+        }
     };
     
     const formHarvestingMonthly = document.getElementById('form-harvesting-monthly');
