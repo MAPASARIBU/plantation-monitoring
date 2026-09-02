@@ -998,17 +998,31 @@ app.delete('/api/harvesting/daily/:id', async (req, res) => {
 app.put('/api/harvesting/daily/:id/realization', async (req, res) => {
     try {
         const { realized_janjang, realized_pemanen, realized_kg, realized_ha, status, ritase_list } = req.body;
-        const newStatus = status || 'In Progress';
         const targetId = parseInt(req.params.id) || req.params.id;
+        
+        // Fetch current row so we never overwrite existing realization values with 0 if omitted
+        const curRes = await pool.query('SELECT * FROM harvesting_daily WHERE id = $1', [targetId]);
+        if (curRes.rows.length === 0) {
+            return res.status(404).json({ error: 'Harvesting daily row not found' });
+        }
+        const cur = curRes.rows[0];
+
+        const newJanjang = realized_janjang !== undefined ? parseFloat(realized_janjang) || 0 : (parseFloat(cur.realized_janjang) || 0);
+        const newPemanen = realized_pemanen !== undefined ? parseInt(realized_pemanen) || 0 : (parseInt(cur.realized_pemanen) || 0);
+        const newKg = realized_kg !== undefined ? parseFloat(realized_kg) || 0 : (parseFloat(cur.realized_kg) || 0);
+        const newHa = realized_ha !== undefined ? parseFloat(realized_ha) || 0 : (parseFloat(cur.realized_ha) || 0);
+        const newStatus = status || cur.status || 'In Progress';
+        const newRitase = ritase_list !== undefined ? ritase_list : (cur.ritase_list || '[]');
+
         await pool.query(
-            'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, realized_ha = $4, status = $5, ritase_list = COALESCE($6, ritase_list) WHERE id = $7',
+            'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, realized_ha = $4, status = $5, ritase_list = $6 WHERE id = $7',
             [
-                parseFloat(realized_janjang) || 0,
-                parseInt(realized_pemanen) || 0,
-                parseFloat(realized_kg) || 0,
-                parseFloat(realized_ha) || 0,
+                newJanjang,
+                newPemanen,
+                newKg,
+                newHa,
                 newStatus,
-                ritase_list || '[]',
+                newRitase,
                 targetId
             ]
         );
