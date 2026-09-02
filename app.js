@@ -355,7 +355,9 @@ const getProgressStr = (realized, target) => {
 };
 
 // Views Templates
-const views = {
+window.views = window.views || {};
+const views = window.views;
+Object.assign(views, {
     dashboard: `
         <div class="animate-fade-in">
             <div class="dashboard-grid">
@@ -2685,8 +2687,7 @@ const views = {
             </div>
         </div>
     `
-};
-window.views = views;
+});
 
 // Render Functions
 const renderVehicleTable = () => {
@@ -6083,7 +6084,8 @@ const navigate = (viewId) => {
     title.innerText = currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)'
         ? `${baseTitle} - ${currentUser.estate}`
         : baseTitle;
-    container.innerHTML = views[viewId] || views.dashboard;
+    const activeViews = window.views || views;
+    container.innerHTML = activeViews[viewId] || activeViews.dashboard;
     populateSelects();
     
     if(viewId === 'dashboard') {
