@@ -1,4 +1,6 @@
 // --- MILL MODULES (Processing, Water, FFB Quality, Dashboard) ---
+if (!window.views) window.views = {};
+var views = window.views;
 
 // 1. PROCESSING VIEW
 views.processing = `

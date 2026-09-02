@@ -139,14 +139,44 @@ const checkAuth = () => {
     }
 };
 
+window.handleLoginSubmit = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-sandi').value.trim();
+    const estateEl = document.getElementById('login-estate');
+    const estate = estateEl ? estateEl.value : null;
+    login(username, password, estate);
+    return false;
+};
+
 const login = async (username, password, estate) => {
     const errorEl = document.getElementById('login-error');
+    const submitBtn = document.getElementById('btn-login-submit') || document.querySelector('#login-form button[type="submit"]');
+    
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses Masuk...';
+    }
+
+    const resetBtn = () => {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Masuk <i class="fa-solid fa-arrow-right"></i>';
+        }
+    };
+
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+
         const res = await fetch(`${API_URL}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password }),
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
+
         const result = await res.json();
         
         if (result.success) {
@@ -163,6 +193,7 @@ const login = async (username, password, estate) => {
             if (dbUser.role !== 'Admin' && dbUser.estate !== '-' && dbUser.estate !== 'Semua Estate (Khusus Admin)' && !assignedEstates.includes(estate)) {
                 errorEl.innerText = `Akses ditolak! Anda tidak diizinkan masuk ke ${estate}. Anda terdaftar di: ${dbUser.estate}`;
                 errorEl.style.display = 'block';
+                resetBtn();
                 return;
             }
             
@@ -173,14 +204,22 @@ const login = async (username, password, estate) => {
             if (estate) currentUser.estate = estate;
             localStorage.setItem('agrimonitor_user', JSON.stringify(currentUser));
             document.getElementById('login-form').reset();
+            resetBtn();
             checkAuth();
         } else {
-            errorEl.innerText = result.error || result.message || 'Gagal login';
+            errorEl.innerText = result.error || result.message || 'Username atau Password salah.';
             errorEl.style.display = 'block';
+            resetBtn();
         }
     } catch (e) {
-        errorEl.innerText = "Gagal terhubung ke server.";
+        console.error("Login error:", e);
+        if (e.name === 'AbortError') {
+            errorEl.innerText = "Koneksi timeout. Silakan periksa jaringan dan coba lagi.";
+        } else {
+            errorEl.innerText = "Gagal terhubung ke server backend.";
+        }
         errorEl.style.display = 'block';
+        resetBtn();
     }
 };
 
@@ -2618,6 +2657,7 @@ const views = {
         </div>
     `
 };
+window.views = views;
 
 // Render Functions
 const renderVehicleTable = () => {

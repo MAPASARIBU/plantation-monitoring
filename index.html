@@ -28,7 +28,7 @@
                 <h2>AgriMonitor</h2>
                 <h3 style="font-size: 1rem; color: #1f2937; margin: 10px 0 5px; text-transform: uppercase;">PT Tolan Tiga - Region Bengkulu</h3>
             </div>
-            <form id="login-form" autocomplete="off">
+            <form id="login-form" autocomplete="off" onsubmit="return window.handleLoginSubmit(event)">
                 <div class="form-group" style="display: flex; gap: 10px;">
                     <select id="login-location-type" class="form-control" style="text-align: center; font-weight: bold; flex: 1;" onchange="updateLocationList()">
                         <option value="Estate" selected>ESTATE</option>
@@ -59,7 +59,7 @@
                     <input type="text" style="-webkit-text-security: disc;" id="login-sandi" class="form-control" placeholder="Masukkan password..." autocomplete="new-password" required>
                 </div>
                 <div id="login-error" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 10px; display: none;"></div>
-                <button type="submit" class="btn btn-primary btn-block">Masuk <i class="fa-solid fa-arrow-right"></i></button>
+                <button type="submit" id="btn-login-submit" class="btn btn-primary btn-block">Masuk <i class="fa-solid fa-arrow-right"></i></button>
                 <div style="text-align: center; margin-top: 15px;">
                     <a href="javascript:void(0)" onclick="document.getElementById('cp-old').value = document.getElementById('login-sandi').value; document.getElementById('cp-hidden-username').value = document.getElementById('login-username').value; document.getElementById('modal-change-password').style.display='flex'" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-key"></i> Ganti Password</a>
                 </div>
