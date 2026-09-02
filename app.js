@@ -1,5 +1,6 @@
 // API Base URL
 const API_URL = window.location.protocol === 'file:' ? 'http://localhost:3006/api' : '/api';
+window.API_URL = API_URL;
 
 window.updateLocationList = function() {
     const locationTypeEl = document.getElementById('login-location-type');
@@ -3976,6 +3977,34 @@ window.deleteHarvestingDaily = async (id) => {
             console.error(err);
             alert('Terjadi kesalahan saat menghapus data.');
         }
+    }
+};
+
+
+window.publishHarvesting = async function(id) {
+    try {
+        const res = await fetch(`${API_URL}/harvesting/daily/${id}/realization`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'In Progress' })
+        });
+        if (res.ok) await loadData();
+    } catch (e) {
+        console.error(e);
+    }
+};
+
+window.closeHarvesting = async function(id) {
+    if (!confirm('Tutup blok pekerjaan panen ini?')) return;
+    try {
+        const res = await fetch(`${API_URL}/harvesting/daily/${id}/realization`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'Closed' })
+        });
+        if (res.ok) await loadData();
+    } catch (e) {
+        console.error(e);
     }
 };
 

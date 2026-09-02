@@ -1,6 +1,9 @@
 // --- MILL MODULES (Processing, Water, FFB Quality, Dashboard) ---
+window.API_URL = window.API_URL || (window.location.protocol === 'file:' ? 'http://localhost:3006/api' : '/api');
+var API_URL = window.API_URL;
 if (!window.views) window.views = {};
 var views = window.views;
+
 
 // 1. PROCESSING VIEW
 views.processing = `
@@ -991,6 +994,27 @@ views.water = `
     </div>
 </div>
 `;
+
+
+window.openWaterModal = function() {
+    const wDate = document.getElementById('w-date');
+    const curDate = (wDate && wDate.value) ? wDate.value : window.getLocalDate();
+    const sebDate = document.getElementById('w_sebelum_date');
+    if (sebDate) sebDate.value = curDate;
+    if (typeof window.loadSebelumDataByDate === 'function') window.loadSebelumDataByDate();
+    const modal = document.getElementById('modal-water-sebelum');
+    if (modal) modal.style.display = 'flex';
+};
+
+window.openBoilerModal = function() {
+    const wDate = document.getElementById('w-date');
+    const curDate = (wDate && wDate.value) ? wDate.value : window.getLocalDate();
+    const bDate = document.getElementById('w_boiler_date');
+    if (bDate) bDate.value = curDate;
+    if (typeof window.fetchBoilerHourlyByDate === 'function') window.fetchBoilerHourlyByDate();
+    const modal = document.getElementById('modal-water-boiler');
+    if (modal) modal.style.display = 'flex';
+};
 
 window.renderWaterView = function() {
     if (!document.getElementById('w-date').value) {
