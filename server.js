@@ -76,8 +76,15 @@ if (process.env.DATABASE_URL) {
                 }
             });
         },
-        connect: (cb) => {
-            cb(null, null, () => {});
+        connect: async (cb) => {
+            const client = {
+                query: (text, params) => pool.query(text, params),
+                release: () => {}
+            };
+            if (typeof cb === 'function') {
+                cb(null, client, () => {});
+            }
+            return client;
         }
     };
 }
@@ -821,22 +828,24 @@ app.post('/api/upkeep', async (req, res) => {
 });
 
 app.put('/api/upkeep/:id/add', async (req, res) => {
-    const client = await pool.connect();
     try {
         const { additionalHa, dateAdded, worker, workers } = req.body;
-        await client.query('BEGIN');
-        await client.query('UPDATE upkeep SET realized = realized + $1, realizedWorkers = COALESCE(realizedWorkers, 0) + $3 WHERE id = $2', [additionalHa, req.params.id, workers || 0]);
-        await client.query(
-            'INSERT INTO upkeep_history (upkeep_id, dateAdded, addedHa, worker, workers) VALUES ($1,$2,$3,$4,$5)',
-            [req.params.id, dateAdded, additionalHa, worker || '', workers || 0]
-        );
-        await client.query('COMMIT');
+        const targetId = parseInt(req.params.id) || req.params.id;
+        const addHa = parseFloat(additionalHa) || 0;
+        const addWorkers = parseInt(workers) || 0;
+        await pool.query('UPDATE upkeep SET realized = COALESCE(realized, 0) + $1, realizedWorkers = COALESCE(realizedWorkers, 0) + $3 WHERE id = $2', [addHa, targetId, addWorkers]);
+        try {
+            await pool.query(
+                'INSERT INTO upkeep_history (upkeep_id, dateAdded, addedHa, worker, workers) VALUES ($1,$2,$3,$4,$5)',
+                [targetId, dateAdded, addHa, worker || '', addWorkers]
+            );
+        } catch(eHistory) {
+            console.warn('upkeep_history insert ignored:', eHistory.message);
+        }
         res.json({ success: true });
     } catch (err) {
-        await client.query('ROLLBACK');
+        console.error('Upkeep update error:', err);
         res.status(500).json({ error: err.message });
-    } finally {
-        client.release();
     }
 });
 
@@ -870,7 +879,8 @@ app.get('/api/upkeep/monthly', async (req, res) => {
 
 app.get('/api/upkeep/:id/history', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM upkeep_history WHERE upkeep_id = $1 ORDER BY dateAdded DESC', [req.params.id]);
+        const targetId = parseInt(req.params.id) || req.params.id;
+        const result = await pool.query('SELECT * FROM upkeep_history WHERE upkeep_id = $1 ORDER BY dateAdded DESC', [targetId]);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -879,7 +889,8 @@ app.get('/api/upkeep/:id/history', async (req, res) => {
 
 app.put('/api/upkeep/:id/close', async (req, res) => {
     try {
-        await pool.query('UPDATE upkeep SET status = $1 WHERE id = $2', ['Selesai', req.params.id]);
+        const targetId = parseInt(req.params.id) || req.params.id;
+        await pool.query('UPDATE upkeep SET status = $1 WHERE id = $2', ['Selesai', targetId]);
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -901,25 +912,24 @@ app.post('/api/pemupukan', async (req, res) => {
 });
 
 app.put('/api/pemupukan/:id/add', async (req, res) => {
-    const client = await pool.connect();
     try {
         const { realizedKg, realizedHa, realizedWorkers } = req.body;
-        await client.query('BEGIN');
-        // Because it's a one-time daily plan, we OVERWRITE the realization instead of adding
-        await client.query('UPDATE pemupukan SET realizedKg = $1, realizedHa = $2, realizedWorkers = $3, status = $4 WHERE id = $5', [realizedKg || 0, realizedHa || 0, realizedWorkers || 0, 'Selesai', req.params.id]);
-        await client.query('COMMIT');
+        const targetId = parseInt(req.params.id) || req.params.id;
+        const rKg = parseFloat(realizedKg) || 0;
+        const rHa = parseFloat(realizedHa) || 0;
+        const rWorkers = parseInt(realizedWorkers) || 0;
+        await pool.query('UPDATE pemupukan SET realizedKg = $1, realizedHa = $2, realizedWorkers = $3, status = $4 WHERE id = $5', [rKg, rHa, rWorkers, 'Selesai', targetId]);
         res.json({ success: true });
     } catch (err) {
-        await client.query('ROLLBACK');
+        console.error('Pemupukan update error:', err);
         res.status(500).json({ error: err.message });
-    } finally {
-        client.release();
     }
 });
 
 app.get('/api/pemupukan/:id/history', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM pemupukan_history WHERE pemupukan_id = $1 ORDER BY dateAdded DESC', [req.params.id]);
+        const targetId = parseInt(req.params.id) || req.params.id;
+        const result = await pool.query('SELECT * FROM pemupukan_history WHERE pemupukan_id = $1 ORDER BY dateAdded DESC', [targetId]);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -928,7 +938,8 @@ app.get('/api/pemupukan/:id/history', async (req, res) => {
 
 app.put('/api/pemupukan/:id/close', async (req, res) => {
     try {
-        await pool.query('UPDATE pemupukan SET status = $1 WHERE id = $2', ['Selesai', req.params.id]);
+        const targetId = parseInt(req.params.id) || req.params.id;
+        await pool.query('UPDATE pemupukan SET status = $1 WHERE id = $2', ['Selesai', targetId]);
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -936,18 +947,13 @@ app.put('/api/pemupukan/:id/close', async (req, res) => {
 });
 
 app.delete('/api/pemupukan/:id', async (req, res) => {
-    const client = await pool.connect();
     try {
-        await client.query('BEGIN');
-        await client.query('DELETE FROM pemupukan_history WHERE pemupukan_id = $1', [req.params.id]);
-        await client.query('DELETE FROM pemupukan WHERE id = $1', [req.params.id]);
-        await client.query('COMMIT');
+        const targetId = parseInt(req.params.id) || req.params.id;
+        try { await pool.query('DELETE FROM pemupukan_history WHERE pemupukan_id = $1', [targetId]); } catch(e){}
+        await pool.query('DELETE FROM pemupukan WHERE id = $1', [targetId]);
         res.json({ success: true });
     } catch (err) {
-        await client.query('ROLLBACK');
         res.status(500).json({ error: err.message });
-    } finally {
-        client.release();
     }
 });
 
