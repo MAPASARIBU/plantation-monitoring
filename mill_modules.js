@@ -1,8 +1,9 @@
 // --- MILL MODULES (Processing, Water, FFB Quality, Dashboard) ---
 window.API_URL = window.API_URL || (window.location.protocol === 'file:' ? 'http://localhost:3006/api' : '/api');
-var API_URL = window.API_URL;
+// API_URL used from global or window
+window.API_URL = window.API_URL || (window.location.protocol === 'file:' ? 'http://localhost:3006/api' : '/api');
 if (!window.views) window.views = {};
-var views = window.views;
+window.views = window.views || (typeof views !== 'undefined' ? views : {});
 
 
 // 1. PROCESSING VIEW
@@ -1291,13 +1292,13 @@ window.saveWaterData = async function(type) {
 views.ffb_quality = `
 <!-- Sub-Sheet Navigation Tabs -->
 <div class="subsheet-tab-bar">
-    <button class="subsheet-tab-btn active" id="tab-btn-loose" onclick="switchFFBSubTab('loose')">
+    <button class="subsheet-tab-btn active" id="tab-btn-ffb-loose" onclick="switchFFBSubTab('loose')">
         <i class="fa-solid fa-seedling"></i> FFB Quality Fruit Loose Analysis
     </button>
-    <button class="subsheet-tab-btn" id="tab-btn-crop" onclick="switchFFBSubTab('crop')">
+    <button class="subsheet-tab-btn" id="tab-btn-ffb-crop" onclick="switchFFBSubTab('crop')">
         <i class="fa-solid fa-wheat-awn"></i> Daily FFB Crop Quality
     </button>
-    <button class="subsheet-tab-btn" id="tab-btn-monthly" onclick="switchFFBSubTab('monthly')">
+    <button class="subsheet-tab-btn" id="tab-btn-ffb-monthly" onclick="switchFFBSubTab('monthly')">
         <i class="fa-solid fa-calendar-check"></i> Summary Monthly Grading
     </button>
 </div>
@@ -1779,19 +1780,22 @@ window.activeFFBSubTab = 'loose';
 window.switchFFBSubTab = function(tabId) {
     window.activeFFBSubTab = tabId;
     
+    // Deactivate all
     document.querySelectorAll('.subsheet-tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.subsheet-content').forEach(c => {
         c.classList.remove('active');
         c.style.display = 'none';
     });
     
-    const activeBtn = document.getElementById(`tab-btn-${tabId}`);
-    if (activeBtn) activeBtn.classList.add('active');
+    // Activate target button
+    const btn = document.getElementById('tab-btn-ffb-' + tabId) || document.getElementById('tab-btn-' + tabId);
+    if (btn) btn.classList.add('active');
     
-    const activeContent = document.getElementById(`ffb-subsheet-${tabId}`);
-    if (activeContent) {
-        activeContent.classList.add('active');
-        activeContent.style.display = 'block';
+    // Activate target content
+    const content = document.getElementById('ffb-subsheet-' + tabId);
+    if (content) {
+        content.classList.add('active');
+        content.style.display = 'block';
     }
     
     try {
