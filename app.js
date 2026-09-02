@@ -666,7 +666,7 @@ const views = {
             
 `,
     vehicle: `
-        <div id="vehicle-module-layout" class="animate-fade-in" style="padding-top: 10px;">
+        <div id="vehicle-module-layout" class="animate-fade-in module-layout" style="grid-template-columns: 1fr; padding-top: 10px;">
             <div id="modal-vehicle-input" class="modal-overlay" style="display:none;"><div class="modal-content animate-fade-in"><div class="modal-header"><h3>Input Pergerakan</h3><button type="button" class="modal-close" onclick="document.getElementById('modal-vehicle-input').style.display='none';">&times;</button></div>
                 <h2>Input Pergerakan</h2>
                 <form id="form-vehicle" style="margin-top: 20px;">
@@ -700,38 +700,203 @@ const views = {
                 </form>
             </div>
         </div>
-            <div class="glass-card table-wrapper" style="width: 100%;">
-                <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
-                    <h2>Tabel Monitoring Truk</h2>
-                    <div style="display:flex; gap: 10px;">
-                        <button type="button" class="btn btn-primary" id="btn-input-vehicle" onclick="document.getElementById('modal-vehicle-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Vehicle Motion Input</button>
-                        <button type="button" class="btn" style="background-color: white; color: var(--text-primary); border: 2px solid var(--danger); font-weight: bold; padding: 6px 15px;" onclick="promptHistoricalVehicle()">Historical</button>
+
+            <!-- Sub-Sheet Navigation Tabs -->
+            <div class="subsheet-tab-bar">
+                <button class="subsheet-tab-btn active" id="tab-btn-vehicle-monitor" onclick="switchVehicleSubTab('monitor')">
+                    <i class="fa-solid fa-truck-fast"></i> Monitoring Trip Kendaraan
+                </button>
+                <button class="subsheet-tab-btn" id="tab-btn-vehicle-analytics" onclick="switchVehicleSubTab('analytics')">
+                    <i class="fa-solid fa-chart-line"></i> Analisa & Efisiensi Armada
+                </button>
+            </div>
+
+            <!-- 1. SUB-SHEET: MONITORING LIVE PERGERAKAN -->
+            <div id="vehicle-subsheet-monitor" class="subsheet-content active">
+                <div class="glass-card table-wrapper" style="width: 100%;">
+                    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2>Tabel Monitoring Truk</h2>
+                        <div style="display:flex; gap: 10px;">
+                            <button type="button" class="btn btn-primary" id="btn-input-vehicle" onclick="document.getElementById('modal-vehicle-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Vehicle Motion Input</button>
+                            <button type="button" class="btn" style="background-color: white; color: var(--text-primary); border: 2px solid var(--danger); font-weight: bold; padding: 6px 15px;" onclick="promptHistoricalVehicle()">Historical</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Plate Truk</th>
+                                    <th>Asal Estate</th>
+                                    <th>Divisi</th>
+                                    <th>Ritase</th>
+                                    <th>Blok</th>
+                                    <th>Janjang</th>
+                                    <th>Berangkat</th>
+                                    <th>Tiba PKS</th>
+                                    <th>Durasi</th>
+                                    <th>Aksi (PKS)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-vehicle"></tbody>
+                        </table>
                     </div>
                 </div>
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Plate Truk</th>
-                                <th>Asal Estate</th>
-                                <th>Divisi</th>
-                                <th>Ritase</th>
-                                <th>Blok</th>
-                                <th>Janjang</th>
-                                <th>Berangkat</th>
-                                <th>Tiba PKS</th>
-                                <th>Durasi</th>
-                                <th>Aksi (PKS)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-vehicle"></tbody>
-                    </table>
+            </div>
+
+            <!-- 2. SUB-SHEET: ANALYTICS & FLEET EFFICIENCY -->
+            <div id="vehicle-subsheet-analytics" class="subsheet-content">
+                <div class="grading-filter-bar">
+                    <div class="grading-filter-group">
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;"><i class="fa-solid fa-calendar-day"></i> Tanggal Analisis</label>
+                            <input type="date" id="vanal-date" class="form-control" style="font-weight: 600; min-width: 150px;" onchange="window.loadVehicleAnalyticsData()">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;"><i class="fa-solid fa-layer-group"></i> Ruang Lingkup</label>
+                            <select id="vanal-scope" class="form-control" style="font-weight: 600; min-width: 160px;" onchange="window.loadVehicleAnalyticsData()">
+                                <option value="daily" selected>Harian (Tanggal Terpilih)</option>
+                                <option value="mtd">MTD (Bulan Berjalan)</option>
+                                <option value="all">Semua Historis</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="window.loadVehicleAnalyticsData()"><i class="fa-solid fa-rotate"></i> Refresh Analisis</button>
+                        <button class="btn btn-secondary" onclick="window.printVehicleAnalytics()"><i class="fa-solid fa-print"></i> Cetak Laporan</button>
+                        <button class="btn btn-success" onclick="window.exportVehicleAnalyticsCSV()"><i class="fa-solid fa-file-excel"></i> Export CSV</button>
+                    </div>
+                </div>
+
+                <!-- Executive KPI Cards -->
+                <div class="grading-kpi-grid">
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon blue">
+                            <i class="fa-solid fa-truck-moving"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Total Ritase & Armada</h4>
+                            <div class="kpi-val" id="vanal-kpi-trips">0 Trip</div>
+                            <div class="kpi-sub" id="vanal-kpi-trucks">0 Truk Beroperasi Aktif</div>
+                        </div>
+                    </div>
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon green">
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Total Janjang Terangkut</h4>
+                            <div class="kpi-val" id="vanal-kpi-janjang">0 JJG</div>
+                            <div class="kpi-sub" id="vanal-kpi-avg-jjg">Rata-rata 0 JJG / Trip</div>
+                        </div>
+                    </div>
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon yellow">
+                            <i class="fa-solid fa-stopwatch"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Rata-rata Lead Time ke PKS</h4>
+                            <div class="kpi-val" id="vanal-kpi-duration">0 Menit</div>
+                            <div class="kpi-sub" id="vanal-kpi-fastest-slowest">Tercepat: - | Terlama: -</div>
+                        </div>
+                    </div>
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon green">
+                            <i class="fa-solid fa-weight-hanging"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Estimasi Tonase Angkut</h4>
+                            <div class="kpi-val" id="vanal-kpi-tonase">0.00 Ton</div>
+                            <div class="kpi-sub" id="vanal-kpi-turnaround">Rata-rata Ritase: 0.0 Rit/Truk</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabel 1: Rekapitulasi Kinerja Armada per Truk & Supir -->
+                <div class="glass-card" style="overflow-x: auto; margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3 style="margin: 0;"><i class="fa-solid fa-truck-ramp-box"></i> 1. Rekapitulasi Kinerja & Efisiensi Armada (Fleet Performance)</h3>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);">Analisis produktivitas janjang, ritase, dan durasi pengiriman per kendaraan.</span>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="vanal-truck-table" style="font-size: 0.8rem; width: 100%; text-align: center;">
+                            <thead>
+                                <tr style="background-color: #1e293b; color: white;">
+                                    <th style="width: 35px;">NO</th>
+                                    <th style="text-align: left; min-width: 120px;">PLATE TRUK</th>
+                                    <th style="text-align: left; min-width: 130px;">NAMA SUPIR</th>
+                                    <th>ASAL ESTATE</th>
+                                    <th>DIVISI</th>
+                                    <th style="background-color: #0284c7; color: white;">TOTAL RITASE</th>
+                                    <th style="background-color: #059669; color: white;">TOTAL JANJANG</th>
+                                    <th style="background-color: #6366f1; color: white;">RATA-RATA JJG/TRIP</th>
+                                    <th style="background-color: #d97706; color: white;">RATA-RATA DURASI</th>
+                                    <th>TRIP PERTAMA</th>
+                                    <th>TRIP TERAKHIR</th>
+                                    <th>STATUS UTILISASI</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot></tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Grid: Tabel 2 (Logistics Rhythm per Blok) & Charts -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                    <!-- Tabel 2 -->
+                    <div class="glass-card" style="overflow-x: auto;">
+                        <h3 style="margin-top: 0; margin-bottom: 8px;"><i class="fa-solid fa-map-location-dot"></i> 2. Analisis Lead Time per Divisi & Blok</h3>
+                        <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 12px;">Evaluasi kelancaran jalur logistik pengangkutan TBS dari blok ke pabrik.</span>
+                        <div class="table-responsive">
+                            <table class="data-table" id="vanal-block-table" style="font-size: 0.8rem; width: 100%; text-align: center;">
+                                <thead>
+                                    <tr style="background-color: #1e293b; color: white;">
+                                        <th>DIVISI / BLOK</th>
+                                        <th>TRIP</th>
+                                        <th>JANJANG</th>
+                                        <th>TERCEPAT</th>
+                                        <th>TERLAMA</th>
+                                        <th>RATA-RATA</th>
+                                        <th>EVALUASI JALUR</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                                <tfoot></tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Chart 1 -->
+                    <div class="glass-card">
+                        <h3 style="margin-top: 0; margin-bottom: 8px;"><i class="fa-solid fa-chart-column"></i> Produktivitas Janjang per Kendaraan</h3>
+                        <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 12px;">Perbandingan total janjang yang berhasil diangkut oleh masing-masing truk.</span>
+                        <div style="position: relative; height: 320px; width: 100%;">
+                            <canvas id="chart-vanal-productivity"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Ritme Waktu Kedatangan di PKS -->
+                <div class="glass-card" style="margin-bottom: 24px;">
+                    <h3 style="margin-top: 0; margin-bottom: 8px;"><i class="fa-solid fa-clock-rotate-left"></i> Sebaran Waktu Tiba di PKS & Durasi Perjalanan</h3>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 12px;">Pola jam kedatangan armada di pos security / timbangan PKS vs waktu tempuh dari blok.</span>
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="chart-vanal-timeline"></canvas>
+                    </div>
+                </div>
+
+                <!-- Smart Diagnostic Recommendations -->
+                <div class="grading-insight-box">
+                    <h4><i class="fa-solid fa-lightbulb" style="color: #f59e0b;"></i> Smart Operational Diagnostic & Recommendations</h4>
+                    <ul id="vanal-insights-list"></ul>
                 </div>
             </div>
         </div>
     `,
     upkeep: `
-        <div class="animate-fade-in" style="padding-top: 10px;">
+        <div id="upkeep-module-layout" class="animate-fade-in module-layout" style="grid-template-columns: 1fr; padding-top: 10px;">
             <div id="modal-upkeep-input" class="modal-overlay" style="display:none;">
                 <div class="modal-content animate-fade-in">
                     <div class="modal-header">
@@ -780,38 +945,206 @@ const views = {
                     </form>
                 </div>
             </div>
-            <div class="glass-card table-wrapper" style="width: 100%;">
-                <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
-                    <h2>Progress Upkeep Harian</h2>
-                    <div style="display:flex; gap: 10px;">
-                        <button type="button" class="btn btn-primary" id="btn-input-upkeep" onclick="document.getElementById('u-date').value = window.getLocalDate(); document.getElementById('modal-upkeep-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Input Upkeep</button>
-                        <button type="button" class="btn btn-primary btn-sm" onclick="openUpkeepMonthlyRealization()"><i class="fa-solid fa-chart-pie"></i> Realisasi Bulanan</button>
+
+            <!-- Sub-Sheet Navigation Tabs -->
+            <div class="subsheet-tab-bar">
+                <button class="subsheet-tab-btn active" id="tab-btn-upkeep-monitor" onclick="switchUpkeepSubTab('monitor')">
+                    <i class="fa-solid fa-list-check"></i> Progress Upkeep Harian
+                </button>
+                <button class="subsheet-tab-btn" id="tab-btn-upkeep-analytics" onclick="switchUpkeepSubTab('analytics')">
+                    <i class="fa-solid fa-chart-simple"></i> Analisa Produktivitas & Kinerja Upkeep
+                </button>
+            </div>
+
+            <!-- 1. SUB-SHEET: PROGRESS UPKEEP HARIAN -->
+            <div id="upkeep-subsheet-monitor" class="subsheet-content active">
+                <div class="glass-card table-wrapper" style="width: 100%;">
+                    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2>Progress Upkeep Harian</h2>
+                        <div style="display:flex; gap: 10px;">
+                            <button type="button" class="btn btn-primary" id="btn-input-upkeep" onclick="document.getElementById('u-date').value = window.getLocalDate(); document.getElementById('modal-upkeep-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Input Upkeep</button>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="openUpkeepMonthlyRealization()"><i class="fa-solid fa-chart-pie"></i> Realisasi Bulanan</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Blok</th>
+                                    <th>Tanggal Mulai</th>
+                                    <th>Estate</th>
+                                    <th>Divisi</th>
+                                    <th>Pekerjaan</th>
+                                    <th>Target (Ha)</th>
+                                    <th>Target HK</th>
+                                    <th>Realisasi (Ha)</th>
+                                    <th>Realisasi Prestasi (Ha/HK)</th>
+                                    <th style="text-align:center;">Aksi / Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-upkeep"></tbody>
+                        </table>
                     </div>
                 </div>
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Blok</th>
-                                <th>Tanggal Mulai</th>
-                                <th>Estate</th>
-                                <th>Divisi</th>
-                                <th>Pekerjaan</th>
-                                <th>Target (Ha)</th>
-                                <th>Target HK</th>
-                                <th>Realisasi (Ha)</th>
-                                <th>Realisasi Prestasi (Ha/HK)</th>
-                                <th style="text-align:center;">Aksi / Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-upkeep"></tbody>
-                    </table>
+            </div>
+
+            <!-- 2. SUB-SHEET: ANALYTICS UPKEEP -->
+            <div id="upkeep-subsheet-analytics" class="subsheet-content">
+                <div class="grading-filter-bar">
+                    <div class="grading-filter-group">
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;"><i class="fa-solid fa-calendar-day"></i> Periode Analisis</label>
+                            <input type="date" id="uanal-date" class="form-control" style="font-weight: 600; min-width: 150px;" onchange="window.loadUpkeepAnalyticsData()">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;"><i class="fa-solid fa-layer-group"></i> Ruang Lingkup</label>
+                            <select id="uanal-scope" class="form-control" style="font-weight: 600; min-width: 160px;" onchange="window.loadUpkeepAnalyticsData()">
+                                <option value="all" selected>Semua Data (Total Historis)</option>
+                                <option value="mtd">MTD (Bulan Berjalan)</option>
+                                <option value="daily">Harian (Tanggal Saja)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;"><i class="fa-solid fa-filter"></i> Filter Pekerjaan</label>
+                            <select id="uanal-type-filter" class="form-control" style="font-weight: 600; min-width: 150px;" onchange="window.processAndRenderUpkeepAnalytics()">
+                                <option value="ALL">Semua Jenis Pekerjaan</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="window.loadUpkeepAnalyticsData()"><i class="fa-solid fa-rotate"></i> Refresh Analisis</button>
+                        <button class="btn btn-secondary" onclick="window.printUpkeepAnalytics()"><i class="fa-solid fa-print"></i> Cetak Laporan</button>
+                        <button class="btn btn-success" onclick="window.exportUpkeepAnalyticsCSV()"><i class="fa-solid fa-file-excel"></i> Export CSV</button>
+                    </div>
+                </div>
+
+                <!-- Executive KPI Cards -->
+                <div class="grading-kpi-grid">
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon green">
+                            <i class="fa-solid fa-map"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Total Luas Rawat (Ha)</h4>
+                            <div class="kpi-val" id="uanal-kpi-area">0.00 Ha</div>
+                            <div class="kpi-sub" id="uanal-kpi-area-sub">Target: 0.00 Ha (0%)</div>
+                        </div>
+                    </div>
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon blue">
+                            <i class="fa-solid fa-person-digging"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Tenaga Kerja Terpakai</h4>
+                            <div class="kpi-val" id="uanal-kpi-hk">0 HK</div>
+                            <div class="kpi-sub" id="uanal-kpi-hk-sub">Total Alokasi Pekerja</div>
+                        </div>
+                    </div>
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon yellow">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Rata-rata Prestasi Upkeep</h4>
+                            <div class="kpi-val" id="uanal-kpi-prestasi">0.00 Ha/HK</div>
+                            <div class="kpi-sub" id="uanal-kpi-prestasi-sub">Norma: 0.50 - 1.50 Ha/HK</div>
+                        </div>
+                    </div>
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon green">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Pekerjaan Paling Dominan</h4>
+                            <div class="kpi-val" id="uanal-kpi-dominant">-</div>
+                            <div class="kpi-sub" id="uanal-kpi-dominant-sub">0.00 Ha (0%)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabel 1: Rekapitulasi per Jenis Pekerjaan Upkeep -->
+                <div class="glass-card" style="overflow-x: auto; margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3 style="margin: 0;"><i class="fa-solid fa-table-list"></i> 1. Rekapitulasi Capaian & Prestasi per Jenis Pekerjaan Rawat Kebun</h3>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);">Komparasi target vs realisasi luas, penggunaan tenaga kerja HK, dan efisiensi prestasi kerja.</span>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="uanal-type-table" style="font-size: 0.8rem; width: 100%; text-align: center;">
+                            <thead>
+                                <tr style="background-color: #1e293b; color: white;">
+                                    <th style="width: 35px;">NO</th>
+                                    <th style="text-align: left; min-width: 140px;">JENIS PEKERJAAN</th>
+                                    <th style="background-color: #0284c7; color: white;">TARGET (HA)</th>
+                                    <th style="background-color: #059669; color: white;">REALISASI (HA)</th>
+                                    <th style="background-color: #0d9488; color: white;">% CAPAIAN</th>
+                                    <th>TOTAL HK</th>
+                                    <th style="background-color: #6366f1; color: white;">PRESTASI (HA/HK)</th>
+                                    <th style="background-color: #d97706; color: white;">EFISIENSI KERJA</th>
+                                    <th>STATUS EVALUASI</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot></tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Grid: Tabel 2 & Charts -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                    <!-- Tabel 2: Evaluasi Mandor & Blok -->
+                    <div class="glass-card" style="overflow-x: auto;">
+                        <h3 style="margin-top: 0; margin-bottom: 8px;"><i class="fa-solid fa-user-check"></i> 2. Evaluasi Produktivitas Mandor & Blok</h3>
+                        <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 12px;">Rincian prestasi pemenuhan target mandor di masing-masing blok divisi.</span>
+                        <div class="table-responsive">
+                            <table class="data-table" id="uanal-block-table" style="font-size: 0.8rem; width: 100%; text-align: center;">
+                                <thead>
+                                    <tr style="background-color: #1e293b; color: white;">
+                                        <th>DIV / BLOK</th>
+                                        <th>PEKERJAAN</th>
+                                        <th>MANDOR</th>
+                                        <th>LUAS (HA)</th>
+                                        <th>HK</th>
+                                        <th>HA/HK</th>
+                                        <th>EVALUASI</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                                <tfoot></tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Chart 1: Capaian Luas per Jenis Pekerjaan -->
+                    <div class="glass-card">
+                        <h3 style="margin-top: 0; margin-bottom: 8px;"><i class="fa-solid fa-chart-column"></i> Capaian Luas Rawat (Ha) per Aktivitas</h3>
+                        <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 12px;">Perbandingan target vs realisasi luas area yang telah diselesaikan.</span>
+                        <div style="position: relative; height: 320px; width: 100%;">
+                            <canvas id="chart-uanal-type"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Komparasi Prestasi Ha/HK -->
+                <div class="glass-card" style="margin-bottom: 24px;">
+                    <h3 style="margin-top: 0; margin-bottom: 8px;"><i class="fa-solid fa-chart-line"></i> Produktivitas Kerja Realisasi vs Standar Norma (Ha/HK)</h3>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 12px;">Analisis efisiensi output per orang pekerja untuk tiap jenis kegiatan rawat.</span>
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="chart-uanal-prestasi"></canvas>
+                    </div>
+                </div>
+
+                <!-- Smart Diagnostic Recommendations -->
+                <div class="grading-insight-box">
+                    <h4><i class="fa-solid fa-lightbulb" style="color: #f59e0b;"></i> Smart Upkeep Diagnostic & Recommendations</h4>
+                    <ul id="uanal-insights-list"></ul>
                 </div>
             </div>
         </div>
     `,
     pemupukan: `
-        <div class="animate-fade-in" style="padding-top: 10px;">
+        <div id="pemupukan-module-layout" class="animate-fade-in module-layout" style="grid-template-columns: 1fr; padding-top: 10px;">
             <div id="modal-pemupukan-input" class="modal-overlay" style="display:none;">
                 <div class="modal-content animate-fade-in">
                     <div class="modal-header">
@@ -918,34 +1251,206 @@ const views = {
                     </form>
                 </div>
             </div>
-            <div class="glass-card table-wrapper" style="width: 100%;">
-                <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
-                    <h2>Monitoring Pemupukan Blok</h2>
-                    <button type="button" class="btn btn-primary" id="btn-input-pemupukan" onclick="document.getElementById('modal-pemupukan-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Input Pemupukan</button>
+
+            <!-- Sub-Sheet Navigation Tabs -->
+            <div class="subsheet-tab-bar">
+                <button class="subsheet-tab-btn active" id="tab-btn-pemupukan-monitor" onclick="switchPemupukanSubTab('monitor')">
+                    <i class="fa-solid fa-seedling"></i> Rencana & Progres Harian
+                </button>
+                <button class="subsheet-tab-btn" id="tab-btn-pemupukan-analytics" onclick="switchPemupukanSubTab('analytics')">
+                    <i class="fa-solid fa-chart-pie"></i> Analisa Kinerja & Dosis Pemupukan
+                </button>
+            </div>
+
+            <!-- 1. SUB-SHEET: MONITORING HARIAN -->
+            <div id="pemupukan-subsheet-monitor" class="subsheet-content active">
+                <div class="glass-card table-wrapper" style="width: 100%;">
+                    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2>Monitoring Pemupukan Blok</h2>
+                        <button type="button" class="btn btn-primary" id="btn-input-pemupukan" onclick="document.getElementById('modal-pemupukan-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Input Pemupukan</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Mulai</th>
+                                    <th>Estate</th>
+                                    <th>DIV</th>
+                                    <th>Blok</th>
+                                    <th>Pupuk</th>
+                                    <th>Target<br><small>(Kg | Ha | Orang)</small></th>
+                                    <th>Realisasi<br><small>(Kg | Ha | Orang)</small></th>
+                                    <th>Progress<br><small>(Kg)</small></th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-pemupukan"></tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Mulai</th>
-                                <th>Estate</th>
-                                <th>DIV</th>
-                                <th>Blok</th>
-                                <th>Pupuk</th>
-                                <th>Target<br><small>(Kg | Ha | Orang)</small></th>
-                                <th>Realisasi<br><small>(Kg | Ha | Orang)</small></th>
-                                <th>Progress<br><small>(Kg)</small></th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-pemupukan"></tbody>
-                    </table>
+            </div>
+
+            <!-- 2. SUB-SHEET: ANALYTICS PEMUPUKAN -->
+            <div id="pemupukan-subsheet-analytics" class="subsheet-content">
+                <div class="grading-filter-bar">
+                    <div class="grading-filter-group">
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;"><i class="fa-solid fa-calendar-day"></i> Periode Analisis</label>
+                            <input type="date" id="panal-date" class="form-control" style="font-weight: 600; min-width: 150px;" onchange="window.loadPemupukanAnalyticsData()">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;"><i class="fa-solid fa-layer-group"></i> Ruang Lingkup</label>
+                            <select id="panal-scope" class="form-control" style="font-weight: 600; min-width: 160px;" onchange="window.loadPemupukanAnalyticsData()">
+                                <option value="all" selected>Semua Data (Total Historis)</option>
+                                <option value="mtd">MTD (Bulan Berjalan)</option>
+                                <option value="daily">Harian (Tanggal Saja)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;"><i class="fa-solid fa-filter"></i> Filter Pupuk</label>
+                            <select id="panal-pupuk-filter" class="form-control" style="font-weight: 600; min-width: 150px;" onchange="window.processAndRenderPemupukanAnalytics()">
+                                <option value="ALL">Semua Jenis Pupuk</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="window.loadPemupukanAnalyticsData()"><i class="fa-solid fa-rotate"></i> Refresh Analisis</button>
+                        <button class="btn btn-secondary" onclick="window.printPemupukanAnalytics()"><i class="fa-solid fa-print"></i> Cetak Laporan</button>
+                        <button class="btn btn-success" onclick="window.exportPemupukanAnalyticsCSV()"><i class="fa-solid fa-file-excel"></i> Export CSV</button>
+                    </div>
+                </div>
+
+                <!-- Executive KPI Cards -->
+                <div class="grading-kpi-grid">
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon green">
+                            <i class="fa-solid fa-vector-square"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Total Area Terpukul (Ha)</h4>
+                            <div class="kpi-val" id="panal-kpi-area">0.00 Ha</div>
+                            <div class="kpi-sub" id="panal-kpi-area-sub">Target Plan: 0.00 Ha (0%)</div>
+                        </div>
+                    </div>
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon blue">
+                            <i class="fa-solid fa-sack-xmark"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Pupuk Diaplikasikan (Kg)</h4>
+                            <div class="kpi-val" id="panal-kpi-pupuk">0 Kg</div>
+                            <div class="kpi-sub" id="panal-kpi-pupuk-sub">Rencana: 0 Kg (0%)</div>
+                        </div>
+                    </div>
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon yellow">
+                            <i class="fa-solid fa-user-gear"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Rata-rata Prestasi Kerja</h4>
+                            <div class="kpi-val" id="panal-kpi-prestasi">0.00 Ha/HK</div>
+                            <div class="kpi-sub" id="panal-kpi-prestasi-sub">Aplikasi: 0.0 Kg / HK</div>
+                        </div>
+                    </div>
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon red">
+                            <i class="fa-solid fa-hourglass-half"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Sisa Defisit Belum Selesai</h4>
+                            <div class="kpi-val" id="panal-kpi-sisa">0.00 Ha</div>
+                            <div class="kpi-sub" id="panal-kpi-sisa-sub">Sisa Pupuk: 0 Kg</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabel 1: Rekapitulasi Capaian Pemupukan per Jenis Pupuk -->
+                <div class="glass-card" style="overflow-x: auto; margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3 style="margin: 0;"><i class="fa-solid fa-layer-group"></i> 1. Rekapitulasi Capaian & Akurasi Dosis Pemupukan per Jenis Pupuk</h3>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);">Evaluasi pemenuhan target luas area, pemakaian kilogram pupuk, dan deviasi dosis rekomendasi.</span>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="panal-pupuk-table" style="font-size: 0.8rem; width: 100%; text-align: center;">
+                            <thead>
+                                <tr style="background-color: #1e293b; color: white;">
+                                    <th style="width: 35px;">NO</th>
+                                    <th style="text-align: left; min-width: 140px;">JENIS PUPUK</th>
+                                    <th style="background-color: #0284c7; color: white;">TARGET (HA)</th>
+                                    <th style="background-color: #059669; color: white;">REALISASI (HA)</th>
+                                    <th style="background-color: #0d9488; color: white;">% AREA</th>
+                                    <th style="background-color: #0284c7; color: white;">TARGET (KG)</th>
+                                    <th style="background-color: #059669; color: white;">REALISASI (KG)</th>
+                                    <th style="background-color: #0d9488; color: white;">% PUPUK</th>
+                                    <th>DOSIS BAKU<br>(KG/PKK)</th>
+                                    <th>DOSIS REAL<br>(KG/PKK)</th>
+                                    <th style="background-color: #d97706; color: white;">DEVIASI DOSIS</th>
+                                    <th>STATUS APLIKASI</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot></tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Grid: Tabel 2 & Charts -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                    <!-- Tabel 2: Evaluasi Mandor & Blok -->
+                    <div class="glass-card" style="overflow-x: auto;">
+                        <h3 style="margin-top: 0; margin-bottom: 8px;"><i class="fa-solid fa-users"></i> 2. Evaluasi Produktivitas Tenaga Kerja per Blok</h3>
+                        <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 12px;">Analisis output harian tenaga kerja pemupukan dan efisiensi mandor di lapangan.</span>
+                        <div class="table-responsive">
+                            <table class="data-table" id="panal-block-table" style="font-size: 0.8rem; width: 100%; text-align: center;">
+                                <thead>
+                                    <tr style="background-color: #1e293b; color: white;">
+                                        <th>DIV / BLOK</th>
+                                        <th>PUPUK</th>
+                                        <th>REAL HA</th>
+                                        <th>REAL KG</th>
+                                        <th>HK</th>
+                                        <th>HA/HK</th>
+                                        <th>KG/HK</th>
+                                        <th>EVALUASI</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                                <tfoot></tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Chart 1: Target vs Realisasi Luas -->
+                    <div class="glass-card">
+                        <h3 style="margin-top: 0; margin-bottom: 8px;"><i class="fa-solid fa-chart-column"></i> Luas Area Target vs Realisasi (Ha)</h3>
+                        <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 12px;">Capaian hektar per jenis pupuk yang telah diaplikasikan di lapangan.</span>
+                        <div style="position: relative; height: 320px; width: 100%;">
+                            <canvas id="chart-panal-area"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Komparasi Tonase Pupuk Terpakai -->
+                <div class="glass-card" style="margin-bottom: 24px;">
+                    <h3 style="margin-top: 0; margin-bottom: 8px;"><i class="fa-solid fa-weight-scale"></i> Pemakaian Pupuk Target vs Realisasi (Kg)</h3>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 12px;">Akurasi penyerapan kilogram pupuk sesuai rekomendasi dosis agronomi.</span>
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="chart-panal-dose"></canvas>
+                    </div>
+                </div>
+
+                <!-- Smart Diagnostic Recommendations -->
+                <div class="grading-insight-box">
+                    <h4><i class="fa-solid fa-lightbulb" style="color: #f59e0b;"></i> Smart Fertilizer Diagnostic & Recommendations</h4>
+                    <ul id="panal-insights-list"></ul>
                 </div>
             </div>
         </div>
     `,
     harvesting: `
-        <div class="animate-fade-in" style="padding-top: 10px;">
+        <div id="harvesting-module-layout" class="animate-fade-in module-layout" style="grid-template-columns: 1fr; padding-top: 10px;">
             <div id="modal-harvesting-monthly-input" class="modal-overlay" style="display:none;">
                 <div class="modal-content animate-fade-in">
                     <div class="modal-header">
@@ -1051,106 +1556,276 @@ const views = {
                     </form>
                 </div>
             </div>
-            
-            <div class="glass-card table-wrapper" style="width: 100%;">
-                <div class="view-header" style="margin-bottom: 5px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-                        <h2>Monitoring Panen Harian</h2>
-                        <div style="display:flex; gap: 10px;">
-                            <button type="button" class="btn btn-primary btn-sm" id="btn-input-hm" onclick="document.getElementById('modal-harvesting-monthly-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Rencana Bulanan</button>
-                            <button type="button" class="btn btn-primary btn-sm" id="btn-input-hd" onclick="document.getElementById('modal-harvesting-daily-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Rencana Harian</button>
-                            <button type="button" class="btn btn-primary btn-sm" onclick="openMonthlyRealization()"><i class="fa-solid fa-chart-pie"></i> Realisasi Bulanan</button>
-                            <button type="button" class="btn btn-primary btn-sm" onclick="printHarvestingDaily()" style="background-color: #64748b; border: none;"><i class="fa-solid fa-print"></i> Print Out</button>
+
+            <!-- Sub-Sheet Navigation Tabs -->
+            <div class="subsheet-tab-bar">
+                <button class="subsheet-tab-btn active" id="tab-btn-harvesting-monitor" onclick="switchHarvestingSubTab('monitor')">
+                    <i class="fa-solid fa-wheat-awn"></i> Monitoring Panen Harian & Rekap
+                </button>
+                <button class="subsheet-tab-btn" id="tab-btn-harvesting-analytics" onclick="switchHarvestingSubTab('analytics')">
+                    <i class="fa-solid fa-chart-column"></i> Analisa Kinerja Panen & Produktivitas
+                </button>
+            </div>
+
+            <!-- 1. SUB-SHEET: MONITORING HARIAN -->
+            <div id="harvesting-subsheet-monitor" class="subsheet-content active">
+                <div class="glass-card table-wrapper" style="width: 100%;">
+                    <div class="view-header" style="margin-bottom: 5px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                            <h2>Monitoring Panen Harian</h2>
+                            <div style="display:flex; gap: 10px;">
+                                <button type="button" class="btn btn-primary btn-sm" id="btn-input-hm" onclick="document.getElementById('modal-harvesting-monthly-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Rencana Bulanan</button>
+                                <button type="button" class="btn btn-primary btn-sm" id="btn-input-hd" onclick="document.getElementById('modal-harvesting-daily-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Rencana Harian</button>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="openMonthlyRealization()"><i class="fa-solid fa-chart-pie"></i> Realisasi Bulanan</button>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="printHarvestingDaily()" style="background-color: #64748b; border: none;"><i class="fa-solid fa-print"></i> Print Out</button>
+                            </div>
+                        </div>
+                    </div>
+                    <h4 id="monitoring-month-year" style="margin-top: 0; margin-bottom: 5px; color: var(--text-secondary); font-weight: 500;"></h4>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 15px;">* Keterangan: Hvr = Harvester</p>
+                    <div class="table-container" style="margin-bottom: 30px;">
+                        <table class="data-table table-compact">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Estate</th>
+                                    <th>Div</th>
+                                    <th>Blok</th>
+                                    <th>Round</th>
+                                    <th>Mandor</th>
+                                    <th>Plan<br>(Jjg)</th>
+                                    <th>Plan<br>(Kg)</th>
+                                    <th>Hvr</th>
+                                    <th>Act<br>(Jjg)</th>
+                                    <th>Act<br>(Hvr)</th>
+                                    <th>Act<br>(Kg)</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-harvesting-daily"></tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="closed-jobs-header" style="display: none; justify-content: space-between; align-items: center; margin-top: 30px; margin-bottom: 10px;">
+                        <h3 style="margin: 0; color: var(--text-primary);"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Closed</h3>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="openPrintClosedHarvestingModal()" style="background-color: #64748b; border: none; padding: 6px 12px; font-size: 0.8rem;"><i class="fa-solid fa-print"></i> Print Out</button>
+                    </div>
+                    <div class="table-container" id="closed-jobs-container" style="margin-bottom: 30px; display: none;">
+                        <table class="data-table table-compact">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Estate</th>
+                                    <th>Div</th>
+                                    <th>Blok</th>
+                                    <th>Round</th>
+                                    <th>Mandor</th>
+                                    <th>Plan<br>(Jjg)</th>
+                                    <th>Plan<br>(Kg)</th>
+                                    <th>Hvr</th>
+                                    <th>Act<br>(Jjg)</th>
+                                    <th>Act<br>(Hvr)</th>
+                                    <th>Act<br>(Kg)</th>
+                                    <th>Plan<br>(Ha)</th>
+                                    <th>Act<br>(Ha)</th>
+                                    <th>Prestasi<br>Ha/WD</th>
+                                    <th>Prestasi<br>Kg/WD</th>
+                                    <th>Actual<br>BJR</th>
+                                    <th>Var Act Ha<br>vs Plan (%)</th>
+                                    <th>Turn Out<br>(%)</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-harvesting-closed"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Rekap Panen Table -->
+                    <div class="table-container" style="margin-bottom: 30px; overflow-x: auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; padding: 12px 15px; border: 1px solid #cbd5e1; border-bottom: none;">
+                            <div><i class="fa-solid fa-chart-simple" style="color: var(--primary-color);"></i> Rekap Panen per Divisi (Dari Pekerjaan Selesai)</div>
+                            <button class="btn btn-primary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="openPrintRekapModal()"><i class="fa-solid fa-print"></i> Print Out</button>
+                        </div>
+                        <table class="data-table table-compact" style="border-collapse: collapse; min-width: 1200px;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #cbd5e1; text-align:center;">MTD</th>
+                                    <th style="border: 1px solid #cbd5e1; text-align:center;">ESTATE</th>
+                                    <th style="border: 1px solid #cbd5e1; text-align:center;">DIVISI</th>
+                                    <th style="border: 1px solid #cbd5e1; text-align:center;">AVG<br>ROUND</th>
+                                    <th style="border: 1px solid #cbd5e1; text-align:center;">AKP<br>(%)</th>
+                                    <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN<br>TOTAL JJG</th>
+                                    <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN<br>PANEN (KG)</th>
+                                    <th style="border: 1px solid #cbd5e1; text-align:center;">ACT<br>TOTAL JJG</th>
+                                    <th style="border: 1px solid #cbd5e1; text-align:center;">ACT<br>PANEN (KG)</th>
+                                    <th style="border: 1px solid #cbd5e1; text-align:center;">ACT<br>HVR (HK)</th>
+                                    <th style="border: 1px solid #cbd5e1; text-align:center;">PRESTASI<br>HA/ACT HVR</th>
+                                    <th style="border: 1px solid #cbd5e1; text-align:center;">PRESTASI<br>KG/WD (KG/HK)</th>
+                                    <th style="border: 1px solid #cbd5e1; text-align:center;">VAR<br>HA(%)</th>
+                                    <th style="border: 1px solid #cbd5e1; text-align:center;">TURN OUT<br>(%)</th>
+                                    <th style="border: 1px solid #cbd5e1; text-align:center;">ABW<br>(BJR ACTUAL)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-harvesting-rekap"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. SUB-SHEET: HARVESTING ANALYTICS -->
+            <div id="harvesting-subsheet-analytics" class="subsheet-content">
+                <div class="grading-filter-bar">
+                    <div class="grading-filter-group">
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;"><i class="fa-solid fa-calendar-day"></i> Periode Analisis</label>
+                            <input type="date" id="hanal-date" class="form-control" style="font-weight: 600; min-width: 150px;" onchange="window.loadHarvestingAnalyticsData()">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;"><i class="fa-solid fa-layer-group"></i> Ruang Lingkup</label>
+                            <select id="hanal-scope" class="form-control" style="font-weight: 600; min-width: 160px;" onchange="window.loadHarvestingAnalyticsData()">
+                                <option value="all" selected>Semua Data (Total Historis)</option>
+                                <option value="mtd">MTD (Bulan Berjalan)</option>
+                                <option value="daily">Harian (Tanggal Saja)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;"><i class="fa-solid fa-filter"></i> Filter Divisi</label>
+                            <select id="hanal-divisi-filter" class="form-control" style="font-weight: 600; min-width: 150px;" onchange="window.processAndRenderHarvestingAnalytics()">
+                                <option value="ALL">Semua Divisi</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="window.loadHarvestingAnalyticsData()"><i class="fa-solid fa-rotate"></i> Refresh Analisis</button>
+                        <button class="btn btn-secondary" onclick="window.printHarvestingAnalytics()"><i class="fa-solid fa-print"></i> Cetak Laporan</button>
+                        <button class="btn btn-success" onclick="window.exportHarvestingAnalyticsCSV()"><i class="fa-solid fa-file-excel"></i> Export CSV</button>
+                    </div>
+                </div>
+
+                <!-- Executive KPI Cards -->
+                <div class="grading-kpi-grid">
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon green">
+                            <i class="fa-solid fa-scale-balanced"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Total Produksi Tonase</h4>
+                            <div class="kpi-val" id="hanal-kpi-tonase">0.00 Ton</div>
+                            <div class="kpi-sub" id="hanal-kpi-janjang">Total 0 Janjang (JJG)</div>
+                        </div>
+                    </div>
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon blue">
+                            <i class="fa-solid fa-chart-area"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Total Luas Panen</h4>
+                            <div class="kpi-val" id="hanal-kpi-area">0.00 Ha</div>
+                            <div class="kpi-sub" id="hanal-kpi-density">Kerapatan: 0 JJG / Ha</div>
+                        </div>
+                    </div>
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon yellow">
+                            <i class="fa-solid fa-person-digging"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Produktivitas Pemanen</h4>
+                            <div class="kpi-val" id="hanal-kpi-output">0 JJG/HK</div>
+                            <div class="kpi-sub" id="hanal-kpi-output-ton">Output: 0.00 Ton / HK</div>
+                        </div>
+                    </div>
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon green">
+                            <i class="fa-solid fa-weight-scale"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Rata-rata Berat Janjang (BJR)</h4>
+                            <div class="kpi-val" id="hanal-kpi-bjr">0.00 Kg</div>
+                            <div class="kpi-sub" id="hanal-kpi-pemanen-count">Total 0 HK Pemanen</div>
                         </div>
                     </div>
                 </div>
-                <h4 id="monitoring-month-year" style="margin-top: 0; margin-bottom: 5px; color: var(--text-secondary); font-weight: 500;"></h4>
-                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 15px;">* Keterangan: Hvr = Harvester</p>
-                <div class="table-container" style="margin-bottom: 30px;">
-                    <table class="data-table table-compact">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Estate</th>
-                                <th>Div</th>
-                                <th>Blok</th>
-                                <th>Round</th>
-                                <th>Mandor</th>
-                                <th>Plan<br>(Jjg)</th>
-                                <th>Plan<br>(Kg)</th>
-                                <th>Hvr</th>
-                                <th>Act<br>(Jjg)</th>
-                                <th>Act<br>(Hvr)</th>
-                                <th>Act<br>(Kg)</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-harvesting-daily"></tbody>
-                    </table>
-                </div>
-                
-                <div id="closed-jobs-header" style="display: none; justify-content: space-between; align-items: center; margin-top: 30px; margin-bottom: 10px;">
-                    <h3 style="margin: 0; color: var(--text-primary);"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Closed</h3>
-                    <button type="button" class="btn btn-primary btn-sm" onclick="openPrintClosedHarvestingModal()" style="background-color: #64748b; border: none; padding: 6px 12px; font-size: 0.8rem;"><i class="fa-solid fa-print"></i> Print Out</button>
-                </div>
-                <div class="table-container" id="closed-jobs-container" style="margin-bottom: 30px; display: none;">
-                    <table class="data-table table-compact">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Estate</th>
-                                <th>Div</th>
-                                <th>Blok</th>
-                                <th>Round</th>
-                                <th>Mandor</th>
-                                <th>Plan<br>(Jjg)</th>
-                                <th>Plan<br>(Kg)</th>
-                                <th>Hvr</th>
-                                <th>Act<br>(Jjg)</th>
-                                <th>Act<br>(Hvr)</th>
-                                <th>Act<br>(Kg)</th>
-                                <th>Plan<br>(Ha)</th>
-                                <th>Act<br>(Ha)</th>
-                                <th>Prestasi<br>Ha/WD</th>
-                                <th>Prestasi<br>Kg/WD</th>
-                                <th>Actual<br>BJR</th>
-                                <th>Var Act Ha<br>vs Plan (%)</th>
-                                <th>Turn Out<br>(%)</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-harvesting-closed"></tbody>
-                    </table>
+
+                <!-- Tabel 1: Rekapitulasi Kinerja Panen per Divisi -->
+                <div class="glass-card" style="overflow-x: auto; margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3 style="margin: 0;"><i class="fa-solid fa-sitemap"></i> 1. Rekapitulasi Kinerja & Output Panen per Divisi</h3>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);">Konsolidasi produksi janjang, tonase panen, kerapatan pohon, dan output prestasi pemanen per divisi.</span>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="hanal-divisi-table" style="font-size: 0.8rem; width: 100%; text-align: center;">
+                            <thead>
+                                <tr style="background-color: #1e293b; color: white;">
+                                    <th style="width: 35px;">NO</th>
+                                    <th style="text-align: left; min-width: 140px;">DIVISI</th>
+                                    <th style="background-color: #0284c7; color: white;">LUAS PANEN (HA)</th>
+                                    <th style="background-color: #059669; color: white;">TOTAL JJG</th>
+                                    <th>KERAPATAN (JJG/HA)</th>
+                                    <th>BJR AKTUAL (KG)</th>
+                                    <th style="background-color: #059669; color: white;">EST. TONASE (TON)</th>
+                                    <th>HK PEMANEN</th>
+                                    <th style="background-color: #6366f1; color: white;">OUTPUT JJG/HK</th>
+                                    <th style="background-color: #d97706; color: white;">OUTPUT TON/HK</th>
+                                    <th>STATUS KINERJA</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot></tfoot>
+                        </table>
+                    </div>
                 </div>
 
-                <!-- Rekap Panen Table -->
-                <div class="table-container" style="margin-bottom: 30px; overflow-x: auto;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; padding: 12px 15px; border: 1px solid #cbd5e1; border-bottom: none;">
-                        <div><i class="fa-solid fa-chart-simple" style="color: var(--primary-color);"></i> Rekap Panen per Divisi (Dari Pekerjaan Selesai)</div>
-                        <button class="btn btn-primary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="openPrintRekapModal()"><i class="fa-solid fa-print"></i> Print Out</button>
+                <!-- Grid: Tabel 2 & Charts -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                    <!-- Tabel 2: Analisis Blok & Pusingan -->
+                    <div class="glass-card" style="overflow-x: auto;">
+                        <h3 style="margin-top: 0; margin-bottom: 8px;"><i class="fa-solid fa-cubes-stacked"></i> 2. Analisis Produktivitas & Pusingan Panen per Blok</h3>
+                        <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 12px;">Evaluasi kedisiplinan interval pusingan rotasi panen (standar 7-10 hari) dan pemenuhan taksasi.</span>
+                        <div class="table-responsive">
+                            <table class="data-table" id="hanal-block-table" style="font-size: 0.8rem; width: 100%; text-align: center;">
+                                <thead>
+                                    <tr style="background-color: #1e293b; color: white;">
+                                        <th>DIV / BLOK</th>
+                                        <th>ROUND</th>
+                                        <th>MANDOR</th>
+                                        <th>EST JJG</th>
+                                        <th>ACT JJG</th>
+                                        <th>% CAPAIAN</th>
+                                        <th>JJG/HK</th>
+                                        <th>STATUS PUSINGAN</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                                <tfoot></tfoot>
+                            </table>
+                        </div>
                     </div>
-                    <table class="data-table table-compact" style="border-collapse: collapse; min-width: 1200px;">
-                        <thead>
-                            <tr>
-                                <th style="border: 1px solid #cbd5e1; text-align:center;">MTD</th>
-                                <th style="border: 1px solid #cbd5e1; text-align:center;">ESTATE</th>
-                                <th style="border: 1px solid #cbd5e1; text-align:center;">DIVISI</th>
-                                <th style="border: 1px solid #cbd5e1; text-align:center;">AVG<br>ROUND</th>
-                                <th style="border: 1px solid #cbd5e1; text-align:center;">AKP<br>(%)</th>
-                                <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN<br>TOTAL JJG</th>
-                                <th style="border: 1px solid #cbd5e1; text-align:center;">PLAN<br>PANEN (KG)</th>
-                                <th style="border: 1px solid #cbd5e1; text-align:center;">ACT<br>TOTAL JJG</th>
-                                <th style="border: 1px solid #cbd5e1; text-align:center;">ACT<br>PANEN (KG)</th>
-                                <th style="border: 1px solid #cbd5e1; text-align:center;">ACT<br>HVR (HK)</th>
-                                <th style="border: 1px solid #cbd5e1; text-align:center;">PRESTASI<br>HA/ACT HVR</th>
-                                <th style="border: 1px solid #cbd5e1; text-align:center;">PRESTASI<br>KG/WD (KG/HK)</th>
-                                <th style="border: 1px solid #cbd5e1; text-align:center;">VAR<br>HA(%)</th>
-                                <th style="border: 1px solid #cbd5e1; text-align:center;">TURN OUT<br>(%)</th>
-                                <th style="border: 1px solid #cbd5e1; text-align:center;">ABW<br>(BJR ACTUAL)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-harvesting-rekap"></tbody>
-                    </table>
+
+                    <!-- Chart 1: Tonase Panen per Divisi -->
+                    <div class="glass-card">
+                        <h3 style="margin-top: 0; margin-bottom: 8px;"><i class="fa-solid fa-chart-column"></i> Produksi Tonase & Janjang per Divisi</h3>
+                        <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 12px;">Sebaran hasil panen TBS yang diperoleh dari tiap-tiap divisi kebun.</span>
+                        <div style="position: relative; height: 320px; width: 100%;">
+                            <canvas id="chart-hanal-divisi"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Output Pemanen vs Kerapatan -->
+                <div class="glass-card" style="margin-bottom: 24px;">
+                    <h3 style="margin-top: 0; margin-bottom: 8px;"><i class="fa-solid fa-chart-line"></i> Produktivitas Pemanen (JJG/HK) vs Kerapatan Buah (JJG/Ha)</h3>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 12px;">Hubungan antara ketersediaan buah matang di pohon dengan kecepatan hasil potong tenaga panen.</span>
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="chart-hanal-output"></canvas>
+                    </div>
+                </div>
+
+                <!-- Smart Diagnostic Recommendations -->
+                <div class="grading-insight-box">
+                    <h4><i class="fa-solid fa-lightbulb" style="color: #f59e0b;"></i> Smart Harvesting Diagnostic & Recommendations</h4>
+                    <ul id="hanal-insights-list"></ul>
                 </div>
             </div>
         </div>
@@ -5339,10 +6014,26 @@ const navigate = (viewId) => {
             if (millSec) millSec.style.display = 'none';
         }
     }
-    if(viewId === 'vehicle') { renderVehicleTable(); bindForms(); }
-    if(viewId === 'upkeep') { renderUpkeepTable(); bindForms(); }
-    if(viewId === 'pemupukan') { renderPemupukanTable(); bindForms(); }
-    if(viewId === 'harvesting') { renderHarvestingTable(); bindForms(); }
+    if(viewId === 'vehicle') { 
+        renderVehicleTable(); 
+        bindForms(); 
+        if(window.switchVehicleSubTab) window.switchVehicleSubTab(window.activeVehicleSubTab || 'monitor');
+    }
+    if(viewId === 'upkeep') { 
+        renderUpkeepTable(); 
+        bindForms(); 
+        if(window.switchUpkeepSubTab) window.switchUpkeepSubTab(window.activeUpkeepSubTab || 'monitor');
+    }
+    if(viewId === 'pemupukan') { 
+        renderPemupukanTable(); 
+        bindForms(); 
+        if(window.switchPemupukanSubTab) window.switchPemupukanSubTab(window.activePemupukanSubTab || 'monitor');
+    }
+    if(viewId === 'harvesting') { 
+        renderHarvestingTable(); 
+        bindForms(); 
+        if(window.switchHarvestingSubTab) window.switchHarvestingSubTab(window.activeHarvestingSubTab || 'monitor');
+    }
     if(viewId === 'processing') { if(window.renderProcessingView) window.renderProcessingView(); }
     if(viewId === 'water') { if(window.renderWaterView) window.renderWaterView(); }
     if(viewId === 'ffb_quality') { if(window.renderFFBQualityView) window.renderFFBQualityView(); }
@@ -10226,6 +10917,1638 @@ window.exportTonaseSummaryCSV = () => {
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.setAttribute('download', `Summary_Penerimaan_TBS_${mill}_${selectedDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+
+// =========================================================================
+// --- VEHICLE MOTION SUB-SHEET & FLEET ANALYTICS SYSTEM ---
+// =========================================================================
+
+window.activeVehicleSubTab = 'monitor';
+let chartVanalProdInstance = null;
+let chartVanalTimeInstance = null;
+window.cachedVehicleAnalyticsData = null;
+
+window.switchVehicleSubTab = (tabId) => {
+    window.activeVehicleSubTab = tabId;
+    const btnMonitor = document.getElementById('tab-btn-vehicle-monitor');
+    const btnAnalytics = document.getElementById('tab-btn-vehicle-analytics');
+    if (btnMonitor) btnMonitor.classList.toggle('active', tabId === 'monitor');
+    if (btnAnalytics) btnAnalytics.classList.toggle('active', tabId === 'analytics');
+
+    const contentMonitor = document.getElementById('vehicle-subsheet-monitor');
+    const contentAnalytics = document.getElementById('vehicle-subsheet-analytics');
+    if (contentMonitor) contentMonitor.classList.toggle('active', tabId === 'monitor');
+    if (contentAnalytics) contentAnalytics.classList.toggle('active', tabId === 'analytics');
+
+    if (tabId === 'monitor') {
+        renderVehicleTable();
+    } else if (tabId === 'analytics') {
+        const dateInput = document.getElementById('vanal-date');
+        if (dateInput && !dateInput.value) {
+            dateInput.value = window.getLocalDate();
+        }
+        window.loadVehicleAnalyticsData();
+    }
+};
+
+window.loadVehicleAnalyticsData = async () => {
+    const dateInput = document.getElementById('vanal-date');
+    const scopeSelect = document.getElementById('vanal-scope');
+    if (dateInput && !dateInput.value) dateInput.value = window.getLocalDate();
+
+    const selectedDate = dateInput ? dateInput.value : window.getLocalDate();
+    const scope = scopeSelect ? scopeSelect.value : 'daily';
+    const month = selectedDate.substring(0, 7);
+
+    let rawVehicles = db.vehicles || [];
+    
+    // Filter by estate
+    if (currentUser.estate && currentUser.estate.endsWith('Mill')) {
+        const allowedEstates = (masterData.supply_chain || []).map(sc => sc.estate);
+        rawVehicles = rawVehicles.filter(v => allowedEstates.includes(v.estate));
+    } else if (currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+        rawVehicles = rawVehicles.filter(v => v.estate === currentUser.estate);
+    }
+
+    // Filter by scope
+    if (scope === 'daily') {
+        rawVehicles = rawVehicles.filter(v => v.date === selectedDate);
+    } else if (scope === 'mtd') {
+        rawVehicles = rawVehicles.filter(v => v.date && v.date.startsWith(month));
+    }
+
+    window.cachedVehicleAnalyticsData = {
+        selectedDate,
+        scope,
+        month,
+        vehicles: rawVehicles
+    };
+
+    window.processAndRenderVehicleAnalytics();
+};
+
+window.processAndRenderVehicleAnalytics = () => {
+    if (!window.cachedVehicleAnalyticsData) return;
+    const { selectedDate, scope, vehicles } = window.cachedVehicleAnalyticsData;
+
+    // Helper: convert HH:MM to minutes
+    const parseMinutes = (tStr) => {
+        if (!tStr) return null;
+        const p = tStr.split(':');
+        if (p.length < 2) return null;
+        return parseInt(p[0]) * 60 + parseInt(p[1]);
+    };
+
+    // 1. Group by Truck
+    const truckMap = {};
+    let totJanjang = 0;
+    let totDurationMin = 0;
+    let validDurationCount = 0;
+    let fastestMin = 9999, slowestMin = 0;
+    let fastestInfo = '-', slowestInfo = '-';
+
+    vehicles.forEach(v => {
+        const key = v.plate || 'UNKNOWN';
+        if (!truckMap[key]) {
+            truckMap[key] = {
+                plate: v.plate,
+                driver: v.driver || '-',
+                estate: v.estate || '-',
+                divisi: v.divisi || '-',
+                trips: 0,
+                janjang: 0,
+                totalDurMin: 0,
+                durCount: 0,
+                firstDepart: '23:59',
+                lastArrive: '00:00'
+            };
+        }
+
+        const tObj = truckMap[key];
+        tObj.trips += 1;
+        const jjg = parseInt(v.janjang) || 0;
+        tObj.janjang += jjg;
+        totJanjang += jjg;
+
+        const tDepart = v.timedepart || v.timeDepart;
+        const tArrive = v.timearrive || v.timeArrive;
+
+        if (tDepart && tDepart < tObj.firstDepart) tObj.firstDepart = tDepart;
+        if (tArrive && tArrive > tObj.lastArrive) tObj.lastArrive = tArrive;
+
+        const dMin = parseMinutes(tDepart);
+        const aMin = parseMinutes(tArrive);
+        if (dMin !== null && aMin !== null) {
+            let diff = aMin - dMin;
+            if (diff < 0) diff += 1440; // over midnight
+            tObj.totalDurMin += diff;
+            tObj.durCount += 1;
+            totDurationMin += diff;
+            validDurationCount += 1;
+
+            if (diff < fastestMin) {
+                fastestMin = diff;
+                fastestInfo = `${diff}m (${v.plate} / ${v.block})`;
+            }
+            if (diff > slowestMin) {
+                slowestMin = diff;
+                slowestInfo = `${diff}m (${v.plate} / ${v.block})`;
+            }
+        }
+    });
+
+    const truckStats = Object.values(truckMap).map(t => {
+        const avgJjg = t.trips > 0 ? (t.janjang / t.trips) : 0;
+        const avgDur = t.durCount > 0 ? Math.round(t.totalDurMin / t.durCount) : 0;
+        
+        let statusClass = 'grading-cell-good';
+        let statusText = 'Sangat Produktif';
+        if (t.trips < 2) {
+            statusClass = 'grading-cell-warn';
+            statusText = 'Ritase Rendah (<2 Rit)';
+        } else if (avgJjg < 250 && avgJjg > 0) {
+            statusClass = 'grading-cell-danger';
+            statusText = 'Muatan Kurang (<250 JJG)';
+        } else if (t.trips >= 3) {
+            statusClass = 'grading-cell-good';
+            statusText = 'Optimal (≥3 Rit)';
+        }
+
+        return {
+            ...t,
+            avgJjg,
+            avgDur,
+            statusClass,
+            statusText,
+            firstDepart: t.firstDepart === '23:59' ? '-' : t.firstDepart,
+            lastArrive: t.lastArrive === '00:00' ? '-' : t.lastArrive
+        };
+    }).sort((a, b) => b.trips - a.trips || b.janjang - a.janjang);
+
+    // 2. Group by Divisi / Blok
+    const blockMap = {};
+    vehicles.forEach(v => {
+        const div = v.divisi || 'Divisi -';
+        const blk = v.block || 'Blok -';
+        const key = `${v.estate || ''}|${div}|${blk}`;
+
+        if (!blockMap[key]) {
+            blockMap[key] = {
+                estate: v.estate || '-',
+                divisi: div,
+                block: blk,
+                trips: 0,
+                janjang: 0,
+                minDur: 9999,
+                maxDur: 0,
+                totDur: 0,
+                durCount: 0
+            };
+        }
+
+        const bObj = blockMap[key];
+        bObj.trips += 1;
+        bObj.janjang += (parseInt(v.janjang) || 0);
+
+        const dMin = parseMinutes(v.timedepart || v.timeDepart);
+        const aMin = parseMinutes(v.timearrive || v.timeArrive);
+        if (dMin !== null && aMin !== null) {
+            let diff = aMin - dMin;
+            if (diff < 0) diff += 1440;
+            if (diff < bObj.minDur) bObj.minDur = diff;
+            if (diff > bObj.maxDur) bObj.maxDur = diff;
+            bObj.totDur += diff;
+            bObj.durCount += 1;
+        }
+    });
+
+    const blockStats = Object.values(blockMap).map(b => {
+        const avgDur = b.durCount > 0 ? Math.round(b.totDur / b.durCount) : 0;
+        let routeStatus = 'Lancar Terkendali';
+        let routeBadge = 'grading-cell-good';
+        if (avgDur > 120) {
+            routeStatus = 'Jarak Jauh / Hambatan Jalan (>2 Jam)';
+            routeBadge = 'grading-cell-danger';
+        } else if (avgDur > 75) {
+            routeStatus = 'Perjalanan Sedang (1-2 Jam)';
+            routeBadge = 'grading-cell-warn';
+        }
+        return {
+            ...b,
+            avgDur,
+            minDur: b.minDur === 9999 ? '-' : `${b.minDur}m`,
+            maxDur: b.maxDur === 0 ? '-' : `${b.maxDur}m`,
+            routeStatus,
+            routeBadge
+        };
+    }).sort((a, b) => b.trips - a.trips);
+
+    // 3. Render KPI Cards
+    const totalTrips = vehicles.length;
+    const activeTrucks = truckStats.length;
+    const avgJjgPerTrip = totalTrips > 0 ? (totJanjang / totalTrips) : 0;
+    const overallAvgDur = validDurationCount > 0 ? Math.round(totDurationMin / validDurationCount) : 0;
+    const estTonase = (totJanjang * 18.5) / 1000; // Asumsi BJR 18.5 kg
+    const avgTripsPerTruck = activeTrucks > 0 ? (totalTrips / activeTrucks) : 0;
+
+    const elKpiTrips = document.getElementById('vanal-kpi-trips');
+    const elKpiTrucks = document.getElementById('vanal-kpi-trucks');
+    if (elKpiTrips) elKpiTrips.innerText = `${totalTrips} Trip`;
+    if (elKpiTrucks) elKpiTrucks.innerText = `${activeTrucks} Truk Beroperasi Aktif`;
+
+    const elKpiJanjang = document.getElementById('vanal-kpi-janjang');
+    const elKpiAvgJjg = document.getElementById('vanal-kpi-avg-jjg');
+    if (elKpiJanjang) elKpiJanjang.innerText = `${totJanjang.toLocaleString('id-ID')} JJG`;
+    if (elKpiAvgJjg) elKpiAvgJjg.innerText = `Rata-rata ${avgJjgPerTrip.toFixed(0)} JJG / Trip`;
+
+    const elKpiDuration = document.getElementById('vanal-kpi-duration');
+    const elKpiFastSlow = document.getElementById('vanal-kpi-fastest-slowest');
+    if (elKpiDuration) elKpiDuration.innerText = `${overallAvgDur} Menit`;
+    if (elKpiFastSlow) elKpiFastSlow.innerText = `Cepat: ${fastestInfo} | Lambat: ${slowestInfo}`;
+
+    const elKpiTonase = document.getElementById('vanal-kpi-tonase');
+    const elKpiTurnaround = document.getElementById('vanal-kpi-turnaround');
+    if (elKpiTonase) elKpiTonase.innerText = `${estTonase.toFixed(2)} Ton`;
+    if (elKpiTurnaround) elKpiTurnaround.innerText = `Turnaround: ${avgTripsPerTruck.toFixed(1)} Rit / Truk`;
+
+    // 4. Render Table 1 (Fleet)
+    const tbTruck = document.querySelector('#vanal-truck-table tbody');
+    const tfTruck = document.querySelector('#vanal-truck-table tfoot');
+    if (tbTruck) {
+        let html = '';
+        truckStats.forEach((t, idx) => {
+            html += `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td style="text-align:left; font-weight:bold;">${t.plate}</td>
+                    <td style="text-align:left;">${t.driver}</td>
+                    <td>${getEstateCode(t.estate)}</td>
+                    <td>${t.divisi}</td>
+                    <td style="background-color:#f0f9ff; font-weight:bold;">${t.trips}</td>
+                    <td style="background-color:#ecfdf5; font-weight:bold;">${t.janjang.toLocaleString('id-ID')}</td>
+                    <td style="background-color:#eff6ff; font-weight:600;">${t.avgJjg.toFixed(0)}</td>
+                    <td style="background-color:#fffbeb; font-weight:600;">${t.avgDur > 0 ? t.avgDur + ' m' : '-'}</td>
+                    <td>${t.firstDepart}</td>
+                    <td>${t.lastArrive}</td>
+                    <td><span class="grading-badge ${t.statusClass}" style="font-size:0.72rem; padding:2px 6px;">${t.statusText}</span></td>
+                </tr>
+            `;
+        });
+        tbTruck.innerHTML = html || '<tr><td colspan="12" style="text-align:center; padding:15px;">Tidak ada data pergerakan truk.</td></tr>';
+    }
+
+    if (tfTruck) {
+        tfTruck.innerHTML = `
+            <tr style="background-color:#e2e8f0; font-weight:bold;">
+                <td colspan="5" style="text-align:left; padding-left:10px;">TOTAL KONSOLIDASI ARMADA (${activeTrucks} Unit)</td>
+                <td style="background-color:#bae6fd;">${totalTrips}</td>
+                <td style="background-color:#a7f3d0;">${totJanjang.toLocaleString('id-ID')}</td>
+                <td style="background-color:#bfdbfe;">${avgJjgPerTrip.toFixed(0)}</td>
+                <td style="background-color:#fde68a;">${overallAvgDur} m</td>
+                <td colspan="3">-</td>
+            </tr>
+        `;
+    }
+
+    // 5. Render Table 2 (Route / Block)
+    const tbBlock = document.querySelector('#vanal-block-table tbody');
+    const tfBlock = document.querySelector('#vanal-block-table tfoot');
+    if (tbBlock) {
+        let html = '';
+        blockStats.slice(0, 15).forEach(b => {
+            html += `
+                <tr>
+                    <td style="text-align:left; font-weight:600;">${b.divisi} / ${b.block}</td>
+                    <td>${b.trips}</td>
+                    <td style="font-weight:bold;">${b.janjang.toLocaleString('id-ID')}</td>
+                    <td>${b.minDur}</td>
+                    <td>${b.maxDur}</td>
+                    <td style="background-color:#f8fafc; font-weight:600;">${b.avgDur > 0 ? b.avgDur + 'm' : '-'}</td>
+                    <td><span class="grading-badge ${b.routeBadge}" style="font-size:0.7rem; padding:2px 5px;">${b.routeStatus}</span></td>
+                </tr>
+            `;
+        });
+        tbBlock.innerHTML = html || '<tr><td colspan="7" style="text-align:center; padding:15px;">Tidak ada data rute blok.</td></tr>';
+    }
+    if (tfBlock) {
+        tfBlock.innerHTML = `
+            <tr style="background-color:#e2e8f0; font-weight:bold;">
+                <td style="text-align:left;">TOTAL</td>
+                <td>${totalTrips}</td>
+                <td>${totJanjang.toLocaleString('id-ID')}</td>
+                <td colspan="4">-</td>
+            </tr>
+        `;
+    }
+
+    // 6. Render Charts
+    window.renderVehicleCharts(truckStats, vehicles);
+
+    // 7. Render Insights
+    window.renderVehicleInsights(truckStats, blockStats, { totalTrips, activeTrucks, avgJjgPerTrip, overallAvgDur, estTonase, avgTripsPerTruck });
+};
+
+window.renderVehicleCharts = (truckStats, vehicles) => {
+    // Chart 1: Bar Chart Produktivitas Janjang per Kendaraan
+    const ctxProd = document.getElementById('chart-vanal-productivity');
+    if (ctxProd) {
+        if (chartVanalProdInstance) chartVanalProdInstance.destroy();
+        const topTrucks = truckStats.slice(0, 10);
+        chartVanalProdInstance = new Chart(ctxProd, {
+            type: 'bar',
+            data: {
+                labels: topTrucks.map(t => t.plate),
+                datasets: [
+                    {
+                        label: 'Total Janjang (JJG)',
+                        data: topTrucks.map(t => t.janjang),
+                        backgroundColor: '#059669',
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Total Ritase (Trip)',
+                        data: topTrucks.map(t => t.trips),
+                        backgroundColor: '#0284c7',
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { type: 'linear', position: 'left', title: { display: true, text: 'Jumlah Janjang' }, beginAtZero: true },
+                    y1: { type: 'linear', position: 'right', title: { display: true, text: 'Ritase' }, beginAtZero: true, grid: { drawOnChartArea: false } }
+                }
+            }
+        });
+    }
+
+    // Chart 2: Timeline Kedatangan di PKS
+    const ctxTime = document.getElementById('chart-vanal-timeline');
+    if (ctxTime) {
+        if (chartVanalTimeInstance) chartVanalTimeInstance.destroy();
+        
+        // Group arrivals by hour
+        const hourBuckets = {};
+        for (let h = 6; h <= 22; h++) {
+            const hStr = h.toString().padStart(2, '0') + ':00';
+            hourBuckets[hStr] = 0;
+        }
+
+        vehicles.forEach(v => {
+            const arr = v.timearrive || v.timeArrive;
+            if (arr) {
+                const hr = arr.split(':')[0] + ':00';
+                if (hourBuckets[hr] !== undefined) hourBuckets[hr] += 1;
+            }
+        });
+
+        chartVanalTimeInstance = new Chart(ctxTime, {
+            type: 'line',
+            data: {
+                labels: Object.keys(hourBuckets),
+                datasets: [{
+                    label: 'Jumlah Truk Tiba di PKS (Unit)',
+                    data: Object.values(hourBuckets),
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+                    fill: true,
+                    tension: 0.3,
+                    borderWidth: 2.5,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { title: { display: true, text: 'Jumlah Truk Masuk' }, beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+    }
+};
+
+window.renderVehicleInsights = (truckStats, blockStats, metrics) => {
+    const list = document.getElementById('vanal-insights-list');
+    if (!list) return;
+    const insights = [];
+
+    // 1. Ritase & Armada
+    if (metrics.avgTripsPerTruck >= 2.5) {
+        insights.push(`<strong>Utilisasi Armada Sangat Baik:</strong> Rata-rata perputaran truk mencapai <strong>${metrics.avgTripsPerTruck.toFixed(1)} Rit/Truk</strong>. Jadwal pengangkutan dari kebun berjalan optimal.`);
+    } else {
+        const lowTrips = truckStats.filter(t => t.trips === 1);
+        if (lowTrips.length > 0) {
+            insights.push(`<strong>Peluang Peningkatan Ritase:</strong> Sebanyak <strong>${lowTrips.length} truk</strong> hanya melakukan 1 ritase per hari. <em>Rekomendasi: Evaluasi kesiapan restan buah di TPH pagi hari agar truk dapat berangkat lebih awal.</em>`);
+        }
+    }
+
+    // 2. Muatan JJG
+    const lowPayload = truckStats.filter(t => t.avgJjg < 250 && t.trips > 0);
+    if (lowPayload.length > 0) {
+        const names = lowPayload.map(t => t.plate).join(', ');
+        insights.push(`<strong>Muatan Di Bawah Kapasitas:</strong> Kendaraan ${names} memiliki muatan rata-rata di bawah 250 JJG/trip. <em>Rekomendasi: Maksimalkan susunan janjang di bak truk agar efisiensi solar dan biaya angkut per ton TBS lebih hemat.</em>`);
+    }
+
+    // 3. Durasi Perjalanan
+    const longRoutes = blockStats.filter(b => b.avgDur > 100);
+    if (longRoutes.length > 0) {
+        const routeNames = longRoutes.map(b => `${b.divisi}/${b.block} (${b.avgDur}m)`).join(', ');
+        insights.push(`<strong>Peringatan Hambatan Jalur / Jarak Jauh:</strong> Pengiriman dari ${routeNames} membutuhkan waktu tempuh di atas 100 menit. <em>Rekomendasi: Periksa kondisi jalan poros/kolektor kebun dan prioritaskan pengangkutan dari blok jauh pada pagi hari.</em>`);
+    }
+
+    list.innerHTML = insights.map(i => `<li style="margin-bottom:8px;">${i}</li>`).join('');
+};
+
+window.printVehicleAnalytics = () => window.print();
+
+window.exportVehicleAnalyticsCSV = () => {
+    if (!window.cachedVehicleAnalyticsData) { alert('Data belum dimuat.'); return; }
+    const { selectedDate, scope } = window.cachedVehicleAnalyticsData;
+    let csv = `LAPORAN ANALISA KINERJA & EFISIENSI ARMADA (VEHICLE MOTION)\nTanggal: ${selectedDate} (Scope: ${scope.toUpperCase()})\n\n`;
+    csv += `1. KINERJA ARMADA PER TRUK & SUPIR\nNo,Plate Truk,Nama Supir,Asal Estate,Divisi,Total Ritase,Total Janjang,Rata-rata JJG/Trip,Rata-rata Durasi (m),Trip Pertama,Trip Terakhir,Status Utilisasi\n`;
+    
+    document.querySelectorAll('#vanal-truck-table tbody tr').forEach(tr => {
+        const cols = Array.from(tr.querySelectorAll('td')).map(td => `"${td.innerText.replace(/"/g, '""').trim()}"`);
+        if (cols.length > 0) csv += cols.join(',') + '\n';
+    });
+
+    csv += `\n2. ANALISIS LEAD TIME PER BLOK\nDivisi / Blok,Trip,Janjang,Tercepat,Terlama,Rata-rata,Evaluasi Jalur\n`;
+    document.querySelectorAll('#vanal-block-table tbody tr').forEach(tr => {
+        const cols = Array.from(tr.querySelectorAll('td')).map(td => `"${td.innerText.replace(/"/g, '""').trim()}"`);
+        if (cols.length > 0) csv += cols.join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `Vehicle_Analytics_${selectedDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+
+// =========================================================================
+// --- UPKEEP SUB-SHEET & PRODUCTIVITY ANALYTICS SYSTEM ---
+// =========================================================================
+
+window.activeUpkeepSubTab = 'monitor';
+let chartUanalTypeInstance = null;
+let chartUanalPrestasiInstance = null;
+window.cachedUpkeepAnalyticsData = null;
+
+window.switchUpkeepSubTab = (tabId) => {
+    window.activeUpkeepSubTab = tabId;
+    const btnMonitor = document.getElementById('tab-btn-upkeep-monitor');
+    const btnAnalytics = document.getElementById('tab-btn-upkeep-analytics');
+    if (btnMonitor) btnMonitor.classList.toggle('active', tabId === 'monitor');
+    if (btnAnalytics) btnAnalytics.classList.toggle('active', tabId === 'analytics');
+
+    const contentMonitor = document.getElementById('upkeep-subsheet-monitor');
+    const contentAnalytics = document.getElementById('upkeep-subsheet-analytics');
+    if (contentMonitor) contentMonitor.classList.toggle('active', tabId === 'monitor');
+    if (contentAnalytics) contentAnalytics.classList.toggle('active', tabId === 'analytics');
+
+    if (tabId === 'monitor') {
+        renderUpkeepTable();
+    } else if (tabId === 'analytics') {
+        const dateInput = document.getElementById('uanal-date');
+        if (dateInput && !dateInput.value) {
+            dateInput.value = window.getLocalDate();
+        }
+        window.loadUpkeepAnalyticsData();
+    }
+};
+
+window.loadUpkeepAnalyticsData = async () => {
+    const dateInput = document.getElementById('uanal-date');
+    const scopeSelect = document.getElementById('uanal-scope');
+    if (dateInput && !dateInput.value) dateInput.value = window.getLocalDate();
+
+    const selectedDate = dateInput ? dateInput.value : window.getLocalDate();
+    const scope = scopeSelect ? scopeSelect.value : 'all';
+    const month = selectedDate.substring(0, 7);
+
+    let rawUpkeep = db.upkeep || [];
+    if (currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+        rawUpkeep = rawUpkeep.filter(u => !u.estate || u.estate === currentUser.estate);
+    }
+
+    if (scope === 'daily') {
+        rawUpkeep = rawUpkeep.filter(u => u.startdate === selectedDate || u.date === selectedDate);
+    } else if (scope === 'mtd') {
+        rawUpkeep = rawUpkeep.filter(u => (u.startdate && u.startdate.startsWith(month)) || (u.date && u.date.startsWith(month)));
+    }
+
+    // Populate type filter
+    const typeSet = new Set(rawUpkeep.map(u => u.type).filter(Boolean));
+    const typeFilter = document.getElementById('uanal-type-filter');
+    if (typeFilter) {
+        const curr = typeFilter.value;
+        typeFilter.innerHTML = '<option value="ALL">Semua Jenis Pekerjaan</option>' + 
+            Array.from(typeSet).map(t => `<option value="${t}">${t}</option>`).join('');
+        if (curr && typeSet.has(curr)) typeFilter.value = curr;
+    }
+
+    window.cachedUpkeepAnalyticsData = {
+        selectedDate,
+        scope,
+        month,
+        upkeep: rawUpkeep
+    };
+
+    window.processAndRenderUpkeepAnalytics();
+};
+
+window.processAndRenderUpkeepAnalytics = () => {
+    if (!window.cachedUpkeepAnalyticsData) return;
+    const { upkeep } = window.cachedUpkeepAnalyticsData;
+    const typeFilter = document.getElementById('uanal-type-filter');
+    const selectedType = typeFilter ? typeFilter.value : 'ALL';
+
+    let filtered = upkeep;
+    if (selectedType && selectedType !== 'ALL') {
+        filtered = filtered.filter(u => u.type === selectedType);
+    }
+
+    // 1. Group by Job Type
+    const typeMap = {};
+    let totTargetHa = 0, totRealizedHa = 0, totHK = 0;
+
+    filtered.forEach(u => {
+        const type = u.type || 'Lainnya';
+        if (!typeMap[type]) {
+            typeMap[type] = {
+                type,
+                targetHa: 0,
+                realizedHa: 0,
+                targetWorkers: 0,
+                realizedWorkers: 0,
+                count: 0
+            };
+        }
+        const tObj = typeMap[type];
+        const tHa = parseFloat(u.target) || 0;
+        const rHa = parseFloat(u.realized) || 0;
+        const tW = parseInt(u.targetworkers) || 0;
+        const rW = parseInt(u.realizedworkers) || parseInt(u.targetworkers) || 0;
+
+        tObj.targetHa += tHa;
+        tObj.realizedHa += rHa;
+        tObj.targetWorkers += tW;
+        tObj.realizedWorkers += rW;
+        tObj.count += 1;
+
+        totTargetHa += tHa;
+        totRealizedHa += rHa;
+        totHK += rW;
+    });
+
+    const typeStats = Object.values(typeMap).map(t => {
+        const pctHa = t.targetHa > 0 ? (t.realizedHa / t.targetHa * 100) : (t.realizedHa > 0 ? 100 : 0);
+        const realizedPrestasi = t.realizedWorkers > 0 ? (t.realizedHa / t.realizedWorkers) : 0;
+        const targetPrestasi = t.targetWorkers > 0 ? (t.targetHa / t.targetWorkers) : 0;
+        const hkEfficiency = targetPrestasi > 0 ? (realizedPrestasi / targetPrestasi * 100) : 100;
+
+        let statusClass = 'grading-cell-good';
+        let statusText = 'Sesuai Norma';
+        if (pctHa >= 100 && hkEfficiency >= 90) {
+            statusClass = 'grading-cell-good';
+            statusText = 'Sangat Produktif & Tuntas';
+        } else if (pctHa < 70) {
+            statusClass = 'grading-cell-danger';
+            statusText = 'Progress Tertinggal (<70%)';
+        } else if (hkEfficiency < 80) {
+            statusClass = 'grading-cell-warn';
+            statusText = 'Prestasi Rendah (<Norma HK)';
+        }
+
+        return {
+            ...t,
+            pctHa,
+            realizedPrestasi,
+            targetPrestasi,
+            hkEfficiency,
+            statusClass,
+            statusText
+        };
+    }).sort((a, b) => b.realizedHa - a.realizedHa);
+
+    // 2. Group by Mandor / Blok
+    const blockStats = filtered.map(u => {
+        const bData = masterData.blok.find(x => x.name === u.block);
+        const divisi = bData ? bData.divisi : (u.divisi || '-');
+        const rHa = parseFloat(u.realized) || 0;
+        const tHa = parseFloat(u.target) || 0;
+        const rW = parseInt(u.realizedworkers) || parseInt(u.targetworkers) || 0;
+        const haPerHk = rW > 0 ? (rHa / rW) : 0;
+
+        let evalBadge = 'grading-cell-good';
+        let evalText = 'Efisien';
+        if (haPerHk < 0.4 && haPerHk > 0) {
+            evalBadge = 'grading-cell-danger';
+            evalText = 'Kurang Produktif';
+        } else if (rHa < tHa && u.status !== 'Selesai') {
+            evalBadge = 'grading-cell-warn';
+            evalText = 'In Progress';
+        }
+
+        return {
+            block: u.block || '-',
+            divisi,
+            type: u.type || '-',
+            mandor: u.worker || '-',
+            targetHa: tHa,
+            realizedHa: rHa,
+            hk: rW,
+            haPerHk,
+            evalBadge,
+            evalText
+        };
+    }).slice(0, 15);
+
+    // 3. Render KPI Cards
+    const overallPctHa = totTargetHa > 0 ? (totRealizedHa / totTargetHa * 100) : (totRealizedHa > 0 ? 100 : 0);
+    const overallPrestasi = totHK > 0 ? (totRealizedHa / totHK) : 0;
+    const dominantType = typeStats.length > 0 ? typeStats[0] : null;
+
+    const elKpiArea = document.getElementById('uanal-kpi-area');
+    const elKpiAreaSub = document.getElementById('uanal-kpi-area-sub');
+    if (elKpiArea) elKpiArea.innerText = `${totRealizedHa.toFixed(2)} Ha`;
+    if (elKpiAreaSub) elKpiAreaSub.innerText = `Target: ${totTargetHa.toFixed(2)} Ha (${overallPctHa.toFixed(1)}%)`;
+
+    const elKpiHk = document.getElementById('uanal-kpi-hk');
+    const elKpiHkSub = document.getElementById('uanal-kpi-hk-sub');
+    if (elKpiHk) elKpiHk.innerText = `${totHK} HK`;
+    if (elKpiHkSub) elKpiHkSub.innerText = `Total Alokasi Tenaga Kerja`;
+
+    const elKpiPrestasi = document.getElementById('uanal-kpi-prestasi');
+    const elKpiPrestasiSub = document.getElementById('uanal-kpi-prestasi-sub');
+    if (elKpiPrestasi) elKpiPrestasi.innerText = `${overallPrestasi.toFixed(2)} Ha/HK`;
+    if (elKpiPrestasiSub) elKpiPrestasiSub.innerText = `Rata-rata Konsolidasi Rawat`;
+
+    const elKpiDominant = document.getElementById('uanal-kpi-dominant');
+    const elKpiDominantSub = document.getElementById('uanal-kpi-dominant-sub');
+    if (elKpiDominant) elKpiDominant.innerText = dominantType ? dominantType.type : '-';
+    if (elKpiDominantSub) elKpiDominantSub.innerText = dominantType ? `${dominantType.realizedHa.toFixed(2)} Ha (${totRealizedHa > 0 ? (dominantType.realizedHa/totRealizedHa*100).toFixed(0) : 0}%)` : '-';
+
+    // 4. Render Table 1 (Type)
+    const tbType = document.querySelector('#uanal-type-table tbody');
+    const tfType = document.querySelector('#uanal-type-table tfoot');
+    if (tbType) {
+        let html = '';
+        typeStats.forEach((t, idx) => {
+            html += `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td style="text-align:left; font-weight:bold;">${t.type}</td>
+                    <td style="background-color:#f0f9ff;">${t.targetHa.toFixed(2)}</td>
+                    <td style="background-color:#ecfdf5; font-weight:bold;">${t.realizedHa.toFixed(2)}</td>
+                    <td style="font-weight:bold;">${t.pctHa.toFixed(1)}%</td>
+                    <td>${t.realizedWorkers}</td>
+                    <td style="background-color:#eff6ff; font-weight:600;">${t.realizedPrestasi.toFixed(2)}</td>
+                    <td style="background-color:#fffbeb; font-weight:600;">${t.hkEfficiency.toFixed(0)}%</td>
+                    <td><span class="grading-badge ${t.statusClass}" style="font-size:0.72rem; padding:2px 6px;">${t.statusText}</span></td>
+                </tr>
+            `;
+        });
+        tbType.innerHTML = html || '<tr><td colspan="9" style="text-align:center; padding:15px;">Tidak ada data upkeep.</td></tr>';
+    }
+    if (tfType) {
+        tfType.innerHTML = `
+            <tr style="background-color:#e2e8f0; font-weight:bold;">
+                <td colspan="2" style="text-align:left; padding-left:10px;">TOTAL KONSOLIDASI</td>
+                <td style="background-color:#bae6fd;">${totTargetHa.toFixed(2)}</td>
+                <td style="background-color:#a7f3d0;">${totRealizedHa.toFixed(2)}</td>
+                <td style="background-color:#99f6e4;">${overallPctHa.toFixed(1)}%</td>
+                <td>${totHK}</td>
+                <td style="background-color:#bfdbfe;">${overallPrestasi.toFixed(2)}</td>
+                <td colspan="2">-</td>
+            </tr>
+        `;
+    }
+
+    // 5. Render Table 2 (Block)
+    const tbBlock = document.querySelector('#uanal-block-table tbody');
+    if (tbBlock) {
+        let html = '';
+        blockStats.forEach(b => {
+            html += `
+                <tr>
+                    <td style="text-align:left; font-weight:600;">${b.divisi} / ${b.block}</td>
+                    <td>${b.type}</td>
+                    <td style="text-align:left;"><small>${b.mandor}</small></td>
+                    <td style="font-weight:bold;">${b.realizedHa.toFixed(2)}</td>
+                    <td>${b.hk}</td>
+                    <td style="font-weight:600;">${b.haPerHk.toFixed(2)}</td>
+                    <td><span class="grading-badge ${b.evalBadge}" style="font-size:0.7rem; padding:2px 5px;">${b.evalText}</span></td>
+                </tr>
+            `;
+        });
+        tbBlock.innerHTML = html || '<tr><td colspan="7" style="text-align:center; padding:15px;">Tidak ada data blok.</td></tr>';
+    }
+
+    // 6. Render Charts
+    window.renderUpkeepCharts(typeStats);
+
+    // 7. Render Insights
+    window.renderUpkeepInsights(typeStats, { totTargetHa, totRealizedHa, totHK, overallPrestasi, overallPctHa });
+};
+
+window.renderUpkeepCharts = (typeStats) => {
+    // Chart 1: Luas Ha per Aktivitas
+    const ctxType = document.getElementById('chart-uanal-type');
+    if (ctxType) {
+        if (chartUanalTypeInstance) chartUanalTypeInstance.destroy();
+        chartUanalTypeInstance = new Chart(ctxType, {
+            type: 'bar',
+            data: {
+                labels: typeStats.map(t => t.type),
+                datasets: [
+                    {
+                        label: 'Target Plan (Ha)',
+                        data: typeStats.map(t => t.targetHa),
+                        backgroundColor: '#94a3b8'
+                    },
+                    {
+                        label: 'Realisasi (Ha)',
+                        data: typeStats.map(t => t.realizedHa),
+                        backgroundColor: '#10b981'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: { x: { grid: { display: false } }, y: { title: { display: true, text: 'Luas (Ha)' }, beginAtZero: true } }
+            }
+        });
+    }
+
+    // Chart 2: Prestasi Realisasi Ha/HK
+    const ctxPres = document.getElementById('chart-uanal-prestasi');
+    if (ctxPres) {
+        if (chartUanalPrestasiInstance) chartUanalPrestasiInstance.destroy();
+        chartUanalPrestasiInstance = new Chart(ctxPres, {
+            type: 'bar',
+            data: {
+                labels: typeStats.map(t => t.type),
+                datasets: [{
+                    label: 'Realisasi Prestasi (Ha/HK)',
+                    data: typeStats.map(t => t.realizedPrestasi),
+                    backgroundColor: '#0284c7'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: { x: { grid: { display: false } }, y: { title: { display: true, text: 'Prestasi (Ha/HK)' }, beginAtZero: true } }
+            }
+        });
+    }
+};
+
+window.renderUpkeepInsights = (typeStats, metrics) => {
+    const list = document.getElementById('uanal-insights-list');
+    if (!list) return;
+    const insights = [];
+
+    if (metrics.overallPctHa >= 90) {
+        insights.push(`<strong>Capaian Rawat Kebun Sesuai Jadwal:</strong> Total realisasi fisik mencapai <strong>${metrics.totRealizedHa.toFixed(2)} Ha</strong> (${metrics.overallPctHa.toFixed(1)}% dari rencana).`);
+    } else {
+        const gap = metrics.totTargetHa - metrics.totRealizedHa;
+        insights.push(`<strong>Defisit Target Rawat:</strong> Masih terdapat selisih <strong>${gap.toFixed(2)} Ha</strong> area rawat yang belum terselesaikan. <em>Rekomendasi: Tambah alokasi tenaga kerja atau percepat rotasi kerja mandor.</em>`);
+    }
+
+    const lowPres = typeStats.filter(t => t.realizedPrestasi < 0.5 && t.realizedHa > 0);
+    if (lowPres.length > 0) {
+        const names = lowPres.map(t => `${t.type} (${t.realizedPrestasi.toFixed(2)} Ha/HK)`).join(', ');
+        insights.push(`<strong>Prestasi Kerja Perlu Dioptimalkan:</strong> Kegiatan ${names} mencatat output di bawah norma standar. <em>Rekomendasi: Evaluasi kendala lapangan (semak tebal / medan curam) dan pengawasan mandor.</em>`);
+    }
+
+    list.innerHTML = insights.map(i => `<li style="margin-bottom:8px;">${i}</li>`).join('');
+};
+
+window.printUpkeepAnalytics = () => window.print();
+
+window.exportUpkeepAnalyticsCSV = () => {
+    if (!window.cachedUpkeepAnalyticsData) { alert('Data belum dimuat.'); return; }
+    const { selectedDate, scope } = window.cachedUpkeepAnalyticsData;
+    let csv = `LAPORAN ANALISA PRODUKTIVITAS & KINERJA UPKEEP\nPeriode: ${selectedDate} (Scope: ${scope.toUpperCase()})\n\n`;
+    csv += `1. REKAPITULASI CAPAIAN PER JENIS PEKERJAAN\nNo,Jenis Pekerjaan,Target (Ha),Realisasi (Ha),% Capaian,Total HK,Prestasi (Ha/HK),Efisiensi Kerja,Status Evaluasi\n`;
+    
+    document.querySelectorAll('#uanal-type-table tbody tr').forEach(tr => {
+        const cols = Array.from(tr.querySelectorAll('td')).map(td => `"${td.innerText.replace(/"/g, '""').trim()}"`);
+        if (cols.length > 0) csv += cols.join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `Upkeep_Analytics_${selectedDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+
+// =========================================================================
+// --- PEMUPUKAN SUB-SHEET & DOSAGE ANALYTICS SYSTEM ---
+// =========================================================================
+
+window.activePemupukanSubTab = 'monitor';
+let chartPanalAreaInstance = null;
+let chartPanalDoseInstance = null;
+window.cachedPemupukanAnalyticsData = null;
+
+window.switchPemupukanSubTab = (tabId) => {
+    window.activePemupukanSubTab = tabId;
+    const btnMonitor = document.getElementById('tab-btn-pemupukan-monitor');
+    const btnAnalytics = document.getElementById('tab-btn-pemupukan-analytics');
+    if (btnMonitor) btnMonitor.classList.toggle('active', tabId === 'monitor');
+    if (btnAnalytics) btnAnalytics.classList.toggle('active', tabId === 'analytics');
+
+    const contentMonitor = document.getElementById('pemupukan-subsheet-monitor');
+    const contentAnalytics = document.getElementById('pemupukan-subsheet-analytics');
+    if (contentMonitor) contentMonitor.classList.toggle('active', tabId === 'monitor');
+    if (contentAnalytics) contentAnalytics.classList.toggle('active', tabId === 'analytics');
+
+    if (tabId === 'monitor') {
+        renderPemupukanTable();
+    } else if (tabId === 'analytics') {
+        const dateInput = document.getElementById('panal-date');
+        if (dateInput && !dateInput.value) {
+            dateInput.value = window.getLocalDate();
+        }
+        window.loadPemupukanAnalyticsData();
+    }
+};
+
+window.loadPemupukanAnalyticsData = async () => {
+    const dateInput = document.getElementById('panal-date');
+    const scopeSelect = document.getElementById('panal-scope');
+    if (dateInput && !dateInput.value) dateInput.value = window.getLocalDate();
+
+    const selectedDate = dateInput ? dateInput.value : window.getLocalDate();
+    const scope = scopeSelect ? scopeSelect.value : 'all';
+    const month = selectedDate.substring(0, 7);
+
+    let rawPemupukan = db.pemupukan || [];
+    if (currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+        rawPemupukan = rawPemupukan.filter(p => !p.estate || p.estate === currentUser.estate);
+    }
+
+    if (scope === 'daily') {
+        rawPemupukan = rawPemupukan.filter(p => p.startdate === selectedDate || p.startDate === selectedDate);
+    } else if (scope === 'mtd') {
+        rawPemupukan = rawPemupukan.filter(p => (p.startdate && p.startdate.startsWith(month)) || (p.startDate && p.startDate.startsWith(month)));
+    }
+
+    // Populate pupuk filter
+    const pupukSet = new Set(rawPemupukan.map(p => p.plan).filter(Boolean));
+    const pupukFilter = document.getElementById('panal-pupuk-filter');
+    if (pupukFilter) {
+        const curr = pupukFilter.value;
+        pupukFilter.innerHTML = '<option value="ALL">Semua Jenis Pupuk</option>' + 
+            Array.from(pupukSet).map(p => `<option value="${p}">${p}</option>`).join('');
+        if (curr && pupukSet.has(curr)) pupukFilter.value = curr;
+    }
+
+    window.cachedPemupukanAnalyticsData = {
+        selectedDate,
+        scope,
+        month,
+        pemupukan: rawPemupukan
+    };
+
+    window.processAndRenderPemupukanAnalytics();
+};
+
+window.processAndRenderPemupukanAnalytics = () => {
+    if (!window.cachedPemupukanAnalyticsData) return;
+    const { pemupukan } = window.cachedPemupukanAnalyticsData;
+    const pupukFilter = document.getElementById('panal-pupuk-filter');
+    const selectedPupuk = pupukFilter ? pupukFilter.value : 'ALL';
+
+    let filtered = pemupukan;
+    if (selectedPupuk && selectedPupuk !== 'ALL') {
+        filtered = filtered.filter(p => p.plan === selectedPupuk);
+    }
+
+    // 1. Group by Jenis Pupuk
+    const pupukMap = {};
+    let totTargetHa = 0, totRealizedHa = 0, totTargetKg = 0, totRealizedKg = 0, totWorkers = 0;
+
+    filtered.forEach(p => {
+        const jenis = p.plan || 'Pupuk -';
+        if (!pupukMap[jenis]) {
+            pupukMap[jenis] = {
+                jenis,
+                targetHa: 0,
+                realizedHa: 0,
+                targetKg: 0,
+                realizedKg: 0,
+                dosisSum: 0,
+                dosisCount: 0,
+                workers: 0,
+                count: 0
+            };
+        }
+        const pObj = pupukMap[jenis];
+        const tHa = parseFloat(p.targetha || p.targetHa) || 0;
+        const rHa = parseFloat(p.realizedha || p.realizedHa) || 0;
+        const tKg = parseFloat(p.targetkg || p.targetKg) || 0;
+        const rKg = parseFloat(p.realizedkg || p.realizedKg) || 0;
+        const rW = parseInt(p.realizedworkers || p.realizedWorkers || p.targetworkers || p.targetWorkers) || 0;
+        const dosis = parseFloat(p.dosis) || 1.5;
+
+        pObj.targetHa += tHa;
+        pObj.realizedHa += rHa;
+        pObj.targetKg += tKg;
+        pObj.realizedKg += rKg;
+        pObj.dosisSum += dosis;
+        pObj.dosisCount += 1;
+        pObj.workers += rW;
+        pObj.count += 1;
+
+        totTargetHa += tHa;
+        totRealizedHa += rHa;
+        totTargetKg += tKg;
+        totRealizedKg += rKg;
+        totWorkers += rW;
+    });
+
+    const pupukStats = Object.values(pupukMap).map(p => {
+        const pctHa = p.targetHa > 0 ? (p.realizedHa / p.targetHa * 100) : (p.realizedHa > 0 ? 100 : 0);
+        const pctKg = p.targetKg > 0 ? (p.realizedKg / p.targetKg * 100) : (p.realizedKg > 0 ? 100 : 0);
+        const dosisBaku = p.dosisCount > 0 ? (p.dosisSum / p.dosisCount) : 1.5;
+        
+        // Est Pokok (Asumsi 136 pkk/ha)
+        const estPokok = p.realizedHa * 136;
+        const dosisReal = estPokok > 0 ? (p.realizedKg / estPokok) : dosisBaku;
+        const deviasiDosisPct = dosisBaku > 0 ? ((dosisReal - dosisBaku) / dosisBaku * 100) : 0;
+
+        let statusClass = 'grading-cell-good';
+        let statusText = 'Aplikasi Sesuai';
+        if (Math.abs(deviasiDosisPct) > 15) {
+            statusClass = deviasiDosisPct > 15 ? 'grading-cell-warn' : 'grading-cell-danger';
+            statusText = deviasiDosisPct > 15 ? 'Overdose (>15%)' : 'Underdose (<-15%)';
+        } else if (pctHa >= 100) {
+            statusClass = 'grading-cell-good';
+            statusText = 'Tuntas 100%';
+        }
+
+        return {
+            ...p,
+            pctHa,
+            pctKg,
+            dosisBaku,
+            dosisReal,
+            deviasiDosisPct,
+            statusClass,
+            statusText
+        };
+    }).sort((a, b) => b.realizedKg - a.realizedKg);
+
+    // 2. Group by Blok / Mandor
+    const blockStats = filtered.map(p => {
+        const bData = masterData.blok.find(x => x.name === p.block);
+        const divisi = bData ? bData.divisi : '-';
+        const rHa = parseFloat(p.realizedha || p.realizedHa) || 0;
+        const rKg = parseFloat(p.realizedkg || p.realizedKg) || 0;
+        const rW = parseInt(p.realizedworkers || p.realizedWorkers || p.targetworkers || p.targetWorkers) || 0;
+        const haPerHk = rW > 0 ? (rHa / rW) : 0;
+        const kgPerHk = rW > 0 ? (rKg / rW) : 0;
+
+        let evalBadge = 'grading-cell-good';
+        let evalText = 'Optimal';
+        if (haPerHk < 0.3 && haPerHk > 0) {
+            evalBadge = 'grading-cell-warn';
+            evalText = 'Output Rendah';
+        }
+
+        return {
+            block: p.block || '-',
+            divisi,
+            pupuk: p.plan || '-',
+            realizedHa: rHa,
+            realizedKg: rKg,
+            hk: rW,
+            haPerHk,
+            kgPerHk,
+            evalBadge,
+            evalText
+        };
+    }).slice(0, 15);
+
+    // 3. Render KPI Cards
+    const overallPctHa = totTargetHa > 0 ? (totRealizedHa / totTargetHa * 100) : (totRealizedHa > 0 ? 100 : 0);
+    const overallPctKg = totTargetKg > 0 ? (totRealizedKg / totTargetKg * 100) : (totRealizedKg > 0 ? 100 : 0);
+    const avgPrestasiHa = totWorkers > 0 ? (totRealizedHa / totWorkers) : 0;
+    const avgPrestasiKg = totWorkers > 0 ? (totRealizedKg / totWorkers) : 0;
+    const sisaHa = Math.max(0, totTargetHa - totRealizedHa);
+    const sisaKg = Math.max(0, totTargetKg - totRealizedKg);
+
+    const elKpiArea = document.getElementById('panal-kpi-area');
+    const elKpiAreaSub = document.getElementById('panal-kpi-area-sub');
+    if (elKpiArea) elKpiArea.innerText = `${totRealizedHa.toFixed(2)} Ha`;
+    if (elKpiAreaSub) elKpiAreaSub.innerText = `Target Plan: ${totTargetHa.toFixed(2)} Ha (${overallPctHa.toFixed(1)}%)`;
+
+    const elKpiPupuk = document.getElementById('panal-kpi-pupuk');
+    const elKpiPupukSub = document.getElementById('panal-kpi-pupuk-sub');
+    if (elKpiPupuk) elKpiPupuk.innerText = `${totRealizedKg.toLocaleString('id-ID')} Kg`;
+    if (elKpiPupukSub) elKpiPupukSub.innerText = `Rencana: ${totTargetKg.toLocaleString('id-ID')} Kg (${overallPctKg.toFixed(1)}%)`;
+
+    const elKpiPrestasi = document.getElementById('panal-kpi-prestasi');
+    const elKpiPrestasiSub = document.getElementById('panal-kpi-prestasi-sub');
+    if (elKpiPrestasi) elKpiPrestasi.innerText = `${avgPrestasiHa.toFixed(2)} Ha/HK`;
+    if (elKpiPrestasiSub) elKpiPrestasiSub.innerText = `Aplikasi: ${avgPrestasiKg.toFixed(1)} Kg / HK (${totWorkers} HK)`;
+
+    const elKpiSisa = document.getElementById('panal-kpi-sisa');
+    const elKpiSisaSub = document.getElementById('panal-kpi-sisa-sub');
+    if (elKpiSisa) elKpiSisa.innerText = `${sisaHa.toFixed(2)} Ha`;
+    if (elKpiSisaSub) elKpiSisaSub.innerText = `Sisa Pupuk: ${sisaKg.toLocaleString('id-ID')} Kg`;
+
+    // 4. Render Table 1 (Pupuk)
+    const tbPupuk = document.querySelector('#panal-pupuk-table tbody');
+    const tfPupuk = document.querySelector('#panal-pupuk-table tfoot');
+    if (tbPupuk) {
+        let html = '';
+        pupukStats.forEach((p, idx) => {
+            const devBadge = Math.abs(p.deviasiDosisPct) > 15 ? 'grading-cell-warn' : 'grading-cell-good';
+            html += `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td style="text-align:left; font-weight:bold;">${p.jenis}</td>
+                    <td style="background-color:#f0f9ff;">${p.targetHa.toFixed(2)}</td>
+                    <td style="background-color:#ecfdf5; font-weight:bold;">${p.realizedHa.toFixed(2)}</td>
+                    <td style="font-weight:bold;">${p.pctHa.toFixed(1)}%</td>
+                    <td style="background-color:#f0f9ff;">${p.targetKg.toLocaleString('id-ID')}</td>
+                    <td style="background-color:#ecfdf5; font-weight:bold;">${p.realizedKg.toLocaleString('id-ID')}</td>
+                    <td style="font-weight:bold;">${p.pctKg.toFixed(1)}%</td>
+                    <td>${p.dosisBaku.toFixed(2)}</td>
+                    <td style="font-weight:600;">${p.dosisReal.toFixed(2)}</td>
+                    <td class="${devBadge}" style="font-weight:bold;">${p.deviasiDosisPct > 0 ? '+' : ''}${p.deviasiDosisPct.toFixed(1)}%</td>
+                    <td><span class="grading-badge ${p.statusClass}" style="font-size:0.72rem; padding:2px 6px;">${p.statusText}</span></td>
+                </tr>
+            `;
+        });
+        tbPupuk.innerHTML = html || '<tr><td colspan="12" style="text-align:center; padding:15px;">Tidak ada data pemupukan.</td></tr>';
+    }
+    if (tfPupuk) {
+        tfPupuk.innerHTML = `
+            <tr style="background-color:#e2e8f0; font-weight:bold;">
+                <td colspan="2" style="text-align:left; padding-left:10px;">TOTAL KONSOLIDASI</td>
+                <td style="background-color:#bae6fd;">${totTargetHa.toFixed(2)}</td>
+                <td style="background-color:#a7f3d0;">${totRealizedHa.toFixed(2)}</td>
+                <td style="background-color:#99f6e4;">${overallPctHa.toFixed(1)}%</td>
+                <td style="background-color:#bae6fd;">${totTargetKg.toLocaleString('id-ID')}</td>
+                <td style="background-color:#a7f3d0;">${totRealizedKg.toLocaleString('id-ID')}</td>
+                <td style="background-color:#99f6e4;">${overallPctKg.toFixed(1)}%</td>
+                <td colspan="4">-</td>
+            </tr>
+        `;
+    }
+
+    // 5. Render Table 2 (Block)
+    const tbBlock = document.querySelector('#panal-block-table tbody');
+    if (tbBlock) {
+        let html = '';
+        blockStats.forEach(b => {
+            html += `
+                <tr>
+                    <td style="text-align:left; font-weight:600;">${b.divisi} / ${b.block}</td>
+                    <td>${b.pupuk}</td>
+                    <td style="font-weight:bold;">${b.realizedHa.toFixed(2)}</td>
+                    <td>${b.realizedKg.toLocaleString('id-ID')}</td>
+                    <td>${b.hk}</td>
+                    <td style="font-weight:600;">${b.haPerHk.toFixed(2)}</td>
+                    <td style="font-weight:600;">${b.kgPerHk.toFixed(1)}</td>
+                    <td><span class="grading-badge ${b.evalBadge}" style="font-size:0.7rem; padding:2px 5px;">${b.evalText}</span></td>
+                </tr>
+            `;
+        });
+        tbBlock.innerHTML = html || '<tr><td colspan="8" style="text-align:center; padding:15px;">Tidak ada data blok.</td></tr>';
+    }
+
+    // 6. Render Charts
+    window.renderPemupukanCharts(pupukStats);
+
+    // 7. Render Insights
+    window.renderPemupukanInsights(pupukStats, { totTargetHa, totRealizedHa, totTargetKg, totRealizedKg, overallPctHa, overallPctKg, sisaHa, sisaKg });
+};
+
+window.renderPemupukanCharts = (pupukStats) => {
+    // Chart 1: Luas Ha Target vs Realisasi
+    const ctxArea = document.getElementById('chart-panal-area');
+    if (ctxArea) {
+        if (chartPanalAreaInstance) chartPanalAreaInstance.destroy();
+        chartPanalAreaInstance = new Chart(ctxArea, {
+            type: 'bar',
+            data: {
+                labels: pupukStats.map(p => p.jenis),
+                datasets: [
+                    {
+                        label: 'Target Area (Ha)',
+                        data: pupukStats.map(p => p.targetHa),
+                        backgroundColor: '#94a3b8'
+                    },
+                    {
+                        label: 'Realisasi Area (Ha)',
+                        data: pupukStats.map(p => p.realizedHa),
+                        backgroundColor: '#059669'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: { x: { grid: { display: false } }, y: { title: { display: true, text: 'Luas (Ha)' }, beginAtZero: true } }
+            }
+        });
+    }
+
+    // Chart 2: Pemakaian Kg Pupuk Target vs Realisasi
+    const ctxDose = document.getElementById('chart-panal-dose');
+    if (ctxDose) {
+        if (chartPanalDoseInstance) chartPanalDoseInstance.destroy();
+        chartPanalDoseInstance = new Chart(ctxDose, {
+            type: 'bar',
+            data: {
+                labels: pupukStats.map(p => p.jenis),
+                datasets: [
+                    {
+                        label: 'Target Pupuk (Kg)',
+                        data: pupukStats.map(p => p.targetKg),
+                        backgroundColor: '#60a5fa'
+                    },
+                    {
+                        label: 'Realisasi Pupuk (Kg)',
+                        data: pupukStats.map(p => p.realizedKg),
+                        backgroundColor: '#2563eb'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: { x: { grid: { display: false } }, y: { title: { display: true, text: 'Tonase Pupuk (Kg)' }, beginAtZero: true } }
+            }
+        });
+    }
+};
+
+window.renderPemupukanInsights = (pupukStats, metrics) => {
+    const list = document.getElementById('panal-insights-list');
+    if (!list) return;
+    const insights = [];
+
+    if (metrics.overallPctHa >= 90) {
+        insights.push(`<strong>Capaian Luas Pemupukan Optimal:</strong> Realisasi pemupukan mencapai <strong>${metrics.totRealizedHa.toFixed(2)} Ha</strong> (${metrics.overallPctHa.toFixed(1)}% dari target program).`);
+    } else {
+        insights.push(`<strong>Progress Pemupukan Berjalan:</strong> Masih terdapat sisa area <strong>${metrics.sisaHa.toFixed(2)} Ha</strong> (${metrics.sisaKg.toLocaleString('id-ID')} Kg pupuk) yang harus ditabur.`);
+    }
+
+    const devPupuk = pupukStats.filter(p => Math.abs(p.deviasiDosisPct) > 15 && p.realizedHa > 0);
+    if (devPupuk.length > 0) {
+        const names = devPupuk.map(p => `${p.jenis} (${p.deviasiDosisPct > 0 ? '+' : ''}${p.deviasiDosisPct.toFixed(1)}%)`).join(', ');
+        insights.push(`<strong>Peringatan Deviasi Dosis:</strong> Terdapat ketidaksesuaian dosis pada pupuk ${names}. <em>Rekomendasi: Lakukan kalibrasi mangkok takar pupuk pekerja dan briefing mandor sebelum penaburan.</em>`);
+    }
+
+    list.innerHTML = insights.map(i => `<li style="margin-bottom:8px;">${i}</li>`).join('');
+};
+
+window.printPemupukanAnalytics = () => window.print();
+
+window.exportPemupukanAnalyticsCSV = () => {
+    if (!window.cachedPemupukanAnalyticsData) { alert('Data belum dimuat.'); return; }
+    const { selectedDate, scope } = window.cachedPemupukanAnalyticsData;
+    let csv = `LAPORAN ANALISA KINERJA & DOSIS PEMUPUKAN\nPeriode: ${selectedDate} (Scope: ${scope.toUpperCase()})\n\n`;
+    csv += `1. REKAPITULASI CAPAIAN PER JENIS PUPUK\nNo,Jenis Pupuk,Target (Ha),Realisasi (Ha),% Area,Target (Kg),Realisasi (Kg),% Pupuk,Dosis Baku (Kg/Pkk),Dosis Real (Kg/Pkk),Deviasi Dosis,Status Aplikasi\n`;
+    
+    document.querySelectorAll('#panal-pupuk-table tbody tr').forEach(tr => {
+        const cols = Array.from(tr.querySelectorAll('td')).map(td => `"${td.innerText.replace(/"/g, '""').trim()}"`);
+        if (cols.length > 0) csv += cols.join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `Pemupukan_Analytics_${selectedDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+
+// =========================================================================
+// --- HARVESTING SUB-SHEET & PRODUCTIVITY ANALYTICS SYSTEM ---
+// =========================================================================
+
+window.activeHarvestingSubTab = 'monitor';
+let chartHanalDivisiInstance = null;
+let chartHanalOutputInstance = null;
+window.cachedHarvestingAnalyticsData = null;
+
+window.switchHarvestingSubTab = (tabId) => {
+    window.activeHarvestingSubTab = tabId;
+    const btnMonitor = document.getElementById('tab-btn-harvesting-monitor');
+    const btnAnalytics = document.getElementById('tab-btn-harvesting-analytics');
+    if (btnMonitor) btnMonitor.classList.toggle('active', tabId === 'monitor');
+    if (btnAnalytics) btnAnalytics.classList.toggle('active', tabId === 'analytics');
+
+    const contentMonitor = document.getElementById('harvesting-subsheet-monitor');
+    const contentAnalytics = document.getElementById('harvesting-subsheet-analytics');
+    if (contentMonitor) contentMonitor.classList.toggle('active', tabId === 'monitor');
+    if (contentAnalytics) contentAnalytics.classList.toggle('active', tabId === 'analytics');
+
+    if (tabId === 'monitor') {
+        renderHarvestingTable();
+    } else if (tabId === 'analytics') {
+        const dateInput = document.getElementById('hanal-date');
+        if (dateInput && !dateInput.value) {
+            dateInput.value = window.getLocalDate();
+        }
+        window.loadHarvestingAnalyticsData();
+    }
+};
+
+window.loadHarvestingAnalyticsData = async () => {
+    const dateInput = document.getElementById('hanal-date');
+    const scopeSelect = document.getElementById('hanal-scope');
+    if (dateInput && !dateInput.value) dateInput.value = window.getLocalDate();
+
+    const selectedDate = dateInput ? dateInput.value : window.getLocalDate();
+    const scope = scopeSelect ? scopeSelect.value : 'all';
+    const month = selectedDate.substring(0, 7);
+
+    let rawHarvesting = db.harvesting_daily || [];
+    if (currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+        rawHarvesting = rawHarvesting.filter(h => !h.estate || h.estate === currentUser.estate);
+    }
+
+    if (scope === 'daily') {
+        rawHarvesting = rawHarvesting.filter(h => h.date && h.date.startsWith(selectedDate));
+    } else if (scope === 'mtd') {
+        rawHarvesting = rawHarvesting.filter(h => h.date && h.date.startsWith(month));
+    }
+
+    // Populate divisi filter
+    const divSet = new Set(rawHarvesting.map(h => h.divisi).filter(Boolean));
+    const divFilter = document.getElementById('hanal-divisi-filter');
+    if (divFilter) {
+        const curr = divFilter.value;
+        divFilter.innerHTML = '<option value="ALL">Semua Divisi</option>' + 
+            Array.from(divSet).map(d => `<option value="${d}">${d}</option>`).join('');
+        if (curr && divSet.has(curr)) divFilter.value = curr;
+    }
+
+    window.cachedHarvestingAnalyticsData = {
+        selectedDate,
+        scope,
+        month,
+        harvesting: rawHarvesting
+    };
+
+    window.processAndRenderHarvestingAnalytics();
+};
+
+window.processAndRenderHarvestingAnalytics = () => {
+    if (!window.cachedHarvestingAnalyticsData) return;
+    const { harvesting } = window.cachedHarvestingAnalyticsData;
+    const divFilter = document.getElementById('hanal-divisi-filter');
+    const selectedDiv = divFilter ? divFilter.value : 'ALL';
+
+    let filtered = harvesting;
+    if (selectedDiv && selectedDiv !== 'ALL') {
+        filtered = filtered.filter(h => h.divisi === selectedDiv);
+    }
+
+    // 1. Group by Divisi
+    const divMap = {};
+    let totJanjang = 0, totKg = 0, totHa = 0, totHvr = 0;
+
+    filtered.forEach(h => {
+        const div = h.divisi || 'Divisi -';
+        if (!divMap[div]) {
+            divMap[div] = {
+                divisi: div,
+                janjang: 0,
+                kg: 0,
+                ha: 0,
+                hvr: 0,
+                count: 0
+            };
+        }
+        const dObj = divMap[div];
+        const jjg = parseInt(h.realized_janjang || h.est_janjang) || 0;
+        const kg = parseFloat(h.realized_kg || h.est_kg) || 0;
+        const hvr = parseInt(h.realized_pemanen || h.plan_pemanen) || 0;
+        const ha = parseFloat(h.realized_ha || h.plan_ha) || (jjg > 0 ? jjg / 180 : 0); // approx ha if empty
+
+        dObj.janjang += jjg;
+        dObj.kg += kg;
+        dObj.ha += ha;
+        dObj.hvr += hvr;
+        dObj.count += 1;
+
+        totJanjang += jjg;
+        totKg += kg;
+        totHa += ha;
+        totHvr += hvr;
+    });
+
+    const divStats = Object.values(divMap).map(d => {
+        const density = d.ha > 0 ? (d.janjang / d.ha) : 0;
+        const bjr = d.janjang > 0 ? (d.kg / d.janjang) : 18.0;
+        const tonase = d.kg / 1000;
+        const outputJjg = d.hvr > 0 ? (d.janjang / d.hvr) : 0;
+        const outputTon = d.hvr > 0 ? (tonase / d.hvr) : 0;
+
+        let statusClass = 'grading-cell-good';
+        let statusText = 'Produktivitas Baik';
+        if (outputJjg < 100 && outputJjg > 0) {
+            statusClass = 'grading-cell-danger';
+            statusText = 'Output Rendah (<100 JJG)';
+        } else if (outputJjg >= 160) {
+            statusClass = 'grading-cell-good';
+            statusText = 'Sangat Tinggi (≥160 JJG)';
+        }
+
+        return {
+            ...d,
+            density,
+            bjr,
+            tonase,
+            outputJjg,
+            outputTon,
+            statusClass,
+            statusText
+        };
+    }).sort((a, b) => b.tonase - a.tonase);
+
+    // 2. Group by Block & Pusingan
+    const blockStats = filtered.map(h => {
+        const estJjg = parseInt(h.est_janjang) || 0;
+        const actJjg = parseInt(h.realized_janjang) || estJjg;
+        const pctCap = estJjg > 0 ? (actJjg / estJjg * 100) : (actJjg > 0 ? 100 : 0);
+        const hvr = parseInt(h.realized_pemanen || h.plan_pemanen) || 0;
+        const jjgPerHk = hvr > 0 ? (actJjg / hvr) : 0;
+        const round = parseInt(h.pusingan) || 8;
+
+        let roundBadge = 'grading-cell-good';
+        let roundText = `Normal (${round} Hari)`;
+        if (round > 10) {
+            roundBadge = 'grading-cell-danger';
+            roundText = `Molor (${round} Hari)`;
+        } else if (round < 7) {
+            roundBadge = 'grading-cell-warn';
+            roundText = `Ketat (${round} Hari)`;
+        }
+
+        return {
+            divisi: h.divisi || '-',
+            block: h.block || '-',
+            round,
+            mandor: h.mandor || '-',
+            estJjg,
+            actJjg,
+            pctCap,
+            jjgPerHk,
+            roundBadge,
+            roundText
+        };
+    }).slice(0, 15);
+
+    // 3. Render KPI Cards
+    const totalTonase = totKg / 1000;
+    const avgDensity = totHa > 0 ? (totJanjang / totHa) : 0;
+    const avgOutputJjg = totHvr > 0 ? (totJanjang / totHvr) : 0;
+    const avgOutputTon = totHvr > 0 ? (totalTonase / totHvr) : 0;
+    const avgBjr = totJanjang > 0 ? (totKg / totJanjang) : 0;
+
+    const elKpiTonase = document.getElementById('hanal-kpi-tonase');
+    const elKpiJanjang = document.getElementById('hanal-kpi-janjang');
+    if (elKpiTonase) elKpiTonase.innerText = `${totalTonase.toFixed(2)} Ton`;
+    if (elKpiJanjang) elKpiJanjang.innerText = `Total ${totJanjang.toLocaleString('id-ID')} Janjang (JJG)`;
+
+    const elKpiArea = document.getElementById('hanal-kpi-area');
+    const elKpiDensity = document.getElementById('hanal-kpi-density');
+    if (elKpiArea) elKpiArea.innerText = `${totHa.toFixed(2)} Ha`;
+    if (elKpiDensity) elKpiDensity.innerText = `Kerapatan: ${avgDensity.toFixed(0)} JJG / Ha`;
+
+    const elKpiOutput = document.getElementById('hanal-kpi-output');
+    const elKpiOutputTon = document.getElementById('hanal-kpi-output-ton');
+    if (elKpiOutput) elKpiOutput.innerText = `${avgOutputJjg.toFixed(0)} JJG/HK`;
+    if (elKpiOutputTon) elKpiOutputTon.innerText = `Output: ${avgOutputTon.toFixed(2)} Ton / HK`;
+
+    const elKpiBjr = document.getElementById('hanal-kpi-bjr');
+    const elKpiHvr = document.getElementById('hanal-kpi-pemanen-count');
+    if (elKpiBjr) elKpiBjr.innerText = `${avgBjr.toFixed(2)} Kg`;
+    if (elKpiHvr) elKpiHvr.innerText = `Total ${totHvr} HK Pemanen`;
+
+    // 4. Render Table 1 (Divisi)
+    const tbDiv = document.querySelector('#hanal-divisi-table tbody');
+    const tfDiv = document.querySelector('#hanal-divisi-table tfoot');
+    if (tbDiv) {
+        let html = '';
+        divStats.forEach((d, idx) => {
+            html += `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td style="text-align:left; font-weight:bold;">${d.divisi}</td>
+                    <td style="background-color:#f0f9ff;">${d.ha.toFixed(2)}</td>
+                    <td style="background-color:#ecfdf5; font-weight:bold;">${d.janjang.toLocaleString('id-ID')}</td>
+                    <td>${d.density.toFixed(0)}</td>
+                    <td>${d.bjr.toFixed(2)}</td>
+                    <td style="background-color:#ecfdf5; font-weight:bold;">${d.tonase.toFixed(2)}</td>
+                    <td>${d.hvr}</td>
+                    <td style="background-color:#eff6ff; font-weight:600;">${d.outputJjg.toFixed(0)}</td>
+                    <td style="background-color:#fffbeb; font-weight:600;">${d.outputTon.toFixed(2)}</td>
+                    <td><span class="grading-badge ${d.statusClass}" style="font-size:0.72rem; padding:2px 6px;">${d.statusText}</span></td>
+                </tr>
+            `;
+        });
+        tbDiv.innerHTML = html || '<tr><td colspan="11" style="text-align:center; padding:15px;">Tidak ada data panen.</td></tr>';
+    }
+    if (tfDiv) {
+        tfDiv.innerHTML = `
+            <tr style="background-color:#e2e8f0; font-weight:bold;">
+                <td colspan="2" style="text-align:left; padding-left:10px;">TOTAL KONSOLIDASI</td>
+                <td style="background-color:#bae6fd;">${totHa.toFixed(2)}</td>
+                <td style="background-color:#a7f3d0;">${totJanjang.toLocaleString('id-ID')}</td>
+                <td>${avgDensity.toFixed(0)}</td>
+                <td>${avgBjr.toFixed(2)}</td>
+                <td style="background-color:#a7f3d0;">${totalTonase.toFixed(2)}</td>
+                <td>${totHvr}</td>
+                <td style="background-color:#bfdbfe;">${avgOutputJjg.toFixed(0)}</td>
+                <td style="background-color:#fde68a;">${avgOutputTon.toFixed(2)}</td>
+                <td>-</td>
+            </tr>
+        `;
+    }
+
+    // 5. Render Table 2 (Block)
+    const tbBlock = document.querySelector('#hanal-block-table tbody');
+    if (tbBlock) {
+        let html = '';
+        blockStats.forEach(b => {
+            html += `
+                <tr>
+                    <td style="text-align:left; font-weight:600;">${b.divisi} / ${b.block}</td>
+                    <td><span class="grading-badge ${b.roundBadge}" style="font-size:0.7rem; padding:2px 5px;">${b.roundText}</span></td>
+                    <td style="text-align:left;"><small>${b.mandor}</small></td>
+                    <td>${b.estJjg.toLocaleString('id-ID')}</td>
+                    <td style="font-weight:bold;">${b.actJjg.toLocaleString('id-ID')}</td>
+                    <td style="font-weight:bold;">${b.pctCap.toFixed(1)}%</td>
+                    <td style="font-weight:600;">${b.jjgPerHk.toFixed(0)}</td>
+                    <td><span class="grading-badge ${b.roundBadge}" style="font-size:0.7rem; padding:2px 5px;">${b.round > 10 ? 'Risiko Buah Restan' : 'Terkendali'}</span></td>
+                </tr>
+            `;
+        });
+        tbBlock.innerHTML = html || '<tr><td colspan="8" style="text-align:center; padding:15px;">Tidak ada data blok.</td></tr>';
+    }
+
+    // 6. Render Charts
+    window.renderHarvestingCharts(divStats);
+
+    // 7. Render Insights
+    window.renderHarvestingInsights(divStats, blockStats, { totalTonase, totJanjang, avgDensity, avgOutputJjg, avgBjr, totHvr });
+};
+
+window.renderHarvestingCharts = (divStats) => {
+    // Chart 1: Tonase per Divisi
+    const ctxDiv = document.getElementById('chart-hanal-divisi');
+    if (ctxDiv) {
+        if (chartHanalDivisiInstance) chartHanalDivisiInstance.destroy();
+        chartHanalDivisiInstance = new Chart(ctxDiv, {
+            type: 'bar',
+            data: {
+                labels: divStats.map(d => d.divisi),
+                datasets: [
+                    {
+                        label: 'Tonase Panen (Ton)',
+                        data: divStats.map(d => d.tonase),
+                        backgroundColor: '#059669',
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Jumlah Janjang (JJG)',
+                        data: divStats.map(d => d.janjang),
+                        backgroundColor: '#0284c7',
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { type: 'linear', position: 'left', title: { display: true, text: 'Tonase (Ton)' }, beginAtZero: true },
+                    y1: { type: 'linear', position: 'right', title: { display: true, text: 'Janjang' }, beginAtZero: true, grid: { drawOnChartArea: false } }
+                }
+            }
+        });
+    }
+
+    // Chart 2: Output Pemanen vs Kerapatan
+    const ctxOut = document.getElementById('chart-hanal-output');
+    if (ctxOut) {
+        if (chartHanalOutputInstance) chartHanalOutputInstance.destroy();
+        chartHanalOutputInstance = new Chart(ctxOut, {
+            type: 'bar',
+            data: {
+                labels: divStats.map(d => d.divisi),
+                datasets: [
+                    {
+                        type: 'bar',
+                        label: 'Output Pemanen (JJG/HK)',
+                        data: divStats.map(d => d.outputJjg),
+                        backgroundColor: '#f59e0b',
+                        yAxisID: 'y'
+                    },
+                    {
+                        type: 'line',
+                        label: 'Kerapatan Buah (JJG/Ha)',
+                        data: divStats.map(d => d.density),
+                        borderColor: '#2563eb',
+                        backgroundColor: '#2563eb',
+                        borderWidth: 2.5,
+                        pointRadius: 4,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { type: 'linear', position: 'left', title: { display: true, text: 'JJG / HK' }, beginAtZero: true },
+                    y1: { type: 'linear', position: 'right', title: { display: true, text: 'JJG / Ha' }, beginAtZero: true, grid: { drawOnChartArea: false } }
+                }
+            }
+        });
+    }
+};
+
+window.renderHarvestingInsights = (divStats, blockStats, metrics) => {
+    const list = document.getElementById('hanal-insights-list');
+    if (!list) return;
+    const insights = [];
+
+    insights.push(`<strong>Produksi Panen Terkonsolidasi:</strong> Total panen mencapai <strong>${metrics.totalTonase.toFixed(2)} Ton</strong> (${metrics.totJanjang.toLocaleString('id-ID')} JJG) dengan rata-rata BJR <strong>${metrics.avgBjr.toFixed(2)} Kg/JJG</strong>.`);
+
+    if (metrics.avgOutputJjg >= 130) {
+        insights.push(`<strong>Produktivitas Pemanen Sangat Baik:</strong> Rata-rata output pemanen mencapai <strong>${metrics.avgOutputJjg.toFixed(0)} JJG / HK</strong> (di atas standar norma).`);
+    } else {
+        insights.push(`<strong>Peluang Peningkatan Output Panen:</strong> Rata-rata pemanen mencatat <strong>${metrics.avgOutputJjg.toFixed(0)} JJG / HK</strong>. <em>Rekomendasi: Perhatikan kerapatan ancak panen dan distribusi alat panen (egrek/dodos).</em>`);
+    }
+
+    const lateRounds = blockStats.filter(b => b.round > 10);
+    if (lateRounds.length > 0) {
+        const names = lateRounds.map(b => `${b.divisi}/${b.block} (${b.round} hari)`).join(', ');
+        insights.push(`<strong>Peringatan Pusingan Panen Molor (>10 Hari):</strong> Blok ${names} melewati batas rotasi ideal. <em>Rekomendasi: Tambah tenaga pemanen bantuan agar tidak terjadi buah busuk atau kenaikan asam lemak bebas (FFA).</em>`);
+    }
+
+    list.innerHTML = insights.map(i => `<li style="margin-bottom:8px;">${i}</li>`).join('');
+};
+
+window.printHarvestingAnalytics = () => window.print();
+
+window.exportHarvestingAnalyticsCSV = () => {
+    if (!window.cachedHarvestingAnalyticsData) { alert('Data belum dimuat.'); return; }
+    const { selectedDate, scope } = window.cachedHarvestingAnalyticsData;
+    let csv = `LAPORAN ANALISA KINERJA PANEN & PRODUKTIVITAS\nPeriode: ${selectedDate} (Scope: ${scope.toUpperCase()})\n\n`;
+    csv += `1. REKAPITULASI KINERJA PANEN PER DIVISI\nNo,Divisi,Luas Panen (Ha),Total JJG,Kerapatan (JJG/Ha),BJR Aktual (Kg),Est. Tonase (Ton),HK Pemanen,Output JJG/HK,Output Ton/HK,Status Kinerja\n`;
+    
+    document.querySelectorAll('#hanal-divisi-table tbody tr').forEach(tr => {
+        const cols = Array.from(tr.querySelectorAll('td')).map(td => `"${td.innerText.replace(/"/g, '""').trim()}"`);
+        if (cols.length > 0) csv += cols.join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `Harvesting_Analytics_${selectedDate}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
