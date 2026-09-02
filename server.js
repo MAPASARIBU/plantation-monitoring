@@ -999,9 +999,18 @@ app.put('/api/harvesting/daily/:id/realization', async (req, res) => {
     try {
         const { realized_janjang, realized_pemanen, realized_kg, realized_ha, status, ritase_list } = req.body;
         const newStatus = status || 'In Progress';
+        const targetId = parseInt(req.params.id) || req.params.id;
         await pool.query(
             'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, realized_ha = $4, status = $5, ritase_list = COALESCE($6, ritase_list) WHERE id = $7',
-            [realized_janjang, realized_pemanen, realized_kg, realized_ha, newStatus, ritase_list, req.params.id]
+            [
+                parseFloat(realized_janjang) || 0,
+                parseInt(realized_pemanen) || 0,
+                parseFloat(realized_kg) || 0,
+                parseFloat(realized_ha) || 0,
+                newStatus,
+                ritase_list || '[]',
+                targetId
+            ]
         );
         res.json({ success: true });
     } catch (err) {
