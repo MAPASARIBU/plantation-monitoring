@@ -929,3 +929,218 @@ h1, h2, h3, h4, h5, h6 {
     margin-top: 3px;
     color: #15803d;
 }
+
+/* =========================================================================
+   --- PRINT STYLESHEET (FULL MULTI-PAGE & UNCONSTRAINED REPORT) ---
+   ========================================================================= */
+@media print {
+    @page {
+        size: landscape;
+        margin: 8mm 8mm 10mm 8mm;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    html, body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        overflow: visible !important;
+        height: auto !important;
+        min-height: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-size: 8.5pt !important;
+    }
+
+    /* Hide non-printable UI elements */
+    .sidebar,
+    .topbar,
+    .subsheet-tab-bar,
+    .grading-filter-bar,
+    .modal-overlay,
+    .btn,
+    button,
+    .view-header button,
+    .role-selector-container,
+    .btn-tonase-action,
+    #btn-input-vehicle,
+    #btn-input-upkeep,
+    #btn-input-pemupukan,
+    #btn-input-hm,
+    #btn-input-hd {
+        display: none !important;
+    }
+
+    /* Unconstrain layout containers so full document prints without cutting off */
+    .app-container,
+    .main-content,
+    #view-container,
+    .module-layout,
+    .subsheet-content.active,
+    .table-wrapper,
+    .table-responsive,
+    .glass-card {
+        display: block !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        position: static !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    .subsheet-content:not(.active) {
+        display: none !important;
+    }
+
+    /* Print Header */
+    .view-header {
+        margin-bottom: 12px !important;
+        padding-bottom: 6px !important;
+        border-bottom: 2px solid #0f172a !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+    }
+
+    .view-header h2 {
+        font-size: 14pt !important;
+        color: #0f172a !important;
+        margin: 0 !important;
+    }
+
+    /* Glass Cards in Print */
+    .glass-card {
+        margin-bottom: 15px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        padding: 10px !important;
+        background: #ffffff !important;
+    }
+
+    /* KPI Cards in Print */
+    .grading-kpi-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 8px !important;
+        margin-bottom: 15px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .grading-kpi-card {
+        padding: 6px 8px !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        background: #f8fafc !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    .grading-kpi-icon {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 0.9rem !important;
+    }
+
+    .grading-kpi-info h4 {
+        font-size: 7.5pt !important;
+        margin: 0 !important;
+    }
+
+    .grading-kpi-info .kpi-val {
+        font-size: 11pt !important;
+        margin: 2px 0 !important;
+    }
+
+    .grading-kpi-info .kpi-sub {
+        font-size: 7pt !important;
+    }
+
+    /* Tables in Print */
+    table, .data-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 7.5pt !important;
+        page-break-inside: auto !important;
+        margin-bottom: 10px !important;
+    }
+
+    thead {
+        display: table-header-group !important;
+    }
+
+    tfoot {
+        display: table-footer-group !important;
+    }
+
+    tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    th, td {
+        padding: 4px 6px !important;
+        border: 1px solid #94a3b8 !important;
+        color: #0f172a !important;
+    }
+
+    th {
+        background-color: #334155 !important;
+        color: #ffffff !important;
+    }
+
+    /* Grid layouts in print */
+    div[style*="grid-template-columns: 1fr 1fr"],
+    div[style*="grid-template-columns: 1fr 1.5fr"],
+    div[style*="grid-template-columns: 1.5fr 1fr"] {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 12px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    /* Charts in Print */
+    canvas {
+        max-width: 100% !important;
+        max-height: 250px !important;
+    }
+
+    /* Smart Insights Box */
+    .grading-insight-box {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        border: 1.5px solid #16a34a !important;
+        border-radius: 6px !important;
+        padding: 10px 14px !important;
+        background: #f0fdf4 !important;
+        margin-top: 15px !important;
+        margin-bottom: 10px !important;
+    }
+
+    .grading-insight-box h4 {
+        font-size: 9pt !important;
+        color: #166534 !important;
+        margin-bottom: 6px !important;
+    }
+
+    .grading-insight-box li {
+        font-size: 8pt !important;
+        line-height: 1.35 !important;
+        margin-bottom: 4px !important;
+    }
+}
