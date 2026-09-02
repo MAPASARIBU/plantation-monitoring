@@ -984,7 +984,7 @@ app.post('/api/harvesting/daily', async (req, res) => {
 app.delete('/api/harvesting/daily/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM harvesting_daily WHERE id = $1', [req.params.id]);
-        pushUpdate('harvesting_daily');
+        // pushUpdate('harvesting_daily');
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -994,13 +994,14 @@ app.delete('/api/harvesting/daily/:id', async (req, res) => {
 app.put('/api/harvesting/daily/:id/realization', async (req, res) => {
     try {
         const { realized_janjang, realized_pemanen, realized_kg, realized_ha, status, ritase_list } = req.body;
-        const newStatus = status || 'Closed';
+        const newStatus = status || 'In Progress';
         await pool.query(
             'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, realized_ha = $4, status = $5, ritase_list = COALESCE($6, ritase_list) WHERE id = $7',
             [realized_janjang, realized_pemanen, realized_kg, realized_ha, newStatus, ritase_list, req.params.id]
         );
         res.json({ success: true });
     } catch (err) {
+        console.error('Realization update error:', err);
         res.status(500).json({ error: err.message });
     }
 });
