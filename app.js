@@ -2687,6 +2687,952 @@ Object.assign(views, {
             </div>
         </div>
     `
+,
+    processing: `
+<div class="content-header">
+    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        <input type="date" id="p-date" class="form-control" style="width: auto;" onchange="loadProcessingData()">
+        <button class="btn btn-primary" onclick="loadProcessingData()"><i class="fa-solid fa-rotate"></i> Load</button>
+        <button class="btn btn-success btn-tonase-action" onclick="openLiquidModal()"><i class="fa-solid fa-plus"></i> Input Parameter Liquid</button>
+        <button class="btn btn-success btn-tonase-action" onclick="openFfaModal()"><i class="fa-solid fa-plus"></i> Input Parameter FFA</button>
+        <button class="btn btn-info" onclick="openProcessingHistorical()"><i class="fa-solid fa-clock-rotate-left"></i> Historical Per Jam</button>
+    </div>
+</div>
+<div class="dashboard-grid" style="grid-template-columns: 1fr;">
+    <div class="glass-card" style="overflow-x: auto;">
+        <h3>1a. Liquid Monitoring (Summary Hari Ini)</h3>
+        <div class="table-responsive" style="width: 100%;">
+            <table class="data-table" id="summary-liquid-table" style="min-width: 1200px;">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Jam</th>
+                        <th colspan="5">COT (Oil 36-38 %)</th>
+                        <th colspan="6">CST</th>
+                        <th colspan="5">Sludge Tank</th>
+                    </tr>
+                    <tr>
+                        <th>OIL<br>(standart 36-38%)</th><th>SLUDGE<br>(%)</th><th>WATER<br>(%)</th><th>SOLID<br>(%)</th><th>TEMP<br>(°C)</th>
+                        <th>OIL<br>(standart max 6%)</th><th>SLUDGE<br>(%)</th><th>WATER<br>(%)</th><th>SOLID<br>(%)</th><th>TEMP<br>(°C)</th><th>Ketebalan Minyak<br>(mm)</th>
+                        <th>OIL<br>(standart max 6%)</th><th>SLUDGE<br>(%)</th><th>WATER<br>(%)</th><th>SOLID<br>(%)</th><th>TEMP<br>(°C)</th>
+                    </tr>
+                </thead>
+                <tbody id="summary-liquid-tbody">
+                    <!-- Generated via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    
+    <div class="glass-card" style="overflow-x: auto;">
+        <h3>1c. FFA Produksi (Summary Hari Ini)</h3>
+        <div class="table-responsive">
+            <table class="data-table" id="summary-ffa-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Keterangan</th>
+                        <th colspan="3">Sebelum Washing Plant</th>
+                        <th colspan="3">Setelah Washing Plant</th>
+                    </tr>
+                    <tr>
+                        <th>FFA (%)</th><th>Moist (%)</th><th>Dirt (%)</th>
+                        <th>FFA (%)</th><th>Moist (%)</th><th>Dirt (%)</th>
+                    </tr>
+                </thead>
+                <tbody id="summary-ffa-tbody">
+                    <!-- Generated via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+
+</div>
+
+<!-- Modal Input Liquid -->
+<div class="modal-overlay" id="modal-input-liquid" style="display:none; z-index:9999;">
+    <div class="modal-content" style="max-width: 900px; width:90%; padding:20px;">
+        <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="margin:0;">Input Parameter Liquid</h3>
+            <button type="button" class="modal-close" onclick="document.getElementById('modal-input-liquid').style.display='none'">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                <input type="date" id="ml-date" class="form-control" style="width: 150px;" onchange="loadLiquidHour()">
+                <select id="ml-hour" class="form-control" style="width: 120px;" onchange="loadLiquidHour()">
+                    <option value="07:00">07:00</option><option value="08:00">08:00</option>
+                    <option value="09:00">09:00</option><option value="10:00">10:00</option>
+                    <option value="11:00">11:00</option><option value="12:00">12:00</option>
+                    <option value="13:00">13:00</option><option value="14:00">14:00</option>
+                    <option value="15:00">15:00</option><option value="16:00">16:00</option>
+                    <option value="17:00">17:00</option><option value="18:00">18:00</option>
+                    <option value="19:00">19:00</option><option value="20:00">20:00</option>
+                    <option value="21:00">21:00</option><option value="22:00">22:00</option>
+                    <option value="23:00">23:00</option><option value="24:00">24:00</option>
+                    <option value="01:00">01:00</option><option value="02:00">02:00</option>
+                    <option value="03:00">03:00</option><option value="04:00">04:00</option>
+                    <option value="05:00">05:00</option><option value="06:00">06:00</option>
+                </select>
+            </div>
+            <!-- inputs table for Liquid -->
+            <div class="table-responsive">
+                <table class="data-table" style="width: 100%; min-width: 600px;">
+                    <thead>
+                        <tr>
+                            <th>PARAMETER</th>
+                            <th>COT</th>
+                            <th>CST</th>
+                            <th>SLUDGE TANK</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>OIL (%)</strong></td>
+                            <td><input type="number" step="any" id="ml_cot_oil" class="form-control"></td>
+                            <td><input type="number" step="any" id="ml_cst_oil" class="form-control"></td>
+                            <td><input type="number" step="any" id="ml_sludge_oil" class="form-control"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>SLUDGE (%)</strong></td>
+                            <td><input type="number" step="any" id="ml_cot_sludge" class="form-control"></td>
+                            <td><input type="number" step="any" id="ml_cst_sludge" class="form-control"></td>
+                            <td><input type="number" step="any" id="ml_sludge_sludge" class="form-control"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>WATER (%)</strong></td>
+                            <td><input type="number" step="any" id="ml_cot_water" class="form-control"></td>
+                            <td><input type="number" step="any" id="ml_cst_water" class="form-control"></td>
+                            <td><input type="number" step="any" id="ml_sludge_water" class="form-control"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>SOLID (%)</strong></td>
+                            <td><input type="number" step="any" id="ml_cot_solid" class="form-control"></td>
+                            <td><input type="number" step="any" id="ml_cst_solid" class="form-control"></td>
+                            <td><input type="number" step="any" id="ml_sludge_solid" class="form-control"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>TEMP (°C)</strong></td>
+                            <td><input type="number" step="any" id="ml_cot_temp" class="form-control"></td>
+                            <td><input type="number" step="any" id="ml_cst_temp" class="form-control"></td>
+                            <td><input type="number" step="any" id="ml_sludge_temp" class="form-control"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>KETEBALAN MINYAK</strong></td>
+                            <td style="background: #f3f4f6;"></td>
+                            <td><input type="number" step="any" id="ml_cst_level" class="form-control"></td>
+                            <td style="background: #f3f4f6;"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top: 10px; padding: 10px; background-color: #fef3c7; border-left: 4px solid #f59e0b; font-size: 14px;">
+                <strong><i class="fa-solid fa-triangle-exclamation"></i> Note:</strong> Total persentase (Oil + Sludge + Water + Solid) untuk masing-masing <strong>COT, CST, dan Sludge Tank</strong> harus berjumlah tepat <strong>100%</strong>.
+            </div>
+            <button class="btn btn-success mt-3" onclick="saveLiquidHour()">Simpan Liquid</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Input FFA -->
+<div class="modal-overlay" id="modal-input-ffa" style="display:none; z-index:9999;">
+    <div class="modal-content" style="max-width: 600px; width:90%; padding:20px;">
+        <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="margin:0;">Input Parameter FFA</h3>
+            <button type="button" class="modal-close" onclick="document.getElementById('modal-input-ffa').style.display='none'">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                <input type="date" id="mf-date" class="form-control" style="width: 150px;" onchange="loadFfaHour()">
+                <select id="mf-hour" class="form-control" style="width: 120px;" onchange="loadFfaHour()">
+                    <option value="08:00">08:00</option><option value="10:00">10:00</option>
+                    <option value="12:00">12:00</option><option value="15:00">15:00</option>
+                    <option value="17:00">17:00</option><option value="19:00">19:00</option>
+                    <option value="22:00">22:00</option><option value="24:00">24:00</option>
+                    <option value="02:00">02:00</option><option value="04:00">04:00</option>
+                </select>
+            </div>
+            <table class="data-table" style="width:100%; margin-top:15px; margin-bottom: 15px;">
+                <thead>
+                    <tr>
+                        <th style="text-align:center;">PARAMETER</th>
+                        <th style="text-align:center;">Sebelum Washing Plant</th>
+                        <th style="text-align:center;">Setelah Washing Plant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="font-weight:bold;">FFA</td>
+                        <td><input type="number" step="0.1" id="mf_ffa_b" class="form-control" style="width: 100%; box-sizing: border-box;"></td>
+                        <td><input type="number" step="0.1" id="mf_ffa_a" class="form-control" style="width: 100%; box-sizing: border-box;"></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:bold;">Moisture (%)</td>
+                        <td><input type="number" step="0.01" id="mf_moist_b" class="form-control" style="width: 100%; box-sizing: border-box;"></td>
+                        <td><input type="number" step="0.01" id="mf_moist_a" class="form-control" style="width: 100%; box-sizing: border-box;"></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:bold;">Dirt (%)</td>
+                        <td><input type="number" step="0.001" id="mf_dirt_b" class="form-control" style="width: 100%; box-sizing: border-box;"></td>
+                        <td><input type="number" step="0.001" id="mf_dirt_a" class="form-control" style="width: 100%; box-sizing: border-box;"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button class="btn btn-success mt-3" onclick="saveFfaHour()">Simpan FFA</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Historical Processing -->
+<div class="modal-overlay" id="modal-processing-hist" style="display:none; z-index:9998;">
+    <div class="modal-content" style="max-width: 95%; width:100%; padding:20px;">
+        <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="margin:0;">Historical Processing (Per Jam)</h3>
+            <button type="button" class="modal-close" onclick="document.getElementById('modal-processing-hist').style.display='none'">&times;</button>
+        </div>
+        <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
+            <h4>Data Liquid</h4>
+            <div class="table-responsive" style="margin-bottom:20px;">
+                <table class="data-table" id="hist-liquid-table" style="min-width: 1200px;">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">Jam</th>
+                            <th colspan="5">COT (Oil 36-38 %)</th>
+                            <th colspan="6">CST</th>
+                            <th colspan="5">Sludge Tank</th>
+                        </tr>
+                        <tr>
+                            <th>OIL<br>(standart 36-38%)</th><th>SLUDGE<br>(%)</th><th>WATER<br>(%)</th><th>SOLID<br>(%)</th><th>TEMP<br>(°C)</th>
+                            <th>OIL<br>(standart max 6%)</th><th>SLUDGE<br>(%)</th><th>WATER<br>(%)</th><th>SOLID<br>(%)</th><th>TEMP<br>(°C)</th><th>Ketebalan Minyak<br>(mm)</th>
+                            <th>OIL<br>(standart max 6%)</th><th>SLUDGE<br>(%)</th><th>WATER<br>(%)</th><th>SOLID<br>(%)</th><th>TEMP<br>(°C)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <h4>Data FFA</h4>
+            <div class="table-responsive">
+                <table class="data-table" id="hist-ffa-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">Jam</th>
+                            <th colspan="3">Sebelum Washing Plant</th>
+                            <th colspan="3">Setelah Washing Plant</th>
+                        </tr>
+                        <tr>
+                            <th>FFA (%)</th><th>Moist (%)</th><th>Dirt (%)</th>
+                            <th>FFA (%)</th><th>Moist (%)</th><th>Dirt (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+`,
+    water: `
+<div class="content-header">
+    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        <input type="date" id="w-date" class="form-control" style="width: auto;">
+        <button class="btn btn-primary" onclick="loadWaterData()"><i class="fa-solid fa-rotate"></i> Load</button>
+        <button class="btn btn-success" onclick="document.getElementById('w_sebelum_date').value = document.getElementById('w-date').value || window.getLocalDate(); window.loadSebelumDataByDate(); document.getElementById('modal-water-sebelum').style.display='flex'"><i class="fa-solid fa-plus"></i> Input Air Sebelum Proses</button>
+        <button class="btn btn-success" onclick="document.getElementById('w_boiler_date').value = document.getElementById('w-date').value || window.getLocalDate(); window.fetchBoilerHourlyByDate(); document.getElementById('modal-water-boiler').style.display='flex'"><i class="fa-solid fa-plus"></i> Update Air Boiler</button>
+    </div>
+</div>
+
+<div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+    <div class="glass-card">
+        <h3>1.1 Analisa Air Sebelum Proses</h3>
+        <div class="table-responsive">
+            <table class="data-table" id="table-water-sebelum">
+                <tbody>
+                    <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>=> RAW WATER</strong></td></tr>
+                    <tr><td style="width:50%;">PH</td><td id="td_raw_ph"></td></tr>
+                    <tr><td>Tds</td><td id="td_raw_tds"></td></tr>
+                    <tr><td>T.hardness</td><td id="td_raw_thardness"></td></tr>
+                    <tr><td>Silica/Sio2</td><td id="td_raw_silica"></td></tr>
+                    <tr><td>Turbidity</td><td id="td_raw_turbidity"></td></tr>
+                    <tr><td>Cloride</td><td id="td_raw_cloride"></td></tr>
+                    
+                    <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>=> WTP / clarifier</strong></td></tr>
+                    <tr><td>PH</td><td id="td_wtp_ph"></td></tr>
+                    <tr><td>Tds</td><td id="td_wtp_tds"></td></tr>
+                    <tr><td>Turbidity(<10)</td><td id="td_wtp_turbidity"></td></tr>
+                    <tr><td>Cloride</td><td id="td_wtp_cloride"></td></tr>
+                    
+                    <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>=> Sand Filter</strong></td></tr>
+                    <tr><td>PH</td><td id="td_sand_ph"></td></tr>
+                    <tr><td>Tds</td><td id="td_sand_tds"></td></tr>
+                    <tr><td>Turbidity(<10)</td><td id="td_sand_turbidity"></td></tr>
+                    <tr><td>Cloride</td><td id="td_sand_cloride"></td></tr>
+                    
+                    <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>Demin plant no.1 atau no.2 (pilihan)</strong></td></tr>
+                    <tr style="background-color: #f8fafc;"><td colspan="2"><strong>=> CATION</strong></td></tr>
+                    <tr><td>PH(<5.5)</td><td id="td_cation_ph"></td></tr>
+                    <tr><td>Tds</td><td id="td_cation_tds"></td></tr>
+                    <tr><td>T.hardness(Trace)</td><td id="td_cation_thardness"></td></tr>
+                    
+                    <tr style="background-color: #f8fafc;"><td colspan="2"><strong>=> ANION</strong></td></tr>
+                    <tr><td>PH(6.5 - 9.5)</td><td id="td_anion_ph"></td></tr>
+                    <tr><td>Tds(<100)</td><td id="td_anion_tds"></td></tr>
+                    <tr><td>SiO2/silica(<2.5)</td><td id="td_anion_silica"></td></tr>
+                    
+                    <tr style="background-color: #f8fafc;"><td colspan="2"><strong>=> FEED TANK</strong></td></tr>
+                    <tr><td>PH(6.5 - 9.5)</td><td id="td_feed_ph"></td></tr>
+                    <tr><td>Tds(<100)</td><td id="td_feed_tds"></td></tr>
+                    <tr><td>T.hardness(Trace)</td><td id="td_feed_thardness"></td></tr>
+                    <tr><td>Silica/SiO2(<5)</td><td id="td_feed_silica"></td></tr>
+                    <tr><td>Cloride</td><td id="td_feed_cloride"></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <h3>1.2 ANALISA AIR BOILER SELAMA PENGOLAHAN</h3>
+        <div class="table-responsive">
+            <table class="data-table" id="table-water-boiler">
+                <thead>
+                    <tr>
+                        <th style="width:50%;">PARAMETER</th>
+                        <th>HASIL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>PH(10.5-11.5)</td><td id="td_boiler2j_ph"></td></tr>
+                    <tr><td>Tds(<1800)</td><td id="td_boiler2j_tds"></td></tr>
+                    <tr><td>P.alkanity(300 - 700)</td><td id="td_boiler2j_palkanity"></td></tr>
+                    <tr><td>M.alkanity(<1300)</td><td id="td_boiler2j_malkanity"></td></tr>
+                    <tr><td>O.alkanity(>2,5xsilica)</td><td id="td_boiler2j_oalkanity"></td></tr>
+                    <tr><td>T.hardness</td><td id="td_boiler2j_thardness"></td></tr>
+                    <tr><td>Silica/SiO2(<125)</td><td id="td_boiler2j_silica"></td></tr>
+                    <tr><td>Phospate/PO4(30 - 70)</td><td id="td_boiler2j_phospate"></td></tr>
+                    <tr><td>Sulfite/SO3(30 - 70)</td><td id="td_boiler2j_sulfite"></td></tr>
+                    <tr><td>Chloride</td><td id="td_boiler2j_chloride"></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<div class="modal-overlay" id="modal-water-sebelum" style="display:none; z-index:9999;">
+    <div class="modal-content" style="max-width: 900px; width:90%; padding:20px; max-height:90vh; overflow-y:auto;">
+        <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="margin:0;">Input Analisa Air Sebelum Proses</h3>
+            <button type="button" class="modal-close" onclick="document.getElementById('modal-water-sebelum').style.display='none'">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="margin-bottom: 15px;">
+                <label style="font-weight: bold;">Tanggal:</label>
+                <input type="date" id="w_sebelum_date" class="form-control" onchange="window.loadSebelumDataByDate()">
+            </div>
+            <div class="table-responsive">
+                <table class="data-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="width: 50%;">PARAMETER</th>
+                            <th>NILAI PARAMETER</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>=> RAW WATER</strong></td></tr>
+                        <tr><td>PH</td><td><input type="number" step="any" id="w_raw_ph" class="form-control"></td></tr>
+                        <tr><td>Tds</td><td><input type="number" step="any" id="w_raw_tds" class="form-control"></td></tr>
+                        <tr><td>T.hardness</td><td><input type="number" step="any" id="w_raw_thardness" class="form-control"></td></tr>
+                        <tr><td>Silica/Sio2</td><td><input type="number" step="any" id="w_raw_silica" class="form-control"></td></tr>
+                        <tr><td>Turbidity</td><td><input type="number" step="any" id="w_raw_turbidity" class="form-control"></td></tr>
+                        <tr><td>Cloride</td><td><input type="number" step="any" id="w_raw_cloride" class="form-control"></td></tr>
+                        
+                        <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>=> WTP / clarifier</strong></td></tr>
+                        <tr><td>PH</td><td><input type="number" step="any" id="w_wtp_ph" class="form-control"></td></tr>
+                        <tr><td>Tds</td><td><input type="number" step="any" id="w_wtp_tds" class="form-control"></td></tr>
+                        <tr><td>Turbidity(<10)</td><td><input type="number" step="any" id="w_wtp_turbidity" class="form-control"></td></tr>
+                        <tr><td>Cloride</td><td><input type="number" step="any" id="w_wtp_cloride" class="form-control"></td></tr>
+                        
+                        <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>=> Sand Filter</strong></td></tr>
+                        <tr><td>PH</td><td><input type="number" step="any" id="w_sand_ph" class="form-control"></td></tr>
+                        <tr><td>Tds</td><td><input type="number" step="any" id="w_sand_tds" class="form-control"></td></tr>
+                        <tr><td>Turbidity(<10)</td><td><input type="number" step="any" id="w_sand_turbidity" class="form-control"></td></tr>
+                        <tr><td>Cloride</td><td><input type="number" step="any" id="w_sand_cloride" class="form-control"></td></tr>
+                        
+                        <tr style="background-color: #f1f5f9;"><td colspan="2"><strong>Demin plant no.1 atau no.2 (pilihan)</strong></td></tr>
+                        <tr style="background-color: #f8fafc;"><td colspan="2"><strong>=> CATION</strong></td></tr>
+                        <tr><td>PH(<5.5)</td><td><input type="number" step="any" id="w_cation_ph" class="form-control"></td></tr>
+                        <tr><td>Tds</td><td><input type="number" step="any" id="w_cation_tds" class="form-control"></td></tr>
+                        <tr><td>T.hardness(Trace)</td><td><input type="number" step="any" id="w_cation_thardness" class="form-control"></td></tr>
+                        
+                        <tr style="background-color: #f8fafc;"><td colspan="2"><strong>=> ANION</strong></td></tr>
+                        <tr><td>PH(6.5 - 9.5)</td><td><input type="number" step="any" id="w_anion_ph" class="form-control"></td></tr>
+                        <tr><td>Tds(<100)</td><td><input type="number" step="any" id="w_anion_tds" class="form-control"></td></tr>
+                        <tr><td>SiO2/silica(<2.5)</td><td><input type="number" step="any" id="w_anion_silica" class="form-control"></td></tr>
+                        
+                        <tr style="background-color: #f8fafc;"><td colspan="2"><strong>=> FEED TANK</strong></td></tr>
+                        <tr><td>PH(6.5 - 9.5)</td><td><input type="number" step="any" id="w_feed_ph" class="form-control"></td></tr>
+                        <tr><td>Tds(<100)</td><td><input type="number" step="any" id="w_feed_tds" class="form-control"></td></tr>
+                        <tr><td>T.hardness(Trace)</td><td><input type="number" step="any" id="w_feed_thardness" class="form-control"></td></tr>
+                        <tr><td>Silica/SiO2(<5)</td><td><input type="number" step="any" id="w_feed_silica" class="form-control"></td></tr>
+                        <tr><td>Cloride</td><td><input type="number" step="any" id="w_feed_cloride" class="form-control"></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn btn-primary" style="margin-top:15px; width:100%" onclick="saveWaterData('sebelum')"><i class="fa-solid fa-floppy-disk"></i> Simpan Analisa Sebelum Proses</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-water-boiler" style="display:none; z-index:9999;">
+    <div class="modal-content" style="max-width: 600px; width:90%; padding:20px;">
+        <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="margin:0;">Update Analisa Air Boiler</h3>
+            <button type="button" class="modal-close" onclick="document.getElementById('modal-water-boiler').style.display='none'">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                <div style="flex:1;">
+                    <label style="font-weight: bold;">Tanggal:</label>
+                    <input type="date" id="w_boiler_date" class="form-control" onchange="window.fetchBoilerHourlyByDate()">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-weight: bold;">Jam Olah:</label>
+                    <select id="w_boiler_jam" class="form-control" onchange="window.loadBoilerHourlyData()">
+                    <option value="07:00">07:00</option>
+                    <option value="08:00">08:00</option>
+                    <option value="09:00">09:00</option>
+                    <option value="10:00">10:00</option>
+                    <option value="11:00">11:00</option>
+                    <option value="12:00">12:00</option>
+                    <option value="13:00">13:00</option>
+                    <option value="14:00">14:00</option>
+                    <option value="15:00">15:00</option>
+                    <option value="16:00">16:00</option>
+                    <option value="17:00">17:00</option>
+                    <option value="18:00">18:00</option>
+                    <option value="19:00">19:00</option>
+                    <option value="20:00">20:00</option>
+                    <option value="21:00">21:00</option>
+                    <option value="22:00">22:00</option>
+                    <option value="23:00">23:00</option>
+                    <option value="00:00">00:00</option>
+                    <option value="01:00">01:00</option>
+                    <option value="02:00">02:00</option>
+                    <option value="03:00">03:00</option>
+                    <option value="04:00">04:00</option>
+                    <option value="05:00">05:00</option>
+                    <option value="06:00">06:00</option>
+                </select>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="width: 50%;">PARAMETER</th>
+                            <th>NILAI PARAMETER</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>PH(10.5-11.5)</td><td><input type="number" step="0.1" id="w_boiler2j_ph" class="form-control"></td></tr>
+                        <tr><td>Tds(<1800)</td><td><input type="number" step="any" min="500" id="w_boiler2j_tds" class="form-control"></td></tr>
+                        <tr class="boiler-extra-row"><td>P.alkanity(300 - 700)</td><td><input type="number" step="any" min="100" id="w_boiler2j_palkanity" class="form-control"></td></tr>
+                        <tr class="boiler-extra-row"><td>M.alkanity(<1300)</td><td><input type="number" step="any" min="100" id="w_boiler2j_malkanity" class="form-control"></td></tr>
+                        <tr class="boiler-extra-row"><td>O.alkanity(>2.5xsilica)</td><td><input type="number" step="any" min="50" id="w_boiler2j_oalkanity" class="form-control"></td></tr>
+                        <tr class="boiler-extra-row"><td>T.hardness</td><td><input type="number" step="any" id="w_boiler2j_thardness" class="form-control"></td></tr>
+                        <tr class="boiler-extra-row"><td>Silica/SiO2(<125)</td><td><input type="number" step="any" id="w_boiler2j_silica" class="form-control"></td></tr>
+                        <tr class="boiler-extra-row"><td>Phospate/PO4(30 - 70)</td><td><input type="number" step="any" id="w_boiler2j_phospate" class="form-control"></td></tr>
+                        <tr class="boiler-extra-row"><td>Sulfite/SO3(30 - 70)</td><td><input type="number" step="any" id="w_boiler2j_sulfite" class="form-control"></td></tr>
+                        <tr class="boiler-extra-row"><td>Chloride</td><td><input type="number" step="any" id="w_boiler2j_chloride" class="form-control"></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn btn-primary" style="margin-top:15px; width:100%" onclick="saveWaterData('boiler')"><i class="fa-solid fa-floppy-disk"></i> Simpan Analisa Boiler</button>
+        </div>
+    </div>
+</div>
+`,
+    ffb_quality: `
+<!-- Sub-Sheet Navigation Tabs -->
+<div class="subsheet-tab-bar">
+    <button class="subsheet-tab-btn active" id="tab-btn-loose" onclick="switchFFBSubTab('loose')">
+        <i class="fa-solid fa-seedling"></i> FFB Quality Fruit Loose Analysis
+    </button>
+    <button class="subsheet-tab-btn" id="tab-btn-crop" onclick="switchFFBSubTab('crop')">
+        <i class="fa-solid fa-wheat-awn"></i> Daily FFB Crop Quality
+    </button>
+    <button class="subsheet-tab-btn" id="tab-btn-monthly" onclick="switchFFBSubTab('monthly')">
+        <i class="fa-solid fa-calendar-check"></i> Summary Monthly Grading
+    </button>
+</div>
+
+<!-- 1. SUB-SHEET: LOOSE FRUIT ANALYSIS -->
+<div id="ffb-subsheet-loose" class="subsheet-content active">
+    <div class="content-header" style="margin-bottom: 15px;">
+        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="openFqRangeModal('loose')"><i class="fa-solid fa-rotate"></i> Load Data</button>
+            <button class="btn btn-secondary" onclick="printTable('ffb-quality-wrapper', 'Laporan FFB Quality Fruit Loose Analysis')"><i class="fa-solid fa-print"></i> Print</button>
+            <button class="btn btn-success" onclick="openFFBModal()"><i class="fa-solid fa-plus"></i> Tambah input Loose Fruit Quality</button>
+        </div>
+    </div>
+    <div class="glass-card" style="overflow-x: auto;">
+        <h3>FFB Quality Fruit Loose Analysis</h3>
+        <div id="ffb-quality-wrapper" class="table-responsive">
+            <style>
+                #ffb-quality-table th, #ffb-quality-table td {
+                    padding: 4px 8px !important;
+                }
+            </style>
+            <table class="data-table" id="ffb-quality-table" style="font-size: 0.8rem; width: 100%;">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Tanggal</th>
+                        <th rowspan="2">Estate</th>
+                        <th rowspan="2">Divisi</th>
+                        <th rowspan="2">No. Truck</th>
+                        <th>Brt Sample</th>
+                        <th colspan="2">Bron Segar</th>
+                        <th colspan="2">Bron Tdk Segar</th>
+                        <th colspan="2">Bron Busuk</th>
+                        <th colspan="2">Sampah</th>
+                        <th rowspan="2">Aksi</th>
+                    </tr>
+                    <tr>
+                        <th>(gram)</th>
+                        <th>(gram)</th><th>(%)</th>
+                        <th>(gram)</th><th>(%)</th>
+                        <th>(gram)</th><th>(%)</th>
+                        <th>(gram)</th><th>(%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Generated via JS -->
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #f1f5f9; font-weight: bold;">
+                        <td colspan="4" style="text-align: right;">RATA-RATA / TOTAL:</td>
+                        <td id="fq-tot-bg">0</td>
+                        <td id="fq-tot-bd">0</td>
+                        <td id="fq-avg-bd">0.0</td>
+                        <td id="fq-tot-ts">0</td>
+                        <td id="fq-avg-ts">0.0</td>
+                        <td id="fq-tot-bb">0</td>
+                        <td id="fq-avg-bb">0.0</td>
+                        <td id="fq-tot-sampah">0</td>
+                        <td id="fq-avg-sampah">0.0</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 2. SUB-SHEET: DAILY FFB CROP QUALITY -->
+<div id="ffb-subsheet-crop" class="subsheet-content">
+    <div class="glass-card" style="overflow-x: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <h3 style="margin:0;">Daily FFB Crop Quality</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="openFqRangeModal('crop')"><i class="fa-solid fa-rotate"></i> Load Data</button>
+                <button class="btn btn-secondary" onclick="printTable('ffb-crop-wrapper', 'Laporan Daily FFB Crop Quality')"><i class="fa-solid fa-print"></i> Print</button>
+                <button class="btn btn-success" onclick="openFFBCropModal()"><i class="fa-solid fa-plus"></i> Tambah input FFB Crop Quality</button>
+            </div>
+        </div>
+        <div id="ffb-crop-wrapper" class="table-responsive">
+            <style>
+                #ffb-crop-table th, #ffb-crop-table td, #ffb-crop-summary-table th, #ffb-crop-summary-table td {
+                    padding: 4px 8px !important;
+                }
+            </style>
+            <table class="data-table" id="ffb-crop-table" style="font-size: 0.8rem; width: 100%; text-align: center;">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Estate</th>
+                        <th rowspan="2">Divisi</th>
+                        <th rowspan="2">Blok</th>
+                        <th rowspan="2">No. Truck</th>
+                        <th rowspan="2">Total Janjang</th>
+                        <th colspan="2">Unripe</th>
+                        <th colspan="2">Underripe</th>
+                        <th colspan="2">Normal Ripe</th>
+                        <th colspan="2">Over Ripe</th>
+                        <th colspan="2">Empty Bunch</th>
+                        <th colspan="2">Long Stalk</th>
+                        <th colspan="2">Rat Damage</th>
+                        <th rowspan="2">Aksi</th>
+                    </tr>
+                    <tr>
+                        <th>(Jjg)</th><th>(%)</th>
+                        <th>(Jjg)</th><th>(%)</th>
+                        <th>(Jjg)</th><th>(%)</th>
+                        <th>(Jjg)</th><th>(%)</th>
+                        <th>(Jjg)</th><th>(%)</th>
+                        <th>(Jjg)</th><th>(%)</th>
+                        <th>(Jjg)</th><th>(%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Generated via JS -->
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #f1f5f9; font-weight: bold;">
+                        <td colspan="4" style="text-align: right;">TOTAL / AVERAGE:</td>
+                        <td id="fqc-tot-jjg">0</td>
+                        <td id="fqc-tot-unripe">0</td><td id="fqc-avg-unripe">0.0</td>
+                        <td id="fqc-tot-under">0</td><td id="fqc-avg-under">0.0</td>
+                        <td id="fqc-tot-normal">0</td><td id="fqc-avg-normal">0.0</td>
+                        <td id="fqc-tot-over">0</td><td id="fqc-avg-over">0.0</td>
+                        <td id="fqc-tot-empty">0</td><td id="fqc-avg-empty">0.0</td>
+                        <td id="fqc-tot-long">0</td><td id="fqc-avg-long">0.0</td>
+                        <td id="fqc-tot-rat">0</td><td id="fqc-avg-rat">0.0</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+            <table class="data-table" id="ffb-crop-summary-table" style="font-size: 0.8rem; width: 100%; text-align: center; display: none; border-collapse: collapse; margin-top: 20px;">
+                <thead>
+                    <tr>
+                        <th rowspan="2">ESTATE</th>
+                        <th rowspan="2">TOTAL JANJANG</th>
+                        <th colspan="1">UN RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
+                        <th colspan="1">UNDER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 3%)</span></th>
+                        <th colspan="1">RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Min. 90%)</span></th>
+                        <th colspan="1">OVER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 7%)</span></th>
+                        <th colspan="1">EMPTY BUNCH<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
+                        <th colspan="1">LONGSTALK<br><span style="font-size:0.75rem; font-weight:normal;">(&lt; 2%)</span></th>
+                        <th colspan="1">RAT DAMAGE<br><span style="font-size:0.75rem; font-weight:normal;">(%)</span></th>
+                    </tr>
+                    <tr>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #f1f5f9; font-weight: bold;">
+                        <td style="text-align: right;">TOTAL:</td>
+                        <td id="fqc-sum-tot-jjg">0</td>
+                        <td id="fqc-sum-unripe">0.00</td>
+                        <td id="fqc-sum-under">0.00</td>
+                        <td id="fqc-sum-normal">0.00</td>
+                        <td id="fqc-sum-over">0.00</td>
+                        <td id="fqc-sum-empty">0.00</td>
+                        <td id="fqc-sum-long">0.00</td>
+                        <td id="fqc-sum-rat">0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 3. SUB-SHEET: SUMMARY MONTHLY GRADING -->
+<div id="ffb-subsheet-monthly" class="subsheet-content">
+    <!-- Filter & Options Toolbar -->
+    <div class="grading-filter-bar">
+        <div class="grading-filter-group">
+            <div>
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;"><i class="fa-solid fa-sliders"></i> Parameter Kriteria Grading</label>
+                <select id="ffb-monthly-param" class="form-control" style="font-weight: 600; color: #1e293b; min-width: 290px;" onchange="window.onFFBMonthlyParamChange()">
+                    <optgroup label="-- Kualitas Janjang (Crop Quality) --">
+                        <option value="ripe" selected>Ripe / Buah Matang (%) [Standar Min. 90%]</option>
+                        <option value="unripe">Unripe / Buah Mentah (%) [Standar Max. 0%]</option>
+                        <option value="underripe">Under Ripe / Kurang Matang (%) [Standar Max. 3%]</option>
+                        <option value="over_ripe">Over Ripe / Lewat Matang (%) [Standar Max. 7%]</option>
+                        <option value="empty_bunch">Empty Bunch / Janjang Kosong (%) [Standar Max. 0%]</option>
+                        <option value="long_stalk">Long Stalk / Tangkai Panjang (%) [Standar &lt; 2%]</option>
+                        <option value="rat_damage">Rat Damage / Serangan Tikus (%)</option>
+                        <option value="total_janjang">Total Janjang Sampling (Janjang)</option>
+                    </optgroup>
+                    <optgroup label="-- Kualitas Brondolan (Loose Fruit) --">
+                        <option value="bd_percent">Brondolan Segar (%) [Standar Min. 85%]</option>
+                        <option value="t_segar_percent">Brondolan Tidak Segar (%) [Standar Max. 10%]</option>
+                        <option value="busuk_percent">Brondolan Busuk (%) [Standar Max. 5%]</option>
+                        <option value="sampah_percent">Sampah Brondolan (%) [Standar Max. 2%]</option>
+                        <option value="bg_gram">Total Berat Sample (gram)</option>
+                    </optgroup>
+                    <optgroup label="-- Executive Score --">
+                        <option value="quality_index">Overall Grading Quality Score / Indeks Mutu (0-100)</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;"><i class="fa-solid fa-calendar"></i> Tahun</label>
+                <select id="ffb-monthly-year" class="form-control" style="font-weight: 600; min-width: 100px;" onchange="window.loadFFBMonthlySummary()">
+                    <option value="2026" selected>2026</option>
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                    <option value="2027">2027</option>
+                </select>
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="window.loadFFBMonthlySummary()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+            <button class="btn btn-secondary" onclick="window.printMonthlyGrading()"><i class="fa-solid fa-print"></i> Cetak Laporan</button>
+            <button class="btn btn-success" onclick="window.exportMonthlyGradingCSV()"><i class="fa-solid fa-file-excel"></i> Export CSV</button>
+        </div>
+    </div>
+
+    <!-- Executive KPI Summary Cards -->
+    <div class="grading-kpi-grid">
+        <div class="grading-kpi-card">
+            <div class="grading-kpi-icon green">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div class="grading-kpi-info">
+                <h4>Top Performer Estate</h4>
+                <div class="kpi-val" id="ffb-kpi-top-estate">-</div>
+                <div class="kpi-sub" id="ffb-kpi-top-detail">Mutu terbaik tahun ini</div>
+            </div>
+        </div>
+        <div class="grading-kpi-card">
+            <div class="grading-kpi-icon red">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div class="grading-kpi-info">
+                <h4>Perlu Perhatian</h4>
+                <div class="kpi-val" id="ffb-kpi-worst-estate">-</div>
+                <div class="kpi-sub" id="ffb-kpi-worst-detail">Deviasi tertinggi dari standar</div>
+            </div>
+        </div>
+        <div class="grading-kpi-card">
+            <div class="grading-kpi-icon blue">
+                <i class="fa-solid fa-chart-pie"></i>
+            </div>
+            <div class="grading-kpi-info">
+                <h4>Rata-Rata Pabrik (YTD)</h4>
+                <div class="kpi-val" id="ffb-kpi-mill-avg">-</div>
+                <div class="kpi-sub" id="ffb-kpi-mill-target">Target: -</div>
+            </div>
+        </div>
+        <div class="grading-kpi-card">
+            <div class="grading-kpi-icon yellow">
+                <i class="fa-solid fa-bullseye"></i>
+            </div>
+            <div class="grading-kpi-info">
+                <h4>Tingkat Kepatuhan Standar</h4>
+                <div class="kpi-val" id="ffb-kpi-compliance">-</div>
+                <div class="kpi-sub" id="ffb-kpi-compliance-sub">Bulan lolos batas toleransi</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Summary Table Card -->
+    <div class="glass-card" style="overflow-x: auto; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h3 style="margin: 0;" id="ffb-monthly-table-title">Tabel Rekapitulasi Grading Bulanan 1 Tahun</h3>
+                <span id="ffb-monthly-table-subtitle" style="font-size: 0.8rem; color: var(--text-secondary);">Menampilkan capaian per estate untuk 12 bulan beserta rata-rata dan status toleransi.</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; font-size: 0.75rem;">
+                <span class="grading-badge good"><i class="fa-solid fa-check"></i> Sesuai Standar</span>
+                <span class="grading-badge warn"><i class="fa-solid fa-triangle-exclamation"></i> Waspada</span>
+                <span class="grading-badge danger"><i class="fa-solid fa-xmark"></i> Melebihi Toleransi</span>
+            </div>
+        </div>
+        <div id="ffb-monthly-table-wrapper" class="table-responsive">
+            <style>
+                #ffb-monthly-grading-table th, #ffb-monthly-grading-table td {
+                    padding: 6px 8px !important;
+                    text-align: center;
+                }
+                #ffb-monthly-grading-table th {
+                    white-space: nowrap;
+                }
+            </style>
+            <table class="data-table" id="ffb-monthly-grading-table" style="font-size: 0.8rem; width: 100%;">
+                <thead>
+                    <tr>
+                        <th style="width: 35px;">NO</th>
+                        <th style="text-align: left; min-width: 140px;">ESTATE</th>
+                        <th>JAN</th><th>FEB</th><th>MAR</th><th>APR</th>
+                        <th>MEI</th><th>JUN</th><th>JUL</th><th>AGU</th>
+                        <th>SEP</th><th>OKT</th><th>NOV</th><th>DES</th>
+                        <th style="background-color: #e2e8f0; font-weight: bold; min-width: 90px;">RATA-RATA</th>
+                        <th style="min-width: 100px;">TARGET</th>
+                        <th style="min-width: 120px;">EVALUASI & TREND</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Injected by JS -->
+                </tbody>
+                <tfoot>
+                    <!-- Injected by JS -->
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- Monthly Trend Chart Card -->
+    <div class="glass-card" style="margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h3 style="margin: 0;" id="ffb-monthly-chart-title">Grafik Trend Kualitas Bulanan (12 Bulan)</h3>
+                <span style="font-size: 0.8rem; color: var(--text-secondary);">Garis putus-putus menunjukkan batas standar toleransi. Klik legenda estate untuk menyembunyikan/menampilkan garis.</span>
+            </div>
+        </div>
+        <div style="position: relative; height: 350px; width: 100%;">
+            <canvas id="chart-ffb-monthly-trend"></canvas>
+        </div>
+    </div>
+
+    <!-- Smart Diagnostic & Operational Insights -->
+    <div class="grading-insight-box" id="ffb-monthly-insights-card">
+        <h4><i class="fa-solid fa-lightbulb"></i> Analisis & Rekomendasi Operasional Mutu:</h4>
+        <ul id="ffb-monthly-insights-list">
+            <!-- Injected by JS -->
+        </ul>
+    </div>
+</div>
+
+<!-- Modal Input FFB Quality (Loose Fruit) -->
+<div class="modal-overlay" id="modal-ffb-quality" style="display:none; z-index: 1000;">
+    <div class="modal-content" style="width: 500px; max-width: 90%;">
+        <div class="modal-header">
+            <h3 style="margin: 0;">Tambah input Loose Fruit Quality</h3>
+            <button type="button" class="modal-close" onclick="document.getElementById('modal-ffb-quality').style.display='none'">&times;</button>
+        </div>
+        <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+            <div class="form-group">
+                <label>Tanggal</label>
+                <input type="date" id="fq-modal-date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Pilihan Supply Chain</label>
+                <select id="fq-modal-estate" class="form-control" required onchange="window.onFFBModalEstateChange(this.value)"></select>
+            </div>
+            <div class="form-group">
+                <label>Divisi (Opsional)</label>
+                <div id="fq-modal-divisi-container">
+                    <input type="text" id="fq-modal-divisi" class="form-control" placeholder="(Optional)">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Nomor Truk</label>
+                <input type="text" id="fq-modal-truck" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Berat Sample (gram)</label>
+                <input type="number" step="any" id="fq-modal-bg" class="form-control" required oninput="calculateFFBModal()">
+            </div>
+            <div class="form-group">
+                <label>Brondolan Segar (gram)</label>
+                <input type="number" step="any" id="fq-modal-bd" class="form-control" required oninput="calculateFFBModal()">
+            </div>
+            <div class="form-group">
+                <label>Brondolan Tidak Segar (gram)</label>
+                <input type="number" step="any" id="fq-modal-tsegar" class="form-control" required oninput="calculateFFBModal()">
+            </div>
+            <div class="form-group">
+                <label>Brondolan Busuk (gram)</label>
+                <input type="number" step="any" id="fq-modal-busuk" class="form-control" required oninput="calculateFFBModal()">
+            </div>
+            <div class="form-group">
+                <label>Sampah (gram) (Otomatis)</label>
+                <input type="number" step="any" id="fq-modal-sampah" class="form-control" readonly style="background-color: #f1f5f9;">
+            </div>
+            <button class="btn btn-primary" onclick="submitFFBModal()" style="width:100%; justify-content:center; margin-top:10px;">Simpan</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Input FFB Crop Quality -->
+<div class="modal-overlay" id="modal-ffb-crop-quality" style="display:none; z-index: 1000;">
+    <div class="modal-content" style="width: 500px; max-width: 90%;">
+        <div class="modal-header">
+            <h3 style="margin: 0;">Tambah input FFB Crop Quality</h3>
+            <button type="button" class="modal-close" onclick="document.getElementById('modal-ffb-crop-quality').style.display='none'">&times;</button>
+        </div>
+        <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+            <div class="form-group">
+                <label>Tanggal</label>
+                <input type="date" id="fqc-modal-date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Pilihan Supply Chain</label>
+                <select id="fqc-modal-estate" class="form-control" required onchange="window.onFFBCropModalEstateChange(this.value)"></select>
+            </div>
+            <div class="form-group">
+                <label>Divisi (Opsional)</label>
+                <div id="fqc-modal-divisi-container">
+                    <input type="text" id="fqc-modal-divisi" class="form-control" placeholder="(Optional)">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Blok (Opsional)</label>
+                <div id="fqc-modal-blok-container">
+                    <input type="text" id="fqc-modal-blok" class="form-control" placeholder="(Optional)">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Nomor Truk</label>
+                <input type="text" id="fqc-modal-truck" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Total Janjang</label>
+                <input type="number" id="fqc-modal-total" class="form-control" required oninput="calculateFFBCropModal()">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div class="form-group">
+                    <label>Unripe (Jjg)</label>
+                    <input type="number" id="fqc-modal-unripe" class="form-control" required oninput="calculateFFBCropModal()">
+                </div>
+                <div class="form-group">
+                    <label>Underripe (Jjg)</label>
+                    <input type="number" id="fqc-modal-underripe" class="form-control" required oninput="calculateFFBCropModal()">
+                </div>
+                <div class="form-group">
+                    <label>Normal Ripe (Otomatis)</label>
+                    <input type="number" id="fqc-modal-normal" class="form-control" readonly style="background-color: #f1f5f9;">
+                </div>
+                <div class="form-group">
+                    <label>Over Ripe (Jjg)</label>
+                    <input type="number" id="fqc-modal-over" class="form-control" required oninput="calculateFFBCropModal()">
+                </div>
+                <div class="form-group">
+                    <label>Empty Bunch (Jjg)</label>
+                    <input type="number" id="fqc-modal-empty" class="form-control" required oninput="calculateFFBCropModal()">
+                </div>
+                <div class="form-group">
+                    <label>Long Stalk (Jjg)</label>
+                    <input type="number" id="fqc-modal-long" class="form-control" required oninput="calculateFFBCropModal()">
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Rat Damage (Jjg)</label>
+                    <input type="number" id="fqc-modal-rat" class="form-control" placeholder="0" oninput="calculateFFBCropModal()">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="submitFFBCropModal()" style="width:100%; justify-content:center; margin-top:10px;">Simpan</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-fq-range" style="display:none; z-index: 1000;">
+    <div class="modal-content" style="width: 400px; max-width: 90%;">
+        <div class="modal-header">
+            <h3 style="margin: 0;">Pilih Rentang Tanggal</h3>
+            <button type="button" class="modal-close" onclick="document.getElementById('modal-fq-range').style.display='none'">&times;</button>
+        </div>
+        <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+            <input type="hidden" id="fq-range-target">
+            <div class="form-group">
+                <label>Dari Tanggal</label>
+                <input type="date" id="fq-range-start" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Hingga Tanggal</label>
+                <input type="date" id="fq-range-end" class="form-control" required>
+            </div>
+            <button class="btn btn-primary" onclick="submitFqRangeModal()" style="width:100%; justify-content:center; margin-top:10px;">Tampilkan</button>
+        </div>
+    </div>
+</div>
+`
 });
 
 // Render Functions
