@@ -1049,6 +1049,7 @@ Object.assign(views, {
                                     <th>Target (Ha)</th>
                                     <th>Target HK</th>
                                     <th>Realisasi (Ha)</th>
+                                    <th>Realisasi HK</th>
                                     <th>Realisasi Prestasi (Ha/HK)</th>
                                     <th style="text-align:center;">Aksi / Status</th>
                                 </tr>
@@ -3769,6 +3770,7 @@ const renderUpkeepTable = () => {
         
         const bData = masterData.blok.find(x => x.name === u.block);
         const divisi = bData ? bData.divisi : '-';
+        const realizedHa = parseFloat(u.realized || 0);
         
         return `
             <tr>
@@ -3779,7 +3781,8 @@ const renderUpkeepTable = () => {
                 <td>${u.type}<br><small>${u.worker}</small></td>
                 <td>${u.target}</td>
                 <td>${tWorkers} Orang</td>
-                <td>${u.realized}</td>
+                <td>${realizedHa > 0 ? realizedHa.toFixed(2) : '0'}</td>
+                <td>${rWorkers > 0 ? rWorkers + ' Orang' : '-'}</td>
                 <td>${prestasiCell}</td>
                 <td style="text-align:center;">${actionBtn}</td>
             </tr>
@@ -3789,7 +3792,7 @@ const renderUpkeepTable = () => {
     aktif.forEach(u => tbody.innerHTML += renderRow(u));
 
     if (selesai.length > 0) {
-        tbody.innerHTML += `<tr><td colspan="10" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Selesai</td></tr>`;
+        tbody.innerHTML += `<tr><td colspan="11" style="background-color: #f1f5f9; color: var(--text-primary); font-weight: bold; text-align: left; padding: 12px 15px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> List pekerjaan sudah Selesai</td></tr>`;
         selesai.forEach(u => tbody.innerHTML += renderRow(u));
     }
 };
@@ -8512,8 +8515,9 @@ window.viewUpkeepHistory = async (id, block, type) => {
             let totalHK = 0;
 
             const rows = history.map(h => {
-                const addedHa = parseFloat(h.addedha) || 0;
+                const addedHa = parseFloat(h.addedha !== undefined ? h.addedha : h.addedHa) || 0;
                 const workers = parseInt(h.workers) || 0;
+                const dateAdded = h.dateadded || h.dateAdded || '-';
                 totalHa += addedHa;
                 totalHK += workers;
                 
@@ -8522,8 +8526,8 @@ window.viewUpkeepHistory = async (id, block, type) => {
                 
                 return `
                     <tr>
-                        <td>${h.dateadded}</td>
-                        <td><strong>+${addedHa} Ha</strong></td>
+                        <td>${dateAdded}</td>
+                        <td><strong>+${addedHa.toFixed(2)} Ha</strong></td>
                         <td>${workers} Org</td>
                         <td><strong>${prestasi.toFixed(2)}</strong></td>
                         <td><small>${h.worker || '-'}</small></td>
