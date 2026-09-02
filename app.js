@@ -1158,417 +1158,636 @@ const views = {
     tonase: `
         <div class="animate-fade-in module-layout" id="tonase-layout" style="grid-template-columns: 1fr;">
             
-            <!-- Export Wrapper -->
-            <div id="export-dashboard-wrapper" style="background-color: #f8fafc; padding: 20px; border-radius: 8px;">
-            <div style="margin-bottom: 15px;">
-                <h2 style="margin: 0; font-size: 1.5rem; color: var(--primary-color);">Monitoring FFB Received, EFB Evacuation & Despatch CPOPK</h2>
-            </div>
-            
-            <div style="display: flex; justify-content: flex-end; align-items: flex-start; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">                <!-- Controls -->
-                <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary btn-tonase-action" style="display:none;" onclick="openTonaseModal('plan')">
-                            <i class="fa-solid fa-plus"></i> Input Plan
-                        </button>
-                        <button class="btn btn-tonase-action" style="display:none; background-color: #f7a01d; color: white;" onclick="openTonaseModal('realization')">
-                            <i class="fa-solid fa-plus"></i> Input Realisasi
-                        </button>
-                        <button class="btn btn-tonase-action" style="display:none; background-color: #8b5cf6; color: white;" onclick="openDailyMonitorModal()">
-                            <i class="fa-solid fa-calendar-day"></i> Input Harian (LF/JJK/Despatch)
-                        </button>
-                    </div>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="date" id="monitor-tonase-date" class="form-control" onchange="renderTonaseMonitorTable()">
-                        <select id="monitor-tonase-hour" class="form-control" onchange="renderTonaseMonitorTable()">
-                            <option value="06:00">06:00</option>
-                            <option value="07:00">07:00</option>
-                            <option value="08:00">08:00</option>
-                            <option value="09:00">09:00</option>
-                            <option value="10:00">10:00</option>
-                            <option value="11:00">11:00</option>
-                            <option value="12:00">12:00</option>
-                            <option value="13:00">13:00</option>
-                            <option value="14:00">14:00</option>
-                            <option value="15:00">15:00</option>
-                            <option value="16:00">16:00</option>
-                            <option value="17:00">17:00</option>
-                            <option value="18:00">18:00</option>
-                            <option value="19:00">19:00</option>
-                            <option value="20:00">20:00</option>
-                            <option value="21:00">21:00</option>
-                            <option value="22:00">22:00</option>
-                            <option value="23:00">23:00</option>
-                            <option value="24:00">24:00</option>
-                        </select>
-                        <button class="btn btn-primary" onclick="renderTonaseMonitorTable()">
-                            <i class="fa-solid fa-rotate-right"></i> Refresh
-                        </button>
-                        <button class="btn" style="background-color: #ef4444; color: white;" onclick="exportDashboard()">
-                            <i class="fa-solid fa-download"></i> Save
-                        </button>
-                    </div>
-                </div>
+            <!-- Sub-Sheet Navigation Tabs -->
+            <div class="subsheet-tab-bar">
+                <button class="subsheet-tab-btn active" id="tab-btn-tonase-monitor" onclick="switchTonaseSubTab('monitor')">
+                    <i class="fa-solid fa-clock"></i> Monitoring Tonase Harian & Jam-Jaman
+                </button>
+                <button class="subsheet-tab-btn" id="tab-btn-tonase-summary" onclick="switchTonaseSubTab('summary')">
+                    <i class="fa-solid fa-chart-pie"></i> Summary Penerimaan TBS & Analisa Operasional
+                </button>
             </div>
 
-            <!-- Table Dashboard Grid -->
-            <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch;">
-                
-                <!-- FFB -->
-                <div class="glass-card table-wrapper" style="padding: 10px; flex: 1.5 1 500px;">
-                    <div style="margin-bottom: 8px;">
-                        <span style="background: #e2e8f0; padding: 4px 10px; font-weight: bold; text-decoration: underline;">FFB RECEIVED</span>
-                    </div>
-                    <!-- Summary Box moved here -->
-                    <div style="display: flex; flex-direction: column; width: 320px; font-family: monospace; font-size: 14px; border: 1px solid #000; margin-bottom: 15px;">
-                        <div style="display: flex; background: black; color: white; padding: 4px 8px; font-weight: bold;">
-                            <div style="width: 120px;">TANGGAL</div>
-                            <div>: <span id="summary-tanggal">-</span></div>
-                        </div>
-                        <div style="display: flex; background: #e2e8f0; color: black; padding: 4px 8px; font-weight: bold;">
-                            <div style="width: 120px;">JAM</div>
-                            <div>: <span id="summary-jam">-</span></div>
-                        </div>
-                        <div style="display: flex; background: #f8cbad; color: black; padding: 4px 8px; font-weight: bold;">
-                            <div style="width: 120px;">GRAND TOTAL</div>
-                            <div>: <span id="summary-total">-</span></div>
-                        </div>
-                    </div>
-                    <div id="tonase-monitor-table-container" style="overflow-x: auto;">
-                        <div style="text-align:center; padding: 20px; color:#64748b;">Memuat tabel...</div>
-                    </div>
+            <!-- 1. SUB-SHEET: MONITORING TONASE HARIAN & JAM-JAMAN -->
+            <div id="tonase-subsheet-monitor" class="subsheet-content active">
+                <!-- Export Wrapper -->
+                <div id="export-dashboard-wrapper" style="background-color: #f8fafc; padding: 20px; border-radius: 8px;">
+                <div style="margin-bottom: 15px;">
+                    <h2 style="margin: 0; font-size: 1.5rem; color: var(--primary-color);">Monitoring FFB Received, EFB Evacuation & Despatch CPOPK</h2>
                 </div>
                 
-                <!-- LF -->
-                <div class="glass-card table-wrapper" style="padding: 10px; flex: 1 1 350px; display: none;">
-                    <div style="margin-bottom: 8px;">
-                        <span style="background: #e2e8f0; padding: 4px 10px; font-weight: bold; text-decoration: underline;">LOOSE FRUIT RECEIVED</span>
-                    </div>
-                    <div id="lf-monitor-table-container" style="overflow-x: auto;"></div>
-                </div>
-                
-                <!-- JJK -->
-                <div class="glass-card table-wrapper" style="padding: 10px; flex: 1.5 1 450px;">
-                    <div style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="background: #e2e8f0; padding: 4px 10px; font-weight: bold; text-decoration: underline;">MONITORING EVAKUASI EFB</span>
-                        <button class="btn btn-primary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="openEfbHistoricalModal()">
-                            <i class="fa-solid fa-clock-rotate-left"></i> Historical
-                        </button>
-                    </div>
-                    <div id="jjk-monitor-table-container" style="overflow-x: auto;"></div>
-                </div>
-
-                <!-- DESPATCH -->
-                <div class="glass-card table-wrapper" style="padding: 10px; flex: 1 1 250px;">
-                    <div style="margin-bottom: 8px;">
-                        <span style="background: #94a3b8; color: white; padding: 4px 10px; font-weight: bold; text-decoration: underline;">DESPATCH</span>
-                    </div>
-                    <div id="despatch-monitor-table-container" style="overflow-x: auto;"></div>
-                </div>
-            </div>
-            </div> <!-- Close export-dashboard-wrapper -->
-            
-            <div class="glass-card table-wrapper" style="margin-top: 20px;">
-                <div class="view-header">
-                    <h2>Tonase TBS Masuk PKS per Jam</h2>
-                    <div>
-                        <button class="btn btn-primary" onclick="openHistoricalModal()">
-                            <i class="fa-solid fa-clock-rotate-left"></i> Historical
-                        </button>
-                    </div>
-                </div>
-                <div style="height: 400px; width: 100%; margin-top: 20px;">
-                    <canvas id="tonaseBigChart"></canvas>
-                </div>
-            </div>
-            
-            <!-- Modal Historical -->
-            <div class="modal-overlay" id="historical-modal" style="display:none; z-index: 1000;">
-                <div class="modal-content" style="max-width: 95%; width: 1000px; max-height: 90vh; overflow-y: auto;">
-                    <div class="modal-header">
-                        <h2>Historical Tonase</h2>
-                        <button type="button" class="modal-close" onclick="document.getElementById('historical-modal').style.display = 'none'">&times;</button>
-                    </div>
-                    <div style="padding: 20px;">
-                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
-                            <label>Pilih Tanggal:</label>
-                            <input type="date" id="historical-date" class="form-control">
-                            <label>Estate:</label>
-                            <select id="historical-estate" class="form-control" onchange="loadHistoricalChartData()">
-                                <option value="ALL">All Estate (Gabungan)</option>
-                            </select>
-                            <button class="btn btn-primary" onclick="loadHistoricalChartData()">OK</button>
-                        </div>
-                        <div style="height: 300px; width: 100%;">
-                            <canvas id="historicalChartCanvas"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Modal Historical EFB -->
-            <div class="modal-overlay" id="efb-historical-modal" style="display:none; z-index: 1000;">
-                <div class="modal-content" style="max-width: 95%; width: 1000px; max-height: 90vh; overflow-y: auto;">
-                    <div class="modal-header">
-                        <h2>Historical Evakuasi EFB</h2>
-                        <button type="button" class="modal-close" onclick="document.getElementById('efb-historical-modal').style.display = 'none'">&times;</button>
-                    </div>
-                    <div style="padding: 20px;">
-                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
-                            <label>Dari Tanggal:</label>
-                            <input type="date" id="efb-historical-start-date" class="form-control">
-                            <label>Sampai Tanggal:</label>
-                            <input type="date" id="efb-historical-end-date" class="form-control">
-                            <label>Estate:</label>
-                            <select id="efb-historical-estate" class="form-control" onchange="loadEfbHistoricalChartData()">
-                                <option value="ALL">All Estate (Gabungan)</option>
-                            </select>
-                            <button class="btn btn-primary" onclick="loadEfbHistoricalChartData()">OK</button>
-                        </div>
-                        <div style="height: 400px; width: 100%;">
-                            <canvas id="efbHistoricalChartCanvas"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modal Tonase -->
-            <div class="modal-overlay" id="tonase-modal" style="display:none; z-index: 1000;">
-                <div class="modal-content" style="width: 95%; max-width: 1200px; max-height: 90vh; overflow-y: auto; overflow-x: hidden;">
-                    <div class="modal-header">
-                        <h2 id="tonase-form-title">Input Tonase</h2>
-                        <button type="button" class="modal-close" onclick="document.getElementById('tonase-modal').style.display = 'none'">&times;</button>
-                    </div>
-                    
-                    <form id="form-tonase" style="margin-top: 15px;" onsubmit="event.preventDefault(); saveTonaseData();">
-                        <div class="form-group" style="display: flex; gap: 15px; max-width: 600px; margin-bottom: 15px;">
-                            <div style="flex:1;">
-                                <label>Tanggal</label>
-                                <input type="date" id="t-date" class="form-control" required onchange="loadTonaseInputData()">
-                            </div>
-                            <div style="flex:1;" id="container-plan-mode" style="display:none;">
-                                <label>Mode Input (Plan)</label>
-                                <select id="t-plan-mode" class="form-control" onchange="loadTonaseInputData()">
-                                    <option value="single">Opsi 1 (Manual 1 per 1 Jam)</option>
-                                    <option value="grid">Opsi 2 (19 Baris + Copy-Paste)</option>
-                                </select>
-                            </div>
-                            <div style="flex:1;" id="container-t-hour">
-                                <label>Jam</label>
-                                <select id="t-hour" class="form-control" onchange="loadTonaseInputData()">
-                                    <option value="" disabled selected>-- Pilih Jam --</option>
-                                    <option>06:00</option>
-                                    <option>07:00</option>
-                                    <option>08:00</option>
-                                    <option>09:00</option>
-                                    <option>10:00</option>
-                                    <option>11:00</option>
-                                    <option>12:00</option>
-                                    <option>13:00</option>
-                                    <option>14:00</option>
-                                    <option>15:00</option>
-                                    <option>16:00</option>
-                                    <option>17:00</option>
-                                    <option>18:00</option>
-                                    <option>19:00</option>
-                                    <option>20:00</option>
-                                    <option>21:00</option>
-                                    <option>22:00</option>
-                                    <option>23:00</option>
-                                    <option>24:00</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div id="tonase-estate-list" style="margin-top: 15px; overflow-x: auto; max-height: 50vh; overflow-y: auto;">
-                            <!-- Injected JS -->
-                            <div style="text-align:center; padding: 20px; color:#64748b;">Pilih Tanggal terlebih dahulu untuk memunculkan daftar.</div>
-                        </div>
-                        
-                        <div style="margin-top: 20px; text-align: right;">
-                            <button type="button" id="t-btn-reset" class="btn" style="background-color: #ef4444; color: white; margin-right: 10px;" onclick="resetTonaseInputs()"><i class="fa-solid fa-rotate-left"></i> Reset ke 0</button>
-                            <button type="button" class="btn" style="background-color: #e2e8f0; color: #333; margin-right: 10px;" onclick="document.getElementById('tonase-modal').style.display='none'">Batal</button>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fa-solid fa-save"></i> <span id="t-btn-label">Simpan</span>
+                <div style="display: flex; justify-content: flex-end; align-items: flex-start; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                    <!-- Controls -->
+                    <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-primary btn-tonase-action" style="display:none;" onclick="openTonaseModal('plan')">
+                                <i class="fa-solid fa-plus"></i> Input Plan
+                            </button>
+                            <button class="btn btn-tonase-action" style="display:none; background-color: #f7a01d; color: white;" onclick="openTonaseModal('realization')">
+                                <i class="fa-solid fa-plus"></i> Input Realisasi
+                            </button>
+                            <button class="btn btn-tonase-action" style="display:none; background-color: #8b5cf6; color: white;" onclick="openDailyMonitorModal()">
+                                <i class="fa-solid fa-calendar-day"></i> Input Harian (LF/JJK/Despatch)
                             </button>
                         </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Modal Daily Monitor -->
-            <div class="modal-overlay" id="daily-monitor-modal" style="display:none; z-index: 9999;">
-                <div class="modal-content" style="width: 95%; max-width: 1400px; max-height: 90vh; overflow-y: auto; overflow-x: hidden;">
-                    <div class="modal-header" style="cursor: move;" title="Geser Pop Up">
-                        <h2>Input Harian (LF / JJK / Despatch)</h2>
-                        <button type="button" class="modal-close" onclick="document.getElementById('daily-monitor-modal').style.display = 'none'">&times;</button>
-                    </div>
-                    
-                    <div style="display: flex; gap: 15px; max-width: 300px; margin-top: 15px; margin-bottom: 20px;">
-                        <div style="flex:1;">
-                            <label>Tanggal</label>
-                            <input type="date" id="dm-date" class="form-control" required onchange="loadDailyMonitorInputData()">
-                        </div>
-                    </div>
-                    
-                    <!-- Mill Config Section -->
-                    <div class="glass-card" style="margin-bottom: 20px; padding: 15px; background-color: #f8fafc;">
-                        <h3 style="margin-top: 0;">Konfigurasi Mill & Produksi JJK</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; align-items: end;">
-                            <div>
-                                <label>Olah TBS Hari Ini?</label>
-                                <select id="dm-is-processing" class="form-control">
-                                    <option value="1">Ya</option>
-                                    <option value="0">Tidak</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label>Ratio EFB (%)</label>
-                                <input type="number" id="dm-efb-ratio" class="form-control" step="0.01" min="0" placeholder="Cth: 20.5">
-                            </div>
-                            <div>
-                                <label>Sisa JJK Kemarin (TON)</label>
-                                <input type="number" id="dm-sisa-kemarin" class="form-control" step="0.01" min="0" placeholder="0">
-                            </div>
-                            <div>
-                                <button type="button" class="btn btn-primary" id="btn-lock-mill-config" onclick="saveMillConfig()"><i class="fa-solid fa-lock"></i> Simpan & Lock</button>
-                                <div id="mill-config-status" style="font-size: 0.8rem; color: #ef4444; margin-top: 5px;"></div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <form id="form-daily-monitor" onsubmit="event.preventDefault(); saveDailyMonitorData();">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
-                            <!-- Kolom 1: Loose Fruit -->
-                            <div>
-                                <h3>Loose Fruit Received</h3>
-                                <div id="dm-lf-list">Memuat...</div>
-                            </div>
-                            <!-- Kolom 2: EFB Transport -->
-                            <div>
-                                <h3>EFB (JJK) Transport</h3>
-                                <div id="dm-efb-list">Memuat...</div>
-                            </div>
-                            <!-- Kolom 3: Despatch -->
-                            <div>
-                                <h3>Despatch</h3>
-                                <div id="dm-despatch-list">Memuat...</div>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 20px; text-align: right; border-top: 1px solid #e2e8f0; padding-top: 15px;">
-                            <button type="button" class="btn" style="background-color: #e2e8f0; color: #333; margin-right: 10px;" onclick="document.getElementById('daily-monitor-modal').style.display='none'">Batal</button>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fa-solid fa-save"></i> Simpan Realisasi Harian
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="date" id="monitor-tonase-date" class="form-control" onchange="renderTonaseMonitorTable()">
+                            <select id="monitor-tonase-hour" class="form-control" onchange="renderTonaseMonitorTable()">
+                                <option value="06:00">06:00</option>
+                                <option value="07:00">07:00</option>
+                                <option value="08:00">08:00</option>
+                                <option value="09:00">09:00</option>
+                                <option value="10:00">10:00</option>
+                                <option value="11:00">11:00</option>
+                                <option value="12:00">12:00</option>
+                                <option value="13:00">13:00</option>
+                                <option value="14:00">14:00</option>
+                                <option value="15:00">15:00</option>
+                                <option value="16:00">16:00</option>
+                                <option value="17:00">17:00</option>
+                                <option value="18:00">18:00</option>
+                                <option value="19:00">19:00</option>
+                                <option value="20:00">20:00</option>
+                                <option value="21:00">21:00</option>
+                                <option value="22:00">22:00</option>
+                                <option value="23:00">23:00</option>
+                                <option value="24:00">24:00</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="renderTonaseMonitorTable()">
+                                <i class="fa-solid fa-rotate-right"></i> Refresh
+                            </button>
+                            <button class="btn" style="background-color: #ef4444; color: white;" onclick="exportDashboard()">
+                                <i class="fa-solid fa-download"></i> Save
                             </button>
                         </div>
-                    </form>
-                </div>
-            </div>
-            
-            <!-- Modal Historical Tonase Monitor -->
-            <div class="modal-overlay" id="historical-tonase-monitor-modal" style="display:none; z-index: 1000;">
-                <div class="modal-content" style="max-width: 95%; width: 1000px; max-height: 90vh; overflow-y: auto;">
-                    <div class="modal-header">
-                        <h2>Historical Tabel Monitoring FFB</h2>
-                        <button type="button" class="modal-close" onclick="document.getElementById('historical-tonase-monitor-modal').style.display = 'none'">&times;</button>
                     </div>
-                    <div style="padding: 20px;">
-                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
-                            <label>Pilih Tanggal:</label>
-                            <input type="date" id="historical-monitor-date" class="form-control">
-                            <button class="btn btn-primary" onclick="renderTonaseMonitorTable(true)">OK</button>
+                </div>
+
+                <!-- Table Dashboard Grid -->
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch;">
+                    
+                    <!-- FFB -->
+                    <div class="glass-card table-wrapper" style="padding: 10px; flex: 1.5 1 500px;">
+                        <div style="margin-bottom: 8px;">
+                            <span style="background: #e2e8f0; padding: 4px 10px; font-weight: bold; text-decoration: underline;">FFB RECEIVED</span>
                         </div>
-                        <div id="historical-tonase-monitor-container" style="overflow-x: auto;">
-                            <div style="text-align:center; padding: 20px; color:#64748b;">Pilih Tanggal untuk memunculkan tabel.</div>
+                        <!-- Summary Box moved here -->
+                        <div style="display: flex; flex-direction: column; width: 320px; font-family: monospace; font-size: 14px; border: 1px solid #000; margin-bottom: 15px;">
+                            <div style="display: flex; background: black; color: white; padding: 4px 8px; font-weight: bold;">
+                                <div style="width: 120px;">TANGGAL</div>
+                                <div>: <span id="summary-tanggal">-</span></div>
+                            </div>
+                            <div style="display: flex; background: #e2e8f0; color: black; padding: 4px 8px; font-weight: bold;">
+                                <div style="width: 120px;">JAM</div>
+                                <div>: <span id="summary-jam">-</span></div>
+                            </div>
+                            <div style="display: flex; background: #f8cbad; color: black; padding: 4px 8px; font-weight: bold;">
+                                <div style="width: 120px;">GRAND TOTAL</div>
+                                <div>: <span id="summary-total">-</span></div>
+                            </div>
                         </div>
+                        <div id="tonase-monitor-table-container" style="overflow-x: auto;">
+                            <div style="text-align:center; padding: 20px; color:#64748b;">Memuat tabel...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- LF -->
+                    <div class="glass-card table-wrapper" style="padding: 10px; flex: 1 1 350px; display: none;">
+                        <div style="margin-bottom: 8px;">
+                            <span style="background: #e2e8f0; padding: 4px 10px; font-weight: bold; text-decoration: underline;">LOOSE FRUIT RECEIVED</span>
+                        </div>
+                        <div id="lf-monitor-table-container" style="overflow-x: auto;"></div>
+                    </div>
+                    
+                    <!-- JJK -->
+                    <div class="glass-card table-wrapper" style="padding: 10px; flex: 1.5 1 450px;">
+                        <div style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="background: #e2e8f0; padding: 4px 10px; font-weight: bold; text-decoration: underline;">MONITORING EVAKUASI EFB</span>
+                            <button class="btn btn-primary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="openEfbHistoricalModal()">
+                                <i class="fa-solid fa-clock-rotate-left"></i> Historical
+                            </button>
+                        </div>
+                        <div id="jjk-monitor-table-container" style="overflow-x: auto;"></div>
+                    </div>
+
+                    <!-- DESPATCH -->
+                    <div class="glass-card table-wrapper" style="padding: 10px; flex: 1 1 250px;">
+                        <div style="margin-bottom: 8px;">
+                            <span style="background: #94a3b8; color: white; padding: 4px 10px; font-weight: bold; text-decoration: underline;">DESPATCH</span>
+                        </div>
+                        <div id="despatch-monitor-table-container" style="overflow-x: auto;"></div>
+                    </div>
+                </div>
+                </div> <!-- Close export-dashboard-wrapper -->
+                
+                <div class="glass-card table-wrapper" style="margin-top: 20px;">
+                    <div class="view-header">
+                        <h2>Tonase TBS Masuk PKS per Jam</h2>
+                        <div>
+                            <button class="btn btn-primary" onclick="openHistoricalModal()">
+                                <i class="fa-solid fa-clock-rotate-left"></i> Historical
+                            </button>
+                        </div>
+                    </div>
+                    <div style="height: 400px; width: 100%; margin-top: 20px;">
+                        <canvas id="tonaseBigChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Prime Time Chart -->
+                <div class="glass-card table-wrapper" style="margin-top: 20px;">
+                    <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <h2 style="margin:0; display:flex; align-items:center; gap: 10px;">
+                            Prime Time Monitoring
+                            <button class="btn btn-primary btn-sm" onclick="openHistoricalPlanning()">Historical Planning</button>
+                            <button class="btn btn-primary btn-sm" onclick="openHistoricalActual()">Historical Actual</button>
+                        </h2>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <label style="font-weight: bold; font-size: 0.9em; color: var(--text-secondary);">Estate:</label>
+                            <select id="prime-estate" class="form-control" style="width: auto; min-width: 200px;" onchange="loadPrimeTimeChart()">
+                                <option value="ALL">All Estate (Gabungan)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="height: 400px; width: 100%; margin-top: 20px;">
+                        <canvas id="primeTimeChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Daily Arrival Table -->
+                <div class="glass-card table-wrapper" style="margin-top: 20px;">
+                    <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <h2 style="margin:0;">Daily Arrival FFB</h2>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <label style="font-weight: bold; font-size: 0.9em; color: var(--text-secondary);">Date:</label>
+                            <input type="date" id="daily-arrival-date" class="form-control" onchange="renderDailyArrivalTable()">
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px; overflow-x: auto;">
+                        <table class="data-table table-compact" style="width: 100%; max-width: 600px; margin: 0 auto; text-align: center; border: 1px solid #0ea5e9;">
+                            <thead>
+                                <tr>
+                                    <th style="background-color: #0ea5e9; color: white;">KEY OPERATIONAL INDICATORS ( ARRIVAL )</th>
+                                    <th style="background-color: #0ea5e9; color: white;">FFB RECEIVED ( MT )</th>
+                                    <th style="background-color: #0ea5e9; color: white;">PERCENTAGE (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-daily-arrival">
+                                <!-- rows injected here -->
+                            </tbody>
+                            <tfoot id="tfoot-daily-arrival" style="font-weight: bold; background-color: #fed7aa; color: #000;">
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            
-            
-            <!-- Prime Time Chart -->
-            <div class="glass-card table-wrapper" style="margin-top: 20px;">
-                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                    <h2 style="margin:0; display:flex; align-items:center; gap: 10px;">
-                        Prime Time Monitoring
-                        <button class="btn btn-primary btn-sm" onclick="openHistoricalPlanning()">Historical Planning</button>
-                        <button class="btn btn-primary btn-sm" onclick="openHistoricalActual()">Historical Actual</button>
-                    </h2>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <label style="font-weight: bold; font-size: 0.9em; color: var(--text-secondary);">Estate:</label>
-                        <select id="prime-estate" class="form-control" style="width: auto; min-width: 200px;" onchange="loadPrimeTimeChart()">
-                            <option value="ALL">All Estate (Gabungan)</option>
-                        </select>
+            <!-- 2. SUB-SHEET: SUMMARY PENERIMAAN TBS (NEW ANALYTICS) -->
+            <div id="tonase-subsheet-summary" class="subsheet-content">
+                <!-- Filter & Control Toolbar -->
+                <div class="grading-filter-bar">
+                    <div class="grading-filter-group">
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;"><i class="fa-solid fa-calendar-day"></i> Tanggal Analisis</label>
+                            <input type="date" id="tsum-date" class="form-control" style="font-weight: 600; min-width: 150px;" onchange="window.loadTonaseSummaryData()">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;"><i class="fa-solid fa-layer-group"></i> Ruang Lingkup Data</label>
+                            <select id="tsum-scope" class="form-control" style="font-weight: 600; min-width: 170px;" onchange="window.loadTonaseSummaryData()">
+                                <option value="daily" selected>Harian (1 Hari Penuh)</option>
+                                <option value="mtd">MTD (Bulan Berjalan)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="window.loadTonaseSummaryData()"><i class="fa-solid fa-rotate"></i> Refresh Analisis</button>
+                        <button class="btn btn-secondary" onclick="window.printTonaseSummary()"><i class="fa-solid fa-print"></i> Cetak Laporan</button>
+                        <button class="btn btn-success" onclick="window.exportTonaseSummaryCSV()"><i class="fa-solid fa-file-excel"></i> Export CSV</button>
                     </div>
                 </div>
-                <div style="height: 400px; width: 100%; margin-top: 20px;">
-                    <canvas id="primeTimeChart"></canvas>
-                </div>
-            </div>
-            <!-- Daily Arrival Table -->
-            <div class="glass-card table-wrapper" style="margin-top: 20px;">
-                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                    <h2 style="margin:0;">Daily Arrival FFB</h2>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <label style="font-weight: bold; font-size: 0.9em; color: var(--text-secondary);">Date:</label>
-                        <input type="date" id="daily-arrival-date" class="form-control" onchange="renderDailyArrivalTable()">
+
+                <!-- Executive KPI Cards -->
+                <div class="grading-kpi-grid">
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon green">
+                            <i class="fa-solid fa-scale-balanced"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Total Realisasi TBS</h4>
+                            <div class="kpi-val" id="tsum-kpi-total-tbs">0.00 Ton</div>
+                            <div class="kpi-sub" id="tsum-kpi-total-plan">Target Plan: 0.00 Ton (0%)</div>
+                        </div>
+                    </div>
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon blue">
+                            <i class="fa-solid fa-truck-ramp-box"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Efisiensi Armada / Payload</h4>
+                            <div class="kpi-val" id="tsum-kpi-payload">0.00 Ton/Trip</div>
+                            <div class="kpi-sub" id="tsum-kpi-trips">Total 0 Trip Armada Truk</div>
+                        </div>
+                    </div>
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon yellow">
+                            <i class="fa-solid fa-business-time"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Distribusi Waktu Kedatangan</h4>
+                            <div class="kpi-val" id="tsum-kpi-timedist">0% / 0% / 0%</div>
+                            <div class="kpi-sub" id="tsum-kpi-timedist-sub">Prime (06-12) / Mid (13-18) / Last (19-24)</div>
+                        </div>
+                    </div>
+                    <div class="grading-kpi-card">
+                        <div class="grading-kpi-icon green">
+                            <i class="fa-solid fa-recycle"></i>
+                        </div>
+                        <div class="grading-kpi-info">
+                            <h4>Kinerja Evakuasi EFB</h4>
+                            <div class="kpi-val" id="tsum-kpi-efb">0.00 Ton</div>
+                            <div class="kpi-sub" id="tsum-kpi-efb-sub">Sisa JJK Pabrik: 0.00 Ton</div>
+                        </div>
                     </div>
                 </div>
-                <div style="margin-top: 20px; overflow-x: auto;">
-                    <table class="data-table table-compact" style="width: 100%; max-width: 600px; margin: 0 auto; text-align: center; border: 1px solid #0ea5e9;">
-                        <thead>
-                            <tr>
-                                <th style="background-color: #0ea5e9; color: white;">KEY OPERATIONAL INDICATORS ( ARRIVAL )</th>
-                                <th style="background-color: #0ea5e9; color: white;">FFB RECEIVED ( MT )</th>
-                                <th style="background-color: #0ea5e9; color: white;">PERCENTAGE (%)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-daily-arrival">
-                            <!-- rows injected here -->
-                        </tbody>
-                        <tfoot id="tfoot-daily-arrival" style="font-weight: bold; background-color: #fed7aa; color: #000;">
-                        </tfoot>
-                    </table>
+
+                <!-- Tabel 1: Rekapitulasi Penerimaan TBS & Distribusi Waktu per Estate -->
+                <div class="glass-card" style="overflow-x: auto; margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3 style="margin: 0;">1. Rekapitulasi Penerimaan TBS & Distribusi Waktu Kedatangan per Estate</h3>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);">Rincian target plan, realisasi penerimaan, efisiensi muatan truk, loose fruit, dan sebaran waktu kirim (Prime: 06-12, Middle: 13-18, Last: 19-24).</span>
+                        </div>
+                    </div>
+                    <div id="tsum-estate-table-wrapper" class="table-responsive">
+                        <style>
+                            #tsum-estate-table th, #tsum-estate-table td {
+                                padding: 6px 8px !important;
+                                text-align: center;
+                            }
+                            #tsum-estate-table th {
+                                white-space: nowrap;
+                            }
+                        </style>
+                        <table class="data-table" id="tsum-estate-table" style="font-size: 0.8rem; width: 100%;">
+                            <thead>
+                                <tr style="background-color: #334155; color: white;">
+                                    <th rowspan="2" style="width: 35px;">NO</th>
+                                    <th rowspan="2" style="text-align: left; min-width: 140px;">ESTATE</th>
+                                    <th rowspan="2" style="background-color: #0284c7; color: white;">TARGET PLAN<br>(TON)</th>
+                                    <th rowspan="2" style="background-color: #059669; color: white;">REALISASI TBS<br>(TON)</th>
+                                    <th rowspan="2" style="background-color: #0d9488; color: white;">% CAPAIAN<br>PLAN</th>
+                                    <th rowspan="2">TRIP<br>(RIT)</th>
+                                    <th rowspan="2" style="background-color: #6366f1; color: white;">RATA-RATA<br>TON/TRIP</th>
+                                    <th colspan="2" style="background-color: #f59e0b; color: white;">LOOSE FRUIT (LF)</th>
+                                    <th colspan="2" style="background-color: #2563eb; color: white;">PRIME TIME (06-12)</th>
+                                    <th colspan="2" style="background-color: #16a34a; color: white;">MIDDLE TIME (13-18)</th>
+                                    <th colspan="2" style="background-color: #d97706; color: white;">LAST TIME (19-24)</th>
+                                    <th rowspan="2" style="min-width: 130px;">STATUS & EVALUASI</th>
+                                </tr>
+                                <tr style="background-color: #475569; color: white; font-size: 0.72rem;">
+                                    <th>TON</th><th>% LF</th>
+                                    <th>TON</th><th>%</th>
+                                    <th>TON</th><th>%</th>
+                                    <th>TON</th><th>%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Injected JS -->
+                            </tbody>
+                            <tfoot>
+                                <!-- Injected JS -->
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Grid: Tabel 2 (Interval 2 Jam) & Tabel 3 (Evakuasi EFB) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                    
+                    <!-- Tabel 2: Rekapitulasi Arus Masuk Interval 2 Jam -->
+                    <div class="glass-card" style="overflow-x: auto;">
+                        <h3 style="margin-top: 0; margin-bottom: 8px;">2. Monitoring Ritme Kedatangan TBS per Interval 2 Jam</h3>
+                        <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 12px;">Analisis kepadatan arus masuk loading ramp & timbangan per blok 2 jam.</span>
+                        <div id="tsum-interval-table-wrapper" class="table-responsive">
+                            <table class="data-table" id="tsum-interval-table" style="font-size: 0.8rem; width: 100%; text-align: center;">
+                                <thead>
+                                    <tr style="background-color: #1e293b; color: white;">
+                                        <th>INTERVAL WAKTU</th>
+                                        <th>PLAN (TON)</th>
+                                        <th>REALISASI (TON)</th>
+                                        <th>TRIP</th>
+                                        <th>PROPORSI (%)</th>
+                                        <th>KUMULATIF (TON)</th>
+                                        <th>STATUS KEPADATAN</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Injected JS -->
+                                </tbody>
+                                <tfoot>
+                                    <!-- Injected JS -->
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tabel 3: Neraca & Monitoring Evakuasi EFB -->
+                    <div class="glass-card" style="overflow-x: auto;">
+                        <h3 style="margin-top: 0; margin-bottom: 8px;">3. Neraca & Monitoring Evakuasi EFB (Jangkos)</h3>
+                        <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 12px;">Realisasi pengangkutan jangkos vs estimasi produksi pabrik per estate.</span>
+                        
+                        <!-- Mini Balance Box -->
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; font-size: 0.75rem; text-align: center;">
+                            <div style="background: #f1f5f9; padding: 6px; border-radius: 6px;">
+                                <div style="color: var(--text-secondary);">Sisa Kemarin</div>
+                                <div id="tsum-efb-kemarin" style="font-weight: bold; font-size: 0.9rem;">0.00 Ton</div>
+                            </div>
+                            <div style="background: #e0f2fe; padding: 6px; border-radius: 6px;">
+                                <div style="color: #0369a1;">Est. Produksi EFB</div>
+                                <div id="tsum-efb-produksi" style="font-weight: bold; font-size: 0.9rem; color: #0369a1;">0.00 Ton</div>
+                            </div>
+                            <div style="background: #dcfce7; padding: 6px; border-radius: 6px;">
+                                <div style="color: #15803d;">Total Evakuasi</div>
+                                <div id="tsum-efb-realisasi" style="font-weight: bold; font-size: 0.9rem; color: #15803d;">0.00 Ton</div>
+                            </div>
+                            <div style="background: #fef3c7; padding: 6px; border-radius: 6px;">
+                                <div style="color: #b45309;">Sisa di Pabrik</div>
+                                <div id="tsum-efb-sisa" style="font-weight: bold; font-size: 0.9rem; color: #b45309;">0.00 Ton</div>
+                            </div>
+                        </div>
+
+                        <div id="tsum-efb-table-wrapper" class="table-responsive">
+                            <table class="data-table" id="tsum-efb-table" style="font-size: 0.8rem; width: 100%; text-align: center;">
+                                <thead>
+                                    <tr style="background-color: #1e293b; color: white;">
+                                        <th style="width: 30px;">NO</th>
+                                        <th style="text-align: left;">ESTATE</th>
+                                        <th>TARGET (TON)</th>
+                                        <th>REALISASI (TON)</th>
+                                        <th>% CAPAIAN</th>
+                                        <th>TRIP</th>
+                                        <th>TON/TRIP</th>
+                                        <th>STATUS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Injected JS -->
+                                </tbody>
+                                <tfoot>
+                                    <!-- Injected JS -->
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grafik Analisis Interaktif -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                    <div class="glass-card">
+                        <h3 style="margin-top: 0; margin-bottom: 8px;"><i class="fa-solid fa-chart-column"></i> Grafik Distribusi Waktu Kirim TBS per Estate</h3>
+                        <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 12px;">Proporsi kedatangan Prime (06-12), Middle (13-18), dan Last Time (19-24).</span>
+                        <div style="position: relative; height: 320px; width: 100%;">
+                            <canvas id="chart-tsum-timedist"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass-card">
+                        <h3 style="margin-top: 0; margin-bottom: 8px;"><i class="fa-solid fa-chart-area"></i> Grafik Arus Kedatangan TBS Interval 2 Jam</h3>
+                        <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 12px;">Pola tonase masuk per 2 jam vs kurva kumulatif penerimaan harian.</span>
+                        <div style="position: relative; height: 320px; width: 100%;">
+                            <canvas id="chart-tsum-interval"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Smart Operational Diagnostic & Recommendations Box -->
+                <div class="grading-insight-box" id="tsum-insights-box">
+                    <h4><i class="fa-solid fa-lightbulb"></i> Rekomendasi & Analisis Operasional Penerimaan TBS & Evakuasi EFB:</h4>
+                    <ul id="tsum-insights-list">
+                        <!-- Injected JS -->
+                    </ul>
                 </div>
             </div>
             
         </div>
         
-<!-- Historical Actual Modal -->
-<div class="modal-overlay" id="modal-historical-actual" style="display:none; z-index: 1000;">
-    <div class="modal-content" style="width: 1200px; max-width: 95vw; height: 90vh; display:flex; flex-direction:column; overflow:hidden;">
-        <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding: 15px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
-            <h3 style="margin:0;"><i class="fa-solid fa-chart-column"></i> Historical Actual</h3>
-            <button type="button" class="modal-close" onclick="document.getElementById('modal-historical-actual').style.display='none';">&times;</button>
-        </div>
-        <div style="padding: 15px; display:flex; gap:10px; align-items:center; background:white; border-bottom:1px solid #e2e8f0;">
-            <label style="font-weight:bold;">Tipe Akumulasi:</label>
-            <select id="historical-actual-type" class="form-control" style="width:auto;" onchange="window.toggleHistoricalActualInputs()">
-                <option value="bulanan">Bulanan</option>
-                <option value="harian">Harian</option>
-            </select>
-            
-            <label id="lbl-historical-actual-month" style="font-weight:bold; margin-left:10px;">Pilih Bulan:</label>
-            <input type="month" id="historical-actual-month" class="form-control" style="width:auto;" value="${window.getLocalDate().substring(0, 7)}" onchange="loadHistoricalActualChart()">
-            
-            <label id="lbl-historical-actual-date" style="font-weight:bold; margin-left:10px; display:none;">Pilih Tanggal:</label>
-            <input type="date" id="historical-actual-date" class="form-control" style="width:auto; display:none;" value="${window.getLocalDate()}" onchange="loadHistoricalActualChart()">
-            
-            <button class="btn btn-primary" style="margin-left:10px;" onclick="loadHistoricalActualChart()">Tampilkan</button>
-        </div>
-        <div style="flex:1; padding: 15px; background: white; overflow-y: auto; display:flex; flex-direction:column; gap: 20px;">
-            <div style="width:100%; position:relative; min-height: 400px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                <h4 style="text-align: center; margin-top: 0;">Prime Time Actual Monitoring</h4>
-                <canvas id="historicalActualPrimeChartCanvas"></canvas>
-            </div>
-            <div style="width:50%; margin: 0 auto; position:relative; min-height: 400px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                <h4 style="text-align: center; margin-top: 0;">Cumulative FFB Received by Time Band</h4>
-                <canvas id="cumulativeFFBTimeBandChartCanvas"></canvas>
+        <!-- Modal Historical -->
+        <div class="modal-overlay" id="historical-modal" style="display:none; z-index: 1000;">
+            <div class="modal-content" style="max-width: 95%; width: 1000px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h2>Historical Tonase</h2>
+                    <button type="button" class="modal-close" onclick="document.getElementById('historical-modal').style.display = 'none'">&times;</button>
+                </div>
+                <div style="padding: 20px;">
+                    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
+                        <label>Pilih Tanggal:</label>
+                        <input type="date" id="historical-date" class="form-control">
+                        <label>Estate:</label>
+                        <select id="historical-estate" class="form-control" onchange="loadHistoricalChartData()">
+                            <option value="ALL">All Estate (Gabungan)</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="loadHistoricalChartData()">OK</button>
+                    </div>
+                    <div style="height: 300px; width: 100%;">
+                        <canvas id="historicalChartCanvas"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
+        
+        <!-- Modal Historical EFB -->
+        <div class="modal-overlay" id="efb-historical-modal" style="display:none; z-index: 1000;">
+            <div class="modal-content" style="max-width: 95%; width: 1000px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h2>Historical Evakuasi EFB</h2>
+                    <button type="button" class="modal-close" onclick="document.getElementById('efb-historical-modal').style.display = 'none'">&times;</button>
+                </div>
+                <div style="padding: 20px;">
+                    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
+                        <label>Dari Tanggal:</label>
+                        <input type="date" id="efb-historical-start-date" class="form-control">
+                        <label>Sampai Tanggal:</label>
+                        <input type="date" id="efb-historical-end-date" class="form-control">
+                        <label>Estate:</label>
+                        <select id="efb-historical-estate" class="form-control" onchange="loadEfbHistoricalChartData()">
+                            <option value="ALL">All Estate (Gabungan)</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="loadEfbHistoricalChartData()">OK</button>
+                    </div>
+                    <div style="height: 400px; width: 100%;">
+                        <canvas id="efbHistoricalChartCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Tonase -->
+        <div class="modal-overlay" id="tonase-modal" style="display:none; z-index: 1000;">
+            <div class="modal-content" style="width: 95%; max-width: 1200px; max-height: 90vh; overflow-y: auto; overflow-x: hidden;">
+                <div class="modal-header">
+                    <h2 id="tonase-form-title">Input Tonase</h2>
+                    <button type="button" class="modal-close" onclick="document.getElementById('tonase-modal').style.display = 'none'">&times;</button>
+                </div>
+                
+                <form id="form-tonase" style="margin-top: 15px;" onsubmit="event.preventDefault(); saveTonaseData();">
+                    <div class="form-group" style="display: flex; gap: 15px; max-width: 600px; margin-bottom: 15px;">
+                        <div style="flex:1;">
+                            <label>Tanggal</label>
+                            <input type="date" id="t-date" class="form-control" required onchange="loadTonaseInputData()">
+                        </div>
+                        <div style="flex:1;" id="container-plan-mode" style="display:none;">
+                            <label>Mode Input (Plan)</label>
+                            <select id="t-plan-mode" class="form-control" onchange="loadTonaseInputData()">
+                                <option value="single">Opsi 1 (Manual 1 per 1 Jam)</option>
+                                <option value="grid">Opsi 2 (19 Baris + Copy-Paste)</option>
+                            </select>
+                        </div>
+                        <div style="flex:1;" id="container-t-hour">
+                            <label>Jam</label>
+                            <select id="t-hour" class="form-control" onchange="loadTonaseInputData()">
+                                <option value="" disabled selected>-- Pilih Jam --</option>
+                                <option>06:00</option>
+                                <option>07:00</option>
+                                <option>08:00</option>
+                                <option>09:00</option>
+                                <option>10:00</option>
+                                <option>11:00</option>
+                                <option>12:00</option>
+                                <option>13:00</option>
+                                <option>14:00</option>
+                                <option>15:00</option>
+                                <option>16:00</option>
+                                <option>17:00</option>
+                                <option>18:00</option>
+                                <option>19:00</option>
+                                <option>20:00</option>
+                                <option>21:00</option>
+                                <option>22:00</option>
+                                <option>23:00</option>
+                                <option>24:00</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="tonase-estate-list" style="margin-top: 15px; overflow-x: auto; max-height: 50vh; overflow-y: auto;">
+                        <!-- Injected JS -->
+                        <div style="text-align:center; padding: 20px; color:#64748b;">Pilih Tanggal terlebih dahulu untuk memunculkan daftar.</div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; text-align: right;">
+                        <button type="button" id="t-btn-reset" class="btn" style="background-color: #ef4444; color: white; margin-right: 10px;" onclick="resetTonaseInputs()"><i class="fa-solid fa-rotate-left"></i> Reset ke 0</button>
+                        <button type="button" class="btn" style="background-color: #e2e8f0; color: #333; margin-right: 10px;" onclick="document.getElementById('tonase-modal').style.display='none'">Batal</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-save"></i> <span id="t-btn-label">Simpan</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Daily Monitor -->
+        <div class="modal-overlay" id="daily-monitor-modal" style="display:none; z-index: 9999;">
+            <div class="modal-content" style="width: 95%; max-width: 1400px; max-height: 90vh; overflow-y: auto; overflow-x: hidden;">
+                <div class="modal-header" style="cursor: move;" title="Geser Pop Up">
+                    <h2>Input Harian (LF / JJK / Despatch)</h2>
+                    <button type="button" class="modal-close" onclick="document.getElementById('daily-monitor-modal').style.display = 'none'">&times;</button>
+                </div>
+                
+                <div style="display: flex; gap: 15px; max-width: 300px; margin-top: 15px; margin-bottom: 20px;">
+                    <div style="flex:1;">
+                        <label>Tanggal</label>
+                        <input type="date" id="dm-date" class="form-control" required onchange="loadDailyMonitorInputData()">
+                    </div>
+                </div>
+                
+                <!-- Mill Config Section -->
+                <div class="glass-card" style="margin-bottom: 20px; padding: 15px; background-color: #f8fafc;">
+                    <h3 style="margin-top: 0;">Konfigurasi Mill & Produksi JJK</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; align-items: end;">
+                        <div>
+                            <label>Olah TBS Hari Ini?</label>
+                            <select id="dm-is-processing" class="form-control">
+                                <option value="1">Ya</option>
+                                <option value="0">Tidak</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Ratio EFB (%)</label>
+                            <input type="number" id="dm-efb-ratio" class="form-control" step="0.01" min="0" placeholder="Cth: 20.5">
+                        </div>
+                        <div>
+                            <label>Sisa JJK Kemarin (TON)</label>
+                            <input type="number" id="dm-sisa-kemarin" class="form-control" step="0.01" min="0" placeholder="0">
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-primary" id="btn-lock-mill-config" onclick="saveMillConfig()"><i class="fa-solid fa-lock"></i> Simpan & Lock</button>
+                            <div id="mill-config-status" style="font-size: 0.8rem; color: #ef4444; margin-top: 5px;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <form id="form-daily-monitor" onsubmit="event.preventDefault(); saveDailyMonitorData();">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                        <!-- Kolom 1: Loose Fruit -->
+                        <div>
+                            <h3>Loose Fruit Received</h3>
+                            <div id="dm-lf-list">Memuat...</div>
+                        </div>
+                        <!-- Kolom 2: EFB Transport -->
+                        <div>
+                            <h3>EFB (JJK) Transport</h3>
+                            <div id="dm-efb-list">Memuat...</div>
+                        </div>
+                        <!-- Kolom 3: Despatch -->
+                        <div>
+                            <h3>Despatch</h3>
+                            <div id="dm-despatch-list">Memuat...</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; text-align: right;">
+                        <button type="button" class="btn" style="background-color: #e2e8f0; color: #333; margin-right: 10px;" onclick="document.getElementById('daily-monitor-modal').style.display='none'">Batal</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-save"></i> Simpan Harian
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Historical Actual Modal -->
+        <div class="modal-overlay" id="modal-historical-actual" style="display:none; z-index: 1000;">
+            <div class="modal-content" style="width: 1200px; max-width: 95vw; height: 90vh; display:flex; flex-direction:column; overflow:hidden;">
+                <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding: 15px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+                    <h3 style="margin:0;"><i class="fa-solid fa-chart-column"></i> Historical Actual</h3>
+                    <button type="button" class="modal-close" onclick="document.getElementById('modal-historical-actual').style.display='none';">&times;</button>
+                </div>
+                <div style="padding: 15px; display:flex; gap:10px; align-items:center; background:white; border-bottom:1px solid #e2e8f0;">
+                    <label style="font-weight:bold;">Tipe Akumulasi:</label>
+                    <select id="historical-actual-type" class="form-control" style="width:auto;" onchange="window.toggleHistoricalActualInputs()">
+                        <option value="bulanan">Bulanan</option>
+                        <option value="harian">Harian</option>
+                    </select>
+                    
+                    <label id="lbl-historical-actual-month" style="font-weight:bold; margin-left:10px;">Pilih Bulan:</label>
+                    <input type="month" id="historical-actual-month" class="form-control" style="width:auto;" value="${window.getLocalDate().substring(0, 7)}" onchange="loadHistoricalActualChart()">
+                    
+                    <label id="lbl-historical-actual-date" style="font-weight:bold; margin-left:10px; display:none;">Pilih Tanggal:</label>
+                    <input type="date" id="historical-actual-date" class="form-control" style="width:auto; display:none;" value="${window.getLocalDate()}" onchange="loadHistoricalActualChart()">
+                    
+                    <button class="btn btn-primary" style="margin-left:10px;" onclick="loadHistoricalActualChart()">Tampilkan</button>
+                </div>
+                <div style="flex:1; padding: 15px; background: white; overflow-y: auto; display:flex; flex-direction:column; gap: 20px;">
+                    <div style="width:100%; position:relative; min-height: 400px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <h4 style="text-align: center; margin-top: 0;">Prime Time Actual Monitoring</h4>
+                        <canvas id="historicalActualPrimeChartCanvas"></canvas>
+                    </div>
+                    <div style="width:50%; margin: 0 auto; position:relative; min-height: 400px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <h4 style="text-align: center; margin-top: 0;">Cumulative FFB Received by Time Band</h4>
+                        <canvas id="cumulativeFFBTimeBandChartCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
     `,
     master: `
         <div class="animate-fade-in">
@@ -5163,7 +5382,11 @@ const navigate = (viewId) => {
             }
         }
 
-        loadTonaseChartData();
+        if (window.activeTonaseSubTab) {
+            window.switchTonaseSubTab(window.activeTonaseSubTab);
+        } else {
+            window.switchTonaseSubTab('monitor');
+        }
     }
     if(viewId === 'users') { 
         renderUsersTable(); 
@@ -9287,4 +9510,723 @@ window.loadDashboardProgressHistoricalChart = async () => {
         console.error(e);
         alert('Gagal memuat data.');
     }
+};
+
+// ==========================================
+// --- TONASE SUB-SHEET & SUMMARY PENERIMAAN TBS SYSTEM ---
+// ==========================================
+
+window.activeTonaseSubTab = 'monitor';
+
+window.switchTonaseSubTab = (tabId) => {
+    window.activeTonaseSubTab = tabId;
+    
+    // Toggle active class on tab buttons
+    const btnMonitor = document.getElementById('tab-btn-tonase-monitor');
+    const btnSummary = document.getElementById('tab-btn-tonase-summary');
+    
+    if (btnMonitor) btnMonitor.classList.toggle('active', tabId === 'monitor');
+    if (btnSummary) btnSummary.classList.toggle('active', tabId === 'summary');
+    
+    // Toggle active class on tab contents
+    const contentMonitor = document.getElementById('tonase-subsheet-monitor');
+    const contentSummary = document.getElementById('tonase-subsheet-summary');
+    
+    if (contentMonitor) contentMonitor.classList.toggle('active', tabId === 'monitor');
+    if (contentSummary) contentSummary.classList.toggle('active', tabId === 'summary');
+    
+    if (tabId === 'monitor') {
+        if (typeof window.renderTonaseMonitorTable === 'function') {
+            window.renderTonaseMonitorTable();
+        }
+        if (typeof window.loadTonaseChartData === 'function') {
+            window.loadTonaseChartData();
+        }
+    } else if (tabId === 'summary') {
+        // Init dates if not set
+        const dateInput = document.getElementById('tsum-date');
+        const monitorDate = document.getElementById('monitor-tonase-date');
+        if (dateInput) {
+            if (!dateInput.value) {
+                dateInput.value = (monitorDate && monitorDate.value) ? monitorDate.value : window.getLocalDate();
+            }
+        }
+        window.loadTonaseSummaryData();
+    }
+};
+
+let chartTsumTimeDistInstance = null;
+let chartTsumIntervalInstance = null;
+window.cachedTonaseSummaryData = null;
+
+window.loadTonaseSummaryData = async () => {
+    const dateInput = document.getElementById('tsum-date');
+    const scopeSelect = document.getElementById('tsum-scope');
+    
+    if (!dateInput || !dateInput.value) {
+        if (dateInput) dateInput.value = window.getLocalDate();
+    }
+    
+    const selectedDate = dateInput ? dateInput.value : window.getLocalDate();
+    const scope = scopeSelect ? scopeSelect.value : 'daily';
+    const month = selectedDate.substring(0, 7); // YYYY-MM
+    
+    let mill = currentUser.estate;
+    if (!mill || !mill.endsWith('Mill')) {
+        mill = 'Bunga Tanjung Mill';
+    }
+    
+    const estateTableBody = document.querySelector('#tsum-estate-table tbody');
+    if (estateTableBody) {
+        estateTableBody.innerHTML = '<tr><td colspan="16" style="text-align:center; padding: 25px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data analisis penerimaan TBS...</td></tr>';
+    }
+    
+    try {
+        const promises = [
+            fetch(`${API_URL}/master/${mill}`),
+            scope === 'mtd' ? fetch(`${API_URL}/tonase/${mill}/month/${month}`) : fetch(`${API_URL}/tonase/${mill}/${selectedDate}`),
+            fetch(`${API_URL}/daily-monitor/${mill}/${selectedDate}`)
+        ];
+        
+        const [masterRes, tonaseRes, dmRes] = await Promise.all(promises);
+        const masterData = await masterRes.json();
+        const tonaseData = await window.parseTonaseResponse(tonaseRes);
+        const dmData = await dmRes.json();
+        
+        window.cachedTonaseSummaryData = {
+            mill,
+            selectedDate,
+            scope,
+            month,
+            masterData,
+            tonaseData,
+            dmData
+        };
+        
+        window.processAndRenderTonaseSummary();
+    } catch(err) {
+        console.error('Error loading Tonase Summary:', err);
+        if (estateTableBody) {
+            estateTableBody.innerHTML = '<tr><td colspan="16" style="text-align:center; padding: 20px; color: #ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Gagal memuat data analisis penerimaan TBS.</td></tr>';
+        }
+    }
+};
+
+window.processAndRenderTonaseSummary = () => {
+    if (!window.cachedTonaseSummaryData) return;
+    const { mill, selectedDate, scope, month, masterData, tonaseData, dmData } = window.cachedTonaseSummaryData;
+    
+    const supplyChainFFB = (masterData.supply_chain || []).filter(s => s.is_ffb !== false).map(s => s.estate);
+    const supplyChainEFB = (masterData.supply_chain || []).filter(s => s.is_efb !== false).map(s => s.estate);
+    
+    const abbrMap = {};
+    if (masterData && masterData.supply_chain_list) {
+        masterData.supply_chain_list.forEach(item => {
+            abbrMap[item.name] = item.abbr;
+        });
+    }
+    const getAbbr = (estName) => abbrMap[estName] || estName.replace(' Estate', 'E');
+
+    // Time buckets
+    const primeHours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00'];
+    const middleHours = ['13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+    const lastHours = ['19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
+
+    const intervals = [
+        { label: '06:00 - 08:00', hours: ['06:00', '07:00', '08:00'] },
+        { label: '08:00 - 10:00', hours: ['09:00', '10:00'] },
+        { label: '10:00 - 12:00', hours: ['11:00', '12:00'] },
+        { label: '12:00 - 14:00', hours: ['13:00', '14:00'] },
+        { label: '14:00 - 16:00', hours: ['15:00', '16:00'] },
+        { label: '16:00 - 18:00', hours: ['17:00', '18:00'] },
+        { label: '18:00 - 20:00', hours: ['19:00', '20:00'] },
+        { label: '> 20:00 (Malam)', hours: ['21:00', '22:00', '23:00', '24:00'] }
+    ];
+
+    const lfList = dmData.lf || [];
+    const efbList = dmData.efb || [];
+    const millConfig = dmData.mill_config || {};
+
+    // 1. Process Estate Aggregation
+    const estateStats = [];
+    let totPlanTon = 0, totActTon = 0, totTrips = 0, totLfTon = 0;
+    let totPrimeTon = 0, totMidTon = 0, totLastTon = 0;
+
+    supplyChainFFB.forEach(est => {
+        const estRows = tonaseData.filter(t => t.estate === est);
+        let planKg = 0, actKg = 0, tripCount = 0;
+        let primeKg = 0, midKg = 0, lastKg = 0;
+
+        estRows.forEach(r => {
+            const pKg = parseFloat(r.target_kg) || 0;
+            const aKg = parseFloat(r.realized_kg) || 0;
+            const tr = parseInt(r.realized_trip) || 0;
+            const hr = r.time_hour;
+
+            planKg += pKg;
+            actKg += aKg;
+            tripCount += tr;
+
+            if (primeHours.includes(hr)) primeKg += aKg;
+            else if (middleHours.includes(hr)) midKg += aKg;
+            else if (lastHours.includes(hr)) lastKg += aKg;
+        });
+
+        const planTon = planKg / 1000;
+        const actTon = actKg / 1000;
+        const primeTon = primeKg / 1000;
+        const midTon = midKg / 1000;
+        const lastTon = lastKg / 1000;
+
+        const lfRow = lfList.find(x => x.estate === est);
+        const lfTon = lfRow ? (parseFloat(lfRow.actual_lf_tonase) || 0) : 0;
+        const lfPct = actTon > 0 ? (lfTon / actTon * 100) : 0;
+
+        const pctPlan = planTon > 0 ? (actTon / planTon * 100) : (actTon > 0 ? 100 : 0);
+        const payload = tripCount > 0 ? (actTon / tripCount) : 0;
+
+        const primePct = actTon > 0 ? (primeTon / actTon * 100) : 0;
+        const midPct = actTon > 0 ? (midTon / actTon * 100) : 0;
+        const lastPct = actTon > 0 ? (lastTon / actTon * 100) : 0;
+
+        // Evaluation status
+        let evalStatus = '';
+        let evalBadgeClass = '';
+        if (actTon === 0) {
+            evalStatus = 'Belum Ada Kiriman';
+            evalBadgeClass = 'grading-cell-neutral';
+        } else if (lastPct > 30) {
+            evalStatus = 'Penumpukan Last Time (Sore/Malam)';
+            evalBadgeClass = 'grading-cell-danger';
+        } else if (payload > 0 && payload < 6.5) {
+            evalStatus = 'Payload Truk Rendah (<6.5 T)';
+            evalBadgeClass = 'grading-cell-warn';
+        } else if (pctPlan >= 100) {
+            evalStatus = 'Target Tercapai & Lancar';
+            evalBadgeClass = 'grading-cell-good';
+        } else {
+            evalStatus = 'Kirim Normal Sesuai Jadwal';
+            evalBadgeClass = 'grading-cell-good';
+        }
+
+        estateStats.push({
+            estate: est,
+            abbr: getAbbr(est),
+            planTon,
+            actTon,
+            pctPlan,
+            tripCount,
+            payload,
+            lfTon,
+            lfPct,
+            primeTon,
+            primePct,
+            midTon,
+            midPct,
+            lastTon,
+            lastPct,
+            evalStatus,
+            evalBadgeClass
+        });
+
+        totPlanTon += planTon;
+        totActTon += actTon;
+        totTrips += tripCount;
+        totLfTon += lfTon;
+        totPrimeTon += primeTon;
+        totMidTon += midTon;
+        totLastTon += lastTon;
+    });
+
+    // 2. Process Interval 2-Jam Aggregation
+    const intervalStats = [];
+    let cumActTon = 0;
+    let totIntervalPlan = 0, totIntervalAct = 0, totIntervalTrips = 0;
+
+    intervals.forEach(inv => {
+        let invPlanKg = 0, invActKg = 0, invTrips = 0;
+        tonaseData.forEach(r => {
+            if (inv.hours.includes(r.time_hour)) {
+                invPlanKg += parseFloat(r.target_kg) || 0;
+                invActKg += parseFloat(r.realized_kg) || 0;
+                invTrips += parseInt(r.realized_trip) || 0;
+            }
+        });
+
+        const invPlanTon = invPlanKg / 1000;
+        const invActTon = invActKg / 1000;
+        cumActTon += invActTon;
+
+        const proporsiPct = totActTon > 0 ? (invActTon / totActTon * 100) : 0;
+        const cumPct = totActTon > 0 ? (cumActTon / totActTon * 100) : 0;
+
+        let trafficStatus = 'Normal Lancar';
+        let trafficBadge = 'grading-cell-good';
+        if (proporsiPct > 25) {
+            trafficStatus = 'Puncak / Antrian Loading Ramp';
+            trafficBadge = 'grading-cell-danger';
+        } else if (proporsiPct >= 15) {
+            trafficStatus = 'Arus Padat Terkendali';
+            trafficBadge = 'grading-cell-warn';
+        }
+
+        intervalStats.push({
+            label: inv.label,
+            planTon: invPlanTon,
+            actTon: invActTon,
+            trips: invTrips,
+            proporsiPct,
+            cumActTon,
+            cumPct,
+            trafficStatus,
+            trafficBadge
+        });
+
+        totIntervalPlan += invPlanTon;
+        totIntervalAct += invActTon;
+        totIntervalTrips += invTrips;
+    });
+
+    // 3. Process EFB Aggregation
+    const efbRatio = parseFloat(millConfig.efb_ratio) || 22.0;
+    const sisaKemarin = parseFloat(millConfig.sisa_kemarin) || 0;
+    const estProduksiEfb = (totActTon * efbRatio / 100);
+
+    let totEfbTarget = 0, totEfbActual = 0, totEfbTrip = 0;
+    const efbStats = [];
+
+    supplyChainEFB.forEach((est, idx) => {
+        const row = efbList.find(e => e.estate === est);
+        const tgt = row ? (parseFloat(row.target_tonase) || 0) : 0;
+        const act = row ? (parseFloat(row.actual_tonase) || 0) : 0;
+        const tr = row ? (parseInt(row.actual_trip) || 0) : 0;
+        const pct = tgt > 0 ? (act / tgt * 100) : (act > 0 ? 100 : 0);
+        const tonPerTrip = tr > 0 ? (act / tr) : 0;
+
+        let status = act >= tgt && tgt > 0 ? 'Tuntas Sesuai Target' : (act > 0 ? 'Sebagian Terangkut' : 'Belum Ada Evakuasi');
+        let statusBadge = act >= tgt && tgt > 0 ? 'grading-cell-good' : (act > 0 ? 'grading-cell-warn' : 'grading-cell-neutral');
+
+        efbStats.push({
+            no: idx + 1,
+            estate: est,
+            abbr: getAbbr(est),
+            target: tgt,
+            actual: act,
+            pct,
+            trip: tr,
+            tonPerTrip,
+            status,
+            statusBadge
+        });
+
+        totEfbTarget += tgt;
+        totEfbActual += act;
+        totEfbTrip += tr;
+    });
+
+    const sisaJjkPabrik = Math.max(0, sisaKemarin + estProduksiEfb - totEfbActual);
+
+    // 4. Render KPI Cards
+    const totalPlanPct = totPlanTon > 0 ? (totActTon / totPlanTon * 100) : (totActTon > 0 ? 100 : 0);
+    const avgPayload = totTrips > 0 ? (totActTon / totTrips) : 0;
+    const pPrimePct = totActTon > 0 ? (totPrimeTon / totActTon * 100) : 0;
+    const pMidPct = totActTon > 0 ? (totMidTon / totActTon * 100) : 0;
+    const pLastPct = totActTon > 0 ? (totLastTon / totActTon * 100) : 0;
+
+    const elKpiTotalTbs = document.getElementById('tsum-kpi-total-tbs');
+    const elKpiTotalPlan = document.getElementById('tsum-kpi-total-plan');
+    if (elKpiTotalTbs) elKpiTotalTbs.innerText = `${totActTon.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Ton`;
+    if (elKpiTotalPlan) elKpiTotalPlan.innerText = `Target Plan: ${totPlanTon.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Ton (${totalPlanPct.toFixed(1)}%)`;
+
+    const elKpiPayload = document.getElementById('tsum-kpi-payload');
+    const elKpiTrips = document.getElementById('tsum-kpi-trips');
+    if (elKpiPayload) elKpiPayload.innerText = `${avgPayload.toFixed(2)} Ton / Trip`;
+    if (elKpiTrips) elKpiTrips.innerText = `Total ${totTrips} Ritase Truk TBS`;
+
+    const elKpiTimeDist = document.getElementById('tsum-kpi-timedist');
+    const elKpiTimeDistSub = document.getElementById('tsum-kpi-timedist-sub');
+    if (elKpiTimeDist) elKpiTimeDist.innerText = `${pPrimePct.toFixed(0)}% / ${pMidPct.toFixed(0)}% / ${pLastPct.toFixed(0)}%`;
+    if (elKpiTimeDistSub) elKpiTimeDistSub.innerText = `Prime: ${totPrimeTon.toFixed(1)}T | Mid: ${totMidTon.toFixed(1)}T | Last: ${totLastTon.toFixed(1)}T`;
+
+    const elKpiEfb = document.getElementById('tsum-kpi-efb');
+    const elKpiEfbSub = document.getElementById('tsum-kpi-efb-sub');
+    if (elKpiEfb) elKpiEfb.innerText = `${totEfbActual.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Ton`;
+    if (elKpiEfbSub) elKpiEfbSub.innerText = `Sisa Stock JJK di Pabrik: ${sisaJjkPabrik.toFixed(2)} Ton`;
+
+    // Render Mini Balance Box
+    const elEfbKemarin = document.getElementById('tsum-efb-kemarin');
+    const elEfbProduksi = document.getElementById('tsum-efb-produksi');
+    const elEfbRealisasi = document.getElementById('tsum-efb-realisasi');
+    const elEfbSisa = document.getElementById('tsum-efb-sisa');
+    if (elEfbKemarin) elEfbKemarin.innerText = `${sisaKemarin.toFixed(2)} Ton`;
+    if (elEfbProduksi) elEfbProduksi.innerText = `${estProduksiEfb.toFixed(2)} Ton`;
+    if (elEfbRealisasi) elEfbRealisasi.innerText = `${totEfbActual.toFixed(2)} Ton`;
+    if (elEfbSisa) elEfbSisa.innerText = `${sisaJjkPabrik.toFixed(2)} Ton`;
+
+    // 5. Render Table 1 (Estate Summary)
+    const tbEstate = document.querySelector('#tsum-estate-table tbody');
+    const tfEstate = document.querySelector('#tsum-estate-table tfoot');
+    if (tbEstate) {
+        let html = '';
+        estateStats.forEach((st, idx) => {
+            const planBadge = st.pctPlan >= 100 ? 'grading-cell-good' : (st.pctPlan >= 85 ? 'grading-cell-warn' : (st.actTon > 0 ? 'grading-cell-danger' : ''));
+            const payloadBadge = st.payload >= 7.5 ? 'grading-cell-good' : (st.payload >= 6.5 ? 'grading-cell-warn' : (st.tripCount > 0 ? 'grading-cell-danger' : ''));
+            const lastBadge = st.lastPct > 30 ? 'grading-cell-danger' : (st.lastPct > 15 ? 'grading-cell-warn' : '');
+
+            html += `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td style="text-align: left; font-weight: 600;">${st.estate}</td>
+                    <td style="background-color: #f0f9ff; font-weight: bold;">${st.planTon > 0 ? st.planTon.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                    <td style="background-color: #ecfdf5; font-weight: bold;">${st.actTon > 0 ? st.actTon.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+                    <td class="${planBadge}" style="font-weight: bold;">${st.actTon > 0 ? st.pctPlan.toFixed(1) + '%' : '-'}</td>
+                    <td>${st.tripCount > 0 ? st.tripCount : '-'}</td>
+                    <td class="${payloadBadge}" style="font-weight: bold;">${st.payload > 0 ? st.payload.toFixed(2) : '-'}</td>
+                    <td>${st.lfTon > 0 ? st.lfTon.toFixed(2) : '-'}</td>
+                    <td>${st.lfTon > 0 ? st.lfPct.toFixed(2) + '%' : '0.00%'}</td>
+                    <td style="background-color: #eff6ff;">${st.primeTon > 0 ? st.primeTon.toFixed(2) : '-'}</td>
+                    <td style="background-color: #eff6ff; font-weight: 600;">${st.primeTon > 0 ? st.primePct.toFixed(1) + '%' : '0%'}</td>
+                    <td style="background-color: #f0fdf4;">${st.midTon > 0 ? st.midTon.toFixed(2) : '-'}</td>
+                    <td style="background-color: #f0fdf4; font-weight: 600;">${st.midTon > 0 ? st.midPct.toFixed(1) + '%' : '0%'}</td>
+                    <td style="background-color: #fffbeb;">${st.lastTon > 0 ? st.lastTon.toFixed(2) : '-'}</td>
+                    <td class="${lastBadge}" style="font-weight: 600;">${st.lastTon > 0 ? st.lastPct.toFixed(1) + '%' : '0%'}</td>
+                    <td><span class="grading-badge ${st.evalBadgeClass}" style="font-size: 0.72rem; padding: 2px 6px;">${st.evalStatus}</span></td>
+                </tr>
+            `;
+        });
+        tbEstate.innerHTML = html || '<tr><td colspan="16" style="text-align:center; padding: 15px;">Tidak ada data TBS.</td></tr>';
+    }
+
+    if (tfEstate) {
+        const totLfPct = totActTon > 0 ? (totLfTon / totActTon * 100) : 0;
+        const totPrimePct = totActTon > 0 ? (totPrimeTon / totActTon * 100) : 0;
+        const totMidPct = totActTon > 0 ? (totMidTon / totActTon * 100) : 0;
+        const totLastPct = totActTon > 0 ? (totLastTon / totActTon * 100) : 0;
+
+        tfEstate.innerHTML = `
+            <tr style="background-color: #e2e8f0; font-weight: bold; text-align: center;">
+                <td colspan="2" style="text-align: left; padding-left: 10px;">TOTAL / RATA-RATA PABRIK</td>
+                <td style="background-color: #bae6fd;">${totPlanTon.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td style="background-color: #a7f3d0;">${totActTon.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td style="background-color: #99f6e4;">${totalPlanPct.toFixed(1)}%</td>
+                <td>${totTrips}</td>
+                <td style="background-color: #c7d2fe;">${avgPayload.toFixed(2)}</td>
+                <td>${totLfTon.toFixed(2)}</td>
+                <td>${totLfPct.toFixed(2)}%</td>
+                <td style="background-color: #bfdbfe;">${totPrimeTon.toFixed(2)}</td>
+                <td style="background-color: #bfdbfe;">${totPrimePct.toFixed(1)}%</td>
+                <td style="background-color: #bbf7d0;">${totMidTon.toFixed(2)}</td>
+                <td style="background-color: #bbf7d0;">${totMidPct.toFixed(1)}%</td>
+                <td style="background-color: #fde68a;">${totLastTon.toFixed(2)}</td>
+                <td style="background-color: #fde68a;">${totLastPct.toFixed(1)}%</td>
+                <td><span class="grading-badge grading-cell-good" style="font-size: 0.72rem; padding: 2px 6px;">Total Konsolidasi</span></td>
+            </tr>
+        `;
+    }
+
+    // 6. Render Table 2 (Interval 2 Jam)
+    const tbInterval = document.querySelector('#tsum-interval-table tbody');
+    const tfInterval = document.querySelector('#tsum-interval-table tfoot');
+    if (tbInterval) {
+        let html = '';
+        intervalStats.forEach(inv => {
+            html += `
+                <tr>
+                    <td style="font-weight: 600; text-align: left; padding-left: 10px;">${inv.label}</td>
+                    <td>${inv.planTon > 0 ? inv.planTon.toFixed(2) : '-'}</td>
+                    <td style="font-weight: bold; background-color: #ecfdf5;">${inv.actTon > 0 ? inv.actTon.toFixed(2) : '-'}</td>
+                    <td>${inv.trips > 0 ? inv.trips : '-'}</td>
+                    <td style="font-weight: 600;">${inv.actTon > 0 ? inv.proporsiPct.toFixed(1) + '%' : '0%'}</td>
+                    <td style="background-color: #f8fafc;">${inv.cumActTon > 0 ? inv.cumActTon.toFixed(2) + ' (' + inv.cumPct.toFixed(0) + '%)' : '-'}</td>
+                    <td><span class="grading-badge ${inv.trafficBadge}" style="font-size: 0.72rem; padding: 2px 6px;">${inv.trafficStatus}</span></td>
+                </tr>
+            `;
+        });
+        tbInterval.innerHTML = html;
+    }
+    if (tfInterval) {
+        tfInterval.innerHTML = `
+            <tr style="background-color: #e2e8f0; font-weight: bold;">
+                <td style="text-align: left; padding-left: 10px;">TOTAL</td>
+                <td>${totIntervalPlan.toFixed(2)}</td>
+                <td style="background-color: #a7f3d0;">${totIntervalAct.toFixed(2)}</td>
+                <td>${totIntervalTrips}</td>
+                <td>100%</td>
+                <td>${totActTon.toFixed(2)} (100%)</td>
+                <td>-</td>
+            </tr>
+        `;
+    }
+
+    // 7. Render Table 3 (EFB)
+    const tbEfb = document.querySelector('#tsum-efb-table tbody');
+    const tfEfb = document.querySelector('#tsum-efb-table tfoot');
+    if (tbEfb) {
+        let html = '';
+        efbStats.forEach(st => {
+            html += `
+                <tr>
+                    <td>${st.no}</td>
+                    <td style="text-align: left; font-weight: 600;">${st.estate}</td>
+                    <td>${st.target > 0 ? st.target.toFixed(2) : '-'}</td>
+                    <td style="font-weight: bold; background-color: #ecfdf5;">${st.actual > 0 ? st.actual.toFixed(2) : '-'}</td>
+                    <td style="font-weight: bold;">${st.actual > 0 ? st.pct.toFixed(1) + '%' : '-'}</td>
+                    <td>${st.trip > 0 ? st.trip : '-'}</td>
+                    <td>${st.tonPerTrip > 0 ? st.tonPerTrip.toFixed(2) : '-'}</td>
+                    <td><span class="grading-badge ${st.statusBadge}" style="font-size: 0.72rem; padding: 2px 6px;">${st.status}</span></td>
+                </tr>
+            `;
+        });
+        tbEfb.innerHTML = html || '<tr><td colspan="8" style="text-align:center; padding: 15px;">Tidak ada data evakuasi EFB.</td></tr>';
+    }
+    if (tfEfb) {
+        const totEfbPct = totEfbTarget > 0 ? (totEfbActual / totEfbTarget * 100) : (totEfbActual > 0 ? 100 : 0);
+        const totEfbTonPerTrip = totEfbTrip > 0 ? (totEfbActual / totEfbTrip) : 0;
+        tfEfb.innerHTML = `
+            <tr style="background-color: #e2e8f0; font-weight: bold;">
+                <td colspan="2" style="text-align: left; padding-left: 10px;">TOTAL EVAKUASI</td>
+                <td>${totEfbTarget.toFixed(2)}</td>
+                <td style="background-color: #a7f3d0;">${totEfbActual.toFixed(2)}</td>
+                <td>${totEfbPct.toFixed(1)}%</td>
+                <td>${totEfbTrip}</td>
+                <td>${totEfbTonPerTrip.toFixed(2)}</td>
+                <td><span class="grading-badge grading-cell-good" style="font-size: 0.72rem; padding: 2px 6px;">Konsolidasi</span></td>
+            </tr>
+        `;
+    }
+
+    // 8. Render Charts
+    window.renderTonaseSummaryCharts(estateStats, intervalStats);
+
+    // 9. Render Smart Diagnostic Insights
+    window.renderTonaseSummaryInsights(estateStats, intervalStats, efbStats, {
+        totActTon, totPlanTon, avgPayload, pPrimePct, pMidPct, pLastPct, sisaJjkPabrik, estProduksiEfb, totEfbActual
+    });
+};
+
+window.renderTonaseSummaryCharts = (estateStats, intervalStats) => {
+    // Chart 1: Stacked Bar Chart Distribusi Waktu per Estate
+    const ctxTimeDist = document.getElementById('chart-tsum-timedist');
+    if (ctxTimeDist) {
+        if (chartTsumTimeDistInstance) chartTsumTimeDistInstance.destroy();
+
+        const labels = estateStats.map(e => e.abbr);
+        const primeData = estateStats.map(e => e.primeTon);
+        const midData = estateStats.map(e => e.midTon);
+        const lastData = estateStats.map(e => e.lastTon);
+
+        chartTsumTimeDistInstance = new Chart(ctxTimeDist, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Prime Time (06:00 - 12:00)',
+                        data: primeData,
+                        backgroundColor: '#2563eb',
+                        stack: 'time'
+                    },
+                    {
+                        label: 'Middle Time (13:00 - 18:00)',
+                        data: midData,
+                        backgroundColor: '#16a34a',
+                        stack: 'time'
+                    },
+                    {
+                        label: 'Last Time (19:00 - 24:00)',
+                        data: lastData,
+                        backgroundColor: '#f59e0b',
+                        stack: 'time'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const val = context.raw || 0;
+                                return `${context.dataset.label}: ${val.toFixed(2)} Ton`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { stacked: true, grid: { display: false } },
+                    y: { stacked: true, title: { display: true, text: 'Tonase TBS (Ton)' }, beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // Chart 2: Interval 2-Jam Arus Masuk vs Kumulatif
+    const ctxInterval = document.getElementById('chart-tsum-interval');
+    if (ctxInterval) {
+        if (chartTsumIntervalInstance) chartTsumIntervalInstance.destroy();
+
+        const labels = intervalStats.map(i => i.label);
+        const actTonData = intervalStats.map(i => i.actTon);
+        const cumPctData = intervalStats.map(i => i.cumPct);
+
+        chartTsumIntervalInstance = new Chart(ctxInterval, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        type: 'bar',
+                        label: 'Realisasi Tonase (Ton)',
+                        data: actTonData,
+                        backgroundColor: '#0d9488',
+                        yAxisID: 'y',
+                        order: 2
+                    },
+                    {
+                        type: 'line',
+                        label: 'Kumulatif Kedatangan (%)',
+                        data: cumPctData,
+                        borderColor: '#ea580c',
+                        backgroundColor: '#ea580c',
+                        borderWidth: 2.5,
+                        pointRadius: 4,
+                        tension: 0.2,
+                        yAxisID: 'y1',
+                        order: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (context.dataset.type === 'line') {
+                                    return `Kumulatif: ${context.raw.toFixed(1)}%`;
+                                }
+                                return `Tonase: ${context.raw.toFixed(2)} Ton`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                    y: {
+                        type: 'linear',
+                        position: 'left',
+                        title: { display: true, text: 'Tonase Masuk (Ton)' },
+                        beginAtZero: true
+                    },
+                    y1: {
+                        type: 'linear',
+                        position: 'right',
+                        title: { display: true, text: 'Kumulatif (%)' },
+                        min: 0,
+                        max: 100,
+                        grid: { drawOnChartArea: false },
+                        ticks: { callback: v => v + '%' }
+                    }
+                }
+            }
+        });
+    }
+};
+
+window.renderTonaseSummaryInsights = (estateStats, intervalStats, efbStats, metrics) => {
+    const list = document.getElementById('tsum-insights-list');
+    if (!list) return;
+
+    const insights = [];
+
+    // 1. Target Plan Achievement
+    if (metrics.totActTon >= metrics.totPlanTon && metrics.totPlanTon > 0) {
+        insights.push(`<strong>Penerimaan TBS Optimal:</strong> Total realisasi TBS pabrik mencapai <strong>${metrics.totActTon.toFixed(2)} Ton</strong> (${((metrics.totActTon/metrics.totPlanTon)*100).toFixed(1)}% dari target plan). Suplai bahan baku pabrik memenuhi rencana olah.`);
+    } else if (metrics.totPlanTon > 0) {
+        const gap = metrics.totPlanTon - metrics.totActTon;
+        insights.push(`<strong>Under-Target Plan (${((metrics.totActTon/metrics.totPlanTon)*100).toFixed(1)}%):</strong> Realisasi TBS masih di bawah target dengan selisih <strong>${gap.toFixed(2)} Ton</strong>. Koordinasikan dengan estate pengirim untuk memastikan pemenuhan janjang panen.`);
+    }
+
+    // 2. Time Distribution & Last Time Congestion
+    const lateEstates = estateStats.filter(e => e.lastPct > 30 && e.actTon > 0);
+    if (lateEstates.length > 0) {
+        const names = lateEstates.map(e => `${e.estate} (${e.lastPct.toFixed(1)}%)`).join(', ');
+        insights.push(`<strong>Peringatan Penumpukan Last Time (>18:00 WIB):</strong> Estate ${names} mengirimkan lebih dari 30% TBS di malam hari. Hal ini berisiko menimbulkan antrian timbangan, beban lembur loading ramp, dan penurunan mutu buah (kenaikan asam lemak bebas / FFA). <em>Rekomendasi: Dorong percepatan muat di TPH sejak pagi hari (07:00-10:00).</em>`);
+    } else {
+        insights.push(`<strong>Ritme Kirim Teratur:</strong> Distribusi kedatangan TBS berjalan seimbang dengan dominasi pada Prime Time (06-12: <strong>${metrics.pPrimePct.toFixed(1)}%</strong>) dan Middle Time (13-18: <strong>${metrics.pMidPct.toFixed(1)}%</strong>), meminimalkan risiko bottleneck timbangan malam hari.`);
+    }
+
+    // 3. Payload & Truck Fleet Efficiency
+    const lowPayloadEstates = estateStats.filter(e => e.payload < 6.5 && e.tripCount > 0);
+    if (lowPayloadEstates.length > 0) {
+        const names = lowPayloadEstates.map(e => `${e.estate} (${e.payload.toFixed(2)} T/trip)`).join(', ');
+        insights.push(`<strong>Efisiensi Muatan Truk Perlu Ditingkatkan:</strong> Estate ${names} memiliki rata-rata muatan di bawah 6.50 Ton/trip. <em>Rekomendasi: Optimalisasi susunan muatan janjang di bak truk agar biaya solar dan kebutuhan armada per tonase TBS lebih efisien.</em>`);
+    } else if (metrics.avgPayload >= 7.5) {
+        insights.push(`<strong>Payload Armada Sangat Efisien:</strong> Rata-rata muatan truk mencapai <strong>${metrics.avgPayload.toFixed(2)} Ton / Trip</strong> (di atas standar optimal 7.50 Ton/Trip).`);
+    }
+
+    // 4. EFB Evacuation Balance
+    if (metrics.sisaJjkPabrik > 50) {
+        insights.push(`<strong>Perhatian Penumpukan Jangkos (EFB):</strong> Sisa stock jangkos di area pabrik mencapai <strong>${metrics.sisaJjkPabrik.toFixed(2)} Ton</strong>. <em>Rekomendasi: Segera prioritaskan truk kebun untuk membawa muatan balik jangkos (backload) saat kembali ke estate guna mencegah risiko panas/kebakaran di hopper jangkos.</em>`);
+    } else {
+        insights.push(`<strong>Evakuasi EFB Terkendali:</strong> Total evakuasi jangkos mencapai <strong>${metrics.totEfbActual.toFixed(2)} Ton</strong> dengan sisa stock pabrik yang rendah (<strong>${metrics.sisaJjkPabrik.toFixed(2)} Ton</strong>). Area hopper jangkos dalam kondisi bersih.`);
+    }
+
+    list.innerHTML = insights.map(i => `<li style="margin-bottom: 8px;">${i}</li>`).join('');
+};
+
+window.printTonaseSummary = () => {
+    window.print();
+};
+
+window.exportTonaseSummaryCSV = () => {
+    if (!window.cachedTonaseSummaryData) {
+        alert('Data belum dimuat.');
+        return;
+    }
+    const { mill, selectedDate, scope } = window.cachedTonaseSummaryData;
+    
+    let csv = `LAPORAN SUMMARY PENERIMAAN TBS & EVAKUASI EFB\n`;
+    csv += `Unit Pabrik: ${mill}\n`;
+    csv += `Tanggal: ${selectedDate} (Scope: ${scope.toUpperCase()})\n\n`;
+    
+    // Table 1
+    csv += `1. REKAPITULASI PENERIMAAN TBS PER ESTATE\n`;
+    csv += `No,Estate,Target Plan (Ton),Realisasi TBS (Ton),% Capaian,Trip,Payload (Ton/Trip),Loose Fruit (Ton),% LF,Prime 06-12 (Ton),% Prime,Mid 13-18 (Ton),% Mid,Last 19-24 (Ton),% Last,Status Evaluasi\n`;
+    
+    const rows = document.querySelectorAll('#tsum-estate-table tbody tr');
+    rows.forEach(tr => {
+        const cols = Array.from(tr.querySelectorAll('td')).map(td => `"${td.innerText.replace(/"/g, '""').trim()}"`);
+        if (cols.length > 0) csv += cols.join(',') + '\n';
+    });
+    
+    // Table 2
+    csv += `\n2. REKAPITULASI RITME INTERVAL 2 JAM\n`;
+    csv += `Interval Waktu,Plan (Ton),Realisasi (Ton),Trip,Proporsi (%),Kumulatif (Ton),Status Kepadatan\n`;
+    const rows2 = document.querySelectorAll('#tsum-interval-table tbody tr');
+    rows2.forEach(tr => {
+        const cols = Array.from(tr.querySelectorAll('td')).map(td => `"${td.innerText.replace(/"/g, '""').trim()}"`);
+        if (cols.length > 0) csv += cols.join(',') + '\n';
+    });
+
+    // Table 3
+    csv += `\n3. NERACA EVAKUASI EFB (JANGKOS)\n`;
+    csv += `No,Estate,Target (Ton),Realisasi (Ton),% Capaian,Trip,Ton/Trip,Status\n`;
+    const rows3 = document.querySelectorAll('#tsum-efb-table tbody tr');
+    rows3.forEach(tr => {
+        const cols = Array.from(tr.querySelectorAll('td')).map(td => `"${td.innerText.replace(/"/g, '""').trim()}"`);
+        if (cols.length > 0) csv += cols.join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `Summary_Penerimaan_TBS_${mill}_${selectedDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 };
