@@ -263,22 +263,28 @@ window.renderProcessingView = function() {
 };
 
 window.openLiquidModal = function() {
-    const mainDate = document.getElementById('p-date').value;
-    document.getElementById('ml-date').value = mainDate;
-    document.getElementById('modal-input-liquid').style.display = 'flex';
-    window.loadLiquidHour();
+    const pDate = document.getElementById('p-date');
+    const mainDate = (pDate && pDate.value) ? pDate.value : window.getLocalDate();
+    const mlDate = document.getElementById('ml-date');
+    if (mlDate) mlDate.value = mainDate;
+    const modal = document.getElementById('modal-input-liquid');
+    if (modal) modal.style.display = 'flex';
+    try { if (typeof window.loadLiquidHour === 'function') window.loadLiquidHour(); } catch(e){ console.error(e); }
 };
 
 window.openFfaModal = function() {
-    const mainDate = document.getElementById('p-date').value;
-    document.getElementById('mf-date').value = mainDate;
-    document.getElementById('modal-input-ffa').style.display = 'flex';
-    window.loadFfaHour();
+    const pDate = document.getElementById('p-date');
+    const mainDate = (pDate && pDate.value) ? pDate.value : window.getLocalDate();
+    const mfDate = document.getElementById('mf-date');
+    if (mfDate) mfDate.value = mainDate;
+    const modal = document.getElementById('modal-input-ffa');
+    if (modal) modal.style.display = 'flex';
+    try { if (typeof window.loadFfaHour === 'function') window.loadFfaHour(); } catch(e){ console.error(e); }
 };
 
 window.openProcessingHistorical = function() {
-    document.getElementById('modal-processing-hist').style.display = 'flex';
-    // Historical already populated by loadProcessingData
+    const modal = document.getElementById('modal-processing-hist');
+    if (modal) modal.style.display = 'flex';
 };
 
 window.currentLiquidData = [];
@@ -1747,12 +1753,16 @@ window.switchFFBSubTab = function(tabId) {
     const activeContent = document.getElementById(`ffb-subsheet-${tabId}`);
     if (activeContent) activeContent.classList.add('active');
     
-    if (tabId === 'loose') {
-        if (!window.ffbQualityData || window.ffbQualityData.length === 0) window.loadFFBQuality();
-    } else if (tabId === 'crop') {
-        if (!window.ffbCropQualityData || window.ffbCropQualityData.length === 0) window.loadFFBCropQuality();
-    } else if (tabId === 'monthly') {
-        window.loadFFBMonthlySummary();
+    try {
+        if (tabId === 'loose') {
+            if (typeof window.loadFFBQuality === 'function') window.loadFFBQuality();
+        } else if (tabId === 'crop') {
+            if (typeof window.loadFFBCropQuality === 'function') window.loadFFBCropQuality();
+        } else if (tabId === 'monthly') {
+            if (typeof window.loadFFBMonthlySummary === 'function') window.loadFFBMonthlySummary();
+        }
+    } catch(e) {
+        console.error('Error switching FFB subtab:', e);
     }
 };
 
@@ -1926,26 +1936,26 @@ window.onFFBModalEstateChange = async function(estate) {
 };
 
 window.openFFBModal = function() {
-    document.getElementById('fq-modal-date').value = window.getLocalDate();
+    const dateEl = document.getElementById('fq-modal-date');
+    if (dateEl) dateEl.value = window.getLocalDate();
     
     let estatesOpts = typeof masterData !== 'undefined' && masterData.supply_chain 
         ? masterData.supply_chain.filter(s => s.is_ffb !== false).map(s => `<option value="${s.estate}">${s.estate}</option>`).join('')
-        : '<option value="">Kosong / Belum Load</option>';
-    document.getElementById('fq-modal-estate').innerHTML = estatesOpts;
+        : '<option value="Bunga Tanjung Estate">Bunga Tanjung Estate</option>';
+    if (!estatesOpts) estatesOpts = '<option value="Bunga Tanjung Estate">Bunga Tanjung Estate</option>';
     
-    document.getElementById('fq-modal-divisi-container').innerHTML = `<input type="text" id="fq-modal-divisi" class="form-control" placeholder="(Optional)">`;
-    const currentEst = document.getElementById('fq-modal-estate').value;
-    if (currentEst) {
-        window.onFFBModalEstateChange(currentEst);
+    const estEl = document.getElementById('fq-modal-estate');
+    if (estEl) estEl.innerHTML = estatesOpts;
+    
+    const divCont = document.getElementById('fq-modal-divisi-container');
+    if (divCont) divCont.innerHTML = `<input type="text" id="fq-modal-divisi" class="form-control" placeholder="(Optional)">`;
+    
+    const modal = document.getElementById('modal-ffb-quality');
+    if (modal) modal.style.display = 'flex';
+    
+    if (estEl && estEl.value) {
+        try { window.onFFBModalEstateChange(estEl.value); } catch(e){ console.error(e); }
     }
-    document.getElementById('fq-modal-truck').value = '';
-    document.getElementById('fq-modal-bg').value = '';
-    document.getElementById('fq-modal-bd').value = '';
-    document.getElementById('fq-modal-tsegar').value = '';
-    document.getElementById('fq-modal-busuk').value = '';
-    document.getElementById('fq-modal-sampah').value = '';
-    
-    document.getElementById('modal-ffb-quality').style.display = 'flex';
 };
 
 window.calculateFFBModal = function() {

@@ -2687,8 +2687,7 @@ Object.assign(views, {
                 </div>
             </div>
         </div>
-    `
-,
+    `,
     processing: `
 <div class="content-header">
     <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
