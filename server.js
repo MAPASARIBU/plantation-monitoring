@@ -168,6 +168,15 @@ async function initDB() {
         await ensureCol('harvesting_daily', 'ritase_list', "TEXT DEFAULT '[]'");
         try { await pool.query("ALTER TABLE harvesting_daily ALTER COLUMN akp TYPE TEXT USING akp::TEXT"); } catch(e) {}
 
+        // Fix null IDs for SQLite compatibility
+        try {
+            await pool.query("UPDATE harvesting_daily SET id = rowid WHERE id IS NULL");
+            await pool.query("UPDATE harvesting_monthly SET id = rowid WHERE id IS NULL");
+            await pool.query("UPDATE vehicles SET id = rowid WHERE id IS NULL");
+            await pool.query("UPDATE upkeep SET id = rowid WHERE id IS NULL");
+            await pool.query("UPDATE pemupukan SET id = rowid WHERE id IS NULL");
+        } catch(e) {}
+
 
         await pool.query(`CREATE TABLE IF NOT EXISTS master_divisi (id SERIAL PRIMARY KEY, estate TEXT, name TEXT)`);
         // Added divisi column because it's used in bulk insert checking
@@ -1008,15 +1017,26 @@ app.delete('/api/harvesting/daily/:id', async (req, res) => {
 
 app.put('/api/harvesting/daily/:id/realization', async (req, res) => {
     try {
-        const { realized_janjang, realized_pemanen, realized_kg, realized_ha, status, ritase_list } = req.body;
-        const targetId = parseInt(req.params.id) || req.params.id;
+        const { realized_janjang, realized_pemanen, realized_kg, realized_ha, status, ritase_list, date, block } = req.body;
+        let targetId = parseInt(req.params.id);
         
-        // Fetch current row so we never overwrite existing realization values with 0 if omitted
-        const curRes = await pool.query('SELECT * FROM harvesting_daily WHERE id = $1', [targetId]);
-        if (curRes.rows.length === 0) {
+        let curRes;
+        if (!isNaN(targetId) && targetId > 0) {
+            curRes = await pool.query('SELECT rowid, * FROM harvesting_daily WHERE id = $1', [targetId]);
+        }
+        
+        // Fallback: match by date and block if ID is missing or null
+        if (!curRes || curRes.rows.length === 0) {
+            if (date && block) {
+                curRes = await pool.query('SELECT rowid, * FROM harvesting_daily WHERE date = $1 AND block = $2', [date, block]);
+            }
+        }
+        
+        if (!curRes || curRes.rows.length === 0) {
             return res.status(404).json({ error: 'Harvesting daily row not found' });
         }
         const cur = curRes.rows[0];
+        const actualId = cur.id || cur.rowid;
 
         const newJanjang = realized_janjang !== undefined ? parseFloat(realized_janjang) || 0 : (parseFloat(cur.realized_janjang) || 0);
         const newPemanen = realized_pemanen !== undefined ? parseInt(realized_pemanen) || 0 : (parseInt(cur.realized_pemanen) || 0);
@@ -1026,32 +1046,31 @@ app.put('/api/harvesting/daily/:id/realization', async (req, res) => {
         const newRitase = ritase_list !== undefined ? ritase_list : (cur.ritase_list || '[]');
 
         try {
-            await pool.query(
-                'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, realized_ha = $4, status = $5, ritase_list = $6 WHERE id = $7',
-                [
-                    newJanjang,
-                    newPemanen,
-                    newKg,
-                    newHa,
-                    newStatus,
-                    newRitase,
-                    targetId
-                ]
-            );
+            if (actualId) {
+                await pool.query(
+                    'UPDATE harvesting_daily SET id = COALESCE(id, $1), realized_janjang = $2, realized_pemanen = $3, realized_kg = $4, realized_ha = $5, status = $6, ritase_list = $7 WHERE (id = $8 OR rowid = $8)',
+                    [actualId, newJanjang, newPemanen, newKg, newHa, newStatus, newRitase, actualId]
+                );
+            } else {
+                await pool.query(
+                    'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, realized_ha = $4, status = $5, ritase_list = $6 WHERE date = $7 AND block = $8',
+                    [newJanjang, newPemanen, newKg, newHa, newStatus, newRitase, cur.date, cur.block]
+                );
+            }
         } catch (upErr) {
-            console.warn('Full update query failed, ensuring columns and retrying basic update:', upErr.message);
+            console.warn('Full update failed, fallback to basic update:', upErr.message);
             try { await pool.query('ALTER TABLE harvesting_daily ADD COLUMN realized_ha REAL DEFAULT 0'); } catch(e){}
             try { await pool.query("ALTER TABLE harvesting_daily ADD COLUMN ritase_list TEXT DEFAULT '[]'"); } catch(e){}
-            try {
+            
+            if (actualId) {
                 await pool.query(
-                    'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, realized_ha = $4, status = $5, ritase_list = $6 WHERE id = $7',
-                    [newJanjang, newPemanen, newKg, newHa, newStatus, newRitase, targetId]
+                    'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, status = $4 WHERE (id = $5 OR rowid = $5)',
+                    [newJanjang, newPemanen, newKg, newStatus, actualId]
                 );
-            } catch (fallbackErr) {
-                // Last-resort fallback to standard columns
+            } else {
                 await pool.query(
-                    'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, status = $4 WHERE id = $5',
-                    [newJanjang, newPemanen, newKg, newStatus, targetId]
+                    'UPDATE harvesting_daily SET realized_janjang = $1, realized_pemanen = $2, realized_kg = $3, status = $4 WHERE date = $5 AND block = $6',
+                    [newJanjang, newPemanen, newKg, newStatus, cur.date, cur.block]
                 );
             }
         }

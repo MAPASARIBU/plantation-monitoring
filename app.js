@@ -6202,7 +6202,9 @@ window.submitHarvestingRealization = async (id) => {
                 realized_kg: totalKg, 
                 realized_ha: totalHa,
                 status: status,
-                ritase_list: JSON.stringify(ritaseList)
+                ritase_list: JSON.stringify(ritaseList),
+                date: h.date,
+                block: h.block
             })
         });
         
