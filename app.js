@@ -12553,3 +12553,836 @@ window.exportHarvestingAnalyticsCSV = () => {
     link.click();
     document.body.removeChild(link);
 };
+
+
+// =========================================================================
+// --- UNIVERSAL HIGH-RESOLUTION PRINT ENGINE & FULL REPORT GENERATOR ---
+// =========================================================================
+
+window.generateReportPrintHtml = ({
+    reportTitle,
+    moduleName,
+    unitName,
+    dateStr,
+    scopeStr,
+    kpis = [],
+    sections = [],
+    chartCanvasIds = [],
+    insightsListId = null
+}) => {
+    const printTime = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' });
+    const userName = (currentUser && currentUser.name) ? `${currentUser.name} (${currentUser.role || 'Staff'})` : 'Administrator';
+
+    // 1. Convert Canvas Charts to Images
+    const chartImages = [];
+    chartCanvasIds.forEach(item => {
+        const canvas = document.getElementById(item.id);
+        if (canvas) {
+            try {
+                const imgData = canvas.toDataURL('image/png');
+                chartImages.push({ title: item.title, sub: item.sub || '', imgSrc: imgData });
+            } catch(e) {
+                console.warn('Canvas export warning:', e);
+            }
+        }
+    });
+
+    // 2. Extract Insights
+    let insightsHtml = '';
+    if (insightsListId) {
+        const listEl = document.getElementById(insightsListId);
+        if (listEl && listEl.innerHTML.trim()) {
+            insightsHtml = `
+                <div class="print-insight-box">
+                    <h4><span style="font-size: 14pt;">💡</span> Rekomendasi & Analisa Operasional (Smart Diagnostic Insights)</h4>
+                    <ul>${listEl.innerHTML}</ul>
+                </div>
+            `;
+        }
+    }
+
+    // 3. Build KPI HTML
+    let kpiHtml = '';
+    if (kpis.length > 0) {
+        kpiHtml = `
+            <div class="print-kpi-grid">
+                ${kpis.map(k => `
+                    <div class="print-kpi-card">
+                        <div class="print-kpi-title">${k.title}</div>
+                        <div class="print-kpi-val" style="color: ${k.color || '#0f172a'};">${k.val}</div>
+                        <div class="print-kpi-sub">${k.sub || ''}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // 4. Build Sections & Tables HTML
+    let sectionsHtml = '';
+    sections.forEach(sec => {
+        let tableContent = '';
+        if (sec.tableId) {
+            const tbl = document.getElementById(sec.tableId);
+            if (tbl) {
+                tableContent = `<table class="print-table">${tbl.innerHTML}</table>`;
+            }
+        } else if (sec.customHtml) {
+            tableContent = sec.customHtml;
+        }
+
+        sectionsHtml += `
+            <div class="print-section">
+                <div class="print-section-header">
+                    <h3>${sec.title}</h3>
+                    ${sec.sub ? `<span>${sec.sub}</span>` : ''}
+                </div>
+                ${tableContent}
+            </div>
+        `;
+    });
+
+    // 5. Build Charts Grid HTML
+    let chartsHtml = '';
+    if (chartImages.length > 0) {
+        chartsHtml = `
+            <div class="print-charts-grid">
+                ${chartImages.map(c => `
+                    <div class="print-chart-box">
+                        <h4>${c.title}</h4>
+                        ${c.sub ? `<span>${c.sub}</span>` : ''}
+                        <div class="print-chart-img-wrap">
+                            <img src="${c.imgSrc}" alt="${c.title}">
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // 6. Signatures Block
+    const signatureHtml = `
+        <div class="print-signatures">
+            <div class="sig-box">
+                <div class="sig-role">Dibuat Oleh:</div>
+                <div class="sig-space"></div>
+                <div class="sig-name">( ${userName} )</div>
+                <div class="sig-title">Krani / Mandor Operasional</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-role">Diperiksa Oleh:</div>
+                <div class="sig-space"></div>
+                <div class="sig-name">( ........................................ )</div>
+                <div class="sig-title">Asisten / Asisten Kepala (Askep)</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-role">Disetujui Oleh:</div>
+                <div class="sig-space"></div>
+                <div class="sig-name">( ........................................ )</div>
+                <div class="sig-title">Estate Manager / Mill Manager</div>
+            </div>
+        </div>
+    `;
+
+    return `
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>${reportTitle} - ${unitName}</title>
+    <style>
+        @page {
+            size: landscape;
+            margin: 8mm 10mm 10mm 10mm;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #0f172a;
+            background: #ffffff;
+            font-size: 8.5pt;
+            line-height: 1.35;
+        }
+        .print-header-banner {
+            border-bottom: 2.5px solid #0f172a;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .print-brand {
+            font-size: 13pt;
+            font-weight: 800;
+            color: #0d8b4e;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .print-report-title {
+            font-size: 13pt;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 3px 0 2px 0;
+            text-transform: uppercase;
+        }
+        .print-meta-info {
+            font-size: 8pt;
+            color: #475569;
+        }
+        .print-meta-right {
+            text-align: right;
+            font-size: 7.5pt;
+            color: #64748b;
+            line-height: 1.4;
+        }
+        
+        /* KPI Cards */
+        .print-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .print-kpi-card {
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            border-radius: 6px;
+            padding: 8px 10px;
+            text-align: center;
+        }
+        .print-kpi-title {
+            font-size: 7.5pt;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+        }
+        .print-kpi-val {
+            font-size: 12pt;
+            font-weight: 800;
+            margin: 2px 0;
+        }
+        .print-kpi-sub {
+            font-size: 7pt;
+            color: #64748b;
+        }
+
+        /* Sections & Tables */
+        .print-section {
+            margin-bottom: 14px;
+            page-break-inside: auto;
+        }
+        .print-section-header {
+            margin-bottom: 6px;
+        }
+        .print-section-header h3 {
+            margin: 0;
+            font-size: 9.5pt;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .print-section-header span {
+            font-size: 7.5pt;
+            color: #64748b;
+        }
+        .print-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 7.5pt;
+            margin-bottom: 4px;
+        }
+        .print-table th, .print-table td {
+            border: 1px solid #94a3b8;
+            padding: 4px 6px;
+            text-align: center;
+        }
+        .print-table thead tr {
+            background-color: #1e293b !important;
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+        .print-table thead tr th {
+            color: #ffffff !important;
+            background-color: #1e293b !important;
+        }
+        .print-table tfoot tr {
+            background-color: #e2e8f0 !important;
+            font-weight: 700;
+        }
+        .print-table tbody tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        /* Grading Badges */
+        .grading-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 6.8pt;
+            font-weight: 700;
+        }
+        .grading-cell-good, .grading-badge.good { background-color: #dcfce7 !important; color: #15803d !important; }
+        .grading-cell-warn, .grading-badge.warn { background-color: #fef9c3 !important; color: #a16207 !important; }
+        .grading-cell-danger, .grading-badge.danger { background-color: #fee2e2 !important; color: #b91c1c !important; }
+        .grading-cell-neutral, .grading-badge.neutral { background-color: #f1f5f9 !important; color: #475569 !important; }
+
+        /* Charts */
+        .print-charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 14px;
+            page-break-inside: avoid;
+        }
+        .print-chart-box {
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 8px;
+            background: #ffffff;
+            page-break-inside: avoid;
+        }
+        .print-chart-box h4 {
+            margin: 0 0 2px 0;
+            font-size: 8.5pt;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .print-chart-box span {
+            font-size: 7pt;
+            color: #64748b;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .print-chart-img-wrap {
+            text-align: center;
+            height: 200px;
+        }
+        .print-chart-img-wrap img {
+            max-width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+        }
+
+        /* Insights Box */
+        .print-insight-box {
+            border: 1.5px solid #16a34a;
+            border-radius: 6px;
+            padding: 10px 14px;
+            background-color: #f0fdf4 !important;
+            margin-bottom: 16px;
+            page-break-inside: avoid;
+        }
+        .print-insight-box h4 {
+            margin: 0 0 6px 0;
+            font-size: 9pt;
+            font-weight: 700;
+            color: #166534;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .print-insight-box ul {
+            margin: 0;
+            padding-left: 18px;
+        }
+        .print-insight-box li {
+            font-size: 7.8pt;
+            color: #1f2937;
+            margin-bottom: 4px;
+            line-height: 1.35;
+        }
+
+        /* Signatures */
+        .print-signatures {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 15px;
+            padding-top: 10px;
+            page-break-inside: avoid;
+        }
+        .sig-box {
+            text-align: center;
+            font-size: 8pt;
+        }
+        .sig-role {
+            font-weight: 600;
+            margin-bottom: 45px;
+        }
+        .sig-space {
+            height: 1px;
+        }
+        .sig-name {
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .sig-title {
+            font-size: 7pt;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body onload="setTimeout(function(){ window.print(); }, 400);">
+    <div class="print-header-banner">
+        <div>
+            <div class="print-brand">🌿 AgriMonitor - Plantation & Mill Enterprise Portal</div>
+            <div class="print-report-title">${reportTitle}</div>
+            <div class="print-meta-info">
+                <strong>Unit:</strong> ${unitName} &nbsp;|&nbsp; 
+                <strong>Periode:</strong> ${dateStr} &nbsp;|&nbsp; 
+                <strong>Scope:</strong> ${scopeStr}
+            </div>
+        </div>
+        <div class="print-meta-right">
+            <div><strong>Waktu Cetak:</strong> ${printTime}</div>
+            <div><strong>Dicetak Oleh:</strong> ${userName}</div>
+            <div><strong>Modul:</strong> ${moduleName}</div>
+        </div>
+    </div>
+
+    ${kpiHtml}
+    ${sectionsHtml}
+    ${chartsHtml}
+    ${insightsHtml}
+    ${signatureHtml}
+</body>
+</html>
+    `;
+};
+
+// 1. PRINT: TONASE MONITORING (Summary Penerimaan TBS)
+window.printTonaseSummary = () => {
+    if (!window.cachedTonaseSummaryData) {
+        alert('Data summary tonase belum dimuat.');
+        return;
+    }
+    const { mill, selectedDate, scope } = window.cachedTonaseSummaryData;
+
+    const kpis = [
+        {
+            title: 'Total Realisasi TBS',
+            val: document.getElementById('tsum-kpi-total-tbs')?.innerText || '0.00 Ton',
+            sub: document.getElementById('tsum-kpi-total-plan')?.innerText || '',
+            color: '#059669'
+        },
+        {
+            title: 'Efisiensi Armada (Payload)',
+            val: document.getElementById('tsum-kpi-payload')?.innerText || '0.00 Ton/Trip',
+            sub: document.getElementById('tsum-kpi-trips')?.innerText || '',
+            color: '#0284c7'
+        },
+        {
+            title: 'Distribusi Waktu Kedatangan',
+            val: document.getElementById('tsum-kpi-timedist')?.innerText || '0% / 0% / 0%',
+            sub: document.getElementById('tsum-kpi-timedist-sub')?.innerText || '',
+            color: '#d97706'
+        },
+        {
+            title: 'Kinerja Evakuasi EFB (Jangkos)',
+            val: document.getElementById('tsum-kpi-efb')?.innerText || '0.00 Ton',
+            sub: document.getElementById('tsum-kpi-efb-sub')?.innerText || '',
+            color: '#16a34a'
+        }
+    ];
+
+    const sections = [
+        {
+            title: '1. Rekapitulasi Penerimaan TBS & Distribusi Waktu Kedatangan per Estate',
+            sub: 'Rincian target plan, realisasi penerimaan, efisiensi muatan truk, loose fruit, dan sebaran waktu kirim (Prime: 06-12, Middle: 13-18, Last: 19-24).',
+            tableId: 'tsum-estate-table'
+        },
+        {
+            title: '2. Monitoring Ritme Kedatangan TBS per Interval 2 Jam',
+            sub: 'Analisis kepadatan arus masuk loading ramp & timbangan per blok 2 jam.',
+            tableId: 'tsum-interval-table'
+        },
+        {
+            title: '3. Neraca & Monitoring Evakuasi EFB (Jangkos)',
+            sub: 'Realisasi pengangkutan jangkos vs estimasi produksi pabrik per estate.',
+            tableId: 'tsum-efb-table'
+        }
+    ];
+
+    const chartCanvasIds = [
+        { id: 'chart-tsum-timedist', title: 'Grafik Distribusi Waktu Kirim TBS per Estate', sub: 'Proporsi kedatangan Prime (06-12), Middle (13-18), dan Last Time (19-24).' },
+        { id: 'chart-tsum-interval', title: 'Grafik Arus Kedatangan TBS Interval 2 Jam', sub: 'Pola tonase masuk per 2 jam vs kurva kumulatif penerimaan harian.' }
+    ];
+
+    const html = window.generateReportPrintHtml({
+        reportTitle: 'LAPORAN SUMMARY PENERIMAAN TBS & ANALISA OPERASIONAL',
+        moduleName: 'Tonase / Jam Monitoring',
+        unitName: mill,
+        dateStr: selectedDate,
+        scopeStr: scope.toUpperCase(),
+        kpis,
+        sections,
+        chartCanvasIds,
+        insightsListId: 'tsum-insights-list'
+    });
+
+    const printWin = window.open('', '_blank');
+    if (printWin) {
+        printWin.document.write(html);
+        printWin.document.close();
+    }
+};
+
+// 2. PRINT: VEHICLE MOTION (Analisa & Efisiensi Armada)
+window.printVehicleAnalytics = () => {
+    if (!window.cachedVehicleAnalyticsData) {
+        alert('Data analisa kendaraan belum dimuat.');
+        return;
+    }
+    const { selectedDate, scope } = window.cachedVehicleAnalyticsData;
+    const unitName = (currentUser && currentUser.estate) ? currentUser.estate : 'Semua Estate';
+
+    const kpis = [
+        {
+            title: 'Total Ritase & Armada',
+            val: document.getElementById('vanal-kpi-trips')?.innerText || '0 Trip',
+            sub: document.getElementById('vanal-kpi-trucks')?.innerText || '',
+            color: '#0284c7'
+        },
+        {
+            title: 'Total Janjang Terangkut',
+            val: document.getElementById('vanal-kpi-janjang')?.innerText || '0 JJG',
+            sub: document.getElementById('vanal-kpi-avg-jjg')?.innerText || '',
+            color: '#059669'
+        },
+        {
+            title: 'Rata-rata Lead Time ke PKS',
+            val: document.getElementById('vanal-kpi-duration')?.innerText || '0 Menit',
+            sub: document.getElementById('vanal-kpi-fastest-slowest')?.innerText || '',
+            color: '#d97706'
+        },
+        {
+            title: 'Estimasi Tonase Angkut',
+            val: document.getElementById('vanal-kpi-tonase')?.innerText || '0.00 Ton',
+            sub: document.getElementById('vanal-kpi-turnaround')?.innerText || '',
+            color: '#16a34a'
+        }
+    ];
+
+    const sections = [
+        {
+            title: '1. Rekapitulasi Kinerja & Efisiensi Armada (Fleet Performance)',
+            sub: 'Analisis produktivitas janjang, ritase, dan durasi pengiriman per kendaraan.',
+            tableId: 'vanal-truck-table'
+        },
+        {
+            title: '2. Analisis Lead Time per Divisi & Blok',
+            sub: 'Evaluasi kelancaran jalur logistik pengangkutan TBS dari blok ke pabrik.',
+            tableId: 'vanal-block-table'
+        }
+    ];
+
+    const chartCanvasIds = [
+        { id: 'chart-vanal-productivity', title: 'Produktivitas Janjang per Kendaraan', sub: 'Perbandingan total janjang yang berhasil diangkut oleh masing-masing truk.' },
+        { id: 'chart-vanal-timeline', title: 'Sebaran Waktu Tiba di PKS & Durasi Perjalanan', sub: 'Pola jam kedatangan armada di pos security / timbangan PKS.' }
+    ];
+
+    const html = window.generateReportPrintHtml({
+        reportTitle: 'LAPORAN ANALISA KINERJA & EFISIENSI ARMADA TRUK (VEHICLE MOTION)',
+        moduleName: 'Vehicle Motion Monitoring',
+        unitName,
+        dateStr: selectedDate,
+        scopeStr: scope.toUpperCase(),
+        kpis,
+        sections,
+        chartCanvasIds,
+        insightsListId: 'vanal-insights-list'
+    });
+
+    const printWin = window.open('', '_blank');
+    if (printWin) {
+        printWin.document.write(html);
+        printWin.document.close();
+    }
+};
+
+// 3. PRINT: UPKEEP (Analisa Produktivitas & Kinerja Upkeep)
+window.printUpkeepAnalytics = () => {
+    if (!window.cachedUpkeepAnalyticsData) {
+        alert('Data analisa upkeep belum dimuat.');
+        return;
+    }
+    const { selectedDate, scope } = window.cachedUpkeepAnalyticsData;
+    const unitName = (currentUser && currentUser.estate) ? currentUser.estate : 'Semua Estate';
+
+    const kpis = [
+        {
+            title: 'Total Luas Rawat (Ha)',
+            val: document.getElementById('uanal-kpi-area')?.innerText || '0.00 Ha',
+            sub: document.getElementById('uanal-kpi-area-sub')?.innerText || '',
+            color: '#059669'
+        },
+        {
+            title: 'Tenaga Kerja Terpakai',
+            val: document.getElementById('uanal-kpi-hk')?.innerText || '0 HK',
+            sub: document.getElementById('uanal-kpi-hk-sub')?.innerText || '',
+            color: '#0284c7'
+        },
+        {
+            title: 'Rata-rata Prestasi Upkeep',
+            val: document.getElementById('uanal-kpi-prestasi')?.innerText || '0.00 Ha/HK',
+            sub: document.getElementById('uanal-kpi-prestasi-sub')?.innerText || '',
+            color: '#d97706'
+        },
+        {
+            title: 'Pekerjaan Paling Dominan',
+            val: document.getElementById('uanal-kpi-dominant')?.innerText || '-',
+            sub: document.getElementById('uanal-kpi-dominant-sub')?.innerText || '',
+            color: '#16a34a'
+        }
+    ];
+
+    const sections = [
+        {
+            title: '1. Rekapitulasi Capaian & Prestasi per Jenis Pekerjaan Rawat Kebun',
+            sub: 'Komparasi target vs realisasi luas, penggunaan tenaga kerja HK, dan efisiensi prestasi kerja.',
+            tableId: 'uanal-type-table'
+        },
+        {
+            title: '2. Evaluasi Produktivitas Mandor & Blok',
+            sub: 'Rincian prestasi pemenuhan target mandor di masing-masing blok divisi.',
+            tableId: 'uanal-block-table'
+        }
+    ];
+
+    const chartCanvasIds = [
+        { id: 'chart-uanal-type', title: 'Capaian Luas Rawat (Ha) per Aktivitas', sub: 'Perbandingan target vs realisasi luas area yang telah diselesaikan.' },
+        { id: 'chart-uanal-prestasi', title: 'Produktivitas Kerja Realisasi vs Standar Norma (Ha/HK)', sub: 'Analisis efisiensi output per orang pekerja.' }
+    ];
+
+    const html = window.generateReportPrintHtml({
+        reportTitle: 'LAPORAN ANALISA PRODUKTIVITAS & KINERJA RAWAT KEBUN (UPKEEP)',
+        moduleName: 'Upkeep Monitoring',
+        unitName,
+        dateStr: selectedDate,
+        scopeStr: scope.toUpperCase(),
+        kpis,
+        sections,
+        chartCanvasIds,
+        insightsListId: 'uanal-insights-list'
+    });
+
+    const printWin = window.open('', '_blank');
+    if (printWin) {
+        printWin.document.write(html);
+        printWin.document.close();
+    }
+};
+
+// 4. PRINT: PEMUPUKAN (Analisa Kinerja & Dosis Pemupukan)
+window.printPemupukanAnalytics = () => {
+    if (!window.cachedPemupukanAnalyticsData) {
+        alert('Data analisa pemupukan belum dimuat.');
+        return;
+    }
+    const { selectedDate, scope } = window.cachedPemupukanAnalyticsData;
+    const unitName = (currentUser && currentUser.estate) ? currentUser.estate : 'Semua Estate';
+
+    const kpis = [
+        {
+            title: 'Total Area Terpukul (Ha)',
+            val: document.getElementById('panal-kpi-area')?.innerText || '0.00 Ha',
+            sub: document.getElementById('panal-kpi-area-sub')?.innerText || '',
+            color: '#059669'
+        },
+        {
+            title: 'Pupuk Diaplikasikan (Kg)',
+            val: document.getElementById('panal-kpi-pupuk')?.innerText || '0 Kg',
+            sub: document.getElementById('panal-kpi-pupuk-sub')?.innerText || '',
+            color: '#0284c7'
+        },
+        {
+            title: 'Rata-rata Prestasi Kerja',
+            val: document.getElementById('panal-kpi-prestasi')?.innerText || '0.00 Ha/HK',
+            sub: document.getElementById('panal-kpi-prestasi-sub')?.innerText || '',
+            color: '#d97706'
+        },
+        {
+            title: 'Sisa Defisit Belum Selesai',
+            val: document.getElementById('panal-kpi-sisa')?.innerText || '0.00 Ha',
+            sub: document.getElementById('panal-kpi-sisa-sub')?.innerText || '',
+            color: '#ef4444'
+        }
+    ];
+
+    const sections = [
+        {
+            title: '1. Rekapitulasi Capaian & Akurasi Dosis Pemupukan per Jenis Pupuk',
+            sub: 'Evaluasi pemenuhan target luas area, pemakaian kilogram pupuk, dan deviasi dosis rekomendasi.',
+            tableId: 'panal-pupuk-table'
+        },
+        {
+            title: '2. Evaluasi Produktivitas Tenaga Kerja per Blok',
+            sub: 'Analisis output harian tenaga kerja pemupukan dan efisiensi mandor di lapangan.',
+            tableId: 'panal-block-table'
+        }
+    ];
+
+    const chartCanvasIds = [
+        { id: 'chart-panal-area', title: 'Luas Area Target vs Realisasi (Ha)', sub: 'Capaian hektar per jenis pupuk yang telah diaplikasikan di lapangan.' },
+        { id: 'chart-panal-dose', title: 'Pemakaian Pupuk Target vs Realisasi (Kg)', sub: 'Akurasi penyerapan kilogram pupuk sesuai rekomendasi dosis agronomi.' }
+    ];
+
+    const html = window.generateReportPrintHtml({
+        reportTitle: 'LAPORAN ANALISA KINERJA & AKURASI DOSIS PEMUPUKAN',
+        moduleName: 'Pemupukan Monitoring',
+        unitName,
+        dateStr: selectedDate,
+        scopeStr: scope.toUpperCase(),
+        kpis,
+        sections,
+        chartCanvasIds,
+        insightsListId: 'panal-insights-list'
+    });
+
+    const printWin = window.open('', '_blank');
+    if (printWin) {
+        printWin.document.write(html);
+        printWin.document.close();
+    }
+};
+
+// 5. PRINT: HARVESTING (Analisa Kinerja Panen & Produktivitas)
+window.printHarvestingAnalytics = () => {
+    if (!window.cachedHarvestingAnalyticsData) {
+        alert('Data analisa panen belum dimuat.');
+        return;
+    }
+    const { selectedDate, scope } = window.cachedHarvestingAnalyticsData;
+    const unitName = (currentUser && currentUser.estate) ? currentUser.estate : 'Semua Estate';
+
+    const kpis = [
+        {
+            title: 'Total Produksi Tonase',
+            val: document.getElementById('hanal-kpi-tonase')?.innerText || '0.00 Ton',
+            sub: document.getElementById('hanal-kpi-janjang')?.innerText || '',
+            color: '#059669'
+        },
+        {
+            title: 'Total Luas Panen',
+            val: document.getElementById('hanal-kpi-area')?.innerText || '0.00 Ha',
+            sub: document.getElementById('hanal-kpi-density')?.innerText || '',
+            color: '#0284c7'
+        },
+        {
+            title: 'Produktivitas Pemanen',
+            val: document.getElementById('hanal-kpi-output')?.innerText || '0 JJG/HK',
+            sub: document.getElementById('hanal-kpi-output-ton')?.innerText || '',
+            color: '#d97706'
+        },
+        {
+            title: 'Rata-rata Berat Janjang (BJR)',
+            val: document.getElementById('hanal-kpi-bjr')?.innerText || '0.00 Kg',
+            sub: document.getElementById('hanal-kpi-pemanen-count')?.innerText || '',
+            color: '#16a34a'
+        }
+    ];
+
+    const sections = [
+        {
+            title: '1. Rekapitulasi Kinerja & Output Panen per Divisi',
+            sub: 'Konsolidasi produksi janjang, tonase panen, kerapatan pohon, dan output prestasi pemanen per divisi.',
+            tableId: 'hanal-divisi-table'
+        },
+        {
+            title: '2. Analisis Produktivitas & Pusingan Panen per Blok',
+            sub: 'Evaluasi kedisiplinan interval pusingan rotasi panen (standar 7-10 hari) dan pemenuhan taksasi.',
+            tableId: 'hanal-block-table'
+        }
+    ];
+
+    const chartCanvasIds = [
+        { id: 'chart-hanal-divisi', title: 'Produksi Tonase & Janjang per Divisi', sub: 'Sebaran hasil panen TBS yang diperoleh dari tiap-tiap divisi kebun.' },
+        { id: 'chart-hanal-output', title: 'Produktivitas Pemanen (JJG/HK) vs Kerapatan Buah (JJG/Ha)', sub: 'Hubungan ketersediaan buah matang dengan kecepatan hasil potong tenaga panen.' }
+    ];
+
+    const html = window.generateReportPrintHtml({
+        reportTitle: 'LAPORAN ANALISA KINERJA PANEN & PRODUKTIVITAS (HARVESTING)',
+        moduleName: 'Harvesting Monitoring',
+        unitName,
+        dateStr: selectedDate,
+        scopeStr: scope.toUpperCase(),
+        kpis,
+        sections,
+        chartCanvasIds,
+        insightsListId: 'hanal-insights-list'
+    });
+
+    const printWin = window.open('', '_blank');
+    if (printWin) {
+        printWin.document.write(html);
+        printWin.document.close();
+    }
+};
+
+// 6. PRINT: FFB QUALITY (Rekapitulasi Monthly Grading)
+window.printMonthlyGradingReport = () => {
+    const unitName = (currentUser && currentUser.estate) ? currentUser.estate : 'Bunga Tanjung Mill';
+    const yearSelect = document.getElementById('dash-fqc-year');
+    const selectedYear = yearSelect ? yearSelect.value : new Date().getFullYear();
+
+    const kpis = [
+        {
+            title: 'Total Sampel Grading',
+            val: document.getElementById('dash-fqc-tot-sample')?.innerText || '0 Janjang',
+            sub: 'Total Janjang Diperiksa',
+            color: '#0284c7'
+        },
+        {
+            title: 'Total Tonase Masuk',
+            val: `${document.getElementById('dash-fqc-tot-tonase')?.innerText || '0.00'} Ton`,
+            sub: 'Total Suplai Buah',
+            color: '#059669'
+        },
+        {
+            title: 'Rata-rata Buah Masak',
+            val: `${document.getElementById('dash-fqc-tot-ripe')?.innerText || '0.00'}%`,
+            sub: 'Standar Min: 85.00%',
+            color: '#16a34a'
+        },
+        {
+            title: 'Rata-rata Buah Mentah',
+            val: `${document.getElementById('dash-fqc-tot-unripe')?.innerText || '0.00'}%`,
+            sub: 'Maks Toleransi: 5.00%',
+            color: '#ef4444'
+        }
+    ];
+
+    const sections = [
+        {
+            title: `Rekapitulasi Mutu Kualitas Panen TBS per Estate (Tahun ${selectedYear})`,
+            sub: 'Persentase mutu janjang panen tertimbang berdasarkan tonase penerimaan masing-masing estate.',
+            tableId: 'dash-fqc-monthly-table'
+        }
+    ];
+
+    const chartCanvasIds = [
+        { id: 'chart-dash-fqc-trend', title: 'Trend Bulanan Kualitas Buah Masak vs Buah Mentah', sub: 'Perkembangan rasio kematangan buah sepanjang tahun.' }
+    ];
+
+    const html = window.generateReportPrintHtml({
+        reportTitle: 'LAPORAN REKAPITULASI MUTU KUALITAS TBS (MONTHLY FFB GRADING)',
+        moduleName: 'FFB Quality Monitoring',
+        unitName,
+        dateStr: `Tahun ${selectedYear}`,
+        scopeStr: 'TAHUNAN (1 TAHUN PENUH)',
+        kpis,
+        sections,
+        chartCanvasIds,
+        insightsListId: null
+    });
+
+    const printWin = window.open('', '_blank');
+    if (printWin) {
+        printWin.document.write(html);
+        printWin.document.close();
+    }
+};

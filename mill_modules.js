@@ -3234,9 +3234,13 @@ window.renderFFBMonthlyInsights = function() {
 };
 
 window.printMonthlyGrading = function() {
-    const res = window.ffbMonthlySummaryResult;
-    const title = `Laporan Rekapitulasi Summary Monthly Grading ${res ? res.cfg.label : ''} - Tahun ${res ? res.year : ''}`;
-    window.printTable('ffb-monthly-table-wrapper', title);
+    if (typeof window.printMonthlyGradingReport === 'function') {
+        window.printMonthlyGradingReport();
+    } else {
+        const res = window.ffbMonthlySummaryResult;
+        const title = `Laporan Rekapitulasi Summary Monthly Grading ${res ? res.cfg.label : ''} - Tahun ${res ? res.year : ''}`;
+        window.printTable('ffb-monthly-table-wrapper', title);
+    }
 };
 
 window.exportMonthlyGradingCSV = function() {
