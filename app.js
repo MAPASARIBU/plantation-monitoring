@@ -3738,14 +3738,18 @@ const renderUpkeepTable = () => {
         let actionBtn = '';
         const safeType = u.type ? u.type.replace(/['"\n\r]/g, ' ') : '';
         
+        const tWorkers = u.targetworkers !== undefined ? u.targetworkers : (u.targetWorkers !== undefined ? u.targetWorkers : 0);
+        const rWorkers = u.realizedworkers !== undefined ? u.realizedworkers : (u.realizedWorkers !== undefined ? u.realizedWorkers : 0);
+        const sDate = u.startdate || u.startDate || u.date || '-';
+
         if (u.status === 'Selesai') {
             actionBtn = `<span class="status-badge status-done" style="margin-right: 5px;">Selesai</span>`;
         } else if (currentUser && currentUser.role) {
             const roleL = currentUser.role.toLowerCase();
-            if (['asisten divisi', 'assistant', 'assistant divisi', 'asst divisi', 'krani divisi', 'mandor', 'mandor divisi'].includes(roleL)) {
+            if (['asisten divisi', 'assistant', 'assistant divisi', 'asst divisi', 'krani divisi', 'mandor', 'mandor divisi', 'admin'].includes(roleL)) {
                 actionBtn = `
                 <div style="display:flex; justify-content:center; width: 100%;">
-                    <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; justify-content:center;" onclick="promptAddUpkeepProgress(${u.id}, '${u.block}', '${safeType}', ${u.target}, ${u.realized}, ${u.targetworkers || 0})"><i class="fa-solid fa-pen-to-square"></i> Update</button>
+                    <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; justify-content:center;" onclick="promptAddUpkeepProgress(${u.id}, '${u.block}', '${safeType}', ${u.target}, ${u.realized}, ${tWorkers})"><i class="fa-solid fa-pen-to-square"></i> Update</button>
                 </div>
             `;
             } else {
@@ -3756,8 +3760,8 @@ const renderUpkeepTable = () => {
         }
         
         let prestasiCell = '-';
-        if (u.realized > 0 && u.realizedworkers > 0) {
-            const prestasiVal = (u.realized / u.realizedworkers).toFixed(2);
+        if (u.realized > 0 && rWorkers > 0) {
+            const prestasiVal = (u.realized / rWorkers).toFixed(2);
             prestasiCell = `<strong style="color:#0369a1; font-size:1.05rem;">${prestasiVal}</strong> Ha/HK`;
         } else if (u.realized > 0) {
             prestasiCell = `<span style="color:#64748b; font-size:0.85rem;">Menunggu data HK</span>`;
@@ -3769,12 +3773,12 @@ const renderUpkeepTable = () => {
         return `
             <tr>
                 <td><strong><a href="#" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;" onclick="viewUpkeepHistory(${u.id}, '${u.block}', '${safeType}'); return false;">${u.block}</a></strong></td>
-                <td>${u.startdate || '-'}</td>
+                <td>${sDate}</td>
                 <td><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px; white-space:nowrap; font-weight:bold;">${getEstateCode(u.estate)}</span></td>
                 <td><span class="status-badge" style="background:#e2e8f0; color:#334155; padding:2px 6px; white-space:nowrap;">${divisi}</span></td>
                 <td>${u.type}<br><small>${u.worker}</small></td>
                 <td>${u.target}</td>
-                <td>${u.targetworkers || 0} Orang</td>
+                <td>${tWorkers} Orang</td>
                 <td>${u.realized}</td>
                 <td>${prestasiCell}</td>
                 <td style="text-align:center;">${actionBtn}</td>
@@ -12514,9 +12518,12 @@ window.loadUpkeepAnalyticsData = async () => {
     }
 
     if (scope === 'daily') {
-        rawUpkeep = rawUpkeep.filter(u => u.startdate === selectedDate || u.date === selectedDate);
+        rawUpkeep = rawUpkeep.filter(u => (u.startdate || u.startDate || u.date) === selectedDate);
     } else if (scope === 'mtd') {
-        rawUpkeep = rawUpkeep.filter(u => (u.startdate && u.startdate.startsWith(month)) || (u.date && u.date.startsWith(month)));
+        rawUpkeep = rawUpkeep.filter(u => {
+            const d = u.startdate || u.startDate || u.date;
+            return d && d.startsWith(month);
+        });
     }
 
     // Populate type filter
@@ -12524,9 +12531,10 @@ window.loadUpkeepAnalyticsData = async () => {
     const typeFilter = document.getElementById('uanal-type-filter');
     if (typeFilter) {
         const curr = typeFilter.value;
-        typeFilter.innerHTML = '<option value="ALL">Semua Jenis Pekerjaan</option>' + 
-            Array.from(typeSet).map(t => `<option value="${t}">${t}</option>`).join('');
-        if (curr && typeSet.has(curr)) typeFilter.value = curr;
+        typeFilter.innerHTML = '<option value="">Semua Jenis Pekerjaan</option>';
+        typeSet.forEach(t => {
+            typeFilter.innerHTML += `<option value="${t}" ${t === curr ? 'selected' : ''}>${t}</option>`;
+        });
     }
 
     window.cachedUpkeepAnalyticsData = {
@@ -12543,11 +12551,10 @@ window.processAndRenderUpkeepAnalytics = () => {
     if (!window.cachedUpkeepAnalyticsData) return;
     const { upkeep } = window.cachedUpkeepAnalyticsData;
     const typeFilter = document.getElementById('uanal-type-filter');
-    const selectedType = typeFilter ? typeFilter.value : 'ALL';
-
+    
     let filtered = upkeep;
-    if (selectedType && selectedType !== 'ALL') {
-        filtered = filtered.filter(u => u.type === selectedType);
+    if (typeFilter && typeFilter.value) {
+        filtered = filtered.filter(u => u.type === typeFilter.value);
     }
 
     // 1. Group by Job Type
@@ -12569,8 +12576,8 @@ window.processAndRenderUpkeepAnalytics = () => {
         const tObj = typeMap[type];
         const tHa = parseFloat(u.target) || 0;
         const rHa = parseFloat(u.realized) || 0;
-        const tW = parseInt(u.targetworkers) || 0;
-        const rW = parseInt(u.realizedworkers) || parseInt(u.targetworkers) || 0;
+        const tW = parseInt(u.targetworkers !== undefined ? u.targetworkers : u.targetWorkers) || 0;
+        const rW = parseInt(u.realizedworkers !== undefined ? u.realizedworkers : u.realizedWorkers) || tW || 0;
 
         tObj.targetHa += tHa;
         tObj.realizedHa += rHa;
