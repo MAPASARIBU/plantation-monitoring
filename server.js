@@ -49,8 +49,12 @@ if (process.env.DATABASE_URL) {
                 const isInsert = sql.trim().toUpperCase().startsWith('INSERT');
                 const hasReturning = sql.toUpperCase().includes('RETURNING ID');
                 
-                // Convert PostgreSQL $1, $2 to SQLite ?
-                let sqliteSql = sql.replace(/\$\d+/g, '?');
+                // Convert PostgreSQL $1, $2 to SQLite ? and SERIAL to INTEGER PRIMARY KEY AUTOINCREMENT
+                let sqliteSql = sql
+                    .replace(/\$\d+/g, '?')
+                    .replace(/SERIAL\s+PRIMARY\s+KEY/gi, 'INTEGER PRIMARY KEY AUTOINCREMENT')
+                    .replace(/BOOLEAN\s+DEFAULT\s+TRUE/gi, 'INTEGER DEFAULT 1')
+                    .replace(/BOOLEAN\s+DEFAULT\s+FALSE/gi, 'INTEGER DEFAULT 0');
                 
                 if (isInsert || sql.trim().toUpperCase().startsWith('UPDATE') || sql.trim().toUpperCase().startsWith('DELETE') || sql.trim().toUpperCase().startsWith('CREATE') || sql.trim().toUpperCase().startsWith('ALTER')) {
                     if (hasReturning) {
