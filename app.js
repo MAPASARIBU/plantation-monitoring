@@ -11412,7 +11412,7 @@ window.processAndRenderTonaseSummary = () => {
 
     const lfList = dmData.lf || [];
     const efbList = dmData.efb || [];
-    const millConfig = dmData.mill_config || {};
+    const millConfig = dmData.config || dmData.mill_config || {};
 
     // 1. Process Estate Aggregation
     const estateStats = [];
@@ -11445,8 +11445,14 @@ window.processAndRenderTonaseSummary = () => {
         const midTon = midKg / 1000;
         const lastTon = lastKg / 1000;
 
-        const lfRow = lfList.find(x => x.estate === est);
-        const lfTon = lfRow ? (parseFloat(lfRow.actual_lf_tonase) || 0) : 0;
+        const estAbbr = getAbbr(est);
+        const lfRow = lfList.find(x => 
+            x.estate === est || 
+            x.estate === estAbbr || 
+            getAbbr(x.estate) === estAbbr ||
+            (x.estate && est && x.estate.trim().toLowerCase() === est.trim().toLowerCase())
+        );
+        const lfTon = lfRow ? (parseFloat(lfRow.actual_lf_tonase !== undefined ? lfRow.actual_lf_tonase : lfRow.tonase) || 0) : 0;
         const lfPct = actTon > 0 ? (lfTon / actTon * 100) : 0;
 
         const pctPlan = planTon > 0 ? (actTon / planTon * 100) : (actTon > 0 ? 100 : 0);
@@ -11556,17 +11562,37 @@ window.processAndRenderTonaseSummary = () => {
 
     // 3. Process EFB Aggregation
     const efbRatio = parseFloat(millConfig.efb_ratio) || 22.0;
-    const sisaKemarin = parseFloat(millConfig.sisa_kemarin) || 0;
-    const estProduksiEfb = (totActTon * efbRatio / 100);
+    const sisaKemarin = parseFloat(millConfig.sisa_kemarin_jjk !== undefined ? millConfig.sisa_kemarin_jjk : (millConfig.sisa_kemarin || 0));
+    const isProcessing = millConfig.is_processing === 1;
+    const estProduksiEfb = isProcessing ? (totActTon * efbRatio / 100) : (totActTon * efbRatio / 100);
 
     let totEfbTarget = 0, totEfbActual = 0, totEfbTrip = 0;
     const efbStats = [];
 
+    const efbSourceList = (scope === 'mtd' && dmData.efb_mtd && dmData.efb_mtd.length > 0) ? dmData.efb_mtd : efbList;
+
     supplyChainEFB.forEach((est, idx) => {
-        const row = efbList.find(e => e.estate === est);
-        const tgt = row ? (parseFloat(row.target_tonase) || 0) : 0;
-        const act = row ? (parseFloat(row.actual_tonase) || 0) : 0;
-        const tr = row ? (parseInt(row.actual_trip) || 0) : 0;
+        const estAbbr = getAbbr(est);
+        const row = efbSourceList.find(e => 
+            e.estate === est || 
+            e.estate === estAbbr || 
+            getAbbr(e.estate) === estAbbr ||
+            (e.estate && est && e.estate.trim().toLowerCase() === est.trim().toLowerCase())
+        );
+
+        let tgt = 0, act = 0, tr = 0;
+        if (row) {
+            if (scope === 'mtd' && row.tonase_mtd !== undefined) {
+                tgt = parseFloat(row.target_mtd) || 0;
+                act = parseFloat(row.tonase_mtd) || 0;
+                tr = parseInt(row.trip_mtd) || 0;
+            } else {
+                tgt = parseFloat(row.target !== undefined ? row.target : (row.target_tonase || 0)) || 0;
+                act = parseFloat(row.tonase !== undefined ? row.tonase : (row.actual_tonase || 0)) || 0;
+                tr = parseInt(row.trip !== undefined ? row.trip : (row.actual_trip || 0)) || 0;
+            }
+        }
+
         const pct = tgt > 0 ? (act / tgt * 100) : (act > 0 ? 100 : 0);
         const tonPerTrip = tr > 0 ? (act / tr) : 0;
 
@@ -11576,7 +11602,7 @@ window.processAndRenderTonaseSummary = () => {
         efbStats.push({
             no: idx + 1,
             estate: est,
-            abbr: getAbbr(est),
+            abbr: estAbbr,
             target: tgt,
             actual: act,
             pct,
