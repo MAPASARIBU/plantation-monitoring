@@ -4384,9 +4384,9 @@ window.renderDashFfbCropQuality = async function() {
     const allowedRoles = [
         'Senior Field Manager', 'Manager', 'Askep', 'Assistant', 
         'Krani Divisi', 'Manager Mill', 'Manager MIll', 
-        'supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Admin'
+        'supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Admin', 'Administrator'
     ];
-    if (!allowedRoles.includes(window.currentUser.role)) {
+    if (!allowedRoles.includes(window.currentUser.role) && !allowedRoles.includes(window.currentUser.role.trim())) {
         cardEl.style.display = 'none';
         return;
     }
@@ -4428,7 +4428,7 @@ window.renderDashFfbCropQuality = async function() {
     cardEl.style.display = 'block';
 
     const tbody = document.querySelector('#dash-ffb-crop-table tbody');
-    if (tbody) tbody.innerHTML = '<tr><td colspan="8">Loading...</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="10">Loading...</td></tr>';
 
     let mill = 'Bunga Tanjung Mill';
     const headerDropdown = document.getElementById('header-estate-dropdown');
@@ -4441,36 +4441,51 @@ window.renderDashFfbCropQuality = async function() {
     try {
         let rawData = [];
         let rawTonase = [];
+        let rawLf = [];
 
-        // Fetch FFB Crop Quality data
-        try {
-            const ffbUrl = (startDate === endDate)
-                ? `/api/ffb_crop_quality/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}`
-                : `/api/ffb_crop_quality/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`;
-            const ffbRes = await fetch(ffbUrl);
-            if (ffbRes.ok) {
-                rawData = await ffbRes.json();
-            } else {
-                console.warn('ffb_crop_quality response not ok:', ffbRes.status);
-            }
-        } catch(errFfb) {
-            console.error('Error fetching ffb_crop_quality:', errFfb);
-        }
+        // Parallel fetch FFB Crop Quality, Tonase, and LF Received
+        const [ffbRes, tonaseRes, lfRes] = await Promise.all([
+            fetch(`/api/ffb_crop_quality/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`),
+            fetch(`/api/tonase/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`),
+            fetch(`/api/daily-monitor/lf-range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`)
+        ]);
 
-        // Fetch Tonase data
-        try {
-            const tonaseUrl = (startDate === endDate)
-                ? `/api/tonase/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}`
-                : `/api/tonase/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`;
-            const tonaseRes = await fetch(tonaseUrl);
-            if (tonaseRes.ok) {
-                rawTonase = await tonaseRes.json();
-            } else {
-                console.warn('tonase response not ok:', tonaseRes.status);
-            }
-        } catch(errTonase) {
-            console.error('Error fetching tonase range:', errTonase);
+        if (ffbRes.ok) rawData = await ffbRes.json();
+        if (tonaseRes.ok) rawTonase = await tonaseRes.json();
+        if (lfRes.ok) rawLf = await lfRes.json();
+
+        // Abbr map
+        let abbrMap = {};
+        let activeFfbEstates = new Set();
+        if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
+            masterData.supply_chain_list.forEach(item => {
+                if (item.name && item.abbr) {
+                    abbrMap[item.name.trim().toLowerCase()] = item.abbr;
+                    abbrMap[item.name.trim()] = item.abbr;
+                }
+            });
         }
+        if (typeof masterData !== 'undefined' && masterData.supply_chain) {
+            masterData.supply_chain.forEach(item => {
+                const est = item.estate || item.name;
+                const ab = item.abbr;
+                if (item.is_ffb !== false && est) {
+                    activeFfbEstates.add(est);
+                }
+                if (est && ab) {
+                    abbrMap[est.trim().toLowerCase()] = ab;
+                    abbrMap[est.trim()] = ab;
+                }
+            });
+        }
+        const getAbbr = (estName) => {
+            if (!estName) return '-';
+            const clean = estName.trim();
+            if (abbrMap[clean]) return abbrMap[clean];
+            if (abbrMap[clean.toLowerCase()]) return abbrMap[clean.toLowerCase()];
+            if (clean.length <= 6) return clean;
+            return clean.replace(/ Estate/i, 'E');
+        };
 
         // Aggregate tonase from tonase_hourly by estate (realized_kg / 1000 = TON)
         const tonaseByEst = {};
@@ -4479,6 +4494,21 @@ window.renderDashFfbCropQuality = async function() {
                 const e = row.estate || 'Unknown';
                 const ton = (parseFloat(row.realized_kg) || 0) / 1000;
                 tonaseByEst[e] = (tonaseByEst[e] || 0) + ton;
+            });
+        }
+
+        // Aggregate LF from lf_received_daily by estate
+        const lfByEst = {};
+        if (Array.isArray(rawLf)) {
+            rawLf.forEach(row => {
+                const e = row.estate || 'Unknown';
+                const lfTon = parseFloat(row.actual_lf_tonase) || 0;
+                const ffbTon = parseFloat(row.actual_ffb_tonase) || 0;
+                if (!lfByEst[e]) {
+                    lfByEst[e] = { lf_ton: 0, ffb_ton: 0 };
+                }
+                lfByEst[e].lf_ton += lfTon;
+                lfByEst[e].ffb_ton += ffbTon;
             });
         }
 
@@ -4512,8 +4542,15 @@ window.renderDashFfbCropQuality = async function() {
 
         if (tbody) tbody.innerHTML = '';
 
-        if (Object.keys(estData).length === 0) {
-            if (tbody) tbody.innerHTML = '<tr><td colspan="9" style="color: #64748b; font-style: italic; text-align: center;">Tidak ada data.</td></tr>';
+        // Collect all distinct estates from crop data, tonase data, or lf data
+        const allEstNames = new Set([
+            ...Object.keys(estData),
+            ...Object.keys(tonaseByEst),
+            ...Object.keys(lfByEst)
+        ]);
+
+        if (allEstNames.size === 0) {
+            if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="color: #64748b; font-style: italic; text-align: center;">Tidak ada data.</td></tr>';
             const totTonaseEl = document.getElementById('dash-fqc-tot-tonase');
             if (totTonaseEl) totTonaseEl.innerText = '0.00';
             document.getElementById('dash-fqc-avg-unripe').innerText = '0.0';
@@ -4523,26 +4560,9 @@ window.renderDashFfbCropQuality = async function() {
             document.getElementById('dash-fqc-avg-empty').innerText = '0.0';
             document.getElementById('dash-fqc-avg-long').innerText = '0.0';
             if (document.getElementById('dash-fqc-avg-rat')) document.getElementById('dash-fqc-avg-rat').innerText = '0.0';
+            if (document.getElementById('dash-fqc-avg-lf')) document.getElementById('dash-fqc-avg-lf').innerText = '0.00';
             return;
         }
-
-        let sumWeightedUnripe = 0;
-        let sumWeightedUnder = 0;
-        let sumWeightedRipe = 0;
-        let sumWeightedOver = 0;
-        let sumWeightedEmpty = 0;
-        let sumWeightedLong = 0;
-        let sumWeightedRat = 0;
-        let totalAllEstTonase = 0;
-        let t_tot = 0, t_u = 0, t_un = 0, t_n = 0, t_o = 0, t_e = 0, t_l = 0, t_rat = 0;
-
-        let abbrMap = {};
-        if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
-            masterData.supply_chain_list.forEach(item => {
-                abbrMap[item.name] = item.abbr;
-            });
-        }
-        const getAbbr = (estName) => abbrMap[estName] || estName.replace(' Estate', 'E');
 
         const getEstateTonase = (estName) => {
             if (tonaseByEst[estName] !== undefined) return tonaseByEst[estName];
@@ -4551,13 +4571,36 @@ window.renderDashFfbCropQuality = async function() {
                     return tonaseByEst[k];
                 }
             }
+            if (lfByEst[estName] && lfByEst[estName].ffb_ton > 0) return lfByEst[estName].ffb_ton;
             return 0;
         };
 
-        Object.keys(estData).forEach(est => {
-            const d = estData[est];
+        const getEstateLf = (estName) => {
+            if (lfByEst[estName]) return lfByEst[estName];
+            for (let k in lfByEst) {
+                if (getAbbr(k) === getAbbr(estName) || k.toLowerCase() === estName.toLowerCase()) {
+                    return lfByEst[k];
+                }
+            }
+            return { lf_ton: 0, ffb_ton: 0 };
+        };
+
+        let sumWeightedUnripe = 0;
+        let sumWeightedUnder = 0;
+        let sumWeightedRipe = 0;
+        let sumWeightedOver = 0;
+        let sumWeightedEmpty = 0;
+        let sumWeightedLong = 0;
+        let sumWeightedRat = 0;
+        let totalGradingTonase = 0;
+        let totalAllEstTonase = 0;
+        let totalAllLfTon = 0;
+
+        let sortedEstates = Array.from(allEstNames).sort((a, b) => getAbbr(a).localeCompare(getAbbr(b)));
+
+        sortedEstates.forEach(est => {
+            const d = estData[est] || { total_janjang: 0, unripe: 0, underripe: 0, normal_ripe: 0, over_ripe: 0, empty_bunch: 0, long_stalk: 0, rat_damage: 0 };
             const tot = d.total_janjang;
-            t_tot += tot; t_u += d.unripe; t_un += d.underripe; t_n += d.normal_ripe; t_o += d.over_ripe; t_e += d.empty_bunch; t_l += d.long_stalk; t_rat += d.rat_damage;
             
             const p_u_num = tot > 0 ? (d.unripe / tot * 100) : 0;
             const p_un_num = tot > 0 ? (d.underripe / tot * 100) : 0;
@@ -4576,53 +4619,54 @@ window.renderDashFfbCropQuality = async function() {
             const p_rat = p_rat_num.toFixed(2);
 
             const estTonase = getEstateTonase(est);
-            totalAllEstTonase += estTonase;
+            const lfData = getEstateLf(est);
+            const estLfTon = lfData.lf_ton || 0;
+            const estFfbForLf = estTonase > 0 ? estTonase : (lfData.ffb_ton || 0);
+            const p_lf_num = estFfbForLf > 0 ? ((estLfTon / estFfbForLf) * 100) : 0;
+            const p_lf = p_lf_num.toFixed(2);
 
-            sumWeightedUnripe += (estTonase * p_u_num);
-            sumWeightedUnder += (estTonase * p_un_num);
-            sumWeightedRipe += (estTonase * p_n_num);
-            sumWeightedOver += (estTonase * p_o_num);
-            sumWeightedEmpty += (estTonase * p_e_num);
-            sumWeightedLong += (estTonase * p_l_num);
-            sumWeightedRat += (estTonase * p_rat_num);
+            if (estTonase <= 0 && tot <= 0 && estLfTon <= 0) return;
+
+            totalAllEstTonase += estTonase;
+            totalAllLfTon += estLfTon;
+
+            if (tot > 0) {
+                const w = estTonase > 0 ? estTonase : (tot / 100);
+                totalGradingTonase += w;
+                sumWeightedUnripe += (w * p_u_num);
+                sumWeightedUnder += (w * p_un_num);
+                sumWeightedRipe += (w * p_n_num);
+                sumWeightedOver += (w * p_o_num);
+                sumWeightedEmpty += (w * p_e_num);
+                sumWeightedLong += (w * p_l_num);
+                sumWeightedRat += (w * p_rat_num);
+            }
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${getAbbr(est)}</td>
                 <td style="font-weight: 600;">${estTonase.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                <td style="color: ${parseFloat(p_u) > 0 ? 'red' : 'inherit'}">${p_u}</td>
-                <td style="color: ${parseFloat(p_un) > 3 ? 'red' : 'inherit'}">${p_un}</td>
-                <td style="color: ${parseFloat(p_n) < 90 ? 'red' : 'inherit'}">${p_n}</td>
-                <td style="color: ${parseFloat(p_o) > 7 ? 'red' : 'inherit'}">${p_o}</td>
-                <td style="color: ${parseFloat(p_e) > 0 ? 'red' : 'inherit'}">${p_e}</td>
-                <td style="color: ${parseFloat(p_l) >= 2 ? 'red' : 'inherit'}">${p_l}</td>
+                <td style="color: ${tot > 0 && parseFloat(p_u) > 0 ? 'red' : 'inherit'}">${p_u}</td>
+                <td style="color: ${tot > 0 && parseFloat(p_un) > 3 ? 'red' : 'inherit'}">${p_un}</td>
+                <td style="color: ${tot > 0 && parseFloat(p_n) < 90 ? 'red' : (tot > 0 && parseFloat(p_n) >= 90 ? '#10b981' : 'inherit')}">${p_n}</td>
+                <td style="color: ${tot > 0 && parseFloat(p_o) > 7 ? 'red' : 'inherit'}">${p_o}</td>
+                <td style="color: ${tot > 0 && parseFloat(p_e) > 0 ? 'red' : 'inherit'}">${p_e}</td>
+                <td style="color: ${tot > 0 && parseFloat(p_l) >= 2 ? 'red' : 'inherit'}">${p_l}</td>
                 <td>${p_rat}</td>
+                <td style="font-weight: 600;">${p_lf}</td>
             `;
             if (tbody) tbody.appendChild(tr);
         });
 
         // Weighted Totals by Tonase (Interpolasi: SUM(Tonase * %) / Total Tonase)
-        const p_tu = totalAllEstTonase > 0 
-            ? (sumWeightedUnripe / totalAllEstTonase).toFixed(2) 
-            : (t_tot > 0 ? (t_u / t_tot * 100).toFixed(2) : '0.00');
-        const p_tun = totalAllEstTonase > 0 
-            ? (sumWeightedUnder / totalAllEstTonase).toFixed(2) 
-            : (t_tot > 0 ? (t_un / t_tot * 100).toFixed(2) : '0.00');
-        const p_tn = totalAllEstTonase > 0 
-            ? (sumWeightedRipe / totalAllEstTonase).toFixed(2) 
-            : (t_tot > 0 ? (t_n / t_tot * 100).toFixed(2) : '0.00');
-        const p_to = totalAllEstTonase > 0 
-            ? (sumWeightedOver / totalAllEstTonase).toFixed(2) 
-            : (t_tot > 0 ? (t_o / t_tot * 100).toFixed(2) : '0.00');
-        const p_te = totalAllEstTonase > 0 
-            ? (sumWeightedEmpty / totalAllEstTonase).toFixed(2) 
-            : (t_tot > 0 ? (t_e / t_tot * 100).toFixed(2) : '0.00');
-        const p_tl = totalAllEstTonase > 0 
-            ? (sumWeightedLong / totalAllEstTonase).toFixed(2) 
-            : (t_tot > 0 ? (t_l / t_tot * 100).toFixed(2) : '0.00');
-        const p_trat = totalAllEstTonase > 0 
-            ? (sumWeightedRat / totalAllEstTonase).toFixed(2) 
-            : (t_tot > 0 ? (t_rat / t_tot * 100).toFixed(2) : '0.00');
+        const p_tu = totalGradingTonase > 0 ? (sumWeightedUnripe / totalGradingTonase).toFixed(2) : '0.00';
+        const p_tun = totalGradingTonase > 0 ? (sumWeightedUnder / totalGradingTonase).toFixed(2) : '0.00';
+        const p_tn = totalGradingTonase > 0 ? (sumWeightedRipe / totalGradingTonase).toFixed(2) : '0.00';
+        const p_to = totalGradingTonase > 0 ? (sumWeightedOver / totalGradingTonase).toFixed(2) : '0.00';
+        const p_te = totalGradingTonase > 0 ? (sumWeightedEmpty / totalGradingTonase).toFixed(2) : '0.00';
+        const p_tl = totalGradingTonase > 0 ? (sumWeightedLong / totalGradingTonase).toFixed(2) : '0.00';
+        const p_trat = totalGradingTonase > 0 ? (sumWeightedRat / totalGradingTonase).toFixed(2) : '0.00';
+        const p_tlf = totalAllEstTonase > 0 ? ((totalAllLfTon / totalAllEstTonase) * 100).toFixed(2) : '0.00';
 
         const totTonaseEl = document.getElementById('dash-fqc-tot-tonase');
         if (totTonaseEl) totTonaseEl.innerText = totalAllEstTonase.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -4634,16 +4678,18 @@ window.renderDashFfbCropQuality = async function() {
         document.getElementById('dash-fqc-avg-empty').innerText = p_te;
         document.getElementById('dash-fqc-avg-long').innerText = p_tl;
         if (document.getElementById('dash-fqc-avg-rat')) document.getElementById('dash-fqc-avg-rat').innerText = p_trat;
+        if (document.getElementById('dash-fqc-avg-lf')) document.getElementById('dash-fqc-avg-lf').innerText = p_tlf;
         
         document.getElementById('dash-fqc-avg-unripe').style.color = parseFloat(p_tu) > 0 ? 'red' : 'inherit';
         document.getElementById('dash-fqc-avg-under').style.color = parseFloat(p_tun) > 3 ? 'red' : 'inherit';
-        document.getElementById('dash-fqc-avg-normal').style.color = parseFloat(p_tn) < 90 ? 'red' : 'inherit';
+        document.getElementById('dash-fqc-avg-normal').style.color = parseFloat(p_tn) < 90 ? 'red' : (parseFloat(p_tn) >= 90 ? '#10b981' : 'inherit');
         document.getElementById('dash-fqc-avg-over').style.color = parseFloat(p_to) > 7 ? 'red' : 'inherit';
         document.getElementById('dash-fqc-avg-empty').style.color = parseFloat(p_te) > 0 ? 'red' : 'inherit';
         document.getElementById('dash-fqc-avg-long').style.color = parseFloat(p_tl) >= 2 ? 'red' : 'inherit';
+
     } catch(err) {
-        console.error(err);
-        if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="color: #ef4444; text-align: center;">Error loading data.</td></tr>';
+        console.error('Error rendering dash ffb crop quality:', err);
+        if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="color: red;">Error: ' + err.message + '</td></tr>';
     }
 };
 
