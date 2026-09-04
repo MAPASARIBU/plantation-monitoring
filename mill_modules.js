@@ -3754,24 +3754,54 @@ views.mill_dashboard = `
     </div>
 </div>
 
-<!-- Water Analysis Section Below Monthly Liquid Monitoring -->
-<div class="dashboard-grid" style="grid-template-columns: minmax(0, 1fr); gap: 15px; margin-top: 20px;">
-    <div class="glass-card" style="overflow: hidden; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff;">
-        <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.05rem; font-weight: 700; color: #1e293b;"><i class="fa-solid fa-water" style="color: #0284c7; margin-right: 8px;"></i>1.1 Analisa Air Sebelum Proses</h3>
-        <div class="table-responsive" style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+<!-- Water Analysis Section -->
+<div class="dashboard-grid" style="grid-template-columns: minmax(0, 1fr); gap: 20px; margin-top: 25px;">
+    <!-- 1.1 Analisa Air Sebelum Proses Card -->
+    <div class="glass-card" style="padding: 22px; border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
+            <div style="display: flex; flex-direction: column;">
+                <h3 style="margin: 0; font-size: 1.15rem; color: #1e293b; font-weight: 700;"><i class="fa-solid fa-water" style="color: #0284c7; margin-right: 8px;"></i>1.1 Analisa Air Sebelum Proses</h3>
+                <span style="font-size: 0.82rem; color: #64748b; margin-top: 2px;">Monitoring Kualitas Raw Water, Clarifier, Sand Filter & Feed Water Day-by-Day (1-31)</span>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <span style="font-weight: 600; color: #475569; font-size: 0.88rem;"><i class="fa-regular fa-calendar" style="margin-right: 4px; color: #0284c7;"></i> BULAN:</span>
+                <input type="month" id="dash-water-sebelum-month" class="form-control" style="width: auto; padding: 5px 12px; font-size: 0.88rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 6px;">
+                <button class="btn btn-primary" onclick="window.loadWaterSebelumTable()" style="padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;"><i class="fa-solid fa-magnifying-glass"></i> Tampilkan</button>
+                <button class="btn btn-secondary" onclick="printTable('dash-water-sebelum-wrapper', 'Laporan 1.1 Analisa Air Sebelum Proses')" style="padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;"><i class="fa-solid fa-print"></i> Print</button>
+            </div>
+        </div>
+        
+        <div class="table-responsive" id="dash-water-sebelum-wrapper" style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
             <table class="data-table" id="dash-table-water-sebelum" style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem;">
                 <thead></thead>
-                <tbody></tbody>
+                <tbody>
+                    <tr><td colspan="35" style="text-align: center; padding: 25px; color: #64748b; font-style: italic;">Pilih bulan dan klik Tampilkan</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
 
-    <div class="glass-card" style="overflow: hidden; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff;">
-        <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.05rem; font-weight: 700; color: #1e293b;"><i class="fa-solid fa-fire-burner" style="color: #ea580c; margin-right: 8px;"></i>1.2 Analisa Air Boiler (Rata-rata)</h3>
-        <div class="table-responsive" style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+    <!-- 1.2 Analisa Air Boiler Card -->
+    <div class="glass-card" style="padding: 22px; border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
+            <div style="display: flex; flex-direction: column;">
+                <h3 style="margin: 0; font-size: 1.15rem; color: #1e293b; font-weight: 700;"><i class="fa-solid fa-fire-burner" style="color: #ea580c; margin-right: 8px;"></i>1.2 Analisa Air Boiler (Rata-rata)</h3>
+                <span style="font-size: 0.82rem; color: #64748b; margin-top: 2px;">Monitoring Parameter Kualitas Air Boiler & Chemical Treatment Day-by-Day (1-31)</span>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <span style="font-weight: 600; color: #475569; font-size: 0.88rem;"><i class="fa-regular fa-calendar" style="margin-right: 4px; color: #ea580c;"></i> BULAN:</span>
+                <input type="month" id="dash-water-boiler-month" class="form-control" style="width: auto; padding: 5px 12px; font-size: 0.88rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 6px;">
+                <button class="btn btn-primary" onclick="window.loadWaterBoilerTable()" style="padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;"><i class="fa-solid fa-magnifying-glass"></i> Tampilkan</button>
+                <button class="btn btn-secondary" onclick="printTable('dash-water-boiler-wrapper', 'Laporan 1.2 Analisa Air Boiler (Rata-rata)')" style="padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;"><i class="fa-solid fa-print"></i> Print</button>
+            </div>
+        </div>
+        
+        <div class="table-responsive" id="dash-water-boiler-wrapper" style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
             <table class="data-table" id="dash-table-water-boiler" style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem;">
                 <thead></thead>
-                <tbody></tbody>
+                <tbody>
+                    <tr><td colspan="35" style="text-align: center; padding: 25px; color: #64748b; font-style: italic;">Pilih bulan dan klik Tampilkan</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -4005,6 +4035,278 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
     }
 };
 
+window.loadWaterSebelumTable = async function(monthOverride) {
+    const monthInput = document.getElementById('dash-water-sebelum-month');
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const currentMonth = yyyy + '-' + mm;
+
+    let month = monthOverride || (monthInput ? monthInput.value : null) || currentMonth;
+    if (monthInput && !monthInput.value) monthInput.value = month;
+
+    let mill = 'Bunga Tanjung Mill';
+    const headerDropdown = document.getElementById('header-estate-dropdown');
+    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill')) {
+        mill = headerDropdown.value;
+    } else if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+        mill = window.currentUser.estate;
+    }
+
+    const tableEl = document.getElementById('dash-table-water-sebelum');
+    if (!tableEl) return;
+
+    const thead = tableEl.querySelector('thead');
+    const tbody = tableEl.querySelector('tbody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="35" style="text-align: center; padding: 25px; color: #64748b; font-style: italic;"><i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i>Memuat data Analisa Air Sebelum Proses...</td></tr>';
+
+    try {
+        const res = await fetch('/api/water/dashboard/month/' + encodeURIComponent(mill) + '/' + encodeURIComponent(month));
+        const data = res.ok ? await res.json() : { water_analysis: [] };
+        const rawWater = data.water_analysis || [];
+
+        const parts = month.split('-');
+        const year = parseInt(parts[0]);
+        const mNum = parseInt(parts[1]);
+        const daysInMonth = new Date(year, mNum, 0).getDate();
+        const daysArray = Array.from({length: daysInMonth}, (_, i) => i + 1);
+
+        // Map data by day
+        const waterMap = {};
+        const sumMap = {};
+        const countMap = {};
+
+        rawWater.forEach(w => {
+            if (!w.date) return;
+            const d = parseInt(w.date.split('-')[2]);
+            if (!d) return;
+            waterMap[d] = w;
+            for (let k in w) {
+                if (w[k] !== null && w[k] !== undefined && w[k] !== '' && !isNaN(w[k]) && k !== 'id') {
+                    const num = parseFloat(w[k]);
+                    sumMap[k] = (sumMap[k] || 0) + num;
+                    countMap[k] = (countMap[k] || 0) + 1;
+                }
+            }
+        });
+
+        // Header
+        let theadHtml = '<tr>' +
+            '<th rowspan="2" style="min-width: 270px; text-align: left; vertical-align: middle; position: sticky; left: 0; background: #1e293b; color: #ffffff; z-index: 3; padding: 10px 14px; font-weight: 700; border-right: 2px solid #334155;">PARAMETER / SAMPLING POINT</th>' +
+            '<th colspan="' + daysInMonth + '" style="text-align: center; background: #1e293b; color: #ffffff; padding: 8px; font-weight: 700; letter-spacing: 0.5px; border-bottom: 1px solid #334155;">TANGGAL (' + month + ')</th>' +
+            '<th rowspan="2" style="min-width: 70px; text-align: center; vertical-align: middle; background: #0f172a; color: #38bdf8; z-index: 2; padding: 10px 8px; font-weight: 700; border-left: 2px solid #334155;">AVG</th>' +
+            '</tr><tr>';
+        
+        daysArray.forEach(d => {
+            theadHtml += '<th style="min-width: 38px; text-align: center; background: #334155; color: #f8fafc; font-weight: 600; padding: 6px 2px; font-size: 0.78rem; border-right: 1px solid #475569;">' + d + '</th>';
+        });
+        theadHtml += '</tr>';
+        thead.innerHTML = theadHtml;
+
+        const config = [
+            { type: 'header', title: '=> RAW WATER', bg: '#ecfeff', border: '#06b6d4', color: '#0e7490' },
+            { type: 'data', id: 'raw_ph', label: 'Raw Water - PH', isPh: true },
+            { type: 'data', id: 'raw_tds', label: 'Raw Water - TDS' },
+            { type: 'data', id: 'raw_thardness', label: 'Raw Water - Total Hardness' },
+            { type: 'data', id: 'raw_silica', label: 'Raw Water - Silica / SiO2' },
+            { type: 'data', id: 'raw_turbidity', label: 'Raw Water - Turbidity' },
+            { type: 'data', id: 'raw_cloride', label: 'Raw Water - Chloride' },
+
+            { type: 'header', title: '=> WTP / CLARIFIER', bg: '#eff6ff', border: '#3b82f6', color: '#1e40af' },
+            { type: 'data', id: 'wtp_ph', label: 'WTP - PH', isPh: true },
+            { type: 'data', id: 'wtp_tds', label: 'WTP - TDS' },
+            { type: 'data', id: 'wtp_turbidity', label: 'WTP - Turbidity (<10)' },
+            { type: 'data', id: 'wtp_cloride', label: 'WTP - Chloride' },
+
+            { type: 'header', title: '=> SAND FILTER', bg: '#eef2ff', border: '#6366f1', color: '#3730a3' },
+            { type: 'data', id: 'sand_ph', label: 'Sand Filter - PH', isPh: true },
+            { type: 'data', id: 'sand_tds', label: 'Sand Filter - TDS' },
+            { type: 'data', id: 'sand_turbidity', label: 'Sand Filter - Turbidity (<10)' },
+            { type: 'data', id: 'sand_cloride', label: 'Sand Filter - Chloride' },
+
+            { type: 'header', title: '=> DEMIN PLANT (CATION / ANION / FEED TANK)', bg: '#f0fdf4', border: '#10b981', color: '#166534' },
+            { type: 'subheader', title: 'Cation', bg: '#f8fafc', color: '#475569' },
+            { type: 'data', id: 'cation_ph', label: 'Cation - PH (<5.5)', isPh: true },
+            { type: 'data', id: 'cation_tds', label: 'Cation - TDS' },
+            { type: 'data', id: 'cation_thardness', label: 'Cation - Total Hardness (Trace)' },
+
+            { type: 'subheader', title: 'Anion', bg: '#f8fafc', color: '#475569' },
+            { type: 'data', id: 'anion_ph', label: 'Anion - PH (6.5 - 9.5)', isPh: true },
+            { type: 'data', id: 'anion_tds', label: 'Anion - TDS (<100)' },
+            { type: 'data', id: 'anion_silica', label: 'Anion - Silica / SiO2 (<2.5)' },
+
+            { type: 'subheader', title: 'Feed Tank / Feed Water', bg: '#f8fafc', color: '#475569' },
+            { type: 'data', id: 'feed_ph', label: 'Feed Water - PH (6.5 - 9.5)', isPh: true },
+            { type: 'data', id: 'feed_tds', label: 'Feed Water - TDS (<100)' },
+            { type: 'data', id: 'feed_thardness', label: 'Feed Water - Total Hardness (Trace)' },
+            { type: 'data', id: 'feed_silica', label: 'Feed Water - Silica / SiO2 (<5)' },
+            { type: 'data', id: 'feed_cloride', label: 'Feed Water - Chloride' }
+        ];
+
+        let tbodyHtml = '';
+        config.forEach(row => {
+            if (row.type === 'header') {
+                tbodyHtml += '<tr style="background-color: ' + row.bg + '; font-weight: bold; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1;">' +
+                    '<td style="text-align: left; padding: 7px 12px; color: ' + row.color + '; font-weight: 700; position: sticky; left: 0; background-color: ' + row.bg + '; z-index: 1; border-left: 4px solid ' + row.border + '; border-right: 2px solid #cbd5e1;">' + row.title + '</td>' +
+                    '<td colspan="' + daysInMonth + '" style="background-color: ' + row.bg + ';"></td>' +
+                    '<td style="background-color: ' + row.bg + '; border-left: 2px solid #cbd5e1;"></td>' +
+                    '</tr>';
+            } else if (row.type === 'subheader') {
+                tbodyHtml += '<tr style="background-color: ' + row.bg + '; font-weight: 600; border-bottom: 1px solid #e2e8f0;">' +
+                    '<td style="text-align: left; padding: 5px 12px 5px 22px; color: ' + row.color + '; font-style: italic; position: sticky; left: 0; background-color: ' + row.bg + '; z-index: 1; border-left: 4px solid #cbd5e1; border-right: 2px solid #e2e8f0;">' + row.title + '</td>' +
+                    '<td colspan="' + daysInMonth + '" style="background-color: ' + row.bg + ';"></td>' +
+                    '<td style="background-color: ' + row.bg + '; border-left: 2px solid #e2e8f0;"></td>' +
+                    '</tr>';
+            } else if (row.type === 'data') {
+                const avgVal = countMap[row.id] > 0 ? (sumMap[row.id] / countMap[row.id]).toFixed(row.isPh ? 2 : 1) : '-';
+
+                tbodyHtml += '<tr style="transition: background 0.15s ease;">';
+                tbodyHtml += '<td style="text-align: left; padding: 5px 12px 5px 30px; font-weight: 500; position: sticky; left: 0; background-color: #ffffff; z-index: 1; border-right: 2px solid #e2e8f0; border-bottom: 1px solid #f1f5f9; color: #334155;">' + row.label + '</td>';
+                daysArray.forEach(d => {
+                    const rowData = waterMap[d];
+                    let val = rowData && rowData[row.id] !== null && rowData[row.id] !== undefined && rowData[row.id] !== '' ? rowData[row.id] : '-';
+                    if (val !== '-' && !isNaN(val)) {
+                        val = parseFloat(val).toFixed(row.isPh ? 2 : 1);
+                    }
+                    const isMuted = val === '-';
+                    const textColor = isMuted ? '#94a3b8' : '#1e293b';
+                    tbodyHtml += '<td style="text-align: center; padding: 5px 2px; font-size: 0.78rem; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; color: ' + textColor + ';">' + val + '</td>';
+                });
+                tbodyHtml += '<td style="text-align: center; padding: 5px 4px; font-size: 0.8rem; font-weight: 700; color: #0369a1; background-color: #f0f9ff; border-left: 2px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">' + avgVal + '</td>';
+                tbodyHtml += '</tr>';
+            }
+        });
+
+        tbody.innerHTML = tbodyHtml;
+
+    } catch (err) {
+        console.error('Error loading Water Sebelum Table:', err);
+        if (tbody) tbody.innerHTML = '<tr><td colspan="35" style="text-align: center; color: red; padding: 25px;">Gagal memuat data: ' + err.message + '</td></tr>';
+    }
+};
+
+window.loadWaterBoilerTable = async function(monthOverride) {
+    const monthInput = document.getElementById('dash-water-boiler-month');
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const currentMonth = yyyy + '-' + mm;
+
+    let month = monthOverride || (monthInput ? monthInput.value : null) || currentMonth;
+    if (monthInput && !monthInput.value) monthInput.value = month;
+
+    let mill = 'Bunga Tanjung Mill';
+    const headerDropdown = document.getElementById('header-estate-dropdown');
+    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill')) {
+        mill = headerDropdown.value;
+    } else if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+        mill = window.currentUser.estate;
+    }
+
+    const tableEl = document.getElementById('dash-table-water-boiler');
+    if (!tableEl) return;
+
+    const thead = tableEl.querySelector('thead');
+    const tbody = tableEl.querySelector('tbody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="35" style="text-align: center; padding: 25px; color: #64748b; font-style: italic;"><i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i>Memuat data Analisa Air Boiler...</td></tr>';
+
+    try {
+        const res = await fetch('/api/water/dashboard/month/' + encodeURIComponent(mill) + '/' + encodeURIComponent(month));
+        const data = res.ok ? await res.json() : { boiler_averages: {} };
+        const boilerAverages = data.boiler_averages || {};
+
+        const parts = month.split('-');
+        const year = parseInt(parts[0]);
+        const mNum = parseInt(parts[1]);
+        const daysInMonth = new Date(year, mNum, 0).getDate();
+        const daysArray = Array.from({length: daysInMonth}, (_, i) => i + 1);
+
+        // Header
+        let theadHtml = '<tr>' +
+            '<th rowspan="2" style="min-width: 270px; text-align: left; vertical-align: middle; position: sticky; left: 0; background: #1e293b; color: #ffffff; z-index: 3; padding: 10px 14px; font-weight: 700; border-right: 2px solid #334155;">PARAMETER BOILER</th>' +
+            '<th colspan="' + daysInMonth + '" style="text-align: center; background: #1e293b; color: #ffffff; padding: 8px; font-weight: 700; letter-spacing: 0.5px; border-bottom: 1px solid #334155;">TANGGAL (' + month + ')</th>' +
+            '<th rowspan="2" style="min-width: 70px; text-align: center; vertical-align: middle; background: #0f172a; color: #38bdf8; z-index: 2; padding: 10px 8px; font-weight: 700; border-left: 2px solid #334155;">AVG</th>' +
+            '</tr><tr>';
+        
+        daysArray.forEach(d => {
+            theadHtml += '<th style="min-width: 38px; text-align: center; background: #334155; color: #f8fafc; font-weight: 600; padding: 6px 2px; font-size: 0.78rem; border-right: 1px solid #475569;">' + d + '</th>';
+        });
+        theadHtml += '</tr>';
+        thead.innerHTML = theadHtml;
+
+        const params = [
+            { type: 'header', title: 'PARAMETER AIR BOILER', bg: '#fff7ed', border: '#f97316', color: '#c2410c' },
+            { type: 'data', id: 'ph', label: 'PH (10.5 - 11.5)', isPh: true },
+            { type: 'data', id: 'tds', label: 'TDS (<1800)' },
+            { type: 'data', id: 'palkanity', label: 'P-Alkanity (300 - 700)' },
+            { type: 'data', id: 'malkanity', label: 'M-Alkanity (<1300)' },
+            { type: 'data', id: 'oalkanity', label: 'O-Alkanity (>2.5x silica)' },
+            { type: 'data', id: 'thardness', label: 'T-Hardness' },
+            { type: 'data', id: 'silica', label: 'Silica / SiO2 (<125)' },
+            { type: 'data', id: 'phospate', label: 'Phospate / PO4 (30 - 70)' },
+            { type: 'data', id: 'sulfite', label: 'Sulfite / SO3 (30 - 70)' },
+            { type: 'data', id: 'chloride', label: 'Chloride' }
+        ];
+
+        // Compute monthly totals for each parameter
+        const totalSum = {};
+        const totalCount = {};
+
+        daysArray.forEach(d => {
+            const dayStr = String(d).padStart(2, '0');
+            const fullDate = month + '-' + dayStr;
+            const dayObj = boilerAverages[fullDate];
+            if (dayObj) {
+                params.forEach(p => {
+                    if (p.type === 'data') {
+                        const val = dayObj[p.id];
+                        if (val !== undefined && val !== null && val !== '-' && !isNaN(val)) {
+                            totalSum[p.id] = (totalSum[p.id] || 0) + parseFloat(val);
+                            totalCount[p.id] = (totalCount[p.id] || 0) + 1;
+                        }
+                    }
+                });
+            }
+        });
+
+        let tbodyHtml = '';
+        params.forEach(row => {
+            if (row.type === 'header') {
+                tbodyHtml += '<tr style="background-color: ' + row.bg + '; font-weight: bold; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1;">' +
+                    '<td style="text-align: left; padding: 7px 12px; color: ' + row.color + '; font-weight: 700; position: sticky; left: 0; background-color: ' + row.bg + '; z-index: 1; border-left: 4px solid ' + row.border + '; border-right: 2px solid #cbd5e1;">' + row.title + '</td>' +
+                    '<td colspan="' + daysInMonth + '" style="background-color: ' + row.bg + ';"></td>' +
+                    '<td style="background-color: ' + row.bg + '; border-left: 2px solid #cbd5e1;"></td>' +
+                    '</tr>';
+            } else if (row.type === 'data') {
+                const avgVal = totalCount[row.id] > 0 ? (totalSum[row.id] / totalCount[row.id]).toFixed(row.isPh ? 2 : 1) : '-';
+
+                tbodyHtml += '<tr style="transition: background 0.15s ease;">';
+                tbodyHtml += '<td style="text-align: left; padding: 5px 12px 5px 30px; font-weight: 500; position: sticky; left: 0; background-color: #ffffff; z-index: 1; border-right: 2px solid #e2e8f0; border-bottom: 1px solid #f1f5f9; color: #334155;">' + row.label + '</td>';
+                daysArray.forEach(d => {
+                    const dayStr = String(d).padStart(2, '0');
+                    const fullDate = month + '-' + dayStr;
+                    const dayObj = boilerAverages[fullDate];
+                    let val = dayObj && dayObj[row.id] !== undefined && dayObj[row.id] !== null && dayObj[row.id] !== '' ? dayObj[row.id] : '-';
+                    if (val !== '-' && !isNaN(val)) {
+                        val = parseFloat(val).toFixed(row.isPh ? 2 : 1);
+                    }
+                    const isMuted = val === '-';
+                    const textColor = isMuted ? '#94a3b8' : '#1e293b';
+                    tbodyHtml += '<td style="text-align: center; padding: 5px 2px; font-size: 0.78rem; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; color: ' + textColor + ';">' + val + '</td>';
+                });
+                tbodyHtml += '<td style="text-align: center; padding: 5px 4px; font-size: 0.8rem; font-weight: 700; color: #166534; background-color: #f0fdf4; border-left: 2px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">' + avgVal + '</td>';
+                tbodyHtml += '</tr>';
+            }
+        });
+
+        tbody.innerHTML = tbodyHtml;
+
+    } catch (err) {
+        console.error('Error loading Water Boiler Table:', err);
+        if (tbody) tbody.innerHTML = '<tr><td colspan="35" style="text-align: center; color: red; padding: 25px;">Gagal memuat data: ' + err.message + '</td></tr>';
+    }
+};
+
 window.loadDashboardExtraData = async function(dateOverride) {
     let date = dateOverride || document.getElementById('dash-date')?.value;
     if(!date) {
@@ -4015,10 +4317,6 @@ window.loadDashboardExtraData = async function(dateOverride) {
         date = yyyy + '-' + mm + '-' + dd;
     }
     
-    let mill = window.currentUser && window.currentUser.estate && window.currentUser.estate !== 'Semua Estate (Khusus Admin)' 
-               ? window.currentUser.estate 
-               : 'Bunga Tanjung Mill';
-               
     const dashMonth = date.substring(0, 7);
 
     // Call the 3 FFB Cards Renderers
@@ -4036,101 +4334,12 @@ window.loadDashboardExtraData = async function(dateOverride) {
     if (typeof window.loadMonthlyLiquidMonitoring === 'function') {
         window.loadMonthlyLiquidMonitoring(dashMonth);
     }
-    
-    try {
-        let resWMonth = await fetch('/api/water/dashboard/month/' + encodeURIComponent(mill) + '/' + encodeURIComponent(dashMonth));
-        let monthlyWaterData = resWMonth.ok ? await resWMonth.json() : { water_analysis: [], boiler_averages: {} };
-        
-        const parts = date.split('-');
-        const daysInMonth = new Date(parts[0], parts[1], 0).getDate();
-        const daysArray = Array.from({length: daysInMonth}, (_, i) => i + 1);
 
-        // 1. Fill Water Sebelum Proses
-        let dashWaterSebelumTable = document.getElementById('dash-table-water-sebelum');
-        if (dashWaterSebelumTable) {
-            let thead = dashWaterSebelumTable.querySelector('thead');
-            let tbody = dashWaterSebelumTable.querySelector('tbody');
-
-            let headRow = '<tr><th style="min-width: 200px; position: sticky; left: 0; background-color: #fff; z-index: 1;">PARAMETER</th>';
-            daysArray.forEach(d => {
-                headRow += '<th style="min-width: 45px; text-align: center;">' + d + '</th>';
-            });
-            headRow += '</tr>';
-            thead.innerHTML = headRow;
-
-            const fieldsSebelum = [
-                { id: 'raw_tds', label: 'Raw Water - TDS' },
-                { id: 'raw_ph', label: 'Raw Water - PH' },
-                { id: 'raw_turbidity', label: 'Raw Water - Turbidity' },
-                { id: 'raw_thardness', label: 'Raw Water - Total Hardness' },
-                { id: 'clarified_ph', label: 'Clarified Water - PH' },
-                { id: 'clarified_turbidity', label: 'Clarified Water - Turbidity' },
-                { id: 'clarified_thardness', label: 'Clarified Water - Total Hardness' },
-                { id: 'sand_filter_ph', label: 'Sand Filter - PH' },
-                { id: 'sand_filter_turbidity', label: 'Sand Filter - Turbidity' },
-                { id: 'sand_filter_thardness', label: 'Sand Filter - Total Hardness' },
-                { id: 'feed_water_ph', label: 'Feed Water - PH' },
-                { id: 'feed_water_tds', label: 'Feed Water - TDS' },
-                { id: 'feed_water_thardness', label: 'Feed Water - Total Hardness' }
-            ];
-
-            let bodyHtml = '';
-            fieldsSebelum.forEach(f => {
-                bodyHtml += '<tr><td style="position: sticky; left: 0; background-color: #fff; z-index: 1;">' + f.label + '</td>';
-                daysArray.forEach(d => {
-                    const dayStr = String(d).padStart(2, '0');
-                    const fullDate = dashMonth + '-' + dayStr;
-                    const dayObj = (monthlyWaterData.water_analysis || []).find(w => w.date === fullDate);
-                    const val = dayObj && dayObj[f.id] !== null && dayObj[f.id] !== undefined ? dayObj[f.id] : '-';
-                    bodyHtml += '<td style="text-align: center;">' + val + '</td>';
-                });
-                bodyHtml += '</tr>';
-            });
-            tbody.innerHTML = bodyHtml;
-        }
-
-        // 2. Fill Water Boiler Rata-rata (Monthly)
-        let dashWaterBoilerTable = document.getElementById('dash-table-water-boiler');
-        if (dashWaterBoilerTable) {
-            let thead = dashWaterBoilerTable.querySelector('thead');
-            let tbody = dashWaterBoilerTable.querySelector('tbody');
-
-            let headRow = '<tr><th style="min-width: 200px; position: sticky; left: 0; background-color: #fff; z-index: 1;">PARAMETER</th>';
-            daysArray.forEach(d => {
-                headRow += '<th style="min-width: 45px; text-align: center;">' + d + '</th>';
-            });
-            headRow += '</tr>';
-            thead.innerHTML = headRow;
-
-            const fieldsBoiler = [
-                { id: 'ph', label: 'PH' },
-                { id: 'tds', label: 'TDS' },
-                { id: 'palkanity', label: 'P-Alkanity' },
-                { id: 'malkanity', label: 'M-Alkanity' },
-                { id: 'oalkanity', label: 'O-Alkanity' },
-                { id: 'thardness', label: 'T-Hardness' },
-                { id: 'silica', label: 'Silica' },
-                { id: 'phospate', label: 'Phospate' },
-                { id: 'sulfite', label: 'Sulfite' },
-                { id: 'chloride', label: 'Chloride' }
-            ];
-
-            let bodyHtml = '';
-            fieldsBoiler.forEach(f => {
-                bodyHtml += '<tr><td style="position: sticky; left: 0; background-color: #fff; z-index: 1;">' + f.label + '</td>';
-                daysArray.forEach(d => {
-                    const dayStr = String(d).padStart(2, '0');
-                    const fullDate = dashMonth + '-' + dayStr;
-                    const dayAvgObj = monthlyWaterData.boiler_averages ? monthlyWaterData.boiler_averages[fullDate] : null;
-                    const val = dayAvgObj && dayAvgObj[f.id] !== undefined ? dayAvgObj[f.id] : '-';
-                    bodyHtml += '<td style="text-align: center;">' + val + '</td>';
-                });
-                bodyHtml += '</tr>';
-            });
-            tbody.innerHTML = bodyHtml;
-        }
-
-    } catch (e) {
-        console.error('Error in loadDashboardExtraData:', e);
+    // Call Water Tables
+    if (typeof window.loadWaterSebelumTable === 'function') {
+        window.loadWaterSebelumTable(dashMonth);
+    }
+    if (typeof window.loadWaterBoilerTable === 'function') {
+        window.loadWaterBoilerTable(dashMonth);
     }
 };
