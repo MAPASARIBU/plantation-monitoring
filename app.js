@@ -460,7 +460,7 @@ Object.assign(views, {
     </div>
 </div>
 
-<div class="glass-card" id="ffb-received-card" style="margin-top: 20px; display: none;">
+<div class="glass-card" id="ffb-received-card" style="margin-top: 20px;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
         <h3 style="margin: 0;">FFB Received S/D Jam <span id="ffb-received-time-label">18:00</span> by Estates</h3>
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
@@ -499,7 +499,7 @@ Object.assign(views, {
     </div>
 </div>
 
-<div class="glass-card" id="dash-ffb-crop-card" style="margin-top: 20px; display: none;">
+<div class="glass-card" id="dash-ffb-crop-card" style="margin-top: 20px;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
         <h3 style="margin: 0;">Daily FFB Crop Quality</h3>
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
@@ -577,7 +577,7 @@ Object.assign(views, {
     </div>
 </div>
 
-<div class="glass-card" id="dash-ffb-fruit-loose-card" style="margin-top: 20px; display: none;">
+<div class="glass-card" id="dash-ffb-fruit-loose-card" style="margin-top: 20px;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
         <h3 style="margin: 0;">Daily FFB Quality Fruit Loose Analysis</h3>
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
@@ -646,10 +646,10 @@ Object.assign(views, {
 <div id="dashboard-mill-sections">
 <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; border-top: 2px solid #e2e8f0; padding-top: 20px;">
     <div style="display: flex; flex-direction: column;">
-        <h2 style="margin: 0; font-size: 1.35rem; color: #1e293b; font-weight: 700;">Processing & Water Analysis</h2>
-        <span id="dash-extra-date-label" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; margin-top: 2px;">Monitoring Hasil Inputan Report Bulanan</span>
+        <h2 style="margin: 0;">Processing & Water Analysis</h2>
+        <span id="dash-extra-date-label" style="font-size: 0.9em; color: var(--text-secondary); font-weight: bold;">Data Hari Ini</span>
     </div>
-    <button class="btn btn-primary btn-sm" onclick="document.getElementById('dashboard-extra-date-modal').style.display='flex';" style="border-radius: 6px; font-weight: 600;"><i class="fa-solid fa-clock-rotate-left"></i> Historical Pop Up</button>
+    <button class="btn btn-primary btn-sm" onclick="document.getElementById('dashboard-extra-date-modal').style.display='flex';"><i class="fa-solid fa-clock-rotate-left"></i> Historical Pop Up</button>
 </div>
 
 <!-- Monthly Liquid Monitoring Card -->
@@ -671,28 +671,27 @@ Object.assign(views, {
         <table class="data-table" id="dash-table-monthly-liquid" style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem;">
             <thead></thead>
             <tbody>
-                <tr><td colspan="34" style="text-align: center; padding: 25px; color: #64748b; font-style: italic;">Pilih bulan dan klik Tampilkan</td></tr>
+                <tr><td colspan="35" style="text-align: center; padding: 25px; color: #64748b; font-style: italic;">Pilih bulan dan klik Tampilkan</td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
-<!-- Water Analysis Section Below Monthly Liquid Monitoring -->
 <div class="dashboard-grid" style="grid-template-columns: minmax(0, 1fr); gap: 15px; margin-top: 20px;">
-    <div class="glass-card" style="overflow: hidden; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff;">
-        <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.05rem; font-weight: 700; color: #1e293b;"><i class="fa-solid fa-water" style="color: #0284c7; margin-right: 8px;"></i>1.1 Analisa Air Sebelum Proses</h3>
-        <div class="table-responsive" style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
-            <table class="data-table" id="dash-table-water-sebelum" style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem;">
+    <div class="glass-card" style="overflow: hidden;">
+        <h3>1.1 Analisa Air Sebelum Proses</h3>
+        <div class="table-responsive" style="overflow-x: auto;">
+            <table class="data-table" id="dash-table-water-sebelum">
                 <thead></thead>
                 <tbody></tbody>
             </table>
         </div>
     </div>
 
-    <div class="glass-card" style="overflow: hidden; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff;">
-        <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.05rem; font-weight: 700; color: #1e293b;"><i class="fa-solid fa-fire-burner" style="color: #ea580c; margin-right: 8px;"></i>1.2 Analisa Air Boiler (Rata-rata)</h3>
-        <div class="table-responsive" style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
-            <table class="data-table" id="dash-table-water-boiler" style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem;">
+    <div class="glass-card" style="overflow: hidden;">
+        <h3>1.2 Analisa Air Boiler (Rata-rata)</h3>
+        <div class="table-responsive" style="overflow-x: auto;">
+            <table class="data-table" id="dash-table-water-boiler">
                 <thead></thead>
                 <tbody></tbody>
             </table>
@@ -700,6 +699,8 @@ Object.assign(views, {
     </div>
 </div>
 </div> <!-- Close dashboard-mill-sections -->
+
+
 
 <!-- Dashboard Extra Date Picker Modal -->
 <div class="modal-overlay" id="dashboard-extra-date-modal" style="display:none; z-index: 1000;">
@@ -716,7 +717,7 @@ Object.assign(views, {
 </div>
 
             
-    `,
+`,
     vehicle: `
         <div id="vehicle-module-layout" class="animate-fade-in module-layout" style="grid-template-columns: 1fr; padding-top: 10px;">
             <div id="modal-vehicle-input" class="modal-overlay" style="display:none;"><div class="modal-content animate-fade-in"><div class="modal-header"><h3>Input Pergerakan</h3><button type="button" class="modal-close" onclick="document.getElementById('modal-vehicle-input').style.display='none';">&times;</button></div>
@@ -7167,6 +7168,9 @@ const navigate = (viewId) => {
     
     if(viewId === 'dashboard') {
         initDashboardChart();
+        if(window.renderFfbReceivedChart) window.renderFfbReceivedChart();
+        if(window.renderDashFfbCropQuality) window.renderDashFfbCropQuality();
+        if(window.renderDashFfbFruitLooseAnalysis) window.renderDashFfbFruitLooseAnalysis();
         if(window.loadDashboardExtraData) window.loadDashboardExtraData();
         
         // Hide mill sections for estate users
@@ -18967,7 +18971,7 @@ window.renderDashFfbCropQuality = async function() {
     const allowedRoles = [
         'Senior Field Manager', 'Manager', 'Askep', 'Assistant', 
         'Krani Divisi', 'Manager Mill', 'Manager MIll', 
-        'supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Admin', 'Administrator'
+        'supervisor Mill', 'Supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Analis', 'Grading', 'Office Assistant Mill', 'Office Assistant (OAA)', 'Admin', 'Administrator'
     ];
     if (!allowedRoles.includes(window.currentUser.role) && !allowedRoles.includes(window.currentUser.role.trim())) {
         cardEl.style.display = 'none';
@@ -20261,6 +20265,17 @@ window.loadDashboardExtraData = async function(dateOverride) {
                : 'Bunga Tanjung Mill';
                
     const dashMonth = date.substring(0, 7);
+
+    // Call the 3 FFB Cards Renderers
+    if (typeof window.renderFfbReceivedChart === 'function') {
+        window.renderFfbReceivedChart();
+    }
+    if (typeof window.renderDashFfbCropQuality === 'function') {
+        window.renderDashFfbCropQuality();
+    }
+    if (typeof window.renderDashFfbFruitLooseAnalysis === 'function') {
+        window.renderDashFfbFruitLooseAnalysis();
+    }
 
     // Call Monthly Liquid Monitoring
     if (typeof window.loadMonthlyLiquidMonitoring === 'function') {
