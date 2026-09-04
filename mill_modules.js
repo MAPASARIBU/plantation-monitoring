@@ -5091,7 +5091,6 @@ window.initFFQDetailFilters = function() {
 
     const today = window.getLocalDate();
     if (startInput && !startInput.value) {
-        // First day of current month
         startInput.value = today.substring(0, 7) + '-01';
     }
     if (endInput && !endInput.value) {
@@ -5128,7 +5127,6 @@ window.loadFFQDetailData = async function() {
     if (tbody) tbody.innerHTML = '<tr><td colspan="12" style="padding: 20px; color: #64748b; font-style: italic;">Loading data Detail FFQ...</td></tr>';
 
     try {
-        // Parallel fetch crop quality, tonase, and LF received
         const [cropRes, tonaseRes, lfRes] = await Promise.all([
             fetch(`/api/ffb_crop_quality/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`),
             fetch(`/api/tonase/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`),
@@ -5139,7 +5137,6 @@ window.loadFFQDetailData = async function() {
         const rawTonase = tonaseRes.ok ? await tonaseRes.json() : [];
         const rawLf = lfRes.ok ? await lfRes.json() : [];
 
-        // Abbreviation map
         let abbrMap = {};
         let activeFfbEstates = new Set();
         if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
@@ -5157,7 +5154,6 @@ window.loadFFQDetailData = async function() {
         }
         const getAbbr = (estName) => abbrMap[estName] || (estName ? estName.replace(' Estate', 'E') : '-');
 
-        // Aggregate Tonase by (date, estate) in Ton
         const tonaseMap = {};
         if (Array.isArray(rawTonase)) {
             rawTonase.forEach(r => {
@@ -5167,7 +5163,6 @@ window.loadFFQDetailData = async function() {
             });
         }
 
-        // Aggregate LF by (date, estate)
         const lfMap = {};
         if (Array.isArray(rawLf)) {
             rawLf.forEach(r => {
@@ -5179,7 +5174,6 @@ window.loadFFQDetailData = async function() {
             });
         }
 
-        // Aggregate Crop Quality by (date, estate)
         const cropMap = {};
         if (Array.isArray(rawCrop)) {
             rawCrop.forEach(r => {
@@ -5200,7 +5194,6 @@ window.loadFFQDetailData = async function() {
             });
         }
 
-        // Collect all distinct (date, estate) keys
         const allKeys = new Set([
             ...Object.keys(cropMap),
             ...Object.keys(tonaseMap),
@@ -5214,12 +5207,9 @@ window.loadFFQDetailData = async function() {
             const est = parts.slice(1).join('_');
             if (!d || !est) return;
 
-            // Apply estate filter
             if (selectedEstate !== 'ALL' && est !== selectedEstate) return;
 
-            // Only show active FFB estates if known
             if (activeFfbEstates.size > 0 && !activeFfbEstates.has(est) && selectedEstate === 'ALL') {
-                // allow if data exists in cropMap or tonaseMap
                 if (!cropMap[k] && !tonaseMap[k]) return;
             }
 
@@ -5240,7 +5230,6 @@ window.loadFFQDetailData = async function() {
             const ffbTonForLf = ffbTon > 0 ? ffbTon : (lfData.ffb_ton || 0);
             const p_lf = ffbTonForLf > 0 ? ((lfTon / ffbTonForLf) * 100) : 0;
 
-            // Ignore rows that have zero tonase AND zero crop data
             if (ffbTon <= 0 && totJ <= 0 && lfTon <= 0) return;
 
             rowItems.push({
@@ -5261,7 +5250,6 @@ window.loadFFQDetailData = async function() {
             });
         });
 
-        // Sort by Date ASC, Estate ASC
         rowItems.sort((a, b) => {
             if (a.date !== b.date) return a.date.localeCompare(b.date);
             return a.estate.localeCompare(b.estate);
@@ -5285,7 +5273,7 @@ window.loadFFQDetailData = async function() {
             return;
         }
 
-        let sumWeight = 0;
+        let sumGradingWeight = 0;
         let sumFfbTon = 0;
         let sumLfTon = 0;
         let sumUnripeW = 0;
@@ -5299,45 +5287,48 @@ window.loadFFQDetailData = async function() {
         rowItems.forEach((r, idx) => {
             const tr = document.createElement('tr');
             
-            // Weight is FFB ton if available, otherwise total janjang / 100
-            const w = r.ffbTon > 0 ? r.ffbTon : (r.totJ > 0 ? r.totJ : 1);
-            sumWeight += w;
+            // Total FFB & LF includes ALL rows (even if no grading)
             sumFfbTon += r.ffbTon;
             sumLfTon += r.lfTon;
 
-            sumUnripeW += r.unripe * w;
-            sumUnderW += r.under * w;
-            sumRipeW += r.ripe * w;
-            sumOverW += r.over * w;
-            sumEmptyW += r.empty * w;
-            sumLongW += r.long * w;
-            sumRatW += r.rat * w;
+            // Grading parameters ONLY include rows with actual grading samples (r.totJ > 0)
+            if (r.totJ > 0) {
+                const wGrading = r.ffbTon > 0 ? r.ffbTon : (r.totJ > 0 ? (r.totJ / 100) : 1);
+                sumGradingWeight += wGrading;
+                sumUnripeW += r.unripe * wGrading;
+                sumUnderW += r.under * wGrading;
+                sumRipeW += r.ripe * wGrading;
+                sumOverW += r.over * wGrading;
+                sumEmptyW += r.empty * wGrading;
+                sumLongW += r.long * wGrading;
+                sumRatW += r.rat * wGrading;
+            }
 
             tr.innerHTML = `
                 <td>${idx + 1}</td>
                 <td style="font-weight: 500;">${r.date}</td>
                 <td style="text-align: left; font-weight: 600;">${r.estate} <span style="font-size:0.75rem; color:#64748b;">(${r.abbr})</span></td>
                 <td style="font-weight: 600;">${r.ffbTon.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                <td style="${r.unripe > 0 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.unripe.toFixed(2)}</td>
-                <td style="${r.under > 3 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.under.toFixed(2)}</td>
-                <td style="${r.ripe < 90 && r.totJ > 0 ? 'color:#ef4444; font-weight:bold;' : (r.ripe >= 90 ? 'color:#10b981; font-weight:bold;' : '')}">${r.ripe.toFixed(2)}</td>
-                <td style="${r.over > 7 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.over.toFixed(2)}</td>
-                <td style="${r.empty > 0 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.empty.toFixed(2)}</td>
-                <td style="${r.long >= 2 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.long.toFixed(2)}</td>
+                <td style="${r.totJ > 0 && r.unripe > 0 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.unripe.toFixed(2)}</td>
+                <td style="${r.totJ > 0 && r.under > 3 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.under.toFixed(2)}</td>
+                <td style="${r.totJ > 0 && r.ripe < 90 ? 'color:#ef4444; font-weight:bold;' : (r.totJ > 0 && r.ripe >= 90 ? 'color:#10b981; font-weight:bold;' : '')}">${r.ripe.toFixed(2)}</td>
+                <td style="${r.totJ > 0 && r.over > 7 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.over.toFixed(2)}</td>
+                <td style="${r.totJ > 0 && r.empty > 0 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.empty.toFixed(2)}</td>
+                <td style="${r.totJ > 0 && r.long >= 2 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.long.toFixed(2)}</td>
                 <td>${r.rat.toFixed(2)}</td>
                 <td style="font-weight: 500;">${r.lf.toFixed(2)}</td>
             `;
             tbody.appendChild(tr);
         });
 
-        // Compute Weighted Averages
-        const avgUnripe = sumWeight > 0 ? (sumUnripeW / sumWeight) : 0;
-        const avgUnder = sumWeight > 0 ? (sumUnderW / sumWeight) : 0;
-        const avgRipe = sumWeight > 0 ? (sumRipeW / sumWeight) : 0;
-        const avgOver = sumWeight > 0 ? (sumOverW / sumWeight) : 0;
-        const avgEmpty = sumWeight > 0 ? (sumEmptyW / sumWeight) : 0;
-        const avgLong = sumWeight > 0 ? (sumLongW / sumWeight) : 0;
-        const avgRat = sumWeight > 0 ? (sumRatW / sumWeight) : 0;
+        // Compute Weighted Averages using sumGradingWeight for grading, and sumFfbTon for LF
+        const avgUnripe = sumGradingWeight > 0 ? (sumUnripeW / sumGradingWeight) : 0;
+        const avgUnder = sumGradingWeight > 0 ? (sumUnderW / sumGradingWeight) : 0;
+        const avgRipe = sumGradingWeight > 0 ? (sumRipeW / sumGradingWeight) : 0;
+        const avgOver = sumGradingWeight > 0 ? (sumOverW / sumGradingWeight) : 0;
+        const avgEmpty = sumGradingWeight > 0 ? (sumEmptyW / sumGradingWeight) : 0;
+        const avgLong = sumGradingWeight > 0 ? (sumLongW / sumGradingWeight) : 0;
+        const avgRat = sumGradingWeight > 0 ? (sumRatW / sumGradingWeight) : 0;
         const avgLf = sumFfbTon > 0 ? ((sumLfTon / sumFfbTon) * 100) : 0;
 
         document.getElementById('ffqd-tot-ffb').innerText = sumFfbTon.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
