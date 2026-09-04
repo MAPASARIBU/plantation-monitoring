@@ -1490,15 +1490,15 @@ views.ffb_quality = `
             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 6px;">
                     <label style="font-size: 0.8rem; font-weight: 600; color: #64748b; margin: 0;">Dari:</label>
-                    <input type="date" id="fq-detail-start-date" class="form-control" style="width: auto; padding: 5px 10px;">
+                    <input type="date" id="fq-detail-start-date" class="form-control" style="width: auto; padding: 5px 10px;" onchange="window.loadFFQDetailData()">
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px;">
                     <label style="font-size: 0.8rem; font-weight: 600; color: #64748b; margin: 0;">Hingga:</label>
-                    <input type="date" id="fq-detail-end-date" class="form-control" style="width: auto; padding: 5px 10px;">
+                    <input type="date" id="fq-detail-end-date" class="form-control" style="width: auto; padding: 5px 10px;" onchange="window.loadFFQDetailData()">
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px;">
                     <label style="font-size: 0.8rem; font-weight: 600; color: #64748b; margin: 0;">Estate:</label>
-                    <select id="fq-detail-estate-filter" class="form-control" style="width: auto; min-width: 170px; padding: 5px 10px;">
+                    <select id="fq-detail-estate-filter" class="form-control" style="width: auto; min-width: 180px; padding: 5px 10px;" onchange="window.loadFFQDetailData()">
                         <option value="ALL">Semua Estate (FFB)</option>
                     </select>
                 </div>
@@ -5098,14 +5098,37 @@ window.initFFQDetailFilters = function() {
     }
 
     if (estateSelect) {
-        let opts = '<option value="ALL">Semua Estate (FFB)</option>';
-        if (typeof masterData !== 'undefined' && masterData.supply_chain) {
-            masterData.supply_chain.filter(s => s.is_ffb !== false).forEach(s => {
-                const abbr = s.abbr || s.estate;
-                opts += `<option value="${s.estate}">${s.estate} (${abbr})</option>`;
-            });
+        const curVal = estateSelect.value;
+        // Only rebuild options if not populated yet
+        if (estateSelect.options.length <= 1) {
+            let opts = '<option value="ALL">Semua Estate (FFB)</option>';
+            let abbrMap = {};
+            if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
+                masterData.supply_chain_list.forEach(item => {
+                    abbrMap[item.name] = item.abbr;
+                });
+            }
+
+            let scList = [];
+            if (typeof masterData !== 'undefined' && masterData.supply_chain) {
+                scList = masterData.supply_chain.filter(s => s.is_ffb !== false);
+            }
+            if (scList.length > 0) {
+                scList.forEach(s => {
+                    const est = s.estate;
+                    const abbr = s.abbr || abbrMap[est] || (est ? est.replace(' Estate', 'E') : '');
+                    opts += `<option value="${est}">${est}${abbr ? ' (' + abbr + ')' : ''}</option>`;
+                });
+            } else if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
+                masterData.supply_chain_list.forEach(s => {
+                    opts += `<option value="${s.name}">${s.name} (${s.abbr})</option>`;
+                });
+            }
+            estateSelect.innerHTML = opts;
+            if (curVal && curVal !== 'ALL') {
+                estateSelect.value = curVal;
+            }
         }
-        estateSelect.innerHTML = opts;
     }
 };
 
@@ -5116,8 +5139,8 @@ window.loadFFQDetailData = async function() {
     const endInput = document.getElementById('fq-detail-end-date');
     const estateSelect = document.getElementById('fq-detail-estate-filter');
 
-    const startDate = startInput ? startInput.value : window.getLocalDate();
-    const endDate = endInput ? endInput.value : startDate;
+    const startDate = startInput && startInput.value ? startInput.value : window.getLocalDate();
+    const endDate = endInput && endInput.value ? endInput.value : startDate;
     const selectedEstate = estateSelect ? estateSelect.value : 'ALL';
 
     let mill = window.currentUser ? window.currentUser.estate : null; 
@@ -5207,10 +5230,16 @@ window.loadFFQDetailData = async function() {
             const est = parts.slice(1).join('_');
             if (!d || !est) return;
 
-            if (selectedEstate !== 'ALL' && est !== selectedEstate) return;
+            // Date filtering
+            if (d < startDate || d > endDate) return;
 
-            if (activeFfbEstates.size > 0 && !activeFfbEstates.has(est) && selectedEstate === 'ALL') {
-                if (!cropMap[k] && !tonaseMap[k]) return;
+            // Estate filtering
+            if (selectedEstate !== 'ALL') {
+                if (est.trim().toLowerCase() !== selectedEstate.trim().toLowerCase()) return;
+            } else {
+                if (activeFfbEstates.size > 0 && !activeFfbEstates.has(est)) {
+                    if (!cropMap[k] && !tonaseMap[k]) return;
+                }
             }
 
             const cData = cropMap[k] || { tot: 0, unripe: 0, under: 0, normal: 0, over: 0, empty: 0, long: 0, rat: 0 };
@@ -5250,6 +5279,7 @@ window.loadFFQDetailData = async function() {
             });
         });
 
+        // Sort by Date ASC, Estate ASC
         rowItems.sort((a, b) => {
             if (a.date !== b.date) return a.date.localeCompare(b.date);
             return a.estate.localeCompare(b.estate);
