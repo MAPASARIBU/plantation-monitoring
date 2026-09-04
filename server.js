@@ -750,21 +750,24 @@ app.put('/api/master/:type/:id', async (req, res) => {
 });
 
 app.post('/api/master/supply_chain/save', async (req, res) => {
+    const client = await pool.connect();
     try {
         const { mill, estates } = req.body;
-        await pool.query('BEGIN');
-        await pool.query('DELETE FROM master_supply_chain WHERE mill = $1', [mill]);
+        await client.query('BEGIN');
+        await client.query('DELETE FROM master_supply_chain WHERE mill = $1', [mill]);
         for (const est of estates) {
             let estName = typeof est === 'string' ? est : est.estate;
             let is_ffb = typeof est === 'string' ? true : (est.is_ffb !== undefined ? est.is_ffb : true);
             let is_efb = typeof est === 'string' ? true : (est.is_efb !== undefined ? est.is_efb : true);
-            await pool.query('INSERT INTO master_supply_chain (mill, estate, is_ffb, is_efb) VALUES ($1, $2, $3, $4)', [mill, estName, is_ffb, is_efb]);
+            await client.query('INSERT INTO master_supply_chain (mill, estate, is_ffb, is_efb) VALUES ($1, $2, $3, $4)', [mill, estName, is_ffb, is_efb]);
         }
-        await pool.query('COMMIT');
+        await client.query('COMMIT');
         res.json({ success: true });
     } catch (err) {
-        await pool.query('ROLLBACK');
+        await client.query('ROLLBACK');
         res.status(500).json({ error: err.message });
+    } finally {
+        client.release();
     }
 });
 
@@ -1623,17 +1626,16 @@ app.get('/api/ffb_quality/range/:mill/:startDate/:endDate', async (req, res) => 
 });
 
 app.post('/api/ffb_quality', async (req, res) => {
+    const client = await pool.connect();
     try {
         const { date, mill, entries } = req.body;
         
-        // We will just replace all entries for this date & mill for simplicity, or we can update by ID.
-        // Easiest is delete and insert.
-        await pool.query('BEGIN');
-        await pool.query('DELETE FROM ffb_quality WHERE mill=$1 AND date=$2', [mill, date]);
+        await client.query('BEGIN');
+        await client.query('DELETE FROM ffb_quality WHERE mill=$1 AND date=$2', [mill, date]);
         
         for (let item of entries) {
             if (item.estate) { // only save valid rows
-                await pool.query(`INSERT INTO ffb_quality (
+                await client.query(`INSERT INTO ffb_quality (
                     date, mill, estate, divisi, no_truck,
                     bg_gram, bd_gram, bd_percent,
                     t_segar_gram, t_segar_percent,
@@ -1647,11 +1649,13 @@ app.post('/api/ffb_quality', async (req, res) => {
                  item.sampah_gram, item.sampah_percent]);
             }
         }
-        await pool.query('COMMIT');
+        await client.query('COMMIT');
         res.json({ success: true });
     } catch (err) {
-        await pool.query('ROLLBACK');
+        await client.query('ROLLBACK');
         res.status(500).json({ error: err.message });
+    } finally {
+        client.release();
     }
 });
 
@@ -1703,15 +1707,16 @@ app.get('/api/ffb_crop_quality/range/:mill/:startDate/:endDate', async (req, res
 });
 
 app.post('/api/ffb_crop_quality', async (req, res) => {
+    const client = await pool.connect();
     try {
         const { date, mill, entries } = req.body;
         
-        await pool.query('BEGIN');
-        await pool.query('DELETE FROM ffb_crop_quality WHERE mill=$1 AND date=$2', [mill, date]);
+        await client.query('BEGIN');
+        await client.query('DELETE FROM ffb_crop_quality WHERE mill=$1 AND date=$2', [mill, date]);
         
         for (let item of entries) {
             if (item.estate) { // only save valid rows
-                await pool.query(`INSERT INTO ffb_crop_quality (
+                await client.query(`INSERT INTO ffb_crop_quality (
                     date, mill, estate, divisi, blok, no_truck,
                     unripe, underripe, normal_ripe, over_ripe, empty_bunch, long_stalk, rat_damage, total_janjang
                 ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`, 
@@ -1719,11 +1724,13 @@ app.post('/api/ffb_crop_quality', async (req, res) => {
                  item.unripe, item.underripe, item.normal_ripe, item.over_ripe, item.empty_bunch, item.long_stalk, item.rat_damage || 0, item.total_janjang]);
             }
         }
-        await pool.query('COMMIT');
+        await client.query('COMMIT');
         res.json({ success: true });
     } catch (err) {
-        await pool.query('ROLLBACK');
+        await client.query('ROLLBACK');
         res.status(500).json({ error: err.message });
+    } finally {
+        client.release();
     }
 });
 
