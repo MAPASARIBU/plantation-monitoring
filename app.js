@@ -322,16 +322,16 @@ const applyRBAC = () => {
         showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'master']);
     } else if (role === 'Office Assistant Mill') {
         showViews(['dashboard', 'vehicle', 'tonase', 'master', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
-    } else if (role === 'Supervisor Mill') {
-        showViews(['dashboard', 'vehicle', 'tonase', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
+    } else if (role === 'Supervisor Mill' || role === 'supervisor Mill') {
+        showViews(['dashboard', 'vehicle', 'tonase', 'master', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
     } else if (role === 'Mandor' || role === 'Krani Divisi') {
         showViews(['vehicle', 'pemupukan', 'upkeep', 'harvesting']);
     } else if (role === 'Krani Mill') {
-        showViews(['dashboard', 'tonase']);
-    } else if (role === 'Grading') {
-        showViews(['dashboard', 'ffb_quality']);
+        showViews(['dashboard', 'tonase', 'ffb_quality', 'processing', 'water']);
+    } else if (role === 'Grading' || role === 'Analis & Grading') {
+        showViews(['dashboard', 'vehicle', 'tonase', 'ffb_quality', 'processing', 'water', 'mill_dashboard']);
     } else if (role === 'Analis') {
-        showViews(['dashboard', 'processing', 'water']);
+        showViews(['dashboard', 'vehicle', 'tonase', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
     } else if (role === 'Supir') {
         showViews(['vehicle', 'harvesting']);
     } else if (role === 'Security' || role === 'Security Mill') {
@@ -7204,10 +7204,19 @@ const navigate = (viewId) => {
         if(window.renderDashFfbFruitLooseAnalysis) window.renderDashFfbFruitLooseAnalysis();
         if(window.loadDashboardExtraData) window.loadDashboardExtraData();
         
-        // Hide mill sections for estate users
-        if (currentUser && currentUser.estate && !currentUser.estate.toLowerCase().includes('mill') && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
-            const millSec = document.getElementById('dashboard-mill-sections');
-            if (millSec) millSec.style.display = 'none';
+        // Show mill sections for Mill users or Mill roles (Manager Mill, Supervisor Mill, Analis, Grading, etc.)
+        const millRoles = ['Manager Mill', 'Manager MIll', 'Supervisor Mill', 'supervisor Mill', 'Analis', 'Grading', 'Analis & Grading', 'Krani Mill', 'Office Assistant Mill', 'Admin', 'Administrator', 'Senior Field Manager'];
+        const isMillUser = (currentUser && currentUser.estate && currentUser.estate.toLowerCase().includes('mill')) || 
+                           (currentUser && currentUser.role && millRoles.some(r => r.toLowerCase().trim() === currentUser.role.toLowerCase().trim())) ||
+                           (currentUser && currentUser.estate === 'Semua Estate (Khusus Admin)');
+        
+        const millSec = document.getElementById('dashboard-mill-sections');
+        if (millSec) {
+            if (isMillUser) {
+                millSec.style.display = 'block';
+            } else {
+                millSec.style.display = 'none';
+            }
         }
     }
     if(viewId === 'vehicle') { 
@@ -19002,9 +19011,12 @@ window.renderDashFfbCropQuality = async function() {
     const allowedRoles = [
         'Senior Field Manager', 'Manager', 'Askep', 'Assistant', 
         'Krani Divisi', 'Manager Mill', 'Manager MIll', 
-        'supervisor Mill', 'Supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Analis', 'Grading', 'Office Assistant Mill', 'Office Assistant (OAA)', 'Admin', 'Administrator'
+        'supervisor Mill', 'Supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Analis', 'Grading', 
+        'Office Assistant Mill', 'Office Assistant (OAA)', 'Admin', 'Administrator'
     ];
-    if (!allowedRoles.includes(window.currentUser.role) && !allowedRoles.includes(window.currentUser.role.trim())) {
+    const userRole = (window.currentUser.role || '').toLowerCase().trim();
+    const isAllowed = allowedRoles.some(r => r.toLowerCase().trim() === userRole);
+    if (!isAllowed) {
         cardEl.style.display = 'none';
         return;
     }
@@ -19322,9 +19334,12 @@ window.renderDashFfbFruitLooseAnalysis = async function() {
     const allowedRoles = [
         'Senior Field Manager', 'Manager', 'Askep', 'Assistant', 
         'Krani Divisi', 'Manager Mill', 'Manager MIll', 
-        'supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Admin'
+        'supervisor Mill', 'Supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Analis', 'Grading', 
+        'Office Assistant Mill', 'Office Assistant (OAA)', 'Admin', 'Administrator'
     ];
-    if (!allowedRoles.includes(window.currentUser.role)) {
+    const userRole = (window.currentUser.role || '').toLowerCase().trim();
+    const isAllowed = allowedRoles.some(r => r.toLowerCase().trim() === userRole);
+    if (!isAllowed) {
         cardEl.style.display = 'none';
         return;
     }
@@ -19442,10 +19457,13 @@ window.renderFfbReceivedChart = async function() {
     const allowedRoles = [
         'Senior Field Manager', 'Manager', 'Askep', 'Assistant', 
         'Krani Divisi', 'Manager Mill', 'Manager MIll', 
-        'supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Admin'
+        'supervisor Mill', 'Supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Analis', 'Grading', 
+        'Office Assistant Mill', 'Office Assistant (OAA)', 'Admin', 'Administrator'
     ];
     
-    if (!allowedRoles.includes(window.currentUser.role)) {
+    const userRole = (window.currentUser.role || '').toLowerCase().trim();
+    const isAllowed = allowedRoles.some(r => r.toLowerCase().trim() === userRole);
+    if (!isAllowed) {
         cardEl.style.display = 'none';
         return;
     } else {
@@ -19656,15 +19674,12 @@ window.loadDashboardExtraData = async function(dateOverride) {
     }
     
     if (window.currentUser) {
-        const role = window.currentUser.role;
-        const allowedRoles = ['Manager', 'Assistant', 'Askep', 'Supervisor Mill', 'Senior Field Manager', 'Senior Manager Estate', 'Krani Mill', 'Analis', 'Grading', 'Manager Mill', 'Office Assistant Mill', 'Office Assistant (OAA)', 'Admin', 'Administrator'];
+        const role = (window.currentUser.role || '').toLowerCase().trim();
+        const allowedRoles = ['Manager', 'Assistant', 'Askep', 'Supervisor Mill', 'supervisor Mill', 'Senior Field Manager', 'Senior Manager Estate', 'Krani Mill', 'Analis', 'Grading', 'Analis & Grading', 'Manager Mill', 'Manager MIll', 'Office Assistant Mill', 'Office Assistant (OAA)', 'Admin', 'Administrator'];
+        const isAllowed = allowedRoles.some(r => r.toLowerCase().trim() === role);
         const card = document.getElementById('ffb-received-card');
         if (card) {
-            if (allowedRoles.includes(role)) {
-                card.style.display = 'block';
-            } else {
-                card.style.display = 'none';
-            }
+            card.style.display = isAllowed ? 'block' : 'none';
         }
     }
 
