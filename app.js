@@ -297,6 +297,7 @@ window.toggleEstateUI = (roleId, dropdownId, containerId, labelId) => {
 const applyRBAC = () => {
     if (!currentUser) return;
     const role = currentUser.role;
+    const cleanRole = (role || '').trim();
     const navItems = document.querySelectorAll('.nav-item');
     
     // Default hiding all
@@ -310,31 +311,31 @@ const applyRBAC = () => {
         });
     };
     
-    if (role === 'Admin') {
+    if (cleanRole === 'Admin' || cleanRole === 'Administrator') {
         showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'users', 'master', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
-    } else if (role === 'Senior Field Manager' || role === 'Manager') {
+    } else if (cleanRole === 'Senior Field Manager' || cleanRole === 'Manager') {
         showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'master']);
-    } else if (role === 'Estate Manager' || role === 'Asisten Kepala' || role === 'Division Manager' || role === 'Assistant') {
+    } else if (cleanRole === 'Estate Manager' || cleanRole === 'Asisten Kepala' || cleanRole === 'Division Manager' || cleanRole === 'Assistant') {
         showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting']);
-    } else if (role === 'Manager Mill') {
+    } else if (cleanRole === 'Manager Mill' || cleanRole === 'Manager MIll') {
         showViews(['dashboard', 'vehicle', 'tonase', 'master', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
-    } else if (role === 'Askep' || role === 'Office Assistant (OAA)') {
+    } else if (cleanRole === 'Askep' || cleanRole === 'Office Assistant (OAA)') {
         showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'master']);
-    } else if (role === 'Office Assistant Mill') {
+    } else if (cleanRole === 'Office Assistant Mill') {
         showViews(['dashboard', 'vehicle', 'tonase', 'master', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
-    } else if (role === 'Supervisor Mill' || role === 'supervisor Mill') {
+    } else if (cleanRole.toLowerCase() === 'supervisor mill') {
         showViews(['dashboard', 'vehicle', 'tonase', 'master', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
-    } else if (role === 'Mandor' || role === 'Krani Divisi') {
+    } else if (cleanRole === 'Mandor' || cleanRole === 'Krani Divisi') {
         showViews(['vehicle', 'pemupukan', 'upkeep', 'harvesting']);
-    } else if (role === 'Krani Mill') {
+    } else if (cleanRole === 'Krani Mill') {
         showViews(['dashboard', 'tonase', 'ffb_quality', 'processing', 'water']);
-    } else if (role === 'Grading' || role === 'Analis & Grading') {
-        showViews(['dashboard', 'vehicle', 'tonase', 'ffb_quality', 'processing', 'water', 'mill_dashboard']);
-    } else if (role === 'Analis') {
-        showViews(['dashboard', 'vehicle', 'tonase', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
-    } else if (role === 'Supir') {
+    } else if (cleanRole === 'Grading' || cleanRole === 'Analis & Grading') {
+        showViews(['dashboard', 'tonase', 'ffb_quality', 'processing', 'water', 'mill_dashboard']);
+    } else if (cleanRole === 'Analis') {
+        showViews(['dashboard', 'tonase', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
+    } else if (cleanRole === 'Supir') {
         showViews(['vehicle', 'harvesting']);
-    } else if (role === 'Security' || role === 'Security Mill') {
+    } else if (cleanRole === 'Security' || cleanRole === 'Security Mill') {
         showViews(['vehicle']);
     }
 };
