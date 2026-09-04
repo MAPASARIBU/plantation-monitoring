@@ -1625,7 +1625,114 @@ app.get('/api/ffb_quality/range/:mill/:startDate/:endDate', async (req, res) => 
     }
 });
 
+app.post('/api/ffb_quality/add', async (req, res) => {
+    try {
+        const { date, mill, estate, divisi, no_truck, bg_gram, bd_gram, bd_percent, t_segar_gram, t_segar_percent, busuk_gram, busuk_percent, sampah_gram, sampah_percent } = req.body;
+        const result = await pool.query(`INSERT INTO ffb_quality (
+            date, mill, estate, divisi, no_truck,
+            bg_gram, bd_gram, bd_percent,
+            t_segar_gram, t_segar_percent,
+            busuk_gram, busuk_percent,
+            sampah_gram, sampah_percent
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`,
+        [date, mill, estate, divisi || '', no_truck,
+         parseFloat(bg_gram) || 0, parseFloat(bd_gram) || 0, parseFloat(bd_percent) || 0,
+         parseFloat(t_segar_gram) || 0, parseFloat(t_segar_percent) || 0,
+         parseFloat(busuk_gram) || 0, parseFloat(busuk_percent) || 0,
+         parseFloat(sampah_gram) || 0, parseFloat(sampah_percent) || 0]);
+        res.json({ success: true, id: result.rows[0]?.id });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/ffb_quality/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { date, mill, estate, divisi, no_truck, bg_gram, bd_gram, bd_percent, t_segar_gram, t_segar_percent, busuk_gram, busuk_percent, sampah_gram, sampah_percent } = req.body;
+        await pool.query(`UPDATE ffb_quality SET
+            date = $1, estate = $2, divisi = $3, no_truck = $4,
+            bg_gram = $5, bd_gram = $6, bd_percent = $7,
+            t_segar_gram = $8, t_segar_percent = $9,
+            busuk_gram = $10, busuk_percent = $11,
+            sampah_gram = $12, sampah_percent = $13
+            WHERE id = $14`,
+        [date, estate, divisi || '', no_truck,
+         parseFloat(bg_gram) || 0, parseFloat(bd_gram) || 0, parseFloat(bd_percent) || 0,
+         parseFloat(t_segar_gram) || 0, parseFloat(t_segar_percent) || 0,
+         parseFloat(busuk_gram) || 0, parseFloat(busuk_percent) || 0,
+         parseFloat(sampah_gram) || 0, parseFloat(sampah_percent) || 0, id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/ffb_quality/update/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { date, mill, estate, divisi, no_truck, bg_gram, bd_gram, bd_percent, t_segar_gram, t_segar_percent, busuk_gram, busuk_percent, sampah_gram, sampah_percent } = req.body;
+        await pool.query(`UPDATE ffb_quality SET
+            date = $1, estate = $2, divisi = $3, no_truck = $4,
+            bg_gram = $5, bd_gram = $6, bd_percent = $7,
+            t_segar_gram = $8, t_segar_percent = $9,
+            busuk_gram = $10, busuk_percent = $11,
+            sampah_gram = $12, sampah_percent = $13
+            WHERE id = $14`,
+        [date, estate, divisi || '', no_truck,
+         parseFloat(bg_gram) || 0, parseFloat(bd_gram) || 0, parseFloat(bd_percent) || 0,
+         parseFloat(t_segar_gram) || 0, parseFloat(t_segar_percent) || 0,
+         parseFloat(busuk_gram) || 0, parseFloat(busuk_percent) || 0,
+         parseFloat(sampah_gram) || 0, parseFloat(sampah_percent) || 0, id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/ffb_quality/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query('DELETE FROM ffb_quality WHERE id = $1', [id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/ffb_quality/delete/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query('DELETE FROM ffb_quality WHERE id = $1', [id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/ffb_quality', async (req, res) => {
+    if (req.body && !req.body.entries && req.body.estate) {
+        // Single row insert fallback
+        try {
+            const item = req.body;
+            const result = await pool.query(`INSERT INTO ffb_quality (
+                date, mill, estate, divisi, no_truck,
+                bg_gram, bd_gram, bd_percent,
+                t_segar_gram, t_segar_percent,
+                busuk_gram, busuk_percent,
+                sampah_gram, sampah_percent
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`, 
+            [item.date, item.mill, item.estate, item.divisi || '', item.no_truck,
+             parseFloat(item.bg_gram) || 0, parseFloat(item.bd_gram) || 0, parseFloat(item.bd_percent) || 0,
+             parseFloat(item.t_segar_gram) || 0, parseFloat(item.t_segar_percent) || 0,
+             parseFloat(item.busuk_gram) || 0, parseFloat(item.busuk_percent) || 0,
+             parseFloat(item.sampah_gram) || 0, parseFloat(item.sampah_percent) || 0]);
+            return res.json({ success: true, id: result.rows[0]?.id });
+        } catch (err) {
+            return res.status(500).json({ error: err.message });
+        }
+    }
+
     const client = await pool.connect();
     try {
         const { date, mill, entries } = req.body;
@@ -1633,20 +1740,22 @@ app.post('/api/ffb_quality', async (req, res) => {
         await client.query('BEGIN');
         await client.query('DELETE FROM ffb_quality WHERE mill=$1 AND date=$2', [mill, date]);
         
-        for (let item of entries) {
-            if (item.estate) { // only save valid rows
-                await client.query(`INSERT INTO ffb_quality (
-                    date, mill, estate, divisi, no_truck,
-                    bg_gram, bd_gram, bd_percent,
-                    t_segar_gram, t_segar_percent,
-                    busuk_gram, busuk_percent,
-                    sampah_gram, sampah_percent
-                ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`, 
-                [date, mill, item.estate, item.divisi, item.no_truck,
-                 item.bg_gram, item.bd_gram, item.bd_percent,
-                 item.t_segar_gram, item.t_segar_percent,
-                 item.busuk_gram, item.busuk_percent,
-                 item.sampah_gram, item.sampah_percent]);
+        if (Array.isArray(entries)) {
+            for (let item of entries) {
+                if (item.estate) {
+                    await client.query(`INSERT INTO ffb_quality (
+                        date, mill, estate, divisi, no_truck,
+                        bg_gram, bd_gram, bd_percent,
+                        t_segar_gram, t_segar_percent,
+                        busuk_gram, busuk_percent,
+                        sampah_gram, sampah_percent
+                    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`, 
+                    [date, mill, item.estate, item.divisi, item.no_truck,
+                     item.bg_gram, item.bd_gram, item.bd_percent,
+                     item.t_segar_gram, item.t_segar_percent,
+                     item.busuk_gram, item.busuk_percent,
+                     item.sampah_gram, item.sampah_percent]);
+                }
             }
         }
         await client.query('COMMIT');
@@ -1706,7 +1815,94 @@ app.get('/api/ffb_crop_quality/range/:mill/:startDate/:endDate', async (req, res
     }
 });
 
+app.post('/api/ffb_crop_quality/add', async (req, res) => {
+    try {
+        const { date, mill, estate, divisi, blok, no_truck, unripe, underripe, normal_ripe, over_ripe, empty_bunch, long_stalk, rat_damage, total_janjang } = req.body;
+        const result = await pool.query(`INSERT INTO ffb_crop_quality (
+            date, mill, estate, divisi, blok, no_truck,
+            unripe, underripe, normal_ripe, over_ripe, empty_bunch, long_stalk, rat_damage, total_janjang
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`, 
+        [date, mill, estate, divisi || '', blok || '', no_truck,
+         parseInt(unripe) || 0, parseInt(underripe) || 0, parseInt(normal_ripe) || 0, parseInt(over_ripe) || 0, parseInt(empty_bunch) || 0, parseInt(long_stalk) || 0, parseInt(rat_damage) || 0, parseInt(total_janjang) || 0]);
+        res.json({ success: true, id: result.rows[0]?.id });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/ffb_crop_quality/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { date, estate, divisi, blok, no_truck, unripe, underripe, normal_ripe, over_ripe, empty_bunch, long_stalk, rat_damage, total_janjang } = req.body;
+        await pool.query(`UPDATE ffb_crop_quality SET
+            date = $1, estate = $2, divisi = $3, blok = $4, no_truck = $5,
+            unripe = $6, underripe = $7, normal_ripe = $8, over_ripe = $9,
+            empty_bunch = $10, long_stalk = $11, rat_damage = $12, total_janjang = $13
+            WHERE id = $14`,
+        [date, estate, divisi || '', blok || '', no_truck,
+         parseInt(unripe) || 0, parseInt(underripe) || 0, parseInt(normal_ripe) || 0, parseInt(over_ripe) || 0,
+         parseInt(empty_bunch) || 0, parseInt(long_stalk) || 0, parseInt(rat_damage) || 0, parseInt(total_janjang) || 0, id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/ffb_crop_quality/update/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { date, estate, divisi, blok, no_truck, unripe, underripe, normal_ripe, over_ripe, empty_bunch, long_stalk, rat_damage, total_janjang } = req.body;
+        await pool.query(`UPDATE ffb_crop_quality SET
+            date = $1, estate = $2, divisi = $3, blok = $4, no_truck = $5,
+            unripe = $6, underripe = $7, normal_ripe = $8, over_ripe = $9,
+            empty_bunch = $10, long_stalk = $11, rat_damage = $12, total_janjang = $13
+            WHERE id = $14`,
+        [date, estate, divisi || '', blok || '', no_truck,
+         parseInt(unripe) || 0, parseInt(underripe) || 0, parseInt(normal_ripe) || 0, parseInt(over_ripe) || 0,
+         parseInt(empty_bunch) || 0, parseInt(long_stalk) || 0, parseInt(rat_damage) || 0, parseInt(total_janjang) || 0, id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/ffb_crop_quality/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query('DELETE FROM ffb_crop_quality WHERE id = $1', [id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/ffb_crop_quality/delete/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query('DELETE FROM ffb_crop_quality WHERE id = $1', [id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/ffb_crop_quality', async (req, res) => {
+    if (req.body && !req.body.entries && req.body.estate) {
+        // Single row insert fallback
+        try {
+            const item = req.body;
+            const result = await pool.query(`INSERT INTO ffb_crop_quality (
+                date, mill, estate, divisi, blok, no_truck,
+                unripe, underripe, normal_ripe, over_ripe, empty_bunch, long_stalk, rat_damage, total_janjang
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`, 
+            [item.date, item.mill, item.estate, item.divisi || '', item.blok || '', item.no_truck,
+             parseInt(item.unripe) || 0, parseInt(item.underripe) || 0, parseInt(item.normal_ripe) || 0, parseInt(item.over_ripe) || 0, parseInt(item.empty_bunch) || 0, parseInt(item.long_stalk) || 0, parseInt(item.rat_damage) || 0, parseInt(item.total_janjang) || 0]);
+            return res.json({ success: true, id: result.rows[0]?.id });
+        } catch (err) {
+            return res.status(500).json({ error: err.message });
+        }
+    }
+
     const client = await pool.connect();
     try {
         const { date, mill, entries } = req.body;
@@ -1714,14 +1910,16 @@ app.post('/api/ffb_crop_quality', async (req, res) => {
         await client.query('BEGIN');
         await client.query('DELETE FROM ffb_crop_quality WHERE mill=$1 AND date=$2', [mill, date]);
         
-        for (let item of entries) {
-            if (item.estate) { // only save valid rows
-                await client.query(`INSERT INTO ffb_crop_quality (
-                    date, mill, estate, divisi, blok, no_truck,
-                    unripe, underripe, normal_ripe, over_ripe, empty_bunch, long_stalk, rat_damage, total_janjang
-                ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`, 
-                [date, mill, item.estate, item.divisi, item.blok, item.no_truck,
-                 item.unripe, item.underripe, item.normal_ripe, item.over_ripe, item.empty_bunch, item.long_stalk, item.rat_damage || 0, item.total_janjang]);
+        if (Array.isArray(entries)) {
+            for (let item of entries) {
+                if (item.estate) {
+                    await client.query(`INSERT INTO ffb_crop_quality (
+                        date, mill, estate, divisi, blok, no_truck,
+                        unripe, underripe, normal_ripe, over_ripe, empty_bunch, long_stalk, rat_damage, total_janjang
+                    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`, 
+                    [date, mill, item.estate, item.divisi, item.blok, item.no_truck,
+                     item.unripe, item.underripe, item.normal_ripe, item.over_ripe, item.empty_bunch, item.long_stalk, item.rat_damage || 0, item.total_janjang]);
+                }
             }
         }
         await client.query('COMMIT');

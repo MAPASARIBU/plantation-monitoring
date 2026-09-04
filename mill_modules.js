@@ -257,7 +257,7 @@ window.renderProcessingView = function() {
     window.loadProcessingData();
     
     // Disable inputs for read-only roles
-    const readOnlyRoles = ['Manager Mill', 'Supervisor Mill', 'Office Assistant Mill'];
+    const readOnlyRoles = ['Senior Field Manager'];
     if (window.currentUser && readOnlyRoles.includes(window.currentUser.role)) {
         document.querySelectorAll('#view-container .btn-success').forEach(el => el.style.display = 'none');
     }
@@ -1065,7 +1065,7 @@ window.renderWaterView = function() {
     window.loadWaterData();
     
     // Disable inputs for read-only roles
-    const readOnlyRoles = ['Manager Mill', 'Supervisor Mill', 'Office Assistant Mill'];
+    const readOnlyRoles = ['Senior Field Manager'];
     if (window.currentUser && readOnlyRoles.includes(window.currentUser.role)) {
         document.querySelectorAll('#view-container .btn-success').forEach(el => el.style.display = 'none');
     }
@@ -1633,13 +1633,13 @@ views.ffb_quality = `
 <div class="modal-overlay" id="modal-ffb-quality" style="display:none; z-index: 1000;">
     <div class="modal-content" style="width: 500px; max-width: 90%;">
         <div class="modal-header">
-            <h3 style="margin: 0;">Tambah input Loose Fruit Quality</h3>
+            <h3 style="margin: 0;" id="fq-modal-title">Tambah input Loose Fruit Quality</h3>
             <button type="button" class="modal-close" onclick="document.getElementById('modal-ffb-quality').style.display='none'">&times;</button>
         </div>
         <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
             <div class="form-group">
                 <label>Tanggal</label>
-                <input type="date" id="fq-modal-date" class="form-control">
+                <input type="hidden" id="fq-modal-edit-id"><input type="date" id="fq-modal-date" class="form-control">
             </div>
             <div class="form-group">
                 <label>Pilihan Supply Chain</label>
@@ -1675,7 +1675,7 @@ views.ffb_quality = `
                 <label>Sampah (gram) (Otomatis)</label>
                 <input type="number" step="any" id="fq-modal-sampah" class="form-control" readonly style="background-color: #f1f5f9;">
             </div>
-            <button class="btn btn-primary" onclick="submitFFBModal()" style="width:100%; justify-content:center; margin-top:10px;">Simpan</button>
+            <button class="btn btn-primary" id="fq-modal-submit-btn" onclick="submitFFBModal()" style="width:100%; justify-content:center; margin-top:10px;">Simpan</button>
         </div>
     </div>
 </div>
@@ -1684,13 +1684,13 @@ views.ffb_quality = `
 <div class="modal-overlay" id="modal-ffb-crop-quality" style="display:none; z-index: 1000;">
     <div class="modal-content" style="width: 500px; max-width: 90%;">
         <div class="modal-header">
-            <h3 style="margin: 0;">Tambah input FFB Crop Quality</h3>
+            <h3 style="margin: 0;" id="fqc-modal-title">Tambah input FFB Crop Quality</h3>
             <button type="button" class="modal-close" onclick="document.getElementById('modal-ffb-crop-quality').style.display='none'">&times;</button>
         </div>
         <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
             <div class="form-group">
                 <label>Tanggal</label>
-                <input type="date" id="fqc-modal-date" class="form-control">
+                <input type="hidden" id="fqc-modal-edit-id"><input type="date" id="fqc-modal-date" class="form-control">
             </div>
             <div class="form-group">
                 <label>Pilihan Supply Chain</label>
@@ -1746,7 +1746,7 @@ views.ffb_quality = `
                     <input type="number" id="fqc-modal-rat" class="form-control" placeholder="0" oninput="calculateFFBCropModal()">
                 </div>
             </div>
-            <button class="btn btn-primary" onclick="submitFFBCropModal()" style="width:100%; justify-content:center; margin-top:10px;">Simpan</button>
+            <button class="btn btn-primary" id="fqc-modal-submit-btn" onclick="submitFFBCropModal()" style="width:100%; justify-content:center; margin-top:10px;">Simpan</button>
         </div>
     </div>
 </div>
@@ -1815,7 +1815,7 @@ window.renderFFBQualityView = function() {
     window.switchFFBSubTab(window.activeFFBSubTab || 'loose');
 
     // Disable inputs for read-only roles
-    const readOnlyRoles = ['Manager Mill', 'Supervisor Mill', 'Office Assistant Mill'];
+    const readOnlyRoles = ['Senior Field Manager'];
     if (window.currentUser && readOnlyRoles.includes(window.currentUser.role)) {
         document.querySelectorAll('#view-container .btn-success').forEach(el => el.style.display = 'none');
     }
@@ -1832,27 +1832,38 @@ window.calculateFFBAverages = function() {
         totSampah += parseFloat(d.sampah_gram) || 0;
     });
 
-    document.getElementById('fq-tot-bg').innerText = totBg.toFixed(0);
-    document.getElementById('fq-tot-bd').innerText = totBd.toFixed(0);
-    document.getElementById('fq-tot-ts').innerText = totTs.toFixed(0);
-    document.getElementById('fq-tot-bb').innerText = totBb.toFixed(0);
-    document.getElementById('fq-tot-sampah').innerText = totSampah.toFixed(0);
+    const elTotBg = document.getElementById('fq-tot-bg');
+    if (elTotBg) elTotBg.innerText = totBg.toFixed(0);
+    const elTotBd = document.getElementById('fq-tot-bd');
+    if (elTotBd) elTotBd.innerText = totBd.toFixed(0);
+    const elTotTs = document.getElementById('fq-tot-ts');
+    if (elTotTs) elTotTs.innerText = totTs.toFixed(0);
+    const elTotBb = document.getElementById('fq-tot-bb');
+    if (elTotBb) elTotBb.innerText = totBb.toFixed(0);
+    const elTotSampah = document.getElementById('fq-tot-sampah');
+    if (elTotSampah) elTotSampah.innerText = totSampah.toFixed(0);
+
+    const elAvgBd = document.getElementById('fq-avg-bd');
+    const elAvgTs = document.getElementById('fq-avg-ts');
+    const elAvgBb = document.getElementById('fq-avg-bb');
+    const elAvgSampah = document.getElementById('fq-avg-sampah');
 
     if (totBg > 0) {
-        document.getElementById('fq-avg-bd').innerText = ((totBd / totBg) * 100).toFixed(1);
-        document.getElementById('fq-avg-ts').innerText = ((totTs / totBg) * 100).toFixed(1);
-        document.getElementById('fq-avg-bb').innerText = ((totBb / totBg) * 100).toFixed(1);
-        document.getElementById('fq-avg-sampah').innerText = ((totSampah / totBg) * 100).toFixed(1);
+        if (elAvgBd) elAvgBd.innerText = ((totBd / totBg) * 100).toFixed(1);
+        if (elAvgTs) elAvgTs.innerText = ((totTs / totBg) * 100).toFixed(1);
+        if (elAvgBb) elAvgBb.innerText = ((totBb / totBg) * 100).toFixed(1);
+        if (elAvgSampah) elAvgSampah.innerText = ((totSampah / totBg) * 100).toFixed(1);
     } else {
-        document.getElementById('fq-avg-bd').innerText = '0.0';
-        document.getElementById('fq-avg-ts').innerText = '0.0';
-        document.getElementById('fq-avg-bb').innerText = '0.0';
-        document.getElementById('fq-avg-sampah').innerText = '0.0';
+        if (elAvgBd) elAvgBd.innerText = '0.0';
+        if (elAvgTs) elAvgTs.innerText = '0.0';
+        if (elAvgBb) elAvgBb.innerText = '0.0';
+        if (elAvgSampah) elAvgSampah.innerText = '0.0';
     }
 };
 
 window.renderFFBTable = function(isSingleDay = true) {
     const tbody = document.querySelector('#ffb-quality-table tbody');
+    if (!tbody) return;
     tbody.innerHTML = '';
     
     let abbrMap = {};
@@ -1861,25 +1872,42 @@ window.renderFFBTable = function(isSingleDay = true) {
             abbrMap[item.name] = item.abbr;
         });
     }
-    const getAbbr = (estName) => abbrMap[estName] || estName.replace(' Estate', 'E');
+    const getAbbr = (estName) => abbrMap[estName] || (estName ? estName.replace(' Estate', 'E') : '-');
     
+    const userRole = window.currentUser ? window.currentUser.role : '';
+    const canDelete = ['Admin', 'Administrator'].includes(userRole);
+    const canEdit = ['Admin', 'Administrator', 'Grading', 'Analis', 'Supervisor Mill', 'Krani Mill', 'Manager Mill', 'Askep', 'Assistant'].includes(userRole) || !userRole;
+
     window.ffbQualityData.forEach((data, index) => {
         const tr = document.createElement('tr');
+        let actionHtml = '';
+        if (isSingleDay) {
+            if (canEdit) {
+                actionHtml += `<button class="btn btn-warning btn-sm" style="padding: 4px 8px; margin-right: 4px;" title="Edit Data" onclick="openFFBEditModal(${index})"><i class="fa-solid fa-pen-to-square"></i></button>`;
+            }
+            if (canDelete) {
+                actionHtml += `<button class="btn btn-danger btn-sm" style="padding: 4px 8px;" title="Hapus Data" onclick="deleteFFBRow(${index}, ${data.id || 0})"><i class="fa-solid fa-trash"></i></button>`;
+            }
+            if (!actionHtml) actionHtml = '-';
+        } else {
+            actionHtml = '-';
+        }
+
         tr.innerHTML = `
             <td>${data.date}</td>
             <td>${getAbbr(data.estate)}</td>
-            <td>${data.divisi}</td>
+            <td>${data.divisi || '-'}</td>
             <td>${data.no_truck}</td>
-            <td>${parseFloat(data.bg_gram).toFixed(0)}</td>
-            <td>${parseFloat(data.bd_gram).toFixed(0)}</td>
-            <td>${parseFloat(data.bd_percent).toFixed(1)}</td>
-            <td>${parseFloat(data.t_segar_gram).toFixed(0)}</td>
-            <td>${parseFloat(data.t_segar_percent).toFixed(1)}</td>
-            <td>${parseFloat(data.busuk_gram).toFixed(0)}</td>
-            <td>${parseFloat(data.busuk_percent).toFixed(1)}</td>
-            <td>${parseFloat(data.sampah_gram).toFixed(0)}</td>
-            <td>${parseFloat(data.sampah_percent).toFixed(1)}</td>
-            <td>${isSingleDay ? `<button class="btn btn-danger" style="padding: 4px 8px;" onclick="deleteFFBRow(${index})"><i class="fa-solid fa-trash"></i></button>` : '-'}</td>
+            <td>${parseFloat(data.bg_gram || 0).toFixed(0)}</td>
+            <td>${parseFloat(data.bd_gram || 0).toFixed(0)}</td>
+            <td>${parseFloat(data.bd_percent || 0).toFixed(1)}</td>
+            <td>${parseFloat(data.t_segar_gram || 0).toFixed(0)}</td>
+            <td>${parseFloat(data.t_segar_percent || 0).toFixed(1)}</td>
+            <td>${parseFloat(data.busuk_gram || 0).toFixed(0)}</td>
+            <td>${parseFloat(data.busuk_percent || 0).toFixed(1)}</td>
+            <td>${parseFloat(data.sampah_gram || 0).toFixed(0)}</td>
+            <td>${parseFloat(data.sampah_percent || 0).toFixed(1)}</td>
+            <td>${actionHtml}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -1887,11 +1915,22 @@ window.renderFFBTable = function(isSingleDay = true) {
     window.calculateFFBAverages();
 };
 
-window.deleteFFBRow = async function(index) {
-    if(confirm('Hapus baris ini?')) {
-        window.ffbQualityData.splice(index, 1);
-        window.renderFFBTable();
-        await window.saveFFBQuality();
+window.deleteFFBRow = async function(index, id) {
+    if (confirm('Hapus baris data grading Loose Fruit ini?')) {
+        try {
+            if (id) {
+                await fetch(`/api/ffb_quality/${id}`, { method: 'DELETE' });
+            } else {
+                window.ffbQualityData.splice(index, 1);
+                await window.saveFFBQuality();
+            }
+            const fqDateElem = document.getElementById('fq-date');
+            const curDate = fqDateElem ? fqDateElem.value : window.getLocalDate();
+            await window.loadFFBQuality(curDate, curDate);
+        } catch(e) {
+            console.error('Error deleting row:', e);
+            alert('Gagal menghapus baris data.');
+        }
     }
 };
 
@@ -1910,11 +1949,11 @@ window.loadFFBQuality = async function(start, end) {
     try {
         let res;
         if (start === end) {
-            res = await fetch(`/api/ffb_quality/${mill}/${start}`);
+            res = await fetch(`/api/ffb_quality/${encodeURIComponent(mill)}/${encodeURIComponent(start)}`);
         } else {
-            res = await fetch(`/api/ffb_quality/range/${mill}/${start}/${end}`);
+            res = await fetch(`/api/ffb_quality/range/${encodeURIComponent(mill)}/${encodeURIComponent(start)}/${encodeURIComponent(end)}`);
         }
-        window.ffbQualityData = await res.json();
+        window.ffbQualityData = res.ok ? await res.json() : [];
     } catch(e) {
         console.error(e);
         window.ffbQualityData = [];
@@ -1923,7 +1962,7 @@ window.loadFFBQuality = async function(start, end) {
 };
 
 window.saveFFBQuality = async function() {
-    const date = document.getElementById('fq-modal-date').value || window.getLocalDate();
+    const date = document.getElementById('fq-modal-date')?.value || window.getLocalDate();
     let mill = window.currentUser ? window.currentUser.estate : null; 
     if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
     
@@ -1987,8 +2026,16 @@ window.openFFBModal = function() {
         modal.style.display = 'flex';
     }
     
+    const editIdEl = document.getElementById('fq-modal-edit-id');
+    if (editIdEl) editIdEl.value = '';
+    const titleEl = document.getElementById('fq-modal-title');
+    if (titleEl) titleEl.innerText = 'Tambah input Loose Fruit Quality';
+    const btnEl = document.getElementById('fq-modal-submit-btn');
+    if (btnEl) btnEl.innerText = 'Simpan';
+
+    const fqDateElem = document.getElementById('fq-date');
     const dateEl = document.getElementById('fq-modal-date');
-    if (dateEl) dateEl.value = window.getLocalDate();
+    if (dateEl) dateEl.value = (fqDateElem && fqDateElem.value) ? fqDateElem.value : window.getLocalDate();
     
     let estatesOpts = typeof masterData !== 'undefined' && masterData.supply_chain 
         ? masterData.supply_chain.filter(s => s.is_ffb !== false).map(s => `<option value="${s.estate}">${s.estate}</option>`).join('')
@@ -2001,35 +2048,56 @@ window.openFFBModal = function() {
     const divCont = document.getElementById('fq-modal-divisi-container');
     if (divCont) divCont.innerHTML = `<input type="text" id="fq-modal-divisi" class="form-control" placeholder="(Optional)">`;
     
+    document.getElementById('fq-modal-truck').value = '';
+    document.getElementById('fq-modal-bg').value = '';
+    document.getElementById('fq-modal-bd').value = '';
+    document.getElementById('fq-modal-tsegar').value = '';
+    document.getElementById('fq-modal-busuk').value = '';
+    document.getElementById('fq-modal-sampah').value = '0.00';
+
     if (estEl && estEl.value) {
         try { window.onFFBModalEstateChange(estEl.value); } catch(e){ console.error(e); }
     }
 };
 
-window.openFFBCropModal = function() {
-    const modal = document.getElementById('modal-ffb-crop-quality');
+window.openFFBEditModal = function(index) {
+    const data = window.ffbQualityData[index];
+    if (!data) return;
+
+    const modal = document.getElementById('modal-ffb-quality');
     if (modal) {
         if (typeof document !== 'undefined' && document.body && modal.parentNode !== document.body) { document.body.appendChild(modal); }
         modal.style.display = 'flex';
     }
 
-    const dateEl = document.getElementById('fq-crop-modal-date');
-    if (dateEl) dateEl.value = window.getLocalDate();
-    
+    const editIdEl = document.getElementById('fq-modal-edit-id');
+    if (editIdEl) editIdEl.value = data.id || '';
+    const titleEl = document.getElementById('fq-modal-title');
+    if (titleEl) titleEl.innerText = 'Edit Data Loose Fruit Quality';
+    const btnEl = document.getElementById('fq-modal-submit-btn');
+    if (btnEl) btnEl.innerText = 'Update Perubahan';
+
+    const dateEl = document.getElementById('fq-modal-date');
+    if (dateEl) dateEl.value = data.date;
+
     let estatesOpts = typeof masterData !== 'undefined' && masterData.supply_chain 
-        ? masterData.supply_chain.filter(s => s.is_ffb !== false).map(s => `<option value="${s.estate}">${s.estate}</option>`).join('')
-        : '<option value="Bunga Tanjung Estate">Bunga Tanjung Estate</option>';
-    if (!estatesOpts) estatesOpts = '<option value="Bunga Tanjung Estate">Bunga Tanjung Estate</option>';
+        ? masterData.supply_chain.filter(s => s.is_ffb !== false).map(s => `<option value="${s.estate}" ${s.estate === data.estate ? 'selected' : ''}>${s.estate}</option>`).join('')
+        : `<option value="${data.estate}">${data.estate}</option>`;
     
-    const estEl = document.getElementById('fq-crop-modal-estate');
+    const estEl = document.getElementById('fq-modal-estate');
     if (estEl) estEl.innerHTML = estatesOpts;
-    
-    const divCont = document.getElementById('fq-crop-modal-divisi-container');
-    if (divCont) divCont.innerHTML = `<input type="text" id="fq-crop-modal-divisi" class="form-control" placeholder="(Optional)">`;
-    
-    if (estEl && estEl.value) {
-        try { window.onFFBCropModalEstateChange(estEl.value); } catch(e){ console.error(e); }
-    }
+
+    const divCont = document.getElementById('fq-modal-divisi-container');
+    if (divCont) divCont.innerHTML = `<input type="text" id="fq-modal-divisi" class="form-control" value="${data.divisi || ''}">`;
+
+    document.getElementById('fq-modal-truck').value = data.no_truck || '';
+    document.getElementById('fq-modal-bg').value = data.bg_gram || '';
+    document.getElementById('fq-modal-bd').value = data.bd_gram || '';
+    document.getElementById('fq-modal-tsegar').value = data.t_segar_gram || '';
+    document.getElementById('fq-modal-busuk').value = data.busuk_gram || '';
+    document.getElementById('fq-modal-sampah').value = data.sampah_gram || '0.00';
+
+    window.calculateFFBModal();
 };
 
 window.calculateFFBModal = function() {
@@ -2039,18 +2107,15 @@ window.calculateFFBModal = function() {
     const bb = parseFloat(document.getElementById('fq-modal-busuk').value) || 0;
     
     const sampah = bg - bd - ts - bb;
-    document.getElementById('fq-modal-sampah').value = sampah.toFixed(2);
+    const elSampah = document.getElementById('fq-modal-sampah');
+    if (elSampah) elSampah.value = sampah.toFixed(2);
 };
 
 window.submitFFBModal = async function() {
     const modalDate = document.getElementById('fq-modal-date').value;
     const fqDateElem = document.getElementById('fq-date');
     const mainDate = fqDateElem ? fqDateElem.value : null;
-    
-    if (modalDate && fqDateElem && modalDate !== mainDate) {
-        fqDateElem.value = modalDate;
-        await window.loadFFBQuality();
-    }
+    const saveDate = modalDate || mainDate || window.getLocalDate();
 
     const estate = document.getElementById('fq-modal-estate').value;
     const divisi = document.getElementById('fq-modal-divisi') ? document.getElementById('fq-modal-divisi').value : '';
@@ -2077,9 +2142,14 @@ window.submitFFBModal = async function() {
         alert("Sampah tidak boleh minus! Total rincian brondolan melebihi Berat Sample.");
         return;
     }
-    
-    const data = {
-        date: modalDate || mainDate || window.getLocalDate(),
+
+    let mill = window.currentUser ? window.currentUser.estate : null; 
+    if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
+
+    const editId = document.getElementById('fq-modal-edit-id')?.value;
+    const payload = {
+        date: saveDate,
+        mill: mill,
         estate: estate,
         divisi: divisi,
         no_truck: truck,
@@ -2093,15 +2163,31 @@ window.submitFFBModal = async function() {
         sampah_gram: actualSampah,
         sampah_percent: ((actualSampah / bg) * 100)
     };
-    
-    window.ffbQualityData.push(data);
-    document.getElementById('modal-ffb-quality').style.display = 'none';
-    
-    window.renderFFBTable();
-    await window.saveFFBQuality();
+
+    try {
+        if (editId) {
+            await fetch(`/api/ffb_quality/${editId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } else {
+            await fetch('/api/ffb_quality/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        }
+        document.getElementById('modal-ffb-quality').style.display = 'none';
+        if (fqDateElem) fqDateElem.value = saveDate;
+        await window.loadFFBQuality(saveDate, saveDate);
+    } catch(e) {
+        console.error('Error saving FFB quality:', e);
+        alert('Gagal menyimpan data FFB quality.');
+    }
 };
 
-
+// --- FFB CROP QUALITY ---
 window.loadFFBCropQuality = async function(start, end) {
     if (!start) start = window.getLocalDate();
     if (!end) end = start;
@@ -2113,11 +2199,11 @@ window.loadFFBCropQuality = async function(start, end) {
     try {
         let res;
         if (start === end) {
-            res = await fetch(`/api/ffb_crop_quality/${mill}/${start}`);
+            res = await fetch(`/api/ffb_crop_quality/${encodeURIComponent(mill)}/${encodeURIComponent(start)}`);
         } else {
-            res = await fetch(`/api/ffb_crop_quality/range/${mill}/${start}/${end}`);
+            res = await fetch(`/api/ffb_crop_quality/range/${encodeURIComponent(mill)}/${encodeURIComponent(start)}/${encodeURIComponent(end)}`);
         }
-        window.ffbCropQualityData = await res.json();
+        window.ffbCropQualityData = res.ok ? await res.json() : [];
 
         // Fetch tonase range
         try {
@@ -2166,7 +2252,11 @@ window.renderFFBCropTable = function(isSingleDay = true) {
             abbrMap[item.name] = item.abbr;
         });
     }
-    const getAbbr = (estName) => abbrMap[estName] || estName.replace(' Estate', 'E');
+    const getAbbr = (estName) => abbrMap[estName] || (estName ? estName.replace(' Estate', 'E') : '-');
+
+    const userRole = window.currentUser ? window.currentUser.role : '';
+    const canDelete = ['Admin', 'Administrator'].includes(userRole);
+    const canEdit = ['Admin', 'Administrator', 'Grading', 'Analis', 'Supervisor Mill', 'Krani Mill', 'Manager Mill', 'Askep', 'Assistant'].includes(userRole) || !userRole;
 
     if (isSingleDay) {
         rawTable.style.display = 'table';
@@ -2186,6 +2276,15 @@ window.renderFFBCropTable = function(isSingleDay = true) {
             const p_long = tot > 0 ? (parseInt(data.long_stalk) / tot * 100).toFixed(1) : '0.0';
             const p_rat = tot > 0 ? (parseInt(data.rat_damage || 0) / tot * 100).toFixed(1) : '0.0';
             
+            let actionHtml = '';
+            if (canEdit) {
+                actionHtml += `<button class="btn btn-warning btn-sm" style="padding: 4px 8px; margin-right: 4px;" title="Edit Data" onclick="openFFBCropEditModal(${index})"><i class="fa-solid fa-pen-to-square"></i></button>`;
+            }
+            if (canDelete) {
+                actionHtml += `<button class="btn btn-danger btn-sm" style="padding: 4px 8px;" title="Hapus Data" onclick="deleteFFBCropRow(${index}, ${data.id || 0})"><i class="fa-solid fa-trash"></i></button>`;
+            }
+            if (!actionHtml) actionHtml = '-';
+
             tr.innerHTML = `
                 <td>${getAbbr(data.estate)}</td>
                 <td>${data.divisi || '-'}</td>
@@ -2199,7 +2298,7 @@ window.renderFFBCropTable = function(isSingleDay = true) {
                 <td>${data.empty_bunch || 0}</td><td>${p_empty}</td>
                 <td>${data.long_stalk || 0}</td><td>${p_long}</td>
                 <td>${data.rat_damage || 0}</td><td>${p_rat}</td>
-                <td><button class="btn btn-danger" style="padding: 4px 8px;" onclick="deleteFFBCropRow(${index})"><i class="fa-solid fa-trash"></i></button></td>
+                <td>${actionHtml}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -2230,7 +2329,6 @@ window.renderFFBCropTable = function(isSingleDay = true) {
         });
         
         let t_tot = 0, t_unripe = 0, t_under = 0, t_normal = 0, t_over = 0, t_empty = 0, t_long = 0, t_rat = 0;
-        let totalTonaseSum = 0;
         
         for (let est in estateAgg) {
             let d = estateAgg[est];
@@ -2277,12 +2375,12 @@ window.renderFFBCropTable = function(isSingleDay = true) {
         const sumTotJjgEl = document.getElementById('fqc-sum-tot-jjg');
         if (sumTotJjgEl) sumTotJjgEl.innerText = t_tot.toLocaleString('id-ID');
 
-        document.getElementById('fqc-sum-unripe').innerText = pt_unripe.toFixed(2);
-        document.getElementById('fqc-sum-under').innerText = pt_under.toFixed(2);
-        document.getElementById('fqc-sum-normal').innerText = pt_normal.toFixed(2);
-        document.getElementById('fqc-sum-over').innerText = pt_over.toFixed(2);
-        document.getElementById('fqc-sum-empty').innerText = pt_empty.toFixed(2);
-        document.getElementById('fqc-sum-long').innerText = pt_long.toFixed(2);
+        if (document.getElementById('fqc-sum-unripe')) document.getElementById('fqc-sum-unripe').innerText = pt_unripe.toFixed(2);
+        if (document.getElementById('fqc-sum-under')) document.getElementById('fqc-sum-under').innerText = pt_under.toFixed(2);
+        if (document.getElementById('fqc-sum-normal')) document.getElementById('fqc-sum-normal').innerText = pt_normal.toFixed(2);
+        if (document.getElementById('fqc-sum-over')) document.getElementById('fqc-sum-over').innerText = pt_over.toFixed(2);
+        if (document.getElementById('fqc-sum-empty')) document.getElementById('fqc-sum-empty').innerText = pt_empty.toFixed(2);
+        if (document.getElementById('fqc-sum-long')) document.getElementById('fqc-sum-long').innerText = pt_long.toFixed(2);
         if (document.getElementById('fqc-sum-rat')) document.getElementById('fqc-sum-rat').innerText = pt_rat.toFixed(2);
     }
 };
@@ -2303,39 +2401,50 @@ window.calculateFFBCropAverages = function() {
     const elTotJjg = document.getElementById('fqc-tot-jjg');
     if (elTotJjg) {
         elTotJjg.innerText = t_tot;
-        document.getElementById('fqc-tot-unripe').innerText = t_unripe;
-        document.getElementById('fqc-tot-under').innerText = t_under;
-        document.getElementById('fqc-tot-normal').innerText = t_normal;
-        document.getElementById('fqc-tot-over').innerText = t_over;
-        document.getElementById('fqc-tot-empty').innerText = t_empty;
-        document.getElementById('fqc-tot-long').innerText = t_long;
+        if (document.getElementById('fqc-tot-unripe')) document.getElementById('fqc-tot-unripe').innerText = t_unripe;
+        if (document.getElementById('fqc-tot-under')) document.getElementById('fqc-tot-under').innerText = t_under;
+        if (document.getElementById('fqc-tot-normal')) document.getElementById('fqc-tot-normal').innerText = t_normal;
+        if (document.getElementById('fqc-tot-over')) document.getElementById('fqc-tot-over').innerText = t_over;
+        if (document.getElementById('fqc-tot-empty')) document.getElementById('fqc-tot-empty').innerText = t_empty;
+        if (document.getElementById('fqc-tot-long')) document.getElementById('fqc-tot-long').innerText = t_long;
         if (document.getElementById('fqc-tot-rat')) document.getElementById('fqc-tot-rat').innerText = t_rat;
 
         if (t_tot > 0) {
-            document.getElementById('fqc-avg-unripe').innerText = ((t_unripe / t_tot) * 100).toFixed(1);
-            document.getElementById('fqc-avg-under').innerText = ((t_under / t_tot) * 100).toFixed(1);
-            document.getElementById('fqc-avg-normal').innerText = ((t_normal / t_tot) * 100).toFixed(1);
-            document.getElementById('fqc-avg-over').innerText = ((t_over / t_tot) * 100).toFixed(1);
-            document.getElementById('fqc-avg-empty').innerText = ((t_empty / t_tot) * 100).toFixed(1);
-            document.getElementById('fqc-avg-long').innerText = ((t_long / t_tot) * 100).toFixed(1);
+            if (document.getElementById('fqc-avg-unripe')) document.getElementById('fqc-avg-unripe').innerText = ((t_unripe / t_tot) * 100).toFixed(1);
+            if (document.getElementById('fqc-avg-under')) document.getElementById('fqc-avg-under').innerText = ((t_under / t_tot) * 100).toFixed(1);
+            if (document.getElementById('fqc-avg-normal')) document.getElementById('fqc-avg-normal').innerText = ((t_normal / t_tot) * 100).toFixed(1);
+            if (document.getElementById('fqc-avg-over')) document.getElementById('fqc-avg-over').innerText = ((t_over / t_tot) * 100).toFixed(1);
+            if (document.getElementById('fqc-avg-empty')) document.getElementById('fqc-avg-empty').innerText = ((t_empty / t_tot) * 100).toFixed(1);
+            if (document.getElementById('fqc-avg-long')) document.getElementById('fqc-avg-long').innerText = ((t_long / t_tot) * 100).toFixed(1);
             if (document.getElementById('fqc-avg-rat')) document.getElementById('fqc-avg-rat').innerText = ((t_rat / t_tot) * 100).toFixed(1);
         } else {
-            document.getElementById('fqc-avg-unripe').innerText = '0.0';
-            document.getElementById('fqc-avg-under').innerText = '0.0';
-            document.getElementById('fqc-avg-normal').innerText = '0.0';
-            document.getElementById('fqc-avg-over').innerText = '0.0';
-            document.getElementById('fqc-avg-empty').innerText = '0.0';
-            document.getElementById('fqc-avg-long').innerText = '0.0';
+            if (document.getElementById('fqc-avg-unripe')) document.getElementById('fqc-avg-unripe').innerText = '0.0';
+            if (document.getElementById('fqc-avg-under')) document.getElementById('fqc-avg-under').innerText = '0.0';
+            if (document.getElementById('fqc-avg-normal')) document.getElementById('fqc-avg-normal').innerText = '0.0';
+            if (document.getElementById('fqc-avg-over')) document.getElementById('fqc-avg-over').innerText = '0.0';
+            if (document.getElementById('fqc-avg-empty')) document.getElementById('fqc-avg-empty').innerText = '0.0';
+            if (document.getElementById('fqc-avg-long')) document.getElementById('fqc-avg-long').innerText = '0.0';
             if (document.getElementById('fqc-avg-rat')) document.getElementById('fqc-avg-rat').innerText = '0.0';
         }
     }
 };
 
-window.deleteFFBCropRow = async function(index) {
-    if(confirm('Hapus baris ini?')) {
-        window.ffbCropQualityData.splice(index, 1);
-        window.renderFFBCropTable();
-        await window.saveFFBCropQuality();
+window.deleteFFBCropRow = async function(index, id) {
+    if (confirm('Hapus baris data grading Daily FFB Crop Quality ini?')) {
+        try {
+            if (id) {
+                await fetch(`/api/ffb_crop_quality/${id}`, { method: 'DELETE' });
+            } else {
+                window.ffbCropQualityData.splice(index, 1);
+                await window.saveFFBCropQuality();
+            }
+            const fqDateElem = document.getElementById('fq-date');
+            const curDate = fqDateElem ? fqDateElem.value : window.getLocalDate();
+            await window.loadFFBCropQuality(curDate, curDate);
+        } catch(e) {
+            console.error('Error deleting crop row:', e);
+            alert('Gagal menghapus baris data.');
+        }
     }
 };
 
@@ -2410,6 +2519,19 @@ window.onFFBCropModalEstateChange = async function(estate) {
 };
 
 window.openFFBCropModal = function() {
+    const modal = document.getElementById('modal-ffb-crop-quality');
+    if (modal) {
+        if (typeof document !== 'undefined' && document.body && modal.parentNode !== document.body) { document.body.appendChild(modal); }
+        modal.style.display = 'flex';
+    }
+
+    const editIdEl = document.getElementById('fqc-modal-edit-id');
+    if (editIdEl) editIdEl.value = '';
+    const titleEl = document.getElementById('fqc-modal-title');
+    if (titleEl) titleEl.innerText = 'Tambah input FFB Crop Quality';
+    const btnEl = document.getElementById('fqc-modal-submit-btn');
+    if (btnEl) btnEl.innerText = 'Simpan';
+
     const fqDateElem = document.getElementById('fq-date');
     const date = fqDateElem ? fqDateElem.value : window.getLocalDate();
     document.getElementById('fqc-modal-date').value = date;
@@ -2434,8 +2556,46 @@ window.openFFBCropModal = function() {
     document.getElementById('fqc-modal-long').value = '';
     if (document.getElementById('fqc-modal-rat')) document.getElementById('fqc-modal-rat').value = '';
     document.getElementById('fqc-modal-total').value = '0';
+};
+
+window.openFFBCropEditModal = function(index) {
+    const data = window.ffbCropQualityData[index];
+    if (!data) return;
+
+    const modal = document.getElementById('modal-ffb-crop-quality');
+    if (modal) {
+        if (typeof document !== 'undefined' && document.body && modal.parentNode !== document.body) { document.body.appendChild(modal); }
+        modal.style.display = 'flex';
+    }
+
+    const editIdEl = document.getElementById('fqc-modal-edit-id');
+    if (editIdEl) editIdEl.value = data.id || '';
+    const titleEl = document.getElementById('fqc-modal-title');
+    if (titleEl) titleEl.innerText = 'Edit Data FFB Crop Quality';
+    const btnEl = document.getElementById('fqc-modal-submit-btn');
+    if (btnEl) btnEl.innerText = 'Update Perubahan';
+
+    document.getElementById('fqc-modal-date').value = data.date || window.getLocalDate();
     
-    document.getElementById('modal-ffb-crop-quality').style.display = 'flex';
+    let estatesOpts = typeof masterData !== 'undefined' && masterData.supply_chain 
+        ? masterData.supply_chain.filter(s => s.is_ffb !== false).map(s => `<option value="${s.estate}" ${s.estate === data.estate ? 'selected' : ''}>${s.estate}</option>`).join('')
+        : `<option value="${data.estate}">${data.estate}</option>`;
+    document.getElementById('fqc-modal-estate').innerHTML = estatesOpts;
+
+    document.getElementById('fqc-modal-divisi-container').innerHTML = `<input type="text" id="fqc-modal-divisi" class="form-control" value="${data.divisi || ''}">`;
+    document.getElementById('fqc-modal-blok-container').innerHTML = `<input type="text" id="fqc-modal-blok" class="form-control" value="${data.blok || ''}">`;
+    
+    document.getElementById('fqc-modal-truck').value = data.no_truck || '';
+    document.getElementById('fqc-modal-total').value = data.total_janjang || 0;
+    document.getElementById('fqc-modal-unripe').value = data.unripe || 0;
+    document.getElementById('fqc-modal-underripe').value = data.underripe || 0;
+    document.getElementById('fqc-modal-normal').value = data.normal_ripe || 0;
+    document.getElementById('fqc-modal-over').value = data.over_ripe || 0;
+    document.getElementById('fqc-modal-empty').value = data.empty_bunch || 0;
+    document.getElementById('fqc-modal-long').value = data.long_stalk || 0;
+    if (document.getElementById('fqc-modal-rat')) document.getElementById('fqc-modal-rat').value = data.rat_damage || 0;
+
+    window.calculateFFBCropModal();
 };
 
 window.calculateFFBCropModal = function() {
@@ -2447,19 +2607,15 @@ window.calculateFFBCropModal = function() {
     
     let n = tot - (u + un + o + e);
     if (n < 0) n = 0;
-    document.getElementById('fqc-modal-normal').value = n;
+    const elNormal = document.getElementById('fqc-modal-normal');
+    if (elNormal) elNormal.value = n;
 };
 
 window.submitFFBCropModal = async function() {
     const modalDate = document.getElementById('fqc-modal-date').value;
     const fqDateElem = document.getElementById('fq-date');
     const mainDate = fqDateElem ? fqDateElem.value : null;
-    
-    if (modalDate && fqDateElem && modalDate !== mainDate) {
-        fqDateElem.value = modalDate;
-        await window.loadFFBQuality();
-        if(window.loadFFBCropQuality) await window.loadFFBCropQuality();
-    }
+    const saveDate = modalDate || mainDate || window.getLocalDate();
 
     const estate = document.getElementById('fqc-modal-estate').value;
     const divisi = document.getElementById('fqc-modal-divisi') ? document.getElementById('fqc-modal-divisi').value : '';
@@ -2479,9 +2635,14 @@ window.submitFFBCropModal = async function() {
         alert("Mohon isi form Estate dan Truk dengan benar.");
         return;
     }
-    
-    const data = {
-        date: modalDate || mainDate || window.getLocalDate(),
+
+    let mill = window.currentUser ? window.currentUser.estate : null; 
+    if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
+
+    const editId = document.getElementById('fqc-modal-edit-id')?.value;
+    const payload = {
+        date: saveDate,
+        mill: mill,
         estate: estate,
         divisi: divisi,
         blok: blok,
@@ -2495,12 +2656,28 @@ window.submitFFBCropModal = async function() {
         rat_damage: rat,
         total_janjang: tot
     };
-    
-    window.ffbCropQualityData.push(data);
-    document.getElementById('modal-ffb-crop-quality').style.display = 'none';
-    
-    window.renderFFBCropTable();
-    await window.saveFFBCropQuality();
+
+    try {
+        if (editId) {
+            await fetch(`/api/ffb_crop_quality/${editId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } else {
+            await fetch('/api/ffb_crop_quality/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        }
+        document.getElementById('modal-ffb-crop-quality').style.display = 'none';
+        if (fqDateElem) fqDateElem.value = saveDate;
+        await window.loadFFBCropQuality(saveDate, saveDate);
+    } catch(err) {
+        console.error('Error saving FFB crop quality:', err);
+        alert('Gagal menyimpan data FFB Crop Quality.');
+    }
 };
 
 // --- SUMMARY MONTHLY GRADING SYSTEM (12 BULAN PER ESTATE) ---
