@@ -3883,24 +3883,24 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
             });
         });
 
-        const getVal = (type, field, d, fallbackField = null) => {
+        const getVal = (type, field, d, fallbackField = null, decimals = 1) => {
             const store = type === 'liquid' ? dayLiquid[d] : dayFfa[d];
             if (store && store.count[field] > 0) {
-                return (store.sum[field] / store.count[field]).toFixed(1);
+                return (store.sum[field] / store.count[field]).toFixed(decimals);
             }
             if (fallbackField && store && store.count[fallbackField] > 0) {
-                return (store.sum[fallbackField] / store.count[fallbackField]).toFixed(1);
+                return (store.sum[fallbackField] / store.count[fallbackField]).toFixed(decimals);
             }
             return '-';
         };
 
-        const getAvg = (type, field, fallbackField = null) => {
+        const getAvg = (type, field, fallbackField = null, decimals = 1) => {
             const store = type === 'liquid' ? totalLiquid : totalFfa;
             if (store && store.count[field] > 0) {
-                return (store.sum[field] / store.count[field]).toFixed(1);
+                return (store.sum[field] / store.count[field]).toFixed(decimals);
             }
             if (fallbackField && store && store.count[fallbackField] > 0) {
-                return (store.sum[fallbackField] / store.count[fallbackField]).toFixed(1);
+                return (store.sum[fallbackField] / store.count[fallbackField]).toFixed(decimals);
             }
             return '-';
         };
@@ -3922,44 +3922,44 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
         const rowsConfig = [
             // Section a: Crude Oil Tank (% Oil)
             { type: 'header', title: 'a. Crude Oil Tank (% Oil)', bg: '#f0fdf4', border: '#22c55e', color: '#166534' },
-            { type: 'data', label: 'Oil (%)', source: 'liquid', field: 'cot_oil' },
-            { type: 'data', label: 'Sludge (%)', source: 'liquid', field: 'cot_sludge' },
-            { type: 'data', label: 'Water (%)', source: 'liquid', field: 'cot_water' },
-            { type: 'data', label: 'Solid (%)', source: 'liquid', field: 'cot_solid' },
+            { type: 'data', label: 'Oil (%)', source: 'liquid', field: 'cot_oil', decimals: 1 },
+            { type: 'data', label: 'Sludge (%)', source: 'liquid', field: 'cot_sludge', decimals: 1 },
+            { type: 'data', label: 'Water (%)', source: 'liquid', field: 'cot_water', decimals: 1 },
+            { type: 'data', label: 'Solid (%)', source: 'liquid', field: 'cot_solid', decimals: 1 },
             
             // Section b: CONTINUOUS SETTLING TANK (CST)
             { type: 'header', title: 'b. CONTINUOUS SETTLING TANK (CST)', bg: '#eff6ff', border: '#3b82f6', color: '#1e40af' },
             { type: 'subheader', title: 'b.1. UNDERFLOW CST', bg: '#f8fafc', color: '#475569' },
-            { type: 'data', label: 'Oil (%)', source: 'liquid', field: 'cst1_oil' },
-            { type: 'data', label: 'Sludge (%)', source: 'liquid', field: 'cst1_sludge' },
-            { type: 'data', label: 'Water (%)', source: 'liquid', field: 'cst1_water' },
-            { type: 'data', label: 'Solid (%)', source: 'liquid', field: 'cst1_solid' },
+            { type: 'data', label: 'Oil (%)', source: 'liquid', field: 'cst1_oil', decimals: 1 },
+            { type: 'data', label: 'Sludge (%)', source: 'liquid', field: 'cst1_sludge', decimals: 1 },
+            { type: 'data', label: 'Water (%)', source: 'liquid', field: 'cst1_water', decimals: 1 },
+            { type: 'data', label: 'Solid (%)', source: 'liquid', field: 'cst1_solid', decimals: 1 },
             { type: 'subheader', title: 'b.2. Ketebalan Minyak CST (CM)', bg: '#f8fafc', color: '#475569' },
-            { type: 'data', label: 'Ketebalan Minyak (CM)', source: 'liquid', field: 'cst1_level_minyak' },
+            { type: 'data', label: 'Ketebalan Minyak (CM)', source: 'liquid', field: 'cst1_level_minyak', decimals: 1 },
 
             // Section c: SLUDGE TANK
             { type: 'header', title: 'c. SLUDGE TANK', bg: '#f0fdfa', border: '#14b8a6', color: '#115e59' },
-            { type: 'data', label: 'Oil (%)', source: 'liquid', field: 'sludge_tank_oil' },
-            { type: 'data', label: 'Sludge (%)', source: 'liquid', field: 'sludge_tank_sludge' },
-            { type: 'data', label: 'Water (%)', source: 'liquid', field: 'sludge_tank_water' },
-            { type: 'data', label: 'Solid (%)', source: 'liquid', field: 'sludge_tank_solid' },
+            { type: 'data', label: 'Oil (%)', source: 'liquid', field: 'sludge_tank_oil', decimals: 1 },
+            { type: 'data', label: 'Sludge (%)', source: 'liquid', field: 'sludge_tank_sludge', decimals: 1 },
+            { type: 'data', label: 'Water (%)', source: 'liquid', field: 'sludge_tank_water', decimals: 1 },
+            { type: 'data', label: 'Solid (%)', source: 'liquid', field: 'sludge_tank_solid', decimals: 1 },
 
             // Section d: TEMPERATURE
             { type: 'header', title: 'd. TEMPERATURE', bg: '#fffbeb', border: '#f59e0b', color: '#92400e' },
-            { type: 'data', label: 'Crude Oil Tank (°C)', source: 'liquid', field: 'cot_temp' },
-            { type: 'data', label: 'Continuous Settling Tank (CST) (°C)', source: 'liquid', field: 'cst1_temp' },
-            { type: 'data', label: 'Sludge Tank (°C)', source: 'liquid', field: 'sludge_tank_temp' },
+            { type: 'data', label: 'Crude Oil Tank (°C)', source: 'liquid', field: 'cot_temp', decimals: 1 },
+            { type: 'data', label: 'Continuous Settling Tank (CST) (°C)', source: 'liquid', field: 'cst1_temp', decimals: 1 },
+            { type: 'data', label: 'Sludge Tank (°C)', source: 'liquid', field: 'sludge_tank_temp', decimals: 1 },
 
             // Section e: CPO PRODUCTION QUALITY
             { type: 'header', title: 'e. CPO PRODUCTION QUALITY', bg: '#fdf2f8', border: '#ec4899', color: '#9d174d' },
             { type: 'subheader', title: 'e.1. Sebelum Washing Plant', bg: '#f8fafc', color: '#475569' },
-            { type: 'data', label: 'FFA (%)', source: 'ffa', field: 'ffa_b' },
-            { type: 'data', label: 'Moist (%)', source: 'ffa', field: 'moist_b' },
-            { type: 'data', label: 'Dirt (%)', source: 'ffa', field: 'dirt_b' },
-            { type: 'subheader', title: 'e.2. Setelah Washing Plant', bg: '#f8fafc', color: '#475569' },
-            { type: 'data', label: 'FFA (%)', source: 'ffa', field: 'ffa_a', fallback: 'ffa' },
-            { type: 'data', label: 'Moist (%)', source: 'ffa', field: 'moist_a', fallback: 'moist' },
-            { type: 'data', label: 'Dirt (%)', source: 'ffa', field: 'dirt_a' }
+            { type: 'data', label: 'FFA (%)', source: 'ffa', field: 'ffa_b', decimals: 2 },
+            { type: 'data', label: 'Moist (%)', source: 'ffa', field: 'moist_b', decimals: 2 },
+            { type: 'data', label: 'Dirt (%)', source: 'ffa', field: 'dirt_b', decimals: 2 },
+            { type: 'subheader', title: 'e.2. Setelah Washing Plant', bg: '#ffedd5', color: '#9a3412' },
+            { type: 'data', label: 'FFA (%) Maks 3.5 %', source: 'ffa', field: 'ffa_a', fallback: 'ffa', decimals: 2, maxLimit: 3.5 },
+            { type: 'data', label: 'Moist (%) Maks 0.2 %', source: 'ffa', field: 'moist_a', fallback: 'moist', decimals: 2, maxLimit: 0.2 },
+            { type: 'data', label: 'Dirt (%) Maks 0.02 %', source: 'ffa', field: 'dirt_a', decimals: 2, maxLimit: 0.02 }
         ];
 
         let tbodyHtml = '';
@@ -3977,16 +3977,22 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
                     '<td style="background-color: ' + row.bg + '; border-left: 2px solid #e2e8f0;"></td>' +
                     '</tr>';
             } else if (row.type === 'data') {
-                const avgVal = getAvg(row.source, row.field, row.fallback);
+                const dec = row.decimals || 1;
+                const avgVal = getAvg(row.source, row.field, row.fallback, dec);
+                const isAvgOver = row.maxLimit !== undefined && avgVal !== '-' && parseFloat(avgVal) > row.maxLimit;
+                const avgColor = isAvgOver ? '#dc2626' : '#0369a1';
+
                 tbodyHtml += '<tr style="transition: background 0.15s ease;">';
                 tbodyHtml += '<td style="text-align: left; padding: 5px 12px 5px 30px; font-weight: 500; position: sticky; left: 0; background-color: #ffffff; z-index: 1; border-right: 2px solid #e2e8f0; border-bottom: 1px solid #f1f5f9; color: #334155;">' + row.label + '</td>';
                 daysArray.forEach(d => {
-                    const val = getVal(row.source, row.field, d, row.fallback);
+                    const val = getVal(row.source, row.field, d, row.fallback, dec);
                     const isMuted = val === '-';
-                    const textColor = isMuted ? '#94a3b8' : '#1e293b';
-                    tbodyHtml += '<td style="text-align: center; padding: 5px 2px; font-size: 0.78rem; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; color: ' + textColor + ';">' + val + '</td>';
+                    const isOver = row.maxLimit !== undefined && !isMuted && parseFloat(val) > row.maxLimit;
+                    const textColor = isMuted ? '#94a3b8' : (isOver ? '#dc2626' : '#1e293b');
+                    const textWeight = isOver ? 'bold' : 'normal';
+                    tbodyHtml += '<td style="text-align: center; padding: 5px 2px; font-size: 0.78rem; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; color: ' + textColor + '; font-weight: ' + textWeight + ';">' + val + '</td>';
                 });
-                tbodyHtml += '<td style="text-align: center; padding: 5px 4px; font-size: 0.8rem; font-weight: 700; color: #0369a1; background-color: #f0f9ff; border-left: 2px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">' + avgVal + '</td>';
+                tbodyHtml += '<td style="text-align: center; padding: 5px 4px; font-size: 0.8rem; font-weight: 700; color: ' + avgColor + '; background-color: ' + (isAvgOver ? '#fef2f2' : '#f0f9ff') + '; border-left: 2px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">' + avgVal + '</td>';
                 tbodyHtml += '</tr>';
             }
         });
