@@ -20137,10 +20137,10 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
         const getVal = (type, field, d, fallbackField = null) => {
             const store = type === 'liquid' ? dayLiquid[d] : dayFfa[d];
             if (store && store.count[field] > 0) {
-                return (store.sum[field] / store.count[field]).toFixed(2);
+                return (store.sum[field] / store.count[field]).toFixed(1);
             }
             if (fallbackField && store && store.count[fallbackField] > 0) {
-                return (store.sum[fallbackField] / store.count[fallbackField]).toFixed(2);
+                return (store.sum[fallbackField] / store.count[fallbackField]).toFixed(1);
             }
             return '-';
         };
@@ -20148,10 +20148,10 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
         const getAvg = (type, field, fallbackField = null) => {
             const store = type === 'liquid' ? totalLiquid : totalFfa;
             if (store && store.count[field] > 0) {
-                return (store.sum[field] / store.count[field]).toFixed(2);
+                return (store.sum[field] / store.count[field]).toFixed(1);
             }
             if (fallbackField && store && store.count[fallbackField] > 0) {
-                return (store.sum[fallbackField] / store.count[fallbackField]).toFixed(2);
+                return (store.sum[fallbackField] / store.count[fallbackField]).toFixed(1);
             }
             return '-';
         };
