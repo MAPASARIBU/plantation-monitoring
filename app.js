@@ -3209,7 +3209,7 @@ Object.assign(views, {
                 </tbody>
                 <tfoot>
                     <tr style="background-color: #f1f5f9; font-weight: bold;">
-                        <td colspan="4" style="text-align: right;">RATA-RATA / TOTAL:</td>
+                        <td colspan="5" style="text-align: right;">RATA-RATA / TOTAL:</td>
                         <td id="fq-tot-bg">0</td>
                         <td id="fq-tot-bd">0</td>
                         <td id="fq-avg-bd">0.0</td>
@@ -15844,7 +15844,7 @@ views.ffb_quality = `
                 </tbody>
                 <tfoot>
                     <tr style="background-color: #f1f5f9; font-weight: bold;">
-                        <td colspan="4" style="text-align: right;">RATA-RATA / TOTAL:</td>
+                        <td colspan="5" style="text-align: right;">RATA-RATA / TOTAL:</td>
                         <td id="fq-tot-bg">0</td>
                         <td id="fq-tot-bd">0</td>
                         <td id="fq-avg-bd">0.0</td>
@@ -16394,6 +16394,7 @@ window.renderFFBTable = function(isSingleDay = true) {
             <td>${data.date}</td>
             <td>${getAbbr(data.estate)}</td>
             <td>${data.divisi || '-'}</td>
+            <td>${data.blok || '-'}</td>
             <td>${data.no_truck}</td>
             <td>${parseFloat(data.bg_gram || 0).toFixed(0)}</td>
             <td>${parseFloat(data.bd_gram || 0).toFixed(0)}</td>
@@ -16473,28 +16474,49 @@ window.saveFFBQuality = async function() {
     }
 };
 
+window.onFFBModalDivisiChange = function(divisiName) {
+    const blokDatalist = document.getElementById('fq-blok-list');
+    const data = window.currentFFBEstateData;
+    if (blokDatalist && data && data.blok) {
+        let filteredBloks = data.blok;
+        if (divisiName) {
+            filteredBloks = data.blok.filter(b => b.divisi === divisiName);
+        }
+        blokDatalist.innerHTML = filteredBloks.map(b => `<option value="${b.name || b.blok}"></option>`).join('');
+    }
+};
+
 window.onFFBModalEstateChange = async function(estate) {
-    const container = document.getElementById('fq-modal-divisi-container');
-    if (!container) return;
+    const containerDiv = document.getElementById('fq-modal-divisi-container');
+    const containerBlok = document.getElementById('fq-modal-blok-container');
+    if (!containerDiv) return;
     
-    container.innerHTML = '<input type="text" class="form-control" disabled value="Loading...">';
+    containerDiv.innerHTML = '<input type="text" class="form-control" disabled value="Loading...">';
     
     try {
         const res = await fetch(`${API_URL}/master/${encodeURIComponent(estate)}`);
         const data = await res.json();
+        window.currentFFBEstateData = data;
         
         if (data && data.divisi && data.divisi.length > 0) {
-            let sel = `<select id="fq-modal-divisi" class="form-control">`;
-            sel += `<option value="">-- Pilih Divisi (Opsional) --</option>`;
+            let sel = `<select id="fq-modal-divisi" class="form-control" onchange="window.onFFBModalDivisiChange(this.value)">`;
+            sel += `<option value="">-- Pilih Divisi --</option>`;
             data.divisi.forEach(d => {
                 sel += `<option value="${d.name}">${d.name}</option>`;
             });
             sel += `</select>`;
-            container.innerHTML = sel;
+            containerDiv.innerHTML = sel;
         } else {
-            container.innerHTML = `<input type="text" id="fq-modal-divisi" class="form-control" placeholder="(Optional)">`;
+            containerDiv.innerHTML = `<input type="text" id="fq-modal-divisi" class="form-control" placeholder="(Optional)" onchange="window.onFFBModalDivisiChange(this.value)">`;
         }
-
+        
+        if(containerBlok) {
+            containerBlok.innerHTML = `
+                <input type="text" id="fq-modal-blok" class="form-control" placeholder="(Optional)" list="fq-blok-list">
+                <datalist id="fq-blok-list"></datalist>
+            `;
+        }
+        
         const truckInput = document.getElementById('fq-modal-truck');
         if (truckInput) {
             let truckDatalist = document.getElementById('fq-truck-list');
@@ -16510,9 +16532,15 @@ window.onFFBModalEstateChange = async function(estate) {
                 truckDatalist.innerHTML = '';
             }
         }
+        
+        window.onFFBModalDivisiChange('');
+        
     } catch(e) {
         console.error(e);
-        container.innerHTML = `<input type="text" id="fq-modal-divisi" class="form-control" placeholder="(Optional)">`;
+        containerDiv.innerHTML = `<input type="text" id="fq-modal-divisi" class="form-control" placeholder="(Optional)">`;
+        if(containerBlok) {
+            containerBlok.innerHTML = `<input type="text" id="fq-modal-blok" class="form-control" placeholder="(Optional)">`;
+        }
     }
 };
 
@@ -16544,6 +16572,8 @@ window.openFFBModal = function() {
     
     const divCont = document.getElementById('fq-modal-divisi-container');
     if (divCont) divCont.innerHTML = `<input type="text" id="fq-modal-divisi" class="form-control" placeholder="(Optional)">`;
+    const blokCont = document.getElementById('fq-modal-blok-container');
+    if (blokCont) blokCont.innerHTML = `<input type="text" id="fq-modal-blok" class="form-control" placeholder="(Optional)">`;
     
     document.getElementById('fq-modal-truck').value = '';
     document.getElementById('fq-modal-bg').value = '';
@@ -16586,6 +16616,8 @@ window.openFFBEditModal = function(index) {
 
     const divCont = document.getElementById('fq-modal-divisi-container');
     if (divCont) divCont.innerHTML = `<input type="text" id="fq-modal-divisi" class="form-control" value="${data.divisi || ''}">`;
+    const blokCont = document.getElementById('fq-modal-blok-container');
+    if (blokCont) blokCont.innerHTML = `<input type="text" id="fq-modal-blok" class="form-control" value="${data.blok || ''}">`;
 
     document.getElementById('fq-modal-truck').value = data.no_truck || '';
     document.getElementById('fq-modal-bg').value = data.bg_gram || '';
@@ -16616,6 +16648,7 @@ window.submitFFBModal = async function() {
 
     const estate = document.getElementById('fq-modal-estate').value;
     const divisi = document.getElementById('fq-modal-divisi') ? document.getElementById('fq-modal-divisi').value : '';
+    const blok = document.getElementById('fq-modal-blok') ? document.getElementById('fq-modal-blok').value : '';
     const truck = document.getElementById('fq-modal-truck').value;
     
     const bg = parseFloat(document.getElementById('fq-modal-bg').value) || 0;
@@ -16649,6 +16682,7 @@ window.submitFFBModal = async function() {
         mill: mill,
         estate: estate,
         divisi: divisi,
+        blok: blok,
         no_truck: truck,
         bg_gram: bg,
         bd_gram: bd,

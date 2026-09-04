@@ -321,13 +321,19 @@ async function initDB() {
 
         await pool.query(`CREATE TABLE IF NOT EXISTS ffb_quality (
             id SERIAL PRIMARY KEY,
-            date TEXT, mill TEXT, estate TEXT, divisi TEXT, no_truck TEXT,
+            date TEXT, mill TEXT, estate TEXT, divisi TEXT, blok TEXT, no_truck TEXT,
             bg_gram REAL,
             bd_gram REAL, bd_percent REAL,
             t_segar_gram REAL, t_segar_percent REAL,
             busuk_gram REAL, busuk_percent REAL,
             sampah_gram REAL, sampah_percent REAL
         )`);
+
+        try {
+            await pool.query(`ALTER TABLE ffb_quality ADD COLUMN blok TEXT`);
+        } catch (e) {
+            // Ignore if column already exists
+        }
 
         await pool.query(`CREATE TABLE IF NOT EXISTS ffb_crop_quality (
             id SERIAL PRIMARY KEY,
@@ -1627,15 +1633,15 @@ app.get('/api/ffb_quality/range/:mill/:startDate/:endDate', async (req, res) => 
 
 app.post('/api/ffb_quality/add', async (req, res) => {
     try {
-        const { date, mill, estate, divisi, no_truck, bg_gram, bd_gram, bd_percent, t_segar_gram, t_segar_percent, busuk_gram, busuk_percent, sampah_gram, sampah_percent } = req.body;
+        const { date, mill, estate, divisi, blok, no_truck, bg_gram, bd_gram, bd_percent, t_segar_gram, t_segar_percent, busuk_gram, busuk_percent, sampah_gram, sampah_percent } = req.body;
         const result = await pool.query(`INSERT INTO ffb_quality (
-            date, mill, estate, divisi, no_truck,
+            date, mill, estate, divisi, blok, no_truck,
             bg_gram, bd_gram, bd_percent,
             t_segar_gram, t_segar_percent,
             busuk_gram, busuk_percent,
             sampah_gram, sampah_percent
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`,
-        [date, mill, estate, divisi || '', no_truck,
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING id`,
+        [date, mill, estate, divisi || '', blok || '', no_truck,
          parseFloat(bg_gram) || 0, parseFloat(bd_gram) || 0, parseFloat(bd_percent) || 0,
          parseFloat(t_segar_gram) || 0, parseFloat(t_segar_percent) || 0,
          parseFloat(busuk_gram) || 0, parseFloat(busuk_percent) || 0,
@@ -1649,15 +1655,15 @@ app.post('/api/ffb_quality/add', async (req, res) => {
 app.put('/api/ffb_quality/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { date, mill, estate, divisi, no_truck, bg_gram, bd_gram, bd_percent, t_segar_gram, t_segar_percent, busuk_gram, busuk_percent, sampah_gram, sampah_percent } = req.body;
+        const { date, mill, estate, divisi, blok, no_truck, bg_gram, bd_gram, bd_percent, t_segar_gram, t_segar_percent, busuk_gram, busuk_percent, sampah_gram, sampah_percent } = req.body;
         await pool.query(`UPDATE ffb_quality SET
-            date = $1, estate = $2, divisi = $3, no_truck = $4,
-            bg_gram = $5, bd_gram = $6, bd_percent = $7,
-            t_segar_gram = $8, t_segar_percent = $9,
-            busuk_gram = $10, busuk_percent = $11,
-            sampah_gram = $12, sampah_percent = $13
-            WHERE id = $14`,
-        [date, estate, divisi || '', no_truck,
+            date = $1, estate = $2, divisi = $3, blok = $4, no_truck = $5,
+            bg_gram = $6, bd_gram = $7, bd_percent = $8,
+            t_segar_gram = $9, t_segar_percent = $10,
+            busuk_gram = $11, busuk_percent = $12,
+            sampah_gram = $13, sampah_percent = $14
+            WHERE id = $15`,
+        [date, estate, divisi || '', blok || '', no_truck,
          parseFloat(bg_gram) || 0, parseFloat(bd_gram) || 0, parseFloat(bd_percent) || 0,
          parseFloat(t_segar_gram) || 0, parseFloat(t_segar_percent) || 0,
          parseFloat(busuk_gram) || 0, parseFloat(busuk_percent) || 0,
@@ -1671,15 +1677,15 @@ app.put('/api/ffb_quality/:id', async (req, res) => {
 app.post('/api/ffb_quality/update/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { date, mill, estate, divisi, no_truck, bg_gram, bd_gram, bd_percent, t_segar_gram, t_segar_percent, busuk_gram, busuk_percent, sampah_gram, sampah_percent } = req.body;
+        const { date, mill, estate, divisi, blok, no_truck, bg_gram, bd_gram, bd_percent, t_segar_gram, t_segar_percent, busuk_gram, busuk_percent, sampah_gram, sampah_percent } = req.body;
         await pool.query(`UPDATE ffb_quality SET
-            date = $1, estate = $2, divisi = $3, no_truck = $4,
-            bg_gram = $5, bd_gram = $6, bd_percent = $7,
-            t_segar_gram = $8, t_segar_percent = $9,
-            busuk_gram = $10, busuk_percent = $11,
-            sampah_gram = $12, sampah_percent = $13
-            WHERE id = $14`,
-        [date, estate, divisi || '', no_truck,
+            date = $1, estate = $2, divisi = $3, blok = $4, no_truck = $5,
+            bg_gram = $6, bd_gram = $7, bd_percent = $8,
+            t_segar_gram = $9, t_segar_percent = $10,
+            busuk_gram = $11, busuk_percent = $12,
+            sampah_gram = $13, sampah_percent = $14
+            WHERE id = $15`,
+        [date, estate, divisi || '', blok || '', no_truck,
          parseFloat(bg_gram) || 0, parseFloat(bd_gram) || 0, parseFloat(bd_percent) || 0,
          parseFloat(t_segar_gram) || 0, parseFloat(t_segar_percent) || 0,
          parseFloat(busuk_gram) || 0, parseFloat(busuk_percent) || 0,
@@ -1716,13 +1722,13 @@ app.post('/api/ffb_quality', async (req, res) => {
         try {
             const item = req.body;
             const result = await pool.query(`INSERT INTO ffb_quality (
-                date, mill, estate, divisi, no_truck,
+                date, mill, estate, divisi, blok, no_truck,
                 bg_gram, bd_gram, bd_percent,
                 t_segar_gram, t_segar_percent,
                 busuk_gram, busuk_percent,
                 sampah_gram, sampah_percent
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`, 
-            [item.date, item.mill, item.estate, item.divisi || '', item.no_truck,
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING id`, 
+            [item.date, item.mill, item.estate, item.divisi || '', item.blok || '', item.no_truck,
              parseFloat(item.bg_gram) || 0, parseFloat(item.bd_gram) || 0, parseFloat(item.bd_percent) || 0,
              parseFloat(item.t_segar_gram) || 0, parseFloat(item.t_segar_percent) || 0,
              parseFloat(item.busuk_gram) || 0, parseFloat(item.busuk_percent) || 0,
@@ -1744,13 +1750,13 @@ app.post('/api/ffb_quality', async (req, res) => {
             for (let item of entries) {
                 if (item.estate) {
                     await client.query(`INSERT INTO ffb_quality (
-                        date, mill, estate, divisi, no_truck,
+                        date, mill, estate, divisi, blok, no_truck,
                         bg_gram, bd_gram, bd_percent,
                         t_segar_gram, t_segar_percent,
                         busuk_gram, busuk_percent,
                         sampah_gram, sampah_percent
-                    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`, 
-                    [date, mill, item.estate, item.divisi, item.no_truck,
+                    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`, 
+                    [date, mill, item.estate, item.divisi || '', item.blok || '', item.no_truck,
                      item.bg_gram, item.bd_gram, item.bd_percent,
                      item.t_segar_gram, item.t_segar_percent,
                      item.busuk_gram, item.busuk_percent,
