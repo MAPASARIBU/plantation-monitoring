@@ -19766,18 +19766,33 @@ window.loadFFQDetailData = async function() {
         let activeFfbEstates = new Set();
         if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
             masterData.supply_chain_list.forEach(item => {
-                abbrMap[item.name] = item.abbr;
+                if (item.name && item.abbr) {
+                    abbrMap[item.name.trim().toLowerCase()] = item.abbr;
+                    abbrMap[item.name.trim()] = item.abbr;
+                }
             });
         }
         if (typeof masterData !== 'undefined' && masterData.supply_chain) {
             masterData.supply_chain.forEach(item => {
-                if (item.is_ffb !== false) {
-                    activeFfbEstates.add(item.estate);
-                    if (item.abbr) abbrMap[item.estate] = item.abbr;
+                const est = item.estate || item.name;
+                const ab = item.abbr;
+                if (item.is_ffb !== false && est) {
+                    activeFfbEstates.add(est);
+                }
+                if (est && ab) {
+                    abbrMap[est.trim().toLowerCase()] = ab;
+                    abbrMap[est.trim()] = ab;
                 }
             });
         }
-        const getAbbr = (estName) => abbrMap[estName] || (estName ? estName.replace(' Estate', 'E') : '-');
+        const getAbbr = (estName) => {
+            if (!estName) return '-';
+            const clean = estName.trim();
+            if (abbrMap[clean]) return abbrMap[clean];
+            if (abbrMap[clean.toLowerCase()]) return abbrMap[clean.toLowerCase()];
+            if (clean.length <= 6) return clean;
+            return clean.replace(/ Estate/i, 'E');
+        };
 
         const tonaseMap = {};
         if (Array.isArray(rawTonase)) {
@@ -19939,7 +19954,7 @@ window.loadFFQDetailData = async function() {
             tr.innerHTML = `
                 <td>${idx + 1}</td>
                 <td style="font-weight: 500;">${r.date}</td>
-                <td style="text-align: left; font-weight: 600;">${r.estate} <span style="font-size:0.75rem; color:#64748b;">(${r.abbr})</span></td>
+                <td style="text-align: center; font-weight: 600;">${r.abbr}</td>
                 <td style="font-weight: 600;">${r.ffbTon.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 <td style="${r.totJ > 0 && r.unripe > 0 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.unripe.toFixed(2)}</td>
                 <td style="${r.totJ > 0 && r.under > 3 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.under.toFixed(2)}</td>
@@ -19990,10 +20005,10 @@ window.exportFFQDetailCSV = function() {
     const startDate = startInput ? startInput.value : 'start';
     const endDate = endInput ? endInput.value : 'end';
 
-    let csv = 'No,Tanggal,Estate,Kode,FFB (Ton),Unripe (%),Underripe (%),Ripe (%),Over Ripe (%),Empty Bunch (%),Long Stalk (%),Rat Damage (%),LF (%)\n';
+    let csv = 'No,Tanggal,Estate,FFB (Ton),Unripe (%),Underripe (%),Ripe (%),Over Ripe (%),Empty Bunch (%),Long Stalk (%),Rat Damage (%),LF (%)\n';
 
     window.ffqDetailData.forEach((r, idx) => {
-        csv += `${idx + 1},"${r.date}","${r.estate}","${r.abbr}",${r.ffbTon.toFixed(2)},${r.unripe.toFixed(2)},${r.under.toFixed(2)},${r.ripe.toFixed(2)},${r.over.toFixed(2)},${r.empty.toFixed(2)},${r.long.toFixed(2)},${r.rat.toFixed(2)},${r.lf.toFixed(2)}\n`;
+        csv += `${idx + 1},"${r.date}","${r.abbr}",${r.ffbTon.toFixed(2)},${r.unripe.toFixed(2)},${r.under.toFixed(2)},${r.ripe.toFixed(2)},${r.over.toFixed(2)},${r.empty.toFixed(2)},${r.long.toFixed(2)},${r.rat.toFixed(2)},${r.lf.toFixed(2)}\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
