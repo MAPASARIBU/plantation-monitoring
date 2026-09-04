@@ -19711,36 +19711,635 @@ window.submitFqRangeModal = function() {
 };
 
 window.printTable = function(wrapperId, title) {
-    const tableHtml = document.getElementById(wrapperId).innerHTML;
+    const wrapperEl = document.getElementById(wrapperId);
+    if (!wrapperEl) {
+        alert('Element tabel tidak ditemukan untuk dicetak (' + wrapperId + ').');
+        return;
+    }
+
+    // 1. Clone table and clean up interactive elements
+    const cloneWrapper = wrapperEl.cloneNode(true);
+    cloneWrapper.querySelectorAll('button, .btn, .no-print, input, select').forEach(el => el.remove());
+    cloneWrapper.querySelectorAll('script, style').forEach(el => el.remove());
+
+    // 2. Resolve Active Unit / Mill Name
+    const headerDropdown = document.getElementById('header-estate-dropdown');
+    let unitName = 'Bunga Tanjung Mill';
+    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill')) {
+        unitName = headerDropdown.value;
+    } else if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill')) {
+        unitName = window.currentUser.estate;
+    } else if (headerDropdown && headerDropdown.value && headerDropdown.value !== '' && !headerDropdown.value.includes('Semua')) {
+        unitName = headerDropdown.value;
+    } else if (window.currentUser && window.currentUser.estate && !window.currentUser.estate.includes('Semua')) {
+        unitName = window.currentUser.estate;
+    }
+
+    // 3. Resolve Period / Date
+    let periodStr = '';
+    const indoMonths = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    
+    let monthVal = null;
+    if (wrapperId === 'dash-monthly-liquid-wrapper') {
+        monthVal = document.getElementById('dash-monthly-liquid-month')?.value;
+    } else if (wrapperId === 'dash-water-sebelum-wrapper') {
+        monthVal = document.getElementById('dash-water-sebelum-month')?.value;
+    } else if (wrapperId === 'dash-water-boiler-wrapper') {
+        monthVal = document.getElementById('dash-water-boiler-month')?.value;
+    } else if (wrapperId === 'ffq-detail-wrapper') {
+        const s = document.getElementById('fq-detail-start-date')?.value;
+        const e = document.getElementById('fq-detail-end-date')?.value;
+        if (s && e) periodStr = `${s} s/d ${e}`;
+    }
+
+    if (monthVal && monthVal.includes('-')) {
+        const parts = monthVal.split('-');
+        const y = parts[0];
+        const mIdx = parseInt(parts[1], 10) - 1;
+        periodStr = (indoMonths[mIdx] || '') + ' ' + y;
+    }
+
+    if (!periodStr) {
+        const now = new Date();
+        periodStr = indoMonths[now.getMonth()] + ' ' + now.getFullYear();
+    }
+
+    // 4. Resolve Current User & Timestamp
+    const userName = (window.currentUser && window.currentUser.name) ? window.currentUser.name : ((window.currentUser && window.currentUser.username) ? window.currentUser.username : 'Operator Lab');
+    
+    const now = new Date();
+    const formattedDate = String(now.getDate()).padStart(2, '0') + ' ' + indoMonths[now.getMonth()] + ' ' + now.getFullYear();
+    const formattedTime = formattedDate + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ' WIB';
+
+    // 5. Document ISO Code
+    let docCode = 'TTI/LAB/LS-01';
+    const lowerTitle = (title || '').toLowerCase();
+    if (lowerTitle.includes('liquid')) {
+        docCode = 'TTI-BTM/LAB-LIQ/LS-01';
+    } else if (lowerTitle.includes('sebelum')) {
+        docCode = 'TTI-BTM/LAB-WTR/LS-01';
+    } else if (lowerTitle.includes('boiler')) {
+        docCode = 'TTI-BTM/LAB-BLR/LS-02';
+    } else if (lowerTitle.includes('ffb') || lowerTitle.includes('grading') || lowerTitle.includes('loose')) {
+        docCode = 'TTI-BTM/QC-FFB/LS-03';
+    }
+
+    // 6. Generate Clean HTML Document
+    const tableHtml = cloneWrapper.innerHTML;
     const w = window.open('', '_blank');
-    w.document.write(`
-        <html>
-        <head>
-            <title>${title}</title>
-            <style>
-                body { font-family: sans-serif; padding: 20px; }
-                h2 { text-align: center; margin-bottom: 20px; }
-                table { width: 100%; border-collapse: collapse; font-size: 12px; }
-                th, td { border: 1px solid #000; padding: 4px 8px; text-align: center; }
-                th { background-color: #f1f5f9; }
-                .btn { display: none; } /* Hide buttons in print */
-                @media print {
-                    @page { size: landscape; }
-                }
-            </style>
-        </head>
-        <body>
-            <h2>${title}</h2>
+    if (!w) {
+        alert('Pop-up terblokir oleh browser. Silakan izinkan pop-up untuk mencetak logsheet.');
+        return;
+    }
+
+    w.document.write(`<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>${title} - ${unitName}</title>
+    <!-- Google Fonts & Font Awesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @page {
+            size: landscape;
+            margin: 6mm 6mm 6mm 6mm;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body {
+            font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f1f5f9;
+            color: #0f172a;
+            font-size: 7.8pt;
+            line-height: 1.25;
+        }
+        
+        /* Non-Print Toolbar */
+        .no-print {
+            display: block;
+        }
+        .print-toolbar {
+            background: #1e293b;
+            color: #ffffff;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 9999;
+        }
+        .toolbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .toolbar-brand .tool-icon {
+            font-size: 1.4rem;
+        }
+        .toolbar-tips {
+            font-size: 8.2pt;
+            color: #cbd5e1;
+            background: rgba(255,255,255,0.08);
+            padding: 6px 14px;
+            border-radius: 6px;
+            border-left: 3px solid #10b981;
+        }
+        .toolbar-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .t-btn {
+            border: none;
+            padding: 7px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 8.5pt;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .t-btn-primary {
+            background: #0d8b4e;
+            color: #ffffff;
+        }
+        .t-btn-primary:hover {
+            background: #0b7340;
+        }
+        .t-btn-close {
+            background: #475569;
+            color: #ffffff;
+        }
+        .t-btn-close:hover {
+            background: #334155;
+        }
+
+        /* Logsheet Paper Container */
+        .logsheet-paper {
+            background: #ffffff;
+            width: 100%;
+            max-width: 100%;
+            margin: 12px auto;
+            padding: 12px 18px 18px 18px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            border-radius: 6px;
+        }
+
+        /* 1. Header / Kop Logsheet */
+        .logsheet-header {
+            display: grid;
+            grid-template-columns: 270px 1fr 220px;
+            border: 2px solid #0f172a;
+            margin-bottom: 8px;
+            background: #ffffff;
+        }
+        .kop-company {
+            padding: 8px 10px;
+            border-right: 2px solid #0f172a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .company-name {
+            font-size: 9pt;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+        }
+        .company-group {
+            font-size: 7.2pt;
+            font-weight: 700;
+            color: #0d8b4e;
+            margin-top: 1px;
+            letter-spacing: 0.3px;
+        }
+        .company-dept {
+            font-size: 6.5pt;
+            color: #475569;
+            margin-top: 2px;
+            text-transform: uppercase;
+        }
+        .company-unit {
+            font-size: 7.2pt;
+            font-weight: 700;
+            color: #1e293b;
+            margin-top: 3px;
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            border: 1px solid #cbd5e1;
+        }
+
+        .kop-title {
+            padding: 8px 12px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-right: 2px solid #0f172a;
+        }
+        .logsheet-badge {
+            font-size: 6.8pt;
+            font-weight: 700;
+            color: #0d8b4e;
+            background: #dcfce7;
+            padding: 1px 8px;
+            border-radius: 10px;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+            display: inline-block;
+            border: 1px solid #86efac;
+        }
+        .title-text {
+            font-size: 10.5pt;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+        }
+        .period-text {
+            font-size: 7.8pt;
+            font-weight: 600;
+            color: #334155;
+            margin-top: 3px;
+        }
+
+        .kop-meta {
+            padding: 6px 8px;
+            display: flex;
+            align-items: center;
+        }
+        .meta-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 6.8pt;
+        }
+        .meta-table td {
+            padding: 1.5px 2px;
+            border: none !important;
+            text-align: left;
+            color: #334155;
+        }
+        .meta-table td:nth-child(1) {
+            font-weight: 600;
+            width: 70px;
+        }
+        .meta-table td:nth-child(2) {
+            width: 6px;
+        }
+        .meta-table td:nth-child(3) {
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        /* 2. Table Area */
+        .table-area {
+            width: 100%;
+            overflow-x: visible;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            font-size: 7pt !important;
+            table-layout: auto;
+        }
+        th, td {
+            position: static !important;
+            border: 1px solid #000000 !important;
+            padding: 3px 2px !important;
+            text-align: center !important;
+            line-height: 1.15 !important;
+        }
+        th {
+            background-color: #1e293b !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+        }
+        thead th {
+            color: #ffffff !important;
+            background-color: #1e293b !important;
+        }
+        /* Sticky reset */
+        td[style*="position: sticky"], th[style*="position: sticky"] {
+            position: static !important;
+            left: auto !important;
+            right: auto !important;
+            box-shadow: none !important;
+        }
+        /* First Column (Parameter Label) */
+        tbody tr td:first-child, thead tr th:first-child {
+            text-align: left !important;
+            padding-left: 6px !important;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        /* Header group row styles */
+        tbody tr[style*="background-color: #f0fdf4"],
+        tbody tr[style*="background-color: rgb(240, 253, 244)"],
+        tbody tr[style*="background-color: #eff6ff"],
+        tbody tr[style*="background-color: #ecfeff"],
+        tbody tr[style*="background-color: #eef2ff"],
+        tbody tr[style*="background-color: #fff7ed"],
+        tbody tr[style*="background-color: #fffbeb"],
+        tbody tr[style*="background-color: #fdf2f8"] {
+            font-weight: 700 !important;
+            font-size: 7.2pt !important;
+        }
+        tbody tr[style*="background-color: #f0fdf4"] td,
+        tbody tr[style*="background-color: #eff6ff"] td,
+        tbody tr[style*="background-color: #ecfeff"] td,
+        tbody tr[style*="background-color: #eef2ff"] td,
+        tbody tr[style*="background-color: #fff7ed"] td,
+        tbody tr[style*="background-color: #fffbeb"] td,
+        tbody tr[style*="background-color: #fdf2f8"] td {
+            background-color: #f1f5f9 !important;
+            color: #0f172a !important;
+            font-weight: 700 !important;
+            padding: 3px 6px !important;
+        }
+        /* Last column (AVG) */
+        tbody tr td:last-child {
+            font-weight: 800 !important;
+            background-color: #f0f9ff !important;
+            border-left: 2px solid #000000 !important;
+        }
+        thead tr th:last-child {
+            border-left: 2px solid #000000 !important;
+        }
+
+        /* 3. Logsheet Signature Section */
+        .logsheet-signatures {
+            margin-top: 10px;
+            page-break-inside: avoid;
+            border: 1.5px solid #0f172a;
+            padding: 8px 12px 10px 12px;
+            background: #ffffff;
+        }
+        .sig-top-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px dashed #94a3b8;
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+            font-size: 7.2pt;
+            color: #475569;
+        }
+        .sig-top-meta strong {
+            color: #0f172a;
+        }
+        .sig-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+        .sig-card {
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 6px 8px;
+            text-align: center;
+            background: #fafafa;
+        }
+        .sig-card-header {
+            font-size: 7.8pt;
+            font-weight: 800;
+            color: #0f172a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1px;
+        }
+        .sig-card-role {
+            font-size: 6.8pt;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 6px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 3px;
+        }
+        .sig-card-space {
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sig-card-space .watermark {
+            font-size: 6.2pt;
+            color: #cbd5e1;
+            letter-spacing: 1px;
+            font-style: italic;
+        }
+        .sig-card-name {
+            font-size: 7.8pt;
+            font-weight: 700;
+            color: #0f172a;
+            margin-top: 2px;
+            min-height: 14px;
+        }
+        .editable-name {
+            display: inline-block;
+            min-width: 120px;
+            padding: 1px 4px;
+            border-bottom: 1px dotted #94a3b8;
+            outline: none;
+        }
+        .editable-name:focus {
+            background: #fef9c3;
+            border-bottom: 1px solid #0d8b4e;
+        }
+        .sig-card-footer {
+            font-size: 6.2pt;
+            color: #64748b;
+            margin-top: 3px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 4px;
+        }
+
+        /* 4. Footer Note */
+        .logsheet-footer-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+            font-size: 6.5pt;
+            color: #64748b;
+            border-top: 1px solid #cbd5e1;
+            padding-top: 3px;
+        }
+
+        /* Print Media Overrides */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: #ffffff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .logsheet-paper {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border-radius: 0 !important;
+                width: 100% !important;
+            }
+            .editable-name {
+                border-bottom: none !important;
+            }
+            .sig-card {
+                background: #ffffff !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Interactive Top Control Toolbar (Screen only) -->
+    <div class="no-print print-toolbar">
+        <div class="toolbar-brand">
+            <span class="tool-icon">🌿</span>
+            <div>
+                <strong style="color: #4ade80;">AgriMonitor Logsheet Print Engine</strong>
+                <div style="font-size: 11px; color: #94a3b8;">Pratinjau Resmi Logsheet Pabrik & Laboratorium</div>
+            </div>
+        </div>
+        <div class="toolbar-tips">
+            <i class="fa-solid fa-lightbulb" style="color: #facc15; margin-right: 4px;"></i>
+            <span><strong>Saran Cetak:</strong> Pilih Layout <strong>Landscape</strong>, Paper <strong>A4</strong>, dan centang <strong>"Background Graphics"</strong>. Nama penandatangan dapat diklik & diedit langsung di layar sebelum print.</span>
+        </div>
+        <div class="toolbar-actions">
+            <button class="t-btn t-btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Cetak / Print Sekarang</button>
+            <button class="t-btn t-btn-close" onclick="window.close()"><i class="fa-solid fa-xmark"></i> Tutup</button>
+        </div>
+    </div>
+
+    <!-- Paper Container -->
+    <div class="logsheet-paper">
+        <!-- Formal Kop Header -->
+        <div class="logsheet-header">
+            <div class="kop-company">
+                <div class="company-name">PT TOLAN TIGA INDONESIA</div>
+                <div class="company-group">SIPEF GROUP - INDONESIA</div>
+                <div class="company-dept">Palm Oil Mill & Quality Control</div>
+                <div class="company-unit"><i class="fa-solid fa-industry" style="margin-right: 3px;"></i> ${unitName.toUpperCase()}</div>
+            </div>
+            
+            <div class="kop-title">
+                <div class="logsheet-badge">OFFICIAL DAILY / MONTHLY LOGSHEET</div>
+                <h1 class="title-text">${title}</h1>
+                <div class="period-text"><i class="fa-regular fa-calendar" style="margin-right: 4px; color: #0d8b4e;"></i> Periode: <strong>${periodStr.toUpperCase()}</strong></div>
+            </div>
+            
+            <div class="kop-meta">
+                <table class="meta-table">
+                    <tr><td>No. Dokumen</td><td>:</td><td>${docCode}</td></tr>
+                    <tr><td>Revisi</td><td>:</td><td>01</td></tr>
+                    <tr><td>Tgl. Cetak</td><td>:</td><td>${formattedDate}</td></tr>
+                    <tr><td>Halaman</td><td>:</td><td>1 dari 1</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Table Area -->
+        <div class="table-area">
             ${tableHtml}
-            <script>
-                window.onload = function() {
-                    window.print();
-                    window.close();
-                }
-            </script>
-        </body>
-        </html>
-    `);
+        </div>
+
+        <!-- Signature Section (3 Pillars: Dibuat, Diperiksa, Diketahui/Disetujui) -->
+        <div class="logsheet-signatures">
+            <div class="sig-top-meta">
+                <span>Pengesahan Logsheet Operasional: <strong>${unitName}</strong></span>
+                <span>Tanggal Terbit: <strong>${formattedDate}</strong></span>
+            </div>
+            <div class="sig-grid">
+                <!-- 1. DIBUAT OLEH -->
+                <div class="sig-card">
+                    <div class="sig-card-header">Dibuat Oleh:</div>
+                    <div class="sig-card-role">Operator Lab / Analis Proses</div>
+                    <div class="sig-card-space">
+                        <span class="watermark">TANDA TANGAN / PARAF</span>
+                    </div>
+                    <div class="sig-card-name">
+                        ( <span class="editable-name" contenteditable="true" title="Klik untuk mengedit nama">${userName}</span> )
+                    </div>
+                    <div class="sig-card-footer">
+                        <span>NIK: ..................</span>
+                        <span>Tgl: ..................</span>
+                    </div>
+                </div>
+
+                <!-- 2. DIPERIKSA OLEH -->
+                <div class="sig-card">
+                    <div class="sig-card-header">Diperiksa Oleh:</div>
+                    <div class="sig-card-role">Asisten Lab / Asisten Proses</div>
+                    <div class="sig-card-space">
+                        <span class="watermark">TANDA TANGAN / PARAF</span>
+                    </div>
+                    <div class="sig-card-name">
+                        ( <span class="editable-name" contenteditable="true" title="Klik untuk mengedit nama">................................................</span> )
+                    </div>
+                    <div class="sig-card-footer">
+                        <span>NIK: ..................</span>
+                        <span>Tgl: ..................</span>
+                    </div>
+                </div>
+
+                <!-- 3. DIKETAHUI & DISETUJUI -->
+                <div class="sig-card">
+                    <div class="sig-card-header">Diketahui & Disetujui:</div>
+                    <div class="sig-card-role">Mill Manager / Kepala Pabrik</div>
+                    <div class="sig-card-space">
+                        <span class="watermark">TANDA TANGAN / PARAF</span>
+                    </div>
+                    <div class="sig-card-name">
+                        ( <span class="editable-name" contenteditable="true" title="Klik untuk mengedit nama">................................................</span> )
+                    </div>
+                    <div class="sig-card-footer">
+                        <span>NIK: ..................</span>
+                        <span>Tgl: ..................</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Bar -->
+        <div class="logsheet-footer-bar">
+            <div><i class="fa-solid fa-shield-halved" style="color: #0d8b4e;"></i> Dokumen Resmi Pengendalian Mutu & Operasional Pabrik Minyak Kelapa Sawit (PMKS).</div>
+            <div>Dicetak otomatis melalui AgriMonitor Portal pada ${formattedTime}</div>
+        </div>
+    </div>
+
+    <!-- Auto Print Script -->
+    <script>
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+    </script>
+</body>
+</html>`);
     w.document.close();
 };
 
