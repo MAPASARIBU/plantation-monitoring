@@ -3160,6 +3160,9 @@ Object.assign(views, {
     <button class="subsheet-tab-btn" id="tab-btn-crop" onclick="switchFFBSubTab('crop')">
         <i class="fa-solid fa-wheat-awn"></i> Daily FFB Crop Quality
     </button>
+    <button class="subsheet-tab-btn" id="tab-btn-detail" onclick="switchFFBSubTab('detail')">
+        <i class="fa-solid fa-table-list"></i> Detail FFQ FFB Crop Quality
+    </button>
     <button class="subsheet-tab-btn" id="tab-btn-monthly" onclick="switchFFBSubTab('monthly')">
         <i class="fa-solid fa-calendar-check"></i> Summary Monthly Grading
     </button>
@@ -3333,6 +3336,108 @@ Object.assign(views, {
 </div>
 
 <!-- 3. SUB-SHEET: SUMMARY MONTHLY GRADING -->
+<!-- 3. SUB-SHEET: DETAIL FFQ FFB CROP QUALITY -->
+<div id="ffb-subsheet-detail" class="subsheet-content" style="display:none;">
+    <div class="glass-card" style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="background: rgba(16, 185, 129, 0.15); color: #10b981; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                    <i class="fa-solid fa-table-list"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.15rem; color: #1e293b;">Detail FFQ FFB Crop Quality</h3>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Rekapitulasi Mutu Panen & Loose Fruit Harian Day-by-Day per Estate</span>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: #64748b; margin: 0;">Dari:</label>
+                    <input type="date" id="fq-detail-start-date" class="form-control" style="width: auto; padding: 5px 10px;">
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: #64748b; margin: 0;">Hingga:</label>
+                    <input type="date" id="fq-detail-end-date" class="form-control" style="width: auto; padding: 5px 10px;">
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: #64748b; margin: 0;">Estate:</label>
+                    <select id="fq-detail-estate-filter" class="form-control" style="width: auto; min-width: 170px; padding: 5px 10px;">
+                        <option value="ALL">Semua Estate (FFB)</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="window.loadFFQDetailData()"><i class="fa-solid fa-filter"></i> Tampilkan</button>
+                <button class="btn btn-secondary" onclick="printTable('ffq-detail-wrapper', 'Laporan Detail FFQ FFB Crop Quality')"><i class="fa-solid fa-print"></i> Print</button>
+                <button class="btn btn-success" onclick="window.exportFFQDetailCSV()"><i class="fa-solid fa-file-excel"></i> Export CSV</button>
+            </div>
+        </div>
+
+        <div id="ffq-detail-wrapper" class="table-responsive">
+            <style>
+                #ffq-detail-table th, #ffq-detail-table td {
+                    padding: 6px 8px !important;
+                    font-size: 0.8rem;
+                    text-align: center;
+                }
+                #ffq-detail-table th {
+                    background-color: #f8fafc;
+                    color: #334155;
+                    font-weight: 600;
+                    border: 1px solid #e2e8f0;
+                }
+                #ffq-detail-table td {
+                    border: 1px solid #f1f5f9;
+                }
+                #ffq-detail-table tr:hover {
+                    background-color: rgba(241, 245, 249, 0.6);
+                }
+            </style>
+            <table class="data-table" id="ffq-detail-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="width: 40px;">No</th>
+                        <th rowspan="2" style="width: 95px;">Tanggal</th>
+                        <th rowspan="2" style="text-align: left; min-width: 140px;">Estate</th>
+                        <th rowspan="2" style="width: 90px;">FFB<br><span style="font-size:0.75rem; font-weight:normal;">(Ton)</span></th>
+                        <th colspan="1">UNRIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
+                        <th colspan="1">UNDER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 3%)</span></th>
+                        <th colspan="1">RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Min. 90%)</span></th>
+                        <th colspan="1">OVER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 7%)</span></th>
+                        <th colspan="1">EMPTY BUNCH<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
+                        <th colspan="1">LONGSTALK<br><span style="font-size:0.75rem; font-weight:normal;">(&lt; 2%)</span></th>
+                        <th colspan="1">RAT DAMAGE<br><span style="font-size:0.75rem; font-weight:normal;">(%)</span></th>
+                        <th rowspan="2" style="width: 80px;">LF<br><span style="font-size:0.75rem; font-weight:normal;">(%)</span></th>
+                    </tr>
+                    <tr>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="12" style="padding: 20px; color: #64748b; font-style: italic;">Silakan pilih tanggal dan klik Tampilkan</td></tr>
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #f1f5f9; font-weight: bold; border-top: 2px solid #cbd5e1;">
+                        <td colspan="3" style="text-align: right; font-weight: 700;">RATA-RATA / TOTAL (INTERPOLASI):</td>
+                        <td id="ffqd-tot-ffb">0.00</td>
+                        <td id="ffqd-avg-unripe">0.00</td>
+                        <td id="ffqd-avg-under">0.00</td>
+                        <td id="ffqd-avg-ripe">0.00</td>
+                        <td id="ffqd-avg-over">0.00</td>
+                        <td id="ffqd-avg-empty">0.00</td>
+                        <td id="ffqd-avg-long">0.00</td>
+                        <td id="ffqd-avg-rat">0.00</td>
+                        <td id="ffqd-avg-lf">0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
 <div id="ffb-subsheet-monthly" class="subsheet-content">
     <!-- Filter & Options Toolbar -->
     <div class="grading-filter-bar">
@@ -15795,6 +15900,9 @@ views.ffb_quality = `
     <button class="subsheet-tab-btn" id="tab-btn-ffb-crop" onclick="switchFFBSubTab('crop')">
         <i class="fa-solid fa-wheat-awn"></i> Daily FFB Crop Quality
     </button>
+    <button class="subsheet-tab-btn" id="tab-btn-ffb-detail" onclick="switchFFBSubTab('detail')">
+        <i class="fa-solid fa-table-list"></i> Detail FFQ FFB Crop Quality
+    </button>
     <button class="subsheet-tab-btn" id="tab-btn-ffb-monthly" onclick="switchFFBSubTab('monthly')">
         <i class="fa-solid fa-calendar-check"></i> Summary Monthly Grading
     </button>
@@ -15968,6 +16076,108 @@ views.ffb_quality = `
 </div>
 
 <!-- 3. SUB-SHEET: SUMMARY MONTHLY GRADING -->
+<!-- 3. SUB-SHEET: DETAIL FFQ FFB CROP QUALITY -->
+<div id="ffb-subsheet-detail" class="subsheet-content" style="display:none;">
+    <div class="glass-card" style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="background: rgba(16, 185, 129, 0.15); color: #10b981; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                    <i class="fa-solid fa-table-list"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.15rem; color: #1e293b;">Detail FFQ FFB Crop Quality</h3>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Rekapitulasi Mutu Panen & Loose Fruit Harian Day-by-Day per Estate</span>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: #64748b; margin: 0;">Dari:</label>
+                    <input type="date" id="fq-detail-start-date" class="form-control" style="width: auto; padding: 5px 10px;">
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: #64748b; margin: 0;">Hingga:</label>
+                    <input type="date" id="fq-detail-end-date" class="form-control" style="width: auto; padding: 5px 10px;">
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: #64748b; margin: 0;">Estate:</label>
+                    <select id="fq-detail-estate-filter" class="form-control" style="width: auto; min-width: 170px; padding: 5px 10px;">
+                        <option value="ALL">Semua Estate (FFB)</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="window.loadFFQDetailData()"><i class="fa-solid fa-filter"></i> Tampilkan</button>
+                <button class="btn btn-secondary" onclick="printTable('ffq-detail-wrapper', 'Laporan Detail FFQ FFB Crop Quality')"><i class="fa-solid fa-print"></i> Print</button>
+                <button class="btn btn-success" onclick="window.exportFFQDetailCSV()"><i class="fa-solid fa-file-excel"></i> Export CSV</button>
+            </div>
+        </div>
+
+        <div id="ffq-detail-wrapper" class="table-responsive">
+            <style>
+                #ffq-detail-table th, #ffq-detail-table td {
+                    padding: 6px 8px !important;
+                    font-size: 0.8rem;
+                    text-align: center;
+                }
+                #ffq-detail-table th {
+                    background-color: #f8fafc;
+                    color: #334155;
+                    font-weight: 600;
+                    border: 1px solid #e2e8f0;
+                }
+                #ffq-detail-table td {
+                    border: 1px solid #f1f5f9;
+                }
+                #ffq-detail-table tr:hover {
+                    background-color: rgba(241, 245, 249, 0.6);
+                }
+            </style>
+            <table class="data-table" id="ffq-detail-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="width: 40px;">No</th>
+                        <th rowspan="2" style="width: 95px;">Tanggal</th>
+                        <th rowspan="2" style="text-align: left; min-width: 140px;">Estate</th>
+                        <th rowspan="2" style="width: 90px;">FFB<br><span style="font-size:0.75rem; font-weight:normal;">(Ton)</span></th>
+                        <th colspan="1">UNRIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
+                        <th colspan="1">UNDER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 3%)</span></th>
+                        <th colspan="1">RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Min. 90%)</span></th>
+                        <th colspan="1">OVER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 7%)</span></th>
+                        <th colspan="1">EMPTY BUNCH<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
+                        <th colspan="1">LONGSTALK<br><span style="font-size:0.75rem; font-weight:normal;">(&lt; 2%)</span></th>
+                        <th colspan="1">RAT DAMAGE<br><span style="font-size:0.75rem; font-weight:normal;">(%)</span></th>
+                        <th rowspan="2" style="width: 80px;">LF<br><span style="font-size:0.75rem; font-weight:normal;">(%)</span></th>
+                    </tr>
+                    <tr>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                        <th>(%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="12" style="padding: 20px; color: #64748b; font-style: italic;">Silakan pilih tanggal dan klik Tampilkan</td></tr>
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #f1f5f9; font-weight: bold; border-top: 2px solid #cbd5e1;">
+                        <td colspan="3" style="text-align: right; font-weight: 700;">RATA-RATA / TOTAL (INTERPOLASI):</td>
+                        <td id="ffqd-tot-ffb">0.00</td>
+                        <td id="ffqd-avg-unripe">0.00</td>
+                        <td id="ffqd-avg-under">0.00</td>
+                        <td id="ffqd-avg-ripe">0.00</td>
+                        <td id="ffqd-avg-over">0.00</td>
+                        <td id="ffqd-avg-empty">0.00</td>
+                        <td id="ffqd-avg-long">0.00</td>
+                        <td id="ffqd-avg-rat">0.00</td>
+                        <td id="ffqd-avg-lf">0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
 <div id="ffb-subsheet-monthly" class="subsheet-content">
     <!-- Filter & Options Toolbar -->
     <div class="grading-filter-bar">
@@ -16300,6 +16510,8 @@ window.switchFFBSubTab = function(tabId) {
             if (typeof window.loadFFBQuality === 'function') window.loadFFBQuality();
         } else if (tabId === 'crop') {
             if (typeof window.loadFFBCropQuality === 'function') window.loadFFBCropQuality();
+        } else if (tabId === 'detail') {
+            if (typeof window.loadFFQDetailData === 'function') window.loadFFQDetailData();
         } else if (tabId === 'monthly') {
             if (typeof window.loadFFBMonthlySummary === 'function') window.loadFFBMonthlySummary();
         }
@@ -19468,4 +19680,306 @@ window.printTable = function(wrapperId, title) {
         </html>
     `);
     w.document.close();
+};
+
+
+
+// --- DETAIL FFQ FFB CROP QUALITY (DAY BY DAY PER ESTATE) ---
+
+window.initFFQDetailFilters = function() {
+    const startInput = document.getElementById('fq-detail-start-date');
+    const endInput = document.getElementById('fq-detail-end-date');
+    const estateSelect = document.getElementById('fq-detail-estate-filter');
+
+    const today = window.getLocalDate();
+    if (startInput && !startInput.value) {
+        // First day of current month
+        startInput.value = today.substring(0, 7) + '-01';
+    }
+    if (endInput && !endInput.value) {
+        endInput.value = today;
+    }
+
+    if (estateSelect) {
+        let opts = '<option value="ALL">Semua Estate (FFB)</option>';
+        if (typeof masterData !== 'undefined' && masterData.supply_chain) {
+            masterData.supply_chain.filter(s => s.is_ffb !== false).forEach(s => {
+                const abbr = s.abbr || s.estate;
+                opts += `<option value="${s.estate}">${s.estate} (${abbr})</option>`;
+            });
+        }
+        estateSelect.innerHTML = opts;
+    }
+};
+
+window.loadFFQDetailData = async function() {
+    window.initFFQDetailFilters();
+
+    const startInput = document.getElementById('fq-detail-start-date');
+    const endInput = document.getElementById('fq-detail-end-date');
+    const estateSelect = document.getElementById('fq-detail-estate-filter');
+
+    const startDate = startInput ? startInput.value : window.getLocalDate();
+    const endDate = endInput ? endInput.value : startDate;
+    const selectedEstate = estateSelect ? estateSelect.value : 'ALL';
+
+    let mill = window.currentUser ? window.currentUser.estate : null; 
+    if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
+
+    const tbody = document.querySelector('#ffq-detail-table tbody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="12" style="padding: 20px; color: #64748b; font-style: italic;">Loading data Detail FFQ...</td></tr>';
+
+    try {
+        // Parallel fetch crop quality, tonase, and LF received
+        const [cropRes, tonaseRes, lfRes] = await Promise.all([
+            fetch(`/api/ffb_crop_quality/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`),
+            fetch(`/api/tonase/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`),
+            fetch(`/api/daily-monitor/lf-range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`)
+        ]);
+
+        const rawCrop = cropRes.ok ? await cropRes.json() : [];
+        const rawTonase = tonaseRes.ok ? await tonaseRes.json() : [];
+        const rawLf = lfRes.ok ? await lfRes.json() : [];
+
+        // Abbreviation map
+        let abbrMap = {};
+        let activeFfbEstates = new Set();
+        if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
+            masterData.supply_chain_list.forEach(item => {
+                abbrMap[item.name] = item.abbr;
+            });
+        }
+        if (typeof masterData !== 'undefined' && masterData.supply_chain) {
+            masterData.supply_chain.forEach(item => {
+                if (item.is_ffb !== false) {
+                    activeFfbEstates.add(item.estate);
+                    if (item.abbr) abbrMap[item.estate] = item.abbr;
+                }
+            });
+        }
+        const getAbbr = (estName) => abbrMap[estName] || (estName ? estName.replace(' Estate', 'E') : '-');
+
+        // Aggregate Tonase by (date, estate) in Ton
+        const tonaseMap = {};
+        if (Array.isArray(rawTonase)) {
+            rawTonase.forEach(r => {
+                const k = `${r.date}_${r.estate}`;
+                const ton = (parseFloat(r.realized_kg) || 0) / 1000;
+                tonaseMap[k] = (tonaseMap[k] || 0) + ton;
+            });
+        }
+
+        // Aggregate LF by (date, estate)
+        const lfMap = {};
+        if (Array.isArray(rawLf)) {
+            rawLf.forEach(r => {
+                const k = `${r.date}_${r.estate}`;
+                lfMap[k] = {
+                    lf_ton: parseFloat(r.actual_lf_tonase) || 0,
+                    ffb_ton: parseFloat(r.actual_ffb_tonase) || 0
+                };
+            });
+        }
+
+        // Aggregate Crop Quality by (date, estate)
+        const cropMap = {};
+        if (Array.isArray(rawCrop)) {
+            rawCrop.forEach(r => {
+                const k = `${r.date}_${r.estate}`;
+                if (!cropMap[k]) {
+                    cropMap[k] = {
+                        tot: 0, unripe: 0, under: 0, normal: 0, over: 0, empty: 0, long: 0, rat: 0
+                    };
+                }
+                cropMap[k].tot += parseInt(r.total_janjang) || 0;
+                cropMap[k].unripe += parseInt(r.unripe) || 0;
+                cropMap[k].under += parseInt(r.underripe) || 0;
+                cropMap[k].normal += parseInt(r.normal_ripe) || 0;
+                cropMap[k].over += parseInt(r.over_ripe) || 0;
+                cropMap[k].empty += parseInt(r.empty_bunch) || 0;
+                cropMap[k].long += parseInt(r.long_stalk) || 0;
+                cropMap[k].rat += parseInt(r.rat_damage) || 0;
+            });
+        }
+
+        // Collect all distinct (date, estate) keys
+        const allKeys = new Set([
+            ...Object.keys(cropMap),
+            ...Object.keys(tonaseMap),
+            ...Object.keys(lfMap)
+        ]);
+
+        let rowItems = [];
+        allKeys.forEach(k => {
+            const parts = k.split('_');
+            const d = parts[0];
+            const est = parts.slice(1).join('_');
+            if (!d || !est) return;
+
+            // Apply estate filter
+            if (selectedEstate !== 'ALL' && est !== selectedEstate) return;
+
+            // Only show active FFB estates if known
+            if (activeFfbEstates.size > 0 && !activeFfbEstates.has(est) && selectedEstate === 'ALL') {
+                // allow if data exists in cropMap or tonaseMap
+                if (!cropMap[k] && !tonaseMap[k]) return;
+            }
+
+            const cData = cropMap[k] || { tot: 0, unripe: 0, under: 0, normal: 0, over: 0, empty: 0, long: 0, rat: 0 };
+            const ffbTon = tonaseMap[k] !== undefined ? tonaseMap[k] : (lfMap[k] ? lfMap[k].ffb_ton : 0);
+            const lfData = lfMap[k] || { lf_ton: 0, ffb_ton: ffbTon };
+
+            const totJ = cData.tot;
+            const p_unripe = totJ > 0 ? (cData.unripe / totJ * 100) : 0;
+            const p_under = totJ > 0 ? (cData.under / totJ * 100) : 0;
+            const p_ripe = totJ > 0 ? (cData.normal / totJ * 100) : 0;
+            const p_over = totJ > 0 ? (cData.over / totJ * 100) : 0;
+            const p_empty = totJ > 0 ? (cData.empty / totJ * 100) : 0;
+            const p_long = totJ > 0 ? (cData.long / totJ * 100) : 0;
+            const p_rat = totJ > 0 ? (cData.rat / totJ * 100) : 0;
+
+            const lfTon = lfData.lf_ton || 0;
+            const ffbTonForLf = ffbTon > 0 ? ffbTon : (lfData.ffb_ton || 0);
+            const p_lf = ffbTonForLf > 0 ? ((lfTon / ffbTonForLf) * 100) : 0;
+
+            // Ignore rows that have zero tonase AND zero crop data
+            if (ffbTon <= 0 && totJ <= 0 && lfTon <= 0) return;
+
+            rowItems.push({
+                date: d,
+                estate: est,
+                abbr: getAbbr(est),
+                ffbTon: ffbTon,
+                totJ: totJ,
+                unripe: p_unripe,
+                under: p_under,
+                ripe: p_ripe,
+                over: p_over,
+                empty: p_empty,
+                long: p_long,
+                rat: p_rat,
+                lfTon: lfTon,
+                lf: p_lf
+            });
+        });
+
+        // Sort by Date ASC, Estate ASC
+        rowItems.sort((a, b) => {
+            if (a.date !== b.date) return a.date.localeCompare(b.date);
+            return a.estate.localeCompare(b.estate);
+        });
+
+        window.ffqDetailData = rowItems;
+
+        if (tbody) tbody.innerHTML = '';
+
+        if (rowItems.length === 0) {
+            if (tbody) tbody.innerHTML = '<tr><td colspan="12" style="padding: 20px; color: #64748b; font-style: italic;">Tidak ada data pada rentang tanggal dan estate yang dipilih.</td></tr>';
+            document.getElementById('ffqd-tot-ffb').innerText = '0.00';
+            document.getElementById('ffqd-avg-unripe').innerText = '0.00';
+            document.getElementById('ffqd-avg-under').innerText = '0.00';
+            document.getElementById('ffqd-avg-ripe').innerText = '0.00';
+            document.getElementById('ffqd-avg-over').innerText = '0.00';
+            document.getElementById('ffqd-avg-empty').innerText = '0.00';
+            document.getElementById('ffqd-avg-long').innerText = '0.00';
+            document.getElementById('ffqd-avg-rat').innerText = '0.00';
+            document.getElementById('ffqd-avg-lf').innerText = '0.00';
+            return;
+        }
+
+        let sumWeight = 0;
+        let sumFfbTon = 0;
+        let sumLfTon = 0;
+        let sumUnripeW = 0;
+        let sumUnderW = 0;
+        let sumRipeW = 0;
+        let sumOverW = 0;
+        let sumEmptyW = 0;
+        let sumLongW = 0;
+        let sumRatW = 0;
+
+        rowItems.forEach((r, idx) => {
+            const tr = document.createElement('tr');
+            
+            // Weight is FFB ton if available, otherwise total janjang / 100
+            const w = r.ffbTon > 0 ? r.ffbTon : (r.totJ > 0 ? r.totJ : 1);
+            sumWeight += w;
+            sumFfbTon += r.ffbTon;
+            sumLfTon += r.lfTon;
+
+            sumUnripeW += r.unripe * w;
+            sumUnderW += r.under * w;
+            sumRipeW += r.ripe * w;
+            sumOverW += r.over * w;
+            sumEmptyW += r.empty * w;
+            sumLongW += r.long * w;
+            sumRatW += r.rat * w;
+
+            tr.innerHTML = `
+                <td>${idx + 1}</td>
+                <td style="font-weight: 500;">${r.date}</td>
+                <td style="text-align: left; font-weight: 600;">${r.estate} <span style="font-size:0.75rem; color:#64748b;">(${r.abbr})</span></td>
+                <td style="font-weight: 600;">${r.ffbTon.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td style="${r.unripe > 0 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.unripe.toFixed(2)}</td>
+                <td style="${r.under > 3 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.under.toFixed(2)}</td>
+                <td style="${r.ripe < 90 && r.totJ > 0 ? 'color:#ef4444; font-weight:bold;' : (r.ripe >= 90 ? 'color:#10b981; font-weight:bold;' : '')}">${r.ripe.toFixed(2)}</td>
+                <td style="${r.over > 7 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.over.toFixed(2)}</td>
+                <td style="${r.empty > 0 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.empty.toFixed(2)}</td>
+                <td style="${r.long >= 2 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.long.toFixed(2)}</td>
+                <td>${r.rat.toFixed(2)}</td>
+                <td style="font-weight: 500;">${r.lf.toFixed(2)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Compute Weighted Averages
+        const avgUnripe = sumWeight > 0 ? (sumUnripeW / sumWeight) : 0;
+        const avgUnder = sumWeight > 0 ? (sumUnderW / sumWeight) : 0;
+        const avgRipe = sumWeight > 0 ? (sumRipeW / sumWeight) : 0;
+        const avgOver = sumWeight > 0 ? (sumOverW / sumWeight) : 0;
+        const avgEmpty = sumWeight > 0 ? (sumEmptyW / sumWeight) : 0;
+        const avgLong = sumWeight > 0 ? (sumLongW / sumWeight) : 0;
+        const avgRat = sumWeight > 0 ? (sumRatW / sumWeight) : 0;
+        const avgLf = sumFfbTon > 0 ? ((sumLfTon / sumFfbTon) * 100) : 0;
+
+        document.getElementById('ffqd-tot-ffb').innerText = sumFfbTon.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('ffqd-avg-unripe').innerText = avgUnripe.toFixed(2);
+        document.getElementById('ffqd-avg-under').innerText = avgUnder.toFixed(2);
+        document.getElementById('ffqd-avg-ripe').innerText = avgRipe.toFixed(2);
+        document.getElementById('ffqd-avg-over').innerText = avgOver.toFixed(2);
+        document.getElementById('ffqd-avg-empty').innerText = avgEmpty.toFixed(2);
+        document.getElementById('ffqd-avg-long').innerText = avgLong.toFixed(2);
+        document.getElementById('ffqd-avg-rat').innerText = avgRat.toFixed(2);
+        document.getElementById('ffqd-avg-lf').innerText = avgLf.toFixed(2);
+
+    } catch(err) {
+        console.error('Error loading FFQ Detail data:', err);
+        if (tbody) tbody.innerHTML = '<tr><td colspan="12" style="padding: 20px; color: #ef4444;">Gagal memuat data Detail FFQ: ' + err.message + '</td></tr>';
+    }
+};
+
+window.exportFFQDetailCSV = function() {
+    if (!window.ffqDetailData || window.ffqDetailData.length === 0) {
+        alert('Tidak ada data untuk diekspor.');
+        return;
+    }
+
+    const startInput = document.getElementById('fq-detail-start-date');
+    const endInput = document.getElementById('fq-detail-end-date');
+    const startDate = startInput ? startInput.value : 'start';
+    const endDate = endInput ? endInput.value : 'end';
+
+    let csv = 'No,Tanggal,Estate,Kode,FFB (Ton),Unripe (%),Underripe (%),Ripe (%),Over Ripe (%),Empty Bunch (%),Long Stalk (%),Rat Damage (%),LF (%)\n';
+
+    window.ffqDetailData.forEach((r, idx) => {
+        csv += `${idx + 1},"${r.date}","${r.estate}","${r.abbr}",${r.ffbTon.toFixed(2)},${r.unripe.toFixed(2)},${r.under.toFixed(2)},${r.ripe.toFixed(2)},${r.over.toFixed(2)},${r.empty.toFixed(2)},${r.long.toFixed(2)},${r.rat.toFixed(2)},${r.lf.toFixed(2)}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `Detail_FFQ_FFB_Crop_Quality_${startDate}_to_${endDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 };

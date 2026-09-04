@@ -1238,6 +1238,32 @@ app.get('/api/efb-historical/:mill/:startDate/:endDate', async (req, res) => {
     }
 });
 
+app.get('/api/daily-monitor/lf-range/:mill/:startDate/:endDate', async (req, res) => {
+    try {
+        let { mill, startDate, endDate } = req.params;
+        const norm = (d) => {
+            if (!d) return '';
+            d = String(d).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(d)) {
+                const p = d.split('/');
+                return `${p[2]}-${p[0].padStart(2, '0')}-${p[1].padStart(2, '0')}`;
+            }
+            if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(d)) {
+                const p = d.split('-');
+                return `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
+            }
+            return d;
+        };
+        startDate = norm(startDate);
+        endDate = norm(endDate);
+        const result = await pool.query("SELECT * FROM lf_received_daily WHERE mill = $1 AND date >= $2 AND date <= $3 ORDER BY date ASC, estate ASC", [mill, startDate, endDate]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/api/daily-monitor/:mill/latest-efb-target', async (req, res) => {
     try {
         const { mill } = req.params;
