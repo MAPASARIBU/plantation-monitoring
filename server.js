@@ -1370,6 +1370,22 @@ app.post('/api/daily-monitor/config', async (req, res) => {
 
 // --- NEW MODULES: PROCESSING, WATER, FFB QUALITY ---
 
+
+// PROCESSING MONTHLY (ALL LIQUID & FFA FOR A MONTH)
+app.get('/api/processing/monthly/:mill/:month', async (req, res) => {
+    try {
+        const { mill, month } = req.params;
+        const liquidResult = await pool.query("SELECT * FROM processing_liquid WHERE mill = $1 AND date LIKE $2 || '%' ORDER BY date ASC, time_hour ASC", [mill, month]);
+        const ffaResult = await pool.query("SELECT * FROM processing_ffa WHERE mill = $1 AND date LIKE $2 || '%' ORDER BY date ASC, time_hour ASC", [mill, month]);
+        res.json({
+            liquid: liquidResult.rows,
+            ffa: ffaResult.rows
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // PROCESSING LIQUID
 app.get('/api/processing/liquid/:mill/:date', async (req, res) => {
     try {
