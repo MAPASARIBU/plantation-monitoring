@@ -4,6 +4,7 @@ window.API_URL = window.API_URL || (window.location.protocol === 'file:' ? 'http
 window.API_URL = window.API_URL || (window.location.protocol === 'file:' ? 'http://localhost:3006/api' : '/api');
 if (!window.views) window.views = {};
 window.views = window.views || (typeof views !== 'undefined' ? views : {});
+const views = window.views;
 
 
 // 1. PROCESSING VIEW
@@ -3722,96 +3723,57 @@ views.mill_dashboard = `
 <!-- Dashboard Extra Sections (Processing & Water) -->
 <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 2px solid #e2e8f0; padding-top: 20px;">
     <div style="display: flex; flex-direction: column;">
-        <h2 style="margin: 0;">Processing & Water Analysis</h2>
-        <span id="dash-extra-date-label" style="font-size: 0.9em; color: var(--text-secondary); font-weight: bold;">Data Hari Ini</span>
+        <h2 style="margin: 0; font-size: 1.35rem; color: #1e293b; font-weight: 700;">Processing & Water Analysis</h2>
+        <span id="dash-extra-date-label" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; margin-top: 2px;">Monitoring Hasil Inputan Report Bulanan</span>
     </div>
-    <button class="btn btn-primary btn-sm" onclick="document.getElementById('dashboard-extra-date-modal').style.display='flex';"><i class="fa-solid fa-clock-rotate-left"></i> Historical Pop Up</button>
+    <button class="btn btn-primary btn-sm" onclick="document.getElementById('dashboard-extra-date-modal').style.display='flex';" style="border-radius: 6px; font-weight: 600;"><i class="fa-solid fa-clock-rotate-left"></i> Historical Pop Up</button>
 </div>
 
-<div class="glass-card" style="margin-top: 15px;">
-    <h3>Liquid Monitoring Historical Grafik</h3>
-    <div class="dashboard-grid" style="grid-template-columns: repeat(3, 1fr); gap: 15px;">
-        <div class="chart-container" style="position: relative; height:300px; width:100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px; background: white;">
-            <canvas id="chart-oil-cot-cst"></canvas>
+<!-- Monthly Liquid Monitoring Card -->
+<div class="glass-card" style="margin-top: 15px; padding: 22px; border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
+        <div style="display: flex; flex-direction: column;">
+            <h3 style="margin: 0; font-size: 1.15rem; color: #1e293b; font-weight: 700;"><i class="fa-solid fa-flask-vial" style="color: #0d8b4e; margin-right: 8px;"></i>Monthly Liquid Monitoring</h3>
+            <span style="font-size: 0.82rem; color: #64748b; margin-top: 2px;">Rata-rata Harian Parameter Cairan & Mutu Produksi CPO Day-by-Day (1-31)</span>
         </div>
-        <div class="chart-container" style="position: relative; height:300px; width:100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px; background: white;">
-            <canvas id="chart-cst-ketebalan"></canvas>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <span style="font-weight: 600; color: #475569; font-size: 0.88rem;"><i class="fa-regular fa-calendar" style="margin-right: 4px; color: #0d8b4e;"></i> BULAN:</span>
+            <input type="month" id="dash-monthly-liquid-month" class="form-control" style="width: auto; padding: 5px 12px; font-size: 0.88rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 6px;">
+            <button class="btn btn-primary" onclick="if(window.loadMonthlyLiquidMonitoring) window.loadMonthlyLiquidMonitoring()" style="padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;"><i class="fa-solid fa-magnifying-glass"></i> Tampilkan</button>
+            <button class="btn btn-secondary" onclick="printTable('dash-monthly-liquid-wrapper', 'Laporan Monthly Liquid Monitoring')" style="padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;"><i class="fa-solid fa-print"></i> Print</button>
         </div>
-        <div class="chart-container" style="position: relative; height:300px; width:100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px; background: white;">
-            <canvas id="chart-temp-cot-cst"></canvas>
-        </div>
-    </div>
-</div>
-
-<div class="glass-card" style="margin-top: 20px;">
-    <h3>Chart Monitoring FFA Today</h3>
-    <div class="chart-container" style="position: relative; height:300px; width:100%; max-width: 600px; margin: 0 auto;">
-        <canvas id="chart-ffa-today"></canvas>
-    </div>
-</div>
-
-<div class="glass-card" style="margin-top: 20px;">
-    <h3>Korelasi FFB Quality vs FFA Washing Plant (Bulan Berjalan)</h3>
-    <div class="chart-container" style="position: relative; height:350px; width:100%; max-width: 800px; margin: 0 auto;">
-        <canvas id="chart-ffb-ffa-correlation"></canvas>
     </div>
     
-    <h3 style="margin-top: 30px;">Tabel Data Bulanan</h3>
-    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Tanggal</th>
-                    <th>Rata-rata Brondolan Segar (%)</th>
-                    <th>Rata-rata FFA After Washing Plant (%)</th>
-                </tr>
-            </thead>
-            <tbody id="table-ffb-ffa-correlation-body">
-                <tr><td colspan="3" class="text-center">Loading...</td></tr>
+    <div class="table-responsive" id="dash-monthly-liquid-wrapper" style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <table class="data-table" id="dash-table-monthly-liquid" style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem;">
+            <thead></thead>
+            <tbody>
+                <tr><td colspan="34" style="text-align: center; padding: 25px; color: #64748b; font-style: italic;">Pilih bulan dan klik Tampilkan</td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
+<!-- Water Analysis Section Below Monthly Liquid Monitoring -->
 <div class="dashboard-grid" style="grid-template-columns: minmax(0, 1fr); gap: 15px; margin-top: 20px;">
-    <div class="glass-card" style="overflow: hidden;">
-        <h3>1.1 Analisa Air Sebelum Proses</h3>
-        <div class="table-responsive" style="overflow-x: auto;">
-            <table class="data-table" id="dash-table-water-sebelum">
+    <div class="glass-card" style="overflow: hidden; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff;">
+        <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.05rem; font-weight: 700; color: #1e293b;"><i class="fa-solid fa-water" style="color: #0284c7; margin-right: 8px;"></i>1.1 Analisa Air Sebelum Proses</h3>
+        <div class="table-responsive" style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <table class="data-table" id="dash-table-water-sebelum" style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem;">
                 <thead></thead>
                 <tbody></tbody>
             </table>
         </div>
     </div>
 
-    <div class="glass-card" style="overflow: hidden;">
-        <h3>1.2 Analisa Air Boiler (Rata-rata)</h3>
-        <div class="table-responsive" style="overflow-x: auto;">
-            <table class="data-table" id="dash-table-water-boiler">
+    <div class="glass-card" style="overflow: hidden; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff;">
+        <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.05rem; font-weight: 700; color: #1e293b;"><i class="fa-solid fa-fire-burner" style="color: #ea580c; margin-right: 8px;"></i>1.2 Analisa Air Boiler (Rata-rata)</h3>
+        <div class="table-responsive" style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <table class="data-table" id="dash-table-water-boiler" style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem;">
                 <thead></thead>
                 <tbody></tbody>
             </table>
         </div>
-    </div>
-</div>
-
-<div class="glass-card" id="ffb-received-card" style="margin-top: 20px; display: none;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
-        <h3 style="margin: 0;">FFB Received After <span id="ffb-received-time-label">6pm</span> by Estates</h3>
-        <select id="ffb-received-time-select" class="form-control" style="width: auto;" onchange="if(window.renderFfbReceivedChart) window.renderFfbReceivedChart()">
-            <option value="12:00">12:00</option>
-            <option value="13:00">13:00</option>
-            <option value="14:00">14:00</option>
-            <option value="15:00">15:00</option>
-            <option value="16:00">16:00</option>
-            <option value="17:00">17:00</option>
-            <option value="18:00" selected>18:00</option>
-            <option value="19:00">19:00</option>
-            <option value="20:00">20:00</option>
-        </select>
-    </div>
-    <div style="position: relative; height: 300px; width: 100%;">
-        <canvas id="chart-ffb-received"></canvas>
     </div>
 </div>
 
@@ -3838,14 +3800,13 @@ window.renderMillDashboardView = async function() {
     if(window.loadDashboardExtraData) window.loadDashboardExtraData();
 };
 
-// --- MONTHLY LIQUID MONITORING LOGIC ---
 
 window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
     const monthInput = document.getElementById('dash-monthly-liquid-month');
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const currentMonth = `${yyyy}-${mm}`;
+    const currentMonth = yyyy + '-' + mm;
 
     let month = monthOverride || (monthInput ? monthInput.value : null) || currentMonth;
     if (monthInput && !monthInput.value) monthInput.value = month;
@@ -3863,10 +3824,10 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
 
     const thead = tableEl.querySelector('thead');
     const tbody = tableEl.querySelector('tbody');
-    if (tbody) tbody.innerHTML = '<tr><td colspan="32" style="text-align: center; padding: 20px; color: #64748b; font-style: italic;">Memuat data Monthly Liquid Monitoring...</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="35" style="text-align: center; padding: 25px; color: #64748b; font-style: italic;"><i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i>Memuat data Monthly Liquid Monitoring...</td></tr>';
 
     try {
-        const res = await fetch(`/api/processing/monthly/${encodeURIComponent(mill)}/${encodeURIComponent(month)}`);
+        const res = await fetch('/api/processing/monthly/' + encodeURIComponent(mill) + '/' + encodeURIComponent(month));
         const data = res.ok ? await res.json() : { liquid: [], ffa: [] };
         const rawLiquid = data.liquid || [];
         const rawFfa = data.ffa || [];
@@ -3878,9 +3839,11 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
         const daysInMonth = new Date(year, mNum, 0).getDate();
         const daysArray = Array.from({length: daysInMonth}, (_, i) => i + 1);
 
-        // Daily aggregation maps
+        // Daily aggregation maps & Monthly totals
         const dayLiquid = {};
         const dayFfa = {};
+        const totalLiquid = { sum: {}, count: {} };
+        const totalFfa = { sum: {}, count: {} };
 
         for (let d = 1; d <= daysInMonth; d++) {
             dayLiquid[d] = { sum: {}, count: {} };
@@ -3899,6 +3862,8 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
                     const val = parseFloat(r[f]);
                     dayLiquid[d].sum[f] = (dayLiquid[d].sum[f] || 0) + val;
                     dayLiquid[d].count[f] = (dayLiquid[d].count[f] || 0) + 1;
+                    totalLiquid.sum[f] = (totalLiquid.sum[f] || 0) + val;
+                    totalLiquid.count[f] = (totalLiquid.count[f] || 0) + 1;
                 }
             });
         });
@@ -3912,6 +3877,8 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
                     const val = parseFloat(r[f]);
                     dayFfa[d].sum[f] = (dayFfa[d].sum[f] || 0) + val;
                     dayFfa[d].count[f] = (dayFfa[d].count[f] || 0) + 1;
+                    totalFfa.sum[f] = (totalFfa.sum[f] || 0) + val;
+                    totalFfa.count[f] = (totalFfa.count[f] || 0) + 1;
                 }
             });
         });
@@ -3924,62 +3891,72 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
             if (fallbackField && store && store.count[fallbackField] > 0) {
                 return (store.sum[fallbackField] / store.count[fallbackField]).toFixed(2);
             }
-            return '';
+            return '-';
+        };
+
+        const getAvg = (type, field, fallbackField = null) => {
+            const store = type === 'liquid' ? totalLiquid : totalFfa;
+            if (store && store.count[field] > 0) {
+                return (store.sum[field] / store.count[field]).toFixed(2);
+            }
+            if (fallbackField && store && store.count[fallbackField] > 0) {
+                return (store.sum[fallbackField] / store.count[fallbackField]).toFixed(2);
+            }
+            return '-';
         };
 
         // Table Header
-        let theadHtml = `
-            <tr>
-                <th rowspan="2" style="min-width: 260px; text-align: left; vertical-align: middle; position: sticky; left: 0; background-color: #f8fafc; z-index: 2; border: 1px solid #cbd5e1; padding: 6px 10px; font-weight: 700;">Description</th>
-                <th colspan="${daysInMonth}" style="text-align: center; background-color: #e2e8f0; border: 1px solid #cbd5e1; padding: 4px; font-weight: 700;">Date</th>
-            </tr>
-            <tr>
-        `;
+        let theadHtml = '<tr>' +
+            '<th rowspan="2" style="min-width: 270px; text-align: left; vertical-align: middle; position: sticky; left: 0; background: #1e293b; color: #ffffff; z-index: 3; padding: 10px 14px; font-weight: 700; border-right: 2px solid #334155;">PARAMETER / DESCRIPTION</th>' +
+            '<th colspan="' + daysInMonth + '" style="text-align: center; background: #1e293b; color: #ffffff; padding: 8px; font-weight: 700; letter-spacing: 0.5px; border-bottom: 1px solid #334155;">TANGGAL (' + month + ')</th>' +
+            '<th rowspan="2" style="min-width: 70px; text-align: center; vertical-align: middle; background: #0f172a; color: #38bdf8; z-index: 2; padding: 10px 8px; font-weight: 700; border-left: 2px solid #334155;">AVG</th>' +
+            '</tr><tr>';
+        
         daysArray.forEach(d => {
-            theadHtml += `<th style="min-width: 38px; text-align: center; background-color: #f8fafc; border: 1px solid #cbd5e1; font-weight: bold; padding: 4px;">${d}</th>`;
+            theadHtml += '<th style="min-width: 38px; text-align: center; background: #334155; color: #f8fafc; font-weight: 600; padding: 6px 2px; font-size: 0.78rem; border-right: 1px solid #475569;">' + d + '</th>';
         });
-        theadHtml += `</tr>`;
+        theadHtml += '</tr>';
         thead.innerHTML = theadHtml;
 
         // Rows Configuration
         const rowsConfig = [
             // Section a: Crude Oil Tank (% Oil)
-            { type: 'header', title: 'a.Crude Oil Tank (% Oil)', bg: '#dbeafe', color: '#1e3a8a' },
+            { type: 'header', title: 'a. Crude Oil Tank (% Oil)', bg: '#f0fdf4', border: '#22c55e', color: '#166534' },
             { type: 'data', label: 'Oil (%)', source: 'liquid', field: 'cot_oil' },
             { type: 'data', label: 'Sludge (%)', source: 'liquid', field: 'cot_sludge' },
             { type: 'data', label: 'Water (%)', source: 'liquid', field: 'cot_water' },
             { type: 'data', label: 'Solid (%)', source: 'liquid', field: 'cot_solid' },
             
             // Section b: CONTINUOUS SETTLING TANK (CST)
-            { type: 'header', title: 'b.CONTINIOUS SETTLING TANK (CST)', bg: '#dbeafe', color: '#1e3a8a' },
-            { type: 'subheader', title: 'b.1.UNDERFLOW CST', bg: '#ffedd5', color: '#9a3412' },
+            { type: 'header', title: 'b. CONTINUOUS SETTLING TANK (CST)', bg: '#eff6ff', border: '#3b82f6', color: '#1e40af' },
+            { type: 'subheader', title: 'b.1. UNDERFLOW CST', bg: '#f8fafc', color: '#475569' },
             { type: 'data', label: 'Oil (%)', source: 'liquid', field: 'cst1_oil' },
             { type: 'data', label: 'Sludge (%)', source: 'liquid', field: 'cst1_sludge' },
             { type: 'data', label: 'Water (%)', source: 'liquid', field: 'cst1_water' },
             { type: 'data', label: 'Solid (%)', source: 'liquid', field: 'cst1_solid' },
-            { type: 'subheader', title: 'b.2.Ketebalan Minyak CST (CM)', bg: '#f1f5f9', color: '#334155' },
+            { type: 'subheader', title: 'b.2. Ketebalan Minyak CST (CM)', bg: '#f8fafc', color: '#475569' },
             { type: 'data', label: 'Ketebalan Minyak (CM)', source: 'liquid', field: 'cst1_level_minyak' },
 
             // Section c: SLUDGE TANK
-            { type: 'header', title: 'c.SLUDGE TANK', bg: '#dbeafe', color: '#1e3a8a' },
+            { type: 'header', title: 'c. SLUDGE TANK', bg: '#f0fdfa', border: '#14b8a6', color: '#115e59' },
             { type: 'data', label: 'Oil (%)', source: 'liquid', field: 'sludge_tank_oil' },
             { type: 'data', label: 'Sludge (%)', source: 'liquid', field: 'sludge_tank_sludge' },
             { type: 'data', label: 'Water (%)', source: 'liquid', field: 'sludge_tank_water' },
             { type: 'data', label: 'Solid (%)', source: 'liquid', field: 'sludge_tank_solid' },
 
-            // Section c: TEMPERATURE
-            { type: 'header', title: 'c.TEMPERATURE', bg: '#ffedd5', color: '#9a3412' },
-            { type: 'data', label: 'a.Crude Oil Tank (°Celcius)', source: 'liquid', field: 'cot_temp' },
-            { type: 'data', label: 'b.Continous Settling Tank (CST) (°Celcius)', source: 'liquid', field: 'cst1_temp' },
-            { type: 'data', label: 'c.Sludge Tank (°Celcius)', source: 'liquid', field: 'sludge_tank_temp' },
+            // Section d: TEMPERATURE
+            { type: 'header', title: 'd. TEMPERATURE', bg: '#fffbeb', border: '#f59e0b', color: '#92400e' },
+            { type: 'data', label: 'Crude Oil Tank (°C)', source: 'liquid', field: 'cot_temp' },
+            { type: 'data', label: 'Continuous Settling Tank (CST) (°C)', source: 'liquid', field: 'cst1_temp' },
+            { type: 'data', label: 'Sludge Tank (°C)', source: 'liquid', field: 'sludge_tank_temp' },
 
-            // Section d: CPO PRODUCTION QUALITY
-            { type: 'header', title: 'd.CPO PRODUCTION QUALITY', bg: '#dbeafe', color: '#1e3a8a' },
-            { type: 'subheader', title: 'd.1.Sebelum Washing Plant', bg: '#ffedd5', color: '#9a3412' },
+            // Section e: CPO PRODUCTION QUALITY
+            { type: 'header', title: 'e. CPO PRODUCTION QUALITY', bg: '#fdf2f8', border: '#ec4899', color: '#9d174d' },
+            { type: 'subheader', title: 'e.1. Sebelum Washing Plant', bg: '#f8fafc', color: '#475569' },
             { type: 'data', label: 'FFA (%)', source: 'ffa', field: 'ffa_b' },
             { type: 'data', label: 'Moist (%)', source: 'ffa', field: 'moist_b' },
             { type: 'data', label: 'Dirt (%)', source: 'ffa', field: 'dirt_b' },
-            { type: 'subheader', title: 'Setelah Washing Plant', bg: '#ffedd5', color: '#9a3412' },
+            { type: 'subheader', title: 'e.2. Setelah Washing Plant', bg: '#f8fafc', color: '#475569' },
             { type: 'data', label: 'FFA (%)', source: 'ffa', field: 'ffa_a', fallback: 'ffa' },
             { type: 'data', label: 'Moist (%)', source: 'ffa', field: 'moist_a', fallback: 'moist' },
             { type: 'data', label: 'Dirt (%)', source: 'ffa', field: 'dirt_a' }
@@ -3988,27 +3965,29 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
         let tbodyHtml = '';
         rowsConfig.forEach(row => {
             if (row.type === 'header') {
-                tbodyHtml += `
-                    <tr style="background-color: ${row.bg}; font-weight: bold; border-top: 1px solid #cbd5e1;">
-                        <td style="text-align: left; padding: 5px 10px; color: ${row.color}; font-weight: 700; position: sticky; left: 0; background-color: ${row.bg}; z-index: 1;">${row.title}</td>
-                        <td colspan="${daysInMonth}" style="background-color: ${row.bg};"></td>
-                    </tr>
-                `;
+                tbodyHtml += '<tr style="background-color: ' + row.bg + '; font-weight: bold; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1;">' +
+                    '<td style="text-align: left; padding: 7px 12px; color: ' + row.color + '; font-weight: 700; position: sticky; left: 0; background-color: ' + row.bg + '; z-index: 1; border-left: 4px solid ' + row.border + '; border-right: 2px solid #cbd5e1;">' + row.title + '</td>' +
+                    '<td colspan="' + daysInMonth + '" style="background-color: ' + row.bg + ';"></td>' +
+                    '<td style="background-color: ' + row.bg + '; border-left: 2px solid #cbd5e1;"></td>' +
+                    '</tr>';
             } else if (row.type === 'subheader') {
-                tbodyHtml += `
-                    <tr style="background-color: ${row.bg}; font-weight: 600; border-top: 1px solid #cbd5e1;">
-                        <td style="text-align: left; padding: 4px 15px; color: ${row.color}; font-style: italic; position: sticky; left: 0; background-color: ${row.bg}; z-index: 1;">${row.title}</td>
-                        <td colspan="${daysInMonth}" style="background-color: ${row.bg};"></td>
-                    </tr>
-                `;
+                tbodyHtml += '<tr style="background-color: ' + row.bg + '; font-weight: 600; border-bottom: 1px solid #e2e8f0;">' +
+                    '<td style="text-align: left; padding: 5px 12px 5px 22px; color: ' + row.color + '; font-style: italic; position: sticky; left: 0; background-color: ' + row.bg + '; z-index: 1; border-left: 4px solid #cbd5e1; border-right: 2px solid #e2e8f0;">' + row.title + '</td>' +
+                    '<td colspan="' + daysInMonth + '" style="background-color: ' + row.bg + ';"></td>' +
+                    '<td style="background-color: ' + row.bg + '; border-left: 2px solid #e2e8f0;"></td>' +
+                    '</tr>';
             } else if (row.type === 'data') {
-                tbodyHtml += `<tr>`;
-                tbodyHtml += `<td style="text-align: left; padding: 4px 20px; font-weight: 500; position: sticky; left: 0; background-color: #ffffff; z-index: 1; border-right: 1px solid #e2e8f0;">${row.label}</td>`;
+                const avgVal = getAvg(row.source, row.field, row.fallback);
+                tbodyHtml += '<tr style="transition: background 0.15s ease;">';
+                tbodyHtml += '<td style="text-align: left; padding: 5px 12px 5px 30px; font-weight: 500; position: sticky; left: 0; background-color: #ffffff; z-index: 1; border-right: 2px solid #e2e8f0; border-bottom: 1px solid #f1f5f9; color: #334155;">' + row.label + '</td>';
                 daysArray.forEach(d => {
                     const val = getVal(row.source, row.field, d, row.fallback);
-                    tbodyHtml += `<td style="text-align: center; padding: 4px 2px; font-size: 0.78rem; border: 1px solid #f1f5f9;">${val}</td>`;
+                    const isMuted = val === '-';
+                    const textColor = isMuted ? '#94a3b8' : '#1e293b';
+                    tbodyHtml += '<td style="text-align: center; padding: 5px 2px; font-size: 0.78rem; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; color: ' + textColor + ';">' + val + '</td>';
                 });
-                tbodyHtml += `</tr>`;
+                tbodyHtml += '<td style="text-align: center; padding: 5px 4px; font-size: 0.8rem; font-weight: 700; color: #0369a1; background-color: #f0f9ff; border-left: 2px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">' + avgVal + '</td>';
+                tbodyHtml += '</tr>';
             }
         });
 
@@ -4016,7 +3995,7 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
 
     } catch (err) {
         console.error('Error loading Monthly Liquid Monitoring:', err);
-        if (tbody) tbody.innerHTML = `<tr><td colspan="32" style="text-align: center; color: red; padding: 20px;">Gagal memuat data: ${err.message}</td></tr>`;
+        if (tbody) tbody.innerHTML = '<tr><td colspan="35" style="text-align: center; color: red; padding: 25px;">Gagal memuat data: ' + err.message + '</td></tr>';
     }
 };
 
@@ -4027,7 +4006,7 @@ window.loadDashboardExtraData = async function(dateOverride) {
         const yyyy = today.getFullYear();
         const mm = String(today.getMonth() + 1).padStart(2, '0');
         const dd = String(today.getDate()).padStart(2, '0');
-        date = `${yyyy}-${mm}-${dd}`;
+        date = yyyy + '-' + mm + '-' + dd;
     }
     
     let mill = window.currentUser && window.currentUser.estate && window.currentUser.estate !== 'Semua Estate (Khusus Admin)' 
@@ -4042,82 +4021,53 @@ window.loadDashboardExtraData = async function(dateOverride) {
     }
     
     try {
-        let resWMonth = await fetch(`/api/water/dashboard/month/${encodeURIComponent(mill)}/${encodeURIComponent(dashMonth)}`);
+        let resWMonth = await fetch('/api/water/dashboard/month/' + encodeURIComponent(mill) + '/' + encodeURIComponent(dashMonth));
         let monthlyWaterData = resWMonth.ok ? await resWMonth.json() : { water_analysis: [], boiler_averages: {} };
         
         const parts = date.split('-');
         const daysInMonth = new Date(parts[0], parts[1], 0).getDate();
         const daysArray = Array.from({length: daysInMonth}, (_, i) => i + 1);
 
-        // 1. Fill Water Sebelum Proses (Monthly)
+        // 1. Fill Water Sebelum Proses
         let dashWaterSebelumTable = document.getElementById('dash-table-water-sebelum');
         if (dashWaterSebelumTable) {
             let thead = dashWaterSebelumTable.querySelector('thead');
             let tbody = dashWaterSebelumTable.querySelector('tbody');
-            
-            const waterSebelumMap = {};
-            if (monthlyWaterData.water_analysis) {
-                monthlyWaterData.water_analysis.forEach(w => {
-                    waterSebelumMap[w.date] = w;
-                });
-            }
 
-            let headRow = `<tr><th style="min-width: 200px; position: sticky; left: 0; background-color: #fff; z-index: 1;">PARAMETER</th>`;
+            let headRow = '<tr><th style="min-width: 200px; position: sticky; left: 0; background-color: #fff; z-index: 1;">PARAMETER</th>';
             daysArray.forEach(d => {
-                headRow += `<th style="min-width: 50px; text-align: center;">${d}</th>`;
+                headRow += '<th style="min-width: 45px; text-align: center;">' + d + '</th>';
             });
-            headRow += `</tr>`;
+            headRow += '</tr>';
             thead.innerHTML = headRow;
 
             const fieldsSebelum = [
-                { label: '=> RAW WATER', isHeader: true, bg: '#f1f5f9' },
-                { id: 'raw_ph', label: 'PH' },
-                { id: 'raw_tds', label: 'Tds' },
-                { id: 'raw_thardness', label: 'T.hardness' },
-                { id: 'raw_silica', label: 'Silica/Sio2' },
-                { id: 'raw_turbidity', label: 'Turbidity' },
-                { id: 'raw_cloride', label: 'Cloride' },
-                { label: '=> WTP / clarifier', isHeader: true, bg: '#f1f5f9' },
-                { id: 'wtp_ph', label: 'PH' },
-                { id: 'wtp_tds', label: 'Tds' },
-                { id: 'wtp_turbidity', label: 'Turbidity(<10)' },
-                { id: 'wtp_cloride', label: 'Cloride' },
-                { label: '=> Sand Filter', isHeader: true, bg: '#f1f5f9' },
-                { id: 'sand_ph', label: 'PH' },
-                { id: 'sand_tds', label: 'Tds' },
-                { id: 'sand_turbidity', label: 'Turbidity(<5)' },
-                { id: 'sand_cloride', label: 'Cloride' },
-                { label: '=> Cation Tower', isHeader: true, bg: '#f1f5f9' },
-                { id: 'cation_ph', label: 'PH' },
-                { id: 'cation_tds', label: 'Tds' },
-                { id: 'cation_thardness', label: 'T.Hardness' },
-                { label: '=> Anion Tower', isHeader: true, bg: '#f1f5f9' },
-                { id: 'anion_ph', label: 'PH' },
-                { id: 'anion_tds', label: 'Tds' },
-                { id: 'anion_silica', label: 'Silica' },
-                { label: '=> Feed Water Tank', isHeader: true, bg: '#f1f5f9' },
-                { id: 'feed_ph', label: 'PH' },
-                { id: 'feed_tds', label: 'Tds' },
-                { id: 'feed_thardness', label: 'T.Hardness' },
-                { id: 'feed_silica', label: 'Silica' },
-                { id: 'feed_cloride', label: 'Cloride' }
+                { id: 'raw_tds', label: 'Raw Water - TDS' },
+                { id: 'raw_ph', label: 'Raw Water - PH' },
+                { id: 'raw_turbidity', label: 'Raw Water - Turbidity' },
+                { id: 'raw_thardness', label: 'Raw Water - Total Hardness' },
+                { id: 'clarified_ph', label: 'Clarified Water - PH' },
+                { id: 'clarified_turbidity', label: 'Clarified Water - Turbidity' },
+                { id: 'clarified_thardness', label: 'Clarified Water - Total Hardness' },
+                { id: 'sand_filter_ph', label: 'Sand Filter - PH' },
+                { id: 'sand_filter_turbidity', label: 'Sand Filter - Turbidity' },
+                { id: 'sand_filter_thardness', label: 'Sand Filter - Total Hardness' },
+                { id: 'feed_water_ph', label: 'Feed Water - PH' },
+                { id: 'feed_water_tds', label: 'Feed Water - TDS' },
+                { id: 'feed_water_thardness', label: 'Feed Water - Total Hardness' }
             ];
 
             let bodyHtml = '';
             fieldsSebelum.forEach(f => {
-                if (f.isHeader) {
-                    bodyHtml += `<tr style="background-color: ${f.bg}; font-weight: bold;"><td style="position: sticky; left: 0; background-color: ${f.bg}; z-index: 1;">${f.label}</td><td colspan="${daysInMonth}"></td></tr>`;
-                } else {
-                    bodyHtml += `<tr><td style="position: sticky; left: 0; background-color: #fff; z-index: 1;">${f.label}</td>`;
-                    daysArray.forEach(d => {
-                        const dayStr = String(d).padStart(2, '0');
-                        const fullDate = `${dashMonth}-${dayStr}`;
-                        const rowData = waterSebelumMap[fullDate];
-                        const val = rowData && rowData[f.id] !== undefined && rowData[f.id] !== null ? rowData[f.id] : '-';
-                        bodyHtml += `<td style="text-align: center;">${val}</td>`;
-                    });
-                    bodyHtml += `</tr>`;
-                }
+                bodyHtml += '<tr><td style="position: sticky; left: 0; background-color: #fff; z-index: 1;">' + f.label + '</td>';
+                daysArray.forEach(d => {
+                    const dayStr = String(d).padStart(2, '0');
+                    const fullDate = dashMonth + '-' + dayStr;
+                    const dayObj = (monthlyWaterData.water_analysis || []).find(w => w.date === fullDate);
+                    const val = dayObj && dayObj[f.id] !== null && dayObj[f.id] !== undefined ? dayObj[f.id] : '-';
+                    bodyHtml += '<td style="text-align: center;">' + val + '</td>';
+                });
+                bodyHtml += '</tr>';
             });
             tbody.innerHTML = bodyHtml;
         }
@@ -4128,11 +4078,11 @@ window.loadDashboardExtraData = async function(dateOverride) {
             let thead = dashWaterBoilerTable.querySelector('thead');
             let tbody = dashWaterBoilerTable.querySelector('tbody');
 
-            let headRow = `<tr><th style="min-width: 200px; position: sticky; left: 0; background-color: #fff; z-index: 1;">PARAMETER</th>`;
+            let headRow = '<tr><th style="min-width: 200px; position: sticky; left: 0; background-color: #fff; z-index: 1;">PARAMETER</th>';
             daysArray.forEach(d => {
-                headRow += `<th style="min-width: 50px; text-align: center;">${d}</th>`;
+                headRow += '<th style="min-width: 45px; text-align: center;">' + d + '</th>';
             });
-            headRow += `</tr>`;
+            headRow += '</tr>';
             thead.innerHTML = headRow;
 
             const fieldsBoiler = [
@@ -4150,15 +4100,15 @@ window.loadDashboardExtraData = async function(dateOverride) {
 
             let bodyHtml = '';
             fieldsBoiler.forEach(f => {
-                bodyHtml += `<tr><td style="position: sticky; left: 0; background-color: #fff; z-index: 1;">${f.label}</td>`;
+                bodyHtml += '<tr><td style="position: sticky; left: 0; background-color: #fff; z-index: 1;">' + f.label + '</td>';
                 daysArray.forEach(d => {
                     const dayStr = String(d).padStart(2, '0');
-                    const fullDate = `${dashMonth}-${dayStr}`;
+                    const fullDate = dashMonth + '-' + dayStr;
                     const dayAvgObj = monthlyWaterData.boiler_averages ? monthlyWaterData.boiler_averages[fullDate] : null;
                     const val = dayAvgObj && dayAvgObj[f.id] !== undefined ? dayAvgObj[f.id] : '-';
-                    bodyHtml += `<td style="text-align: center;">${val}</td>`;
+                    bodyHtml += '<td style="text-align: center;">' + val + '</td>';
                 });
-                bodyHtml += `</tr>`;
+                bodyHtml += '</tr>';
             });
             tbody.innerHTML = bodyHtml;
         }
@@ -4166,1278 +4116,4 @@ window.loadDashboardExtraData = async function(dateOverride) {
     } catch (e) {
         console.error('Error in loadDashboardExtraData:', e);
     }
-};
-
-
-window.renderDashboardProcessingCharts = function(liquidData, ffaData) {
-    const labelsLiquid = liquidData.map(d => d.time_hour || '');
-    const dataLiquidCotOil = liquidData.map(d => parseFloat(d.cot_oil) || 0);
-    const dataLiquidCstOil = liquidData.map(d => parseFloat(d.cst1_oil) || 0);
-    const dataLiquidCstMinyak = liquidData.map(d => parseFloat(d.cst1_level_minyak) || 0);
-    const dataLiquidCotTemp = liquidData.map(d => parseFloat(d.cot_temp) || 0);
-    const dataLiquidCstTemp = liquidData.map(d => parseFloat(d.cst1_temp) || 0);
-    
-    // Generate 24 hours from 07:00 to 06:00
-    const labelsFfaAllHours = [];
-    for (let i = 0; i < 24; i++) {
-        let h = (7 + i);
-        if (h === 24) {
-            labelsFfaAllHours.push('24:00');
-        } else {
-            labelsFfaAllHours.push(String(h % 24).padStart(2, '0') + ':00');
-        }
-    }
-    
-    const getDataFfa = (h, field) => {
-        let altH = h === '24:00' ? '00:00' : (h === '00:00' ? '24:00' : h);
-        let row = ffaData.find(d => d.time_hour === h || d.time_hour === altH || d.time_hour === h.replace(':00', ':00:00') || d.time_hour === altH.replace(':00', ':00:00'));
-        return row && row[field] !== null && row[field] !== undefined ? parseFloat(row[field]) : null;
-    };
-    
-    const dataFfaBfAll = labelsFfaAllHours.map(h => getDataFfa(h, 'ffa_b'));
-    const dataFfaAfAll = labelsFfaAllHours.map(h => getDataFfa(h, 'ffa_a'));
-
-    const showLabel = (context) => {
-        return context.dataset.data[context.dataIndex] > 0;
-    };
-    
-    const datalabelsConfig = { 
-        display: showLabel,
-        color: '#000', 
-        font: { weight: 'bold', size: 11 }
-    };
-
-    // Ensure plugin is registered globally if available
-    const chartPlugins = window.ChartDataLabels ? [window.ChartDataLabels] : [];
-
-    function buildChart(id, config) {
-        if (!window.dashProcessingCharts) window.dashProcessingCharts = {};
-        if (window.dashProcessingCharts[id]) window.dashProcessingCharts[id].destroy();
-        let ctx = document.getElementById(id);
-        if (ctx) {
-            window.dashProcessingCharts[id] = new Chart(ctx, config);
-        }
-    }
-
-    if (liquidData.length === 0) {
-        ['chart-oil-cot-cst', 'chart-cst-ketebalan', 'chart-temp-cot-cst'].forEach(id => {
-            if (window.dashProcessingCharts && window.dashProcessingCharts[id]) window.dashProcessingCharts[id].destroy();
-        });
-    } else {
-        buildChart('chart-oil-cot-cst', {
-            type: 'line',
-            plugins: chartPlugins,
-            data: {
-                labels: labelsLiquid,
-                datasets: [
-                    { label: 'COT Oil (%)', data: dataLiquidCotOil, borderColor: '#4285F4', backgroundColor: 'transparent', borderWidth: 2, pointStyle: 'circle', pointRadius: 4, pointHoverRadius: 6, datalabels: { align: 'top', anchor: 'end' } },
-                    { label: 'Under flow CST Oil(%)', data: dataLiquidCstOil, borderColor: '#FBBC04', backgroundColor: 'transparent', borderWidth: 2, pointStyle: 'circle', pointRadius: 4, pointHoverRadius: 6, datalabels: { align: 'bottom', anchor: 'start' } }
-                ]
-            },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 60 } },
-                plugins: {
-                    datalabels: datalabelsConfig,
-                    annotation: {
-                        annotations: {
-                            cotStandard: { type: 'line', yMin: 36.5, yMax: 36.5, borderColor: 'green', borderWidth: 2, borderDash: [5, 5], label: { display: false, content: 'Std COT (36.5%)', position: 'end' } },
-                            cstStandard: { type: 'line', yMin: 6, yMax: 6, borderColor: 'brown', borderWidth: 2, borderDash: [5, 5], label: { display: false, content: 'Std CST (6%)', position: 'end' } }
-                        }
-                    }
-                }
-            }
-        });
-
-        buildChart('chart-cst-ketebalan', {
-            type: 'line',
-            plugins: chartPlugins,
-            data: {
-                labels: labelsLiquid,
-                datasets: [
-                    { label: 'Ketebalan Minyak CST (mm)', data: dataLiquidCstMinyak, borderColor: '#34A853', backgroundColor: 'transparent', borderWidth: 2, pointStyle: 'circle', pointRadius: 4, pointHoverRadius: 6, datalabels: { align: 'top', anchor: 'end' } }
-                ]
-            },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } },
-                plugins: {
-                    datalabels: datalabelsConfig,
-                    annotation: {
-                        annotations: {
-                            idealLine: { type: 'line', yMin: 40, yMax: 40, borderColor: '#4285F4', borderWidth: 1, borderDash: [5, 5], label: { display: false, content: 'Batas Ideal Ketebalan (40)', position: 'end' } }
-                        }
-                    }
-                }
-            }
-        });
-
-        buildChart('chart-temp-cot-cst', {
-            type: 'line',
-            plugins: chartPlugins,
-            data: {
-                labels: labelsLiquid,
-                datasets: [
-                    { label: 'Temp COT (°C)', data: dataLiquidCotTemp, borderColor: '#4285F4', backgroundColor: 'transparent', borderWidth: 2, pointStyle: 'circle', pointRadius: 4, pointHoverRadius: 6, datalabels: { align: 'top', anchor: 'end' } },
-                    { label: 'Temp CST (°C)', data: dataLiquidCstTemp, borderColor: '#FBBC04', backgroundColor: 'transparent', borderWidth: 2, pointStyle: 'circle', pointRadius: 4, pointHoverRadius: 6, datalabels: { align: 'bottom', anchor: 'start' } }
-                ]
-            },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 150 } }, 
-                plugins: { 
-                    datalabels: datalabelsConfig,
-                    annotation: {
-                        annotations: {
-                            stdTemp: { type: 'line', yMin: 90, yMax: 90, borderColor: 'red', borderWidth: 2, borderDash: [5,5], label: { display: false, content: 'Std Min (90°C)', position: 'end' } }
-                        }
-                    } 
-                } 
-            }
-        });
-    }
-
-
-    if (ffaData.length === 0) {
-        if (window.dashProcessingCharts && window.dashProcessingCharts['chart-ffa-today']) window.dashProcessingCharts['chart-ffa-today'].destroy();
-    } else {
-        buildChart('chart-ffa-today', {
-            type: 'line',
-            plugins: chartPlugins,
-            data: {
-                labels: labelsFfaAllHours,
-                datasets: [
-                    { label: 'FFA Sebelum Washing Plant (%)', data: dataFfaBfAll, spanGaps: true, borderColor: '#EA4335', backgroundColor: 'transparent', borderWidth: 2, pointStyle: 'triangle', pointRadius: 5, pointHoverRadius: 7, datalabels: { align: 'bottom', anchor: 'start' } },
-                    { label: 'FFA Setelah Washing Plant (%)', data: dataFfaAfAll, spanGaps: true, borderColor: '#4285F4', backgroundColor: 'transparent', borderWidth: 2, pointStyle: 'triangle', pointRadius: 5, pointHoverRadius: 7, datalabels: { align: 'top', anchor: 'end' } }
-                ]
-            },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false, 
-                scales: { 
-                    y: { min: 1.0, max: 8.0, title: { display: true, text: 'FFA (%)' } },
-                    x: {
-                        ticks: {
-                            callback: function(val, index) {
-                                return index % 2 === 0 ? this.getLabelForValue(val) : '';
-                            }
-                        }
-                    }
-                }, 
-                plugins: { 
-                    title: { display: true, text: 'Grafik FFA Sebelum & Sesudah Washing Plant' }, 
-                    datalabels: datalabelsConfig,
-                    annotation: {
-                        annotations: {
-                            maxFfa: { type: 'line', yMin: 3.5, yMax: 3.5, borderColor: 'green', borderWidth: 2, borderDash: [5,5], label: { display: false, content: 'Max FFA (3.5%)', position: 'end' } }
-                        }
-                    } 
-                } 
-            }
-        });
-    }
-};
-window.toggleFfbReceivedInputs = function() {
-    const period = document.getElementById('ffb-received-period-select')?.value;
-    const dateLabel = document.getElementById('ffb-received-date-label');
-    const dateInput = document.getElementById('ffb-received-date-input');
-    const monthLabel = document.getElementById('ffb-received-month-label');
-    const monthInput = document.getElementById('ffb-received-month-input');
-    
-    if (period === 'monthly') {
-        if (dateLabel) dateLabel.style.display = 'none';
-        if (dateInput) dateInput.style.display = 'none';
-        if (monthLabel) monthLabel.style.display = 'block';
-        if (monthInput) monthInput.style.display = 'block';
-    } else {
-        if (dateLabel) dateLabel.style.display = 'block';
-        if (dateInput) dateInput.style.display = 'block';
-        if (monthLabel) monthLabel.style.display = 'none';
-        if (monthInput) monthInput.style.display = 'none';
-    }
-};
-
-window.renderDashFfbCropQuality = async function() {
-    const cardEl = document.getElementById('dash-ffb-crop-card');
-    if (!cardEl) return;
-
-    if (!window.currentUser || !window.currentUser.role) {
-        cardEl.style.display = 'none';
-        return;
-    }
-    const allowedRoles = [
-        'Senior Field Manager', 'Manager', 'Askep', 'Assistant', 
-        'Krani Divisi', 'Manager Mill', 'Manager MIll', 
-        'supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Admin', 'Administrator'
-    ];
-    if (!allowedRoles.includes(window.currentUser.role) && !allowedRoles.includes(window.currentUser.role.trim())) {
-        cardEl.style.display = 'none';
-        return;
-    }
-
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const defaultDate = `${yyyy}-${mm}-${dd}`;
-
-    const normalizeDateStr = (val, fallback) => {
-        if (!val) return fallback;
-        val = String(val).trim();
-        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
-        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(val)) {
-            const p = val.split('/');
-            return `${p[2]}-${p[0].padStart(2, '0')}-${p[1].padStart(2, '0')}`;
-        }
-        if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(val)) {
-            const p = val.split('-');
-            return `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
-        }
-        return val || fallback;
-    };
-
-    let rawStartDate = document.getElementById('dash-ffb-crop-start-date')?.value;
-    let rawEndDate = document.getElementById('dash-ffb-crop-end-date')?.value;
-
-    let startDate = normalizeDateStr(rawStartDate, defaultDate);
-    let endDate = normalizeDateStr(rawEndDate, defaultDate);
-
-    if (document.getElementById('dash-ffb-crop-start-date') && !document.getElementById('dash-ffb-crop-start-date').value) {
-        document.getElementById('dash-ffb-crop-start-date').value = startDate;
-    }
-    if (document.getElementById('dash-ffb-crop-end-date') && !document.getElementById('dash-ffb-crop-end-date').value) {
-        document.getElementById('dash-ffb-crop-end-date').value = endDate;
-    }
-
-    cardEl.style.display = 'block';
-
-    const tbody = document.querySelector('#dash-ffb-crop-table tbody');
-    if (tbody) tbody.innerHTML = '<tr><td colspan="10">Loading...</td></tr>';
-
-    let mill = 'Bunga Tanjung Mill';
-    const headerDropdown = document.getElementById('header-estate-dropdown');
-    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill')) {
-        mill = headerDropdown.value;
-    } else if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
-        mill = window.currentUser.estate;
-    }
-
-    try {
-        let rawData = [];
-        let rawTonase = [];
-        let rawLf = [];
-
-        // Parallel fetch FFB Crop Quality, Tonase, and LF Received
-        const [ffbRes, tonaseRes, lfRes] = await Promise.all([
-            fetch(`/api/ffb_crop_quality/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`),
-            fetch(`/api/tonase/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`),
-            fetch(`/api/daily-monitor/lf-range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`)
-        ]);
-
-        if (ffbRes.ok) rawData = await ffbRes.json();
-        if (tonaseRes.ok) rawTonase = await tonaseRes.json();
-        if (lfRes.ok) rawLf = await lfRes.json();
-
-        // Abbr map
-        let abbrMap = {};
-        let activeFfbEstates = new Set();
-        if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
-            masterData.supply_chain_list.forEach(item => {
-                if (item.name && item.abbr) {
-                    abbrMap[item.name.trim().toLowerCase()] = item.abbr;
-                    abbrMap[item.name.trim()] = item.abbr;
-                }
-            });
-        }
-        if (typeof masterData !== 'undefined' && masterData.supply_chain) {
-            masterData.supply_chain.forEach(item => {
-                const est = item.estate || item.name;
-                const ab = item.abbr;
-                if (item.is_ffb !== false && est) {
-                    activeFfbEstates.add(est);
-                }
-                if (est && ab) {
-                    abbrMap[est.trim().toLowerCase()] = ab;
-                    abbrMap[est.trim()] = ab;
-                }
-            });
-        }
-        const getAbbr = (estName) => {
-            if (!estName) return '-';
-            const clean = estName.trim();
-            if (abbrMap[clean]) return abbrMap[clean];
-            if (abbrMap[clean.toLowerCase()]) return abbrMap[clean.toLowerCase()];
-            if (clean.length <= 6) return clean;
-            return clean.replace(/ Estate/i, 'E');
-        };
-
-        // Aggregate tonase from tonase_hourly by estate (realized_kg / 1000 = TON)
-        const tonaseByEst = {};
-        if (Array.isArray(rawTonase)) {
-            rawTonase.forEach(row => {
-                const e = row.estate || 'Unknown';
-                const ton = (parseFloat(row.realized_kg) || 0) / 1000;
-                tonaseByEst[e] = (tonaseByEst[e] || 0) + ton;
-            });
-        }
-
-        // Aggregate LF from lf_received_daily by estate
-        const lfByEst = {};
-        if (Array.isArray(rawLf)) {
-            rawLf.forEach(row => {
-                const e = row.estate || 'Unknown';
-                const lfTon = parseFloat(row.actual_lf_tonase) || 0;
-                const ffbTon = parseFloat(row.actual_ffb_tonase) || 0;
-                if (!lfByEst[e]) {
-                    lfByEst[e] = { lf_ton: 0, ffb_ton: 0 };
-                }
-                lfByEst[e].lf_ton += lfTon;
-                lfByEst[e].ffb_ton += ffbTon;
-            });
-        }
-
-        // Aggregate FFB Quality by estate
-        const estData = {};
-        if (Array.isArray(rawData)) {
-            rawData.forEach(row => {
-                const e = row.estate || 'Unknown';
-                if (!estData[e]) {
-                    estData[e] = {
-                        total_janjang: 0,
-                        unripe: 0,
-                        underripe: 0,
-                        normal_ripe: 0,
-                        over_ripe: 0,
-                        empty_bunch: 0,
-                        long_stalk: 0,
-                        rat_damage: 0
-                    };
-                }
-                estData[e].total_janjang += parseInt(row.total_janjang) || 0;
-                estData[e].unripe += parseInt(row.unripe) || 0;
-                estData[e].underripe += parseInt(row.underripe) || 0;
-                estData[e].normal_ripe += parseInt(row.normal_ripe) || 0;
-                estData[e].over_ripe += parseInt(row.over_ripe) || 0;
-                estData[e].empty_bunch += parseInt(row.empty_bunch) || 0;
-                estData[e].long_stalk += parseInt(row.long_stalk) || 0;
-                estData[e].rat_damage += parseInt(row.rat_damage) || 0;
-            });
-        }
-
-        if (tbody) tbody.innerHTML = '';
-
-        // Collect all distinct estates from crop data, tonase data, or lf data
-        const allEstNames = new Set([
-            ...Object.keys(estData),
-            ...Object.keys(tonaseByEst),
-            ...Object.keys(lfByEst)
-        ]);
-
-        if (allEstNames.size === 0) {
-            if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="color: #64748b; font-style: italic; text-align: center;">Tidak ada data.</td></tr>';
-            const totTonaseEl = document.getElementById('dash-fqc-tot-tonase');
-            if (totTonaseEl) totTonaseEl.innerText = '0.00';
-            document.getElementById('dash-fqc-avg-unripe').innerText = '0.0';
-            document.getElementById('dash-fqc-avg-under').innerText = '0.0';
-            document.getElementById('dash-fqc-avg-normal').innerText = '0.0';
-            document.getElementById('dash-fqc-avg-over').innerText = '0.0';
-            document.getElementById('dash-fqc-avg-empty').innerText = '0.0';
-            document.getElementById('dash-fqc-avg-long').innerText = '0.0';
-            if (document.getElementById('dash-fqc-avg-rat')) document.getElementById('dash-fqc-avg-rat').innerText = '0.0';
-            if (document.getElementById('dash-fqc-avg-lf')) document.getElementById('dash-fqc-avg-lf').innerText = '0.00';
-            return;
-        }
-
-        const getEstateTonase = (estName) => {
-            if (tonaseByEst[estName] !== undefined) return tonaseByEst[estName];
-            for (let k in tonaseByEst) {
-                if (getAbbr(k) === getAbbr(estName) || k.toLowerCase() === estName.toLowerCase()) {
-                    return tonaseByEst[k];
-                }
-            }
-            if (lfByEst[estName] && lfByEst[estName].ffb_ton > 0) return lfByEst[estName].ffb_ton;
-            return 0;
-        };
-
-        const getEstateLf = (estName) => {
-            if (lfByEst[estName]) return lfByEst[estName];
-            for (let k in lfByEst) {
-                if (getAbbr(k) === getAbbr(estName) || k.toLowerCase() === estName.toLowerCase()) {
-                    return lfByEst[k];
-                }
-            }
-            return { lf_ton: 0, ffb_ton: 0 };
-        };
-
-        let sumWeightedUnripe = 0;
-        let sumWeightedUnder = 0;
-        let sumWeightedRipe = 0;
-        let sumWeightedOver = 0;
-        let sumWeightedEmpty = 0;
-        let sumWeightedLong = 0;
-        let sumWeightedRat = 0;
-        let totalGradingTonase = 0;
-        let totalAllEstTonase = 0;
-        let totalAllLfTon = 0;
-
-        let sortedEstates = Array.from(allEstNames).sort((a, b) => getAbbr(a).localeCompare(getAbbr(b)));
-
-        sortedEstates.forEach(est => {
-            const d = estData[est] || { total_janjang: 0, unripe: 0, underripe: 0, normal_ripe: 0, over_ripe: 0, empty_bunch: 0, long_stalk: 0, rat_damage: 0 };
-            const tot = d.total_janjang;
-            
-            const p_u_num = tot > 0 ? (d.unripe / tot * 100) : 0;
-            const p_un_num = tot > 0 ? (d.underripe / tot * 100) : 0;
-            const p_n_num = tot > 0 ? (d.normal_ripe / tot * 100) : 0;
-            const p_o_num = tot > 0 ? (d.over_ripe / tot * 100) : 0;
-            const p_e_num = tot > 0 ? (d.empty_bunch / tot * 100) : 0;
-            const p_l_num = tot > 0 ? (d.long_stalk / tot * 100) : 0;
-            const p_rat_num = tot > 0 ? (d.rat_damage / tot * 100) : 0;
-
-            const p_u = p_u_num.toFixed(2);
-            const p_un = p_un_num.toFixed(2);
-            const p_n = p_n_num.toFixed(2);
-            const p_o = p_o_num.toFixed(2);
-            const p_e = p_e_num.toFixed(2);
-            const p_l = p_l_num.toFixed(2);
-            const p_rat = p_rat_num.toFixed(2);
-
-            const estTonase = getEstateTonase(est);
-            const lfData = getEstateLf(est);
-            const estLfTon = lfData.lf_ton || 0;
-            const estFfbForLf = estTonase > 0 ? estTonase : (lfData.ffb_ton || 0);
-            const p_lf_num = estFfbForLf > 0 ? ((estLfTon / estFfbForLf) * 100) : 0;
-            const p_lf = p_lf_num.toFixed(2);
-
-            if (estTonase <= 0 && tot <= 0 && estLfTon <= 0) return;
-
-            totalAllEstTonase += estTonase;
-            totalAllLfTon += estLfTon;
-
-            if (tot > 0) {
-                const w = estTonase > 0 ? estTonase : (tot / 100);
-                totalGradingTonase += w;
-                sumWeightedUnripe += (w * p_u_num);
-                sumWeightedUnder += (w * p_un_num);
-                sumWeightedRipe += (w * p_n_num);
-                sumWeightedOver += (w * p_o_num);
-                sumWeightedEmpty += (w * p_e_num);
-                sumWeightedLong += (w * p_l_num);
-                sumWeightedRat += (w * p_rat_num);
-            }
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${getAbbr(est)}</td>
-                <td style="font-weight: 600;">${estTonase.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                <td style="color: ${tot > 0 && parseFloat(p_u) > 0 ? 'red' : 'inherit'}">${p_u}</td>
-                <td style="color: ${tot > 0 && parseFloat(p_un) > 3 ? 'red' : 'inherit'}">${p_un}</td>
-                <td style="color: ${tot > 0 && parseFloat(p_n) < 90 ? 'red' : (tot > 0 && parseFloat(p_n) >= 90 ? '#10b981' : 'inherit')}">${p_n}</td>
-                <td style="color: ${tot > 0 && parseFloat(p_o) > 7 ? 'red' : 'inherit'}">${p_o}</td>
-                <td style="color: ${tot > 0 && parseFloat(p_e) > 0 ? 'red' : 'inherit'}">${p_e}</td>
-                <td style="color: ${tot > 0 && parseFloat(p_l) >= 2 ? 'red' : 'inherit'}">${p_l}</td>
-                <td>${p_rat}</td>
-                <td style="font-weight: 600;">${p_lf}</td>
-            `;
-            if (tbody) tbody.appendChild(tr);
-        });
-
-        // Weighted Totals by Tonase (Interpolasi: SUM(Tonase * %) / Total Tonase)
-        const p_tu = totalGradingTonase > 0 ? (sumWeightedUnripe / totalGradingTonase).toFixed(2) : '0.00';
-        const p_tun = totalGradingTonase > 0 ? (sumWeightedUnder / totalGradingTonase).toFixed(2) : '0.00';
-        const p_tn = totalGradingTonase > 0 ? (sumWeightedRipe / totalGradingTonase).toFixed(2) : '0.00';
-        const p_to = totalGradingTonase > 0 ? (sumWeightedOver / totalGradingTonase).toFixed(2) : '0.00';
-        const p_te = totalGradingTonase > 0 ? (sumWeightedEmpty / totalGradingTonase).toFixed(2) : '0.00';
-        const p_tl = totalGradingTonase > 0 ? (sumWeightedLong / totalGradingTonase).toFixed(2) : '0.00';
-        const p_trat = totalGradingTonase > 0 ? (sumWeightedRat / totalGradingTonase).toFixed(2) : '0.00';
-        const p_tlf = totalAllEstTonase > 0 ? ((totalAllLfTon / totalAllEstTonase) * 100).toFixed(2) : '0.00';
-
-        const totTonaseEl = document.getElementById('dash-fqc-tot-tonase');
-        if (totTonaseEl) totTonaseEl.innerText = totalAllEstTonase.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-        document.getElementById('dash-fqc-avg-unripe').innerText = p_tu;
-        document.getElementById('dash-fqc-avg-under').innerText = p_tun;
-        document.getElementById('dash-fqc-avg-normal').innerText = p_tn;
-        document.getElementById('dash-fqc-avg-over').innerText = p_to;
-        document.getElementById('dash-fqc-avg-empty').innerText = p_te;
-        document.getElementById('dash-fqc-avg-long').innerText = p_tl;
-        if (document.getElementById('dash-fqc-avg-rat')) document.getElementById('dash-fqc-avg-rat').innerText = p_trat;
-        if (document.getElementById('dash-fqc-avg-lf')) document.getElementById('dash-fqc-avg-lf').innerText = p_tlf;
-        
-        document.getElementById('dash-fqc-avg-unripe').style.color = parseFloat(p_tu) > 0 ? 'red' : 'inherit';
-        document.getElementById('dash-fqc-avg-under').style.color = parseFloat(p_tun) > 3 ? 'red' : 'inherit';
-        document.getElementById('dash-fqc-avg-normal').style.color = parseFloat(p_tn) < 90 ? 'red' : (parseFloat(p_tn) >= 90 ? '#10b981' : 'inherit');
-        document.getElementById('dash-fqc-avg-over').style.color = parseFloat(p_to) > 7 ? 'red' : 'inherit';
-        document.getElementById('dash-fqc-avg-empty').style.color = parseFloat(p_te) > 0 ? 'red' : 'inherit';
-        document.getElementById('dash-fqc-avg-long').style.color = parseFloat(p_tl) >= 2 ? 'red' : 'inherit';
-
-    } catch(err) {
-        console.error('Error rendering dash ffb crop quality:', err);
-        if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="color: red;">Error: ' + err.message + '</td></tr>';
-    }
-};
-
-window.renderDashFfbFruitLooseAnalysis = async function() {
-    const cardEl = document.getElementById('dash-ffb-fruit-loose-card');
-    if (!cardEl) return;
-
-    if (!window.currentUser || !window.currentUser.role) {
-        cardEl.style.display = 'none';
-        return;
-    }
-    const allowedRoles = [
-        'Senior Field Manager', 'Manager', 'Askep', 'Assistant', 
-        'Krani Divisi', 'Manager Mill', 'Manager MIll', 
-        'supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Admin'
-    ];
-    if (!allowedRoles.includes(window.currentUser.role)) {
-        cardEl.style.display = 'none';
-        return;
-    }
-
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const defaultDate = `${yyyy}-${mm}-${dd}`;
-
-    let startDate = document.getElementById('dash-ffb-fruit-loose-start-date')?.value;
-    let endDate = document.getElementById('dash-ffb-fruit-loose-end-date')?.value;
-
-    if (!startDate) {
-        startDate = defaultDate;
-        if (document.getElementById('dash-ffb-fruit-loose-start-date')) document.getElementById('dash-ffb-fruit-loose-start-date').value = startDate;
-    }
-    if (!endDate) {
-        endDate = defaultDate;
-        if (document.getElementById('dash-ffb-fruit-loose-end-date')) document.getElementById('dash-ffb-fruit-loose-end-date').value = endDate;
-    }
-
-    cardEl.style.display = 'block';
-
-    const tbody = document.querySelector('#dash-ffb-fruit-loose-table tbody');
-    if (tbody) tbody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
-
-    let mill = 'Bunga Tanjung Mill';
-    if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
-        mill = window.currentUser.estate;
-    }
-
-    try {
-        const res = await fetch(`/api/ffb_quality/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`);
-        if (!res.ok) throw new Error('Network error fetching ffb quality fruit loose');
-        const rawData = await res.json();
-
-        const estData = {};
-        rawData.forEach(row => {
-            const e = row.estate || 'Unknown';
-            if (!estData[e]) {
-                estData[e] = { bg_gram: 0, bd_gram: 0, t_segar_gram: 0, busuk_gram: 0, sampah_gram: 0 };
-            }
-            estData[e].bg_gram += parseFloat(row.bg_gram) || 0;
-            estData[e].bd_gram += parseFloat(row.bd_gram) || 0;
-            estData[e].t_segar_gram += parseFloat(row.t_segar_gram) || 0;
-            estData[e].busuk_gram += parseFloat(row.busuk_gram) || 0;
-            estData[e].sampah_gram += parseFloat(row.sampah_gram) || 0;
-        });
-
-        if (tbody) tbody.innerHTML = '';
-        let t_bg = 0, t_bd = 0, t_ts = 0, t_bb = 0, t_sampah = 0;
-
-        let abbrMap = {};
-        if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
-            masterData.supply_chain_list.forEach(item => {
-                abbrMap[item.name] = item.abbr;
-            });
-        }
-        const getAbbr = (estName) => abbrMap[estName] || estName.replace(' Estate', 'E');
-
-        Object.keys(estData).forEach(est => {
-            const d = estData[est];
-            t_bg += d.bg_gram; t_bd += d.bd_gram; t_ts += d.t_segar_gram; t_bb += d.busuk_gram; t_sampah += d.sampah_gram;
-
-            const p_bd = d.bg_gram > 0 ? (d.bd_gram / d.bg_gram * 100).toFixed(2) : '0.00';
-            const p_ts = d.bg_gram > 0 ? (d.t_segar_gram / d.bg_gram * 100).toFixed(2) : '0.00';
-            const p_bb = d.bg_gram > 0 ? (d.busuk_gram / d.bg_gram * 100).toFixed(2) : '0.00';
-            const p_sampah = d.bg_gram > 0 ? (d.sampah_gram / d.bg_gram * 100).toFixed(2) : '0.00';
-
-            const bdColor = parseFloat(p_bd) < 70 ? 'red' : 'inherit';
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${getAbbr(est)}</td>
-                <td style="color: ${bdColor}; font-weight: ${parseFloat(p_bd) < 70 ? 'bold' : 'normal'}">${p_bd}</td>
-                <td>${p_ts}</td>
-                <td>${p_bb}</td>
-                <td>${p_sampah}</td>
-            `;
-            if (tbody) tbody.appendChild(tr);
-        });
-
-        if (Object.keys(estData).length === 0) {
-            if (tbody) tbody.innerHTML = '<tr><td colspan="5">Tidak ada data.</td></tr>';
-        }
-
-        const avg_bd = t_bg > 0 ? (t_bd / t_bg * 100).toFixed(2) : '0.00';
-        const avg_ts = t_bg > 0 ? (t_ts / t_bg * 100).toFixed(2) : '0.00';
-        const avg_bb = t_bg > 0 ? (t_bb / t_bg * 100).toFixed(2) : '0.00';
-        const avg_sampah = t_bg > 0 ? (t_sampah / t_bg * 100).toFixed(2) : '0.00';
-
-        document.getElementById('dash-fql-avg-segar').innerText = avg_bd;
-        document.getElementById('dash-fql-avg-tsegar').innerText = avg_ts;
-        document.getElementById('dash-fql-avg-busuk').innerText = avg_bb;
-        document.getElementById('dash-fql-avg-sampah').innerText = avg_sampah;
-
-        document.getElementById('dash-fql-avg-segar').style.color = parseFloat(avg_bd) < 70 ? 'red' : 'inherit';
-
-    } catch(err) {
-        console.error(err);
-        if (tbody) tbody.innerHTML = '<tr><td colspan="5">Error loading data.</td></tr>';
-    }
-};
-
-window.renderFfbReceivedChart = async function() {
-    const cardEl = document.getElementById('ffb-received-card');
-    if (!cardEl) return;
-
-    if (!window.currentUser || !window.currentUser.role) {
-        cardEl.style.display = 'none';
-        return;
-    }
-
-    const allowedRoles = [
-        'Senior Field Manager', 'Manager', 'Askep', 'Assistant', 
-        'Krani Divisi', 'Manager Mill', 'Manager MIll', 
-        'supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Admin'
-    ];
-    
-    if (!allowedRoles.includes(window.currentUser.role)) {
-        cardEl.style.display = 'none';
-        return;
-    } else {
-        cardEl.style.display = 'block';
-    }
-
-    const timeSelect = document.getElementById('ffb-received-time-select');
-    const timeLabel = document.getElementById('ffb-received-time-label');
-    const selectedTime = timeSelect.value || '18:00';
-    
-    if (timeLabel) timeLabel.innerText = selectedTime;
-
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const defaultDate = `${yyyy}-${mm}-${dd}`;
-    const defaultMonth = `${yyyy}-${mm}`;
-
-    const periodSelect = document.getElementById('ffb-received-period-select');
-    const period = periodSelect ? periodSelect.value : 'daily';
-
-    const dateInput = document.getElementById('ffb-received-date-input');
-    const monthInput = document.getElementById('ffb-received-month-input');
-
-    let date = dateInput?.value;
-    let month = monthInput?.value;
-
-    // Fallbacks if empty
-    if (!date) {
-        date = document.getElementById('dash-date')?.value || document.getElementById('dash-extra-date-input')?.value || defaultDate;
-        if (dateInput) dateInput.value = date;
-    }
-    if (!month) {
-        month = date.substring(0, 7);
-        if (monthInput) monthInput.value = month;
-    }
-    
-    let mill = 'Bunga Tanjung Mill';
-    if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
-        mill = window.currentUser.estate;
-    }
-
-
-
-    let apiUrl = `/api/tonase/${mill}/${date}`;
-    if (period === 'monthly') {
-        apiUrl = `/api/tonase/${mill}/month/${month}`;
-    }
-
-    try {
-        const res = await fetch(apiUrl);
-        if (!res.ok) throw new Error('Network response was not ok');
-        const data = await res.json();
-        
-        const estateTotals = {};
-        const estateAfterTime = {};
-        
-        data.forEach(row => {
-            if (!row.estate || row.estate.trim() === '') return;
-            const estate = row.estate;
-            
-            if (!estateTotals[estate]) estateTotals[estate] = 0;
-            if (!estateAfterTime[estate]) estateAfterTime[estate] = 0;
-            
-            const kg = parseFloat(row.realized_kg) || 0;
-            estateTotals[estate] += kg;
-            
-            if (row.time_hour) {
-                const t1 = parseInt(row.time_hour.replace(':',''));
-                const t2 = parseInt(selectedTime.replace(':',''));
-                if (t1 <= t2) {
-                    estateAfterTime[estate] += kg;
-                }
-            }
-        });
-        
-        const chartData = [];
-        for (const estate in estateTotals) {
-            const total = estateTotals[estate];
-            if (total > 0) {
-                const afterTime = estateAfterTime[estate];
-                const percentage = (afterTime / total) * 100;
-                const acronymMap = {
-                    'Bunga Tanjung Estate': 'BTEE',
-                    'Sungai Teramang Estate': 'STGE',
-                    'Air Bikuk Estate': 'ABKE',
-                    'Air Buluh Estate': 'ABEE',
-                    'Malin Deman Estate': 'MDEE',
-                    'Small Holder': 'SH'
-                };
-                let acronym = acronymMap[estate];
-                if (!acronym) {
-                    const words = estate.split(' ');
-                    if (words.length > 1 && estate.toLowerCase().includes('estate')) {
-                        acronym = words.map(w => w[0]).join('').toUpperCase();
-                    } else if (words.length > 1) {
-                        acronym = words.map(w => w[0]).join('').toUpperCase();
-                    } else {
-                        acronym = estate;
-                    }
-                }
-                chartData.push({ estate: acronym, fullName: estate, percentage: percentage, tonase: afterTime, totalTonase: total });
-            }
-        }
-        
-        chartData.sort((a, b) => a.percentage - b.percentage);
-        
-        const labels = chartData.map(d => d.estate);
-        const dataPoints = chartData.map(d => d.percentage);
-        
-        const ctx = document.getElementById('chart-ffb-received');
-        if (!ctx) return;
-        
-        if (window.millCharts.ffbReceived) {
-            window.millCharts.ffbReceived.destroy();
-        }
-        
-        if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
-        
-        const bgColors = dataPoints.map((val, idx) => {
-            const ratio = dataPoints.length > 1 ? idx / (dataPoints.length - 1) : 1;
-            const r = Math.round(59 - (59 - 30) * ratio);
-            const g = Math.round(130 - (130 - 58) * ratio);
-            const b = Math.round(246 - (246 - 138) * ratio);
-            return `rgb(${r}, ${g}, ${b})`;
-        });
-
-        window.millCharts.ffbReceived = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'FFB Received %',
-                    data: dataPoints,
-                    backgroundColor: bgColors,
-                    borderWidth: 0,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            callback: function(value) { return value + '%' }
-                        },
-                        grid: {
-                            color: '#e2e8f0',
-                            drawBorder: false,
-                            borderDash: [5, 5]
-                        }
-                    },
-                    x: {
-                        grid: { display: false }
-                    }
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            title: (context) => {
-                                const idx = context[0].dataIndex;
-                                return chartData[idx].fullName;
-                            },
-                            label: (context) => {
-                                const idx = context.dataIndex;
-                                const amount = (chartData[idx].tonase / 1000).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1});
-                                const total = (chartData[idx].totalTonase / 1000).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1});
-                                return `FFB Received: ${context.parsed.y.toFixed(2)}% (${amount} / ${total} Ton)`;
-                            }
-                        }
-                    },
-                    datalabels: {
-                        display: true,
-                        anchor: 'end',
-                        align: 'top',
-                        formatter: function(value, context) {
-                            const idx = context.dataIndex;
-                            const amount = (chartData[idx].tonase / 1000).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1});
-                            return value.toFixed(1) + '% | ' + amount + ' Ton';
-                        },
-                        font: {
-                            weight: 'bold',
-                            size: 11
-                        },
-                        color: '#1e293b',
-                        rotation: -90,
-                        offset: 4
-                    }
-                }
-            },
-            plugins: [ChartDataLabels]
-        });
-        
-    } catch (err) {
-        console.error("Failed to load FFB Received data:", err);
-    }
-};
-
-const originalLoadDashboardExtraData = window.loadDashboardExtraData;
-window.loadDashboardExtraData = async function(dateOverride) {
-    if (originalLoadDashboardExtraData) {
-        await originalLoadDashboardExtraData(dateOverride);
-    }
-    
-    if (window.currentUser) {
-        const role = window.currentUser.role;
-        const allowedRoles = ['Manager', 'Assistant', 'Askep', 'Supervisor Mill', 'Senior Field Manager', 'Senior Manager Estate', 'Krani Mill', 'Analis', 'Grading'];
-        const card = document.getElementById('ffb-received-card');
-        if (card) {
-            if (allowedRoles.includes(role)) {
-                card.style.display = 'block';
-            } else {
-                card.style.display = 'none';
-            }
-        }
-    }
-
-    if (window.renderFfbReceivedChart) {
-        window.renderFfbReceivedChart();
-    }
-    if (window.renderDashFfbCropQuality) {
-        window.renderDashFfbCropQuality();
-    }
-    if (window.renderDashFfbFruitLooseAnalysis) {
-        window.renderDashFfbFruitLooseAnalysis();
-    }
-};
-
-window.openFqRangeModal = function(target) {
-    document.getElementById('fq-range-target').value = target;
-    const today = window.getLocalDate();
-    document.getElementById('fq-range-start').value = today;
-    document.getElementById('fq-range-end').value = today;
-    document.getElementById('modal-fq-range').style.display = 'flex';
-};
-
-window.submitFqRangeModal = function() {
-    const target = document.getElementById('fq-range-target').value;
-    const start = document.getElementById('fq-range-start').value;
-    const end = document.getElementById('fq-range-end').value;
-    
-    if (!start || !end) {
-        alert("Pilih tanggal awal dan akhir.");
-        return;
-    }
-    if (start > end) {
-        alert("Tanggal awal tidak boleh lebih dari tanggal akhir.");
-        return;
-    }
-    
-    document.getElementById('modal-fq-range').style.display = 'none';
-    
-    if (target === 'loose') {
-        window.loadFFBQuality(start, end);
-    } else if (target === 'crop') {
-        window.loadFFBCropQuality(start, end);
-    }
-};
-
-window.printTable = function(wrapperId, title) {
-    const tableHtml = document.getElementById(wrapperId).innerHTML;
-    const w = window.open('', '_blank');
-    w.document.write(`
-        <html>
-        <head>
-            <title>${title}</title>
-            <style>
-                body { font-family: sans-serif; padding: 20px; }
-                h2 { text-align: center; margin-bottom: 20px; }
-                table { width: 100%; border-collapse: collapse; font-size: 12px; }
-                th, td { border: 1px solid #000; padding: 4px 8px; text-align: center; }
-                th { background-color: #f1f5f9; }
-                .btn { display: none; } /* Hide buttons in print */
-                @media print {
-                    @page { size: landscape; }
-                }
-            </style>
-        </head>
-        <body>
-            <h2>${title}</h2>
-            ${tableHtml}
-            <script>
-                window.onload = function() {
-                    window.print();
-                    window.close();
-                }
-            </script>
-        </body>
-        </html>
-    `);
-    w.document.close();
-};
-
-
-
-// --- DETAIL FFQ FFB CROP QUALITY (DAY BY DAY PER ESTATE) ---
-
-window.initFFQDetailFilters = function() {
-    const startInput = document.getElementById('fq-detail-start-date');
-    const endInput = document.getElementById('fq-detail-end-date');
-    const estateSelect = document.getElementById('fq-detail-estate-filter');
-
-    const today = window.getLocalDate();
-    if (startInput && !startInput.value) {
-        startInput.value = today.substring(0, 7) + '-01';
-    }
-    if (endInput && !endInput.value) {
-        endInput.value = today;
-    }
-
-    if (estateSelect) {
-        const curVal = estateSelect.value;
-        // Only rebuild options if not populated yet
-        if (estateSelect.options.length <= 1) {
-            let opts = '<option value="ALL">Semua Estate (FFB)</option>';
-            let abbrMap = {};
-            if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
-                masterData.supply_chain_list.forEach(item => {
-                    abbrMap[item.name] = item.abbr;
-                });
-            }
-
-            let scList = [];
-            if (typeof masterData !== 'undefined' && masterData.supply_chain) {
-                scList = masterData.supply_chain.filter(s => s.is_ffb !== false);
-            }
-            if (scList.length > 0) {
-                scList.forEach(s => {
-                    const est = s.estate;
-                    const abbr = s.abbr || abbrMap[est] || (est ? est.replace(' Estate', 'E') : '');
-                    opts += `<option value="${est}">${est}${abbr ? ' (' + abbr + ')' : ''}</option>`;
-                });
-            } else if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
-                masterData.supply_chain_list.forEach(s => {
-                    opts += `<option value="${s.name}">${s.name} (${s.abbr})</option>`;
-                });
-            }
-            estateSelect.innerHTML = opts;
-            if (curVal && curVal !== 'ALL') {
-                estateSelect.value = curVal;
-            }
-        }
-    }
-};
-
-window.loadFFQDetailData = async function() {
-    window.initFFQDetailFilters();
-
-    const startInput = document.getElementById('fq-detail-start-date');
-    const endInput = document.getElementById('fq-detail-end-date');
-    const estateSelect = document.getElementById('fq-detail-estate-filter');
-
-    const startDate = startInput && startInput.value ? startInput.value : window.getLocalDate();
-    const endDate = endInput && endInput.value ? endInput.value : startDate;
-    const selectedEstate = estateSelect ? estateSelect.value : 'ALL';
-
-    let mill = window.currentUser ? window.currentUser.estate : null; 
-    if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
-
-    const tbody = document.querySelector('#ffq-detail-table tbody');
-    if (tbody) tbody.innerHTML = '<tr><td colspan="12" style="padding: 20px; color: #64748b; font-style: italic;">Loading data Detail FFQ...</td></tr>';
-
-    try {
-        const [cropRes, tonaseRes, lfRes] = await Promise.all([
-            fetch(`/api/ffb_crop_quality/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`),
-            fetch(`/api/tonase/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`),
-            fetch(`/api/daily-monitor/lf-range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`)
-        ]);
-
-        const rawCrop = cropRes.ok ? await cropRes.json() : [];
-        const rawTonase = tonaseRes.ok ? await tonaseRes.json() : [];
-        const rawLf = lfRes.ok ? await lfRes.json() : [];
-
-        let abbrMap = {};
-        let activeFfbEstates = new Set();
-        if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
-            masterData.supply_chain_list.forEach(item => {
-                if (item.name && item.abbr) {
-                    abbrMap[item.name.trim().toLowerCase()] = item.abbr;
-                    abbrMap[item.name.trim()] = item.abbr;
-                }
-            });
-        }
-        if (typeof masterData !== 'undefined' && masterData.supply_chain) {
-            masterData.supply_chain.forEach(item => {
-                const est = item.estate || item.name;
-                const ab = item.abbr;
-                if (item.is_ffb !== false && est) {
-                    activeFfbEstates.add(est);
-                }
-                if (est && ab) {
-                    abbrMap[est.trim().toLowerCase()] = ab;
-                    abbrMap[est.trim()] = ab;
-                }
-            });
-        }
-        const getAbbr = (estName) => {
-            if (!estName) return '-';
-            const clean = estName.trim();
-            if (abbrMap[clean]) return abbrMap[clean];
-            if (abbrMap[clean.toLowerCase()]) return abbrMap[clean.toLowerCase()];
-            if (clean.length <= 6) return clean;
-            return clean.replace(/ Estate/i, 'E');
-        };
-
-        const tonaseMap = {};
-        if (Array.isArray(rawTonase)) {
-            rawTonase.forEach(r => {
-                const k = `${r.date}_${r.estate}`;
-                const ton = (parseFloat(r.realized_kg) || 0) / 1000;
-                tonaseMap[k] = (tonaseMap[k] || 0) + ton;
-            });
-        }
-
-        const lfMap = {};
-        if (Array.isArray(rawLf)) {
-            rawLf.forEach(r => {
-                const k = `${r.date}_${r.estate}`;
-                lfMap[k] = {
-                    lf_ton: parseFloat(r.actual_lf_tonase) || 0,
-                    ffb_ton: parseFloat(r.actual_ffb_tonase) || 0
-                };
-            });
-        }
-
-        const cropMap = {};
-        if (Array.isArray(rawCrop)) {
-            rawCrop.forEach(r => {
-                const k = `${r.date}_${r.estate}`;
-                if (!cropMap[k]) {
-                    cropMap[k] = {
-                        tot: 0, unripe: 0, under: 0, normal: 0, over: 0, empty: 0, long: 0, rat: 0
-                    };
-                }
-                cropMap[k].tot += parseInt(r.total_janjang) || 0;
-                cropMap[k].unripe += parseInt(r.unripe) || 0;
-                cropMap[k].under += parseInt(r.underripe) || 0;
-                cropMap[k].normal += parseInt(r.normal_ripe) || 0;
-                cropMap[k].over += parseInt(r.over_ripe) || 0;
-                cropMap[k].empty += parseInt(r.empty_bunch) || 0;
-                cropMap[k].long += parseInt(r.long_stalk) || 0;
-                cropMap[k].rat += parseInt(r.rat_damage) || 0;
-            });
-        }
-
-        const allKeys = new Set([
-            ...Object.keys(cropMap),
-            ...Object.keys(tonaseMap),
-            ...Object.keys(lfMap)
-        ]);
-
-        let rowItems = [];
-        allKeys.forEach(k => {
-            const parts = k.split('_');
-            const d = parts[0];
-            const est = parts.slice(1).join('_');
-            if (!d || !est) return;
-
-            // Date filtering
-            if (d < startDate || d > endDate) return;
-
-            // Estate filtering
-            if (selectedEstate !== 'ALL') {
-                if (est.trim().toLowerCase() !== selectedEstate.trim().toLowerCase()) return;
-            } else {
-                if (activeFfbEstates.size > 0 && !activeFfbEstates.has(est)) {
-                    if (!cropMap[k] && !tonaseMap[k]) return;
-                }
-            }
-
-            const cData = cropMap[k] || { tot: 0, unripe: 0, under: 0, normal: 0, over: 0, empty: 0, long: 0, rat: 0 };
-            const ffbTon = tonaseMap[k] !== undefined ? tonaseMap[k] : (lfMap[k] ? lfMap[k].ffb_ton : 0);
-            const lfData = lfMap[k] || { lf_ton: 0, ffb_ton: ffbTon };
-
-            const totJ = cData.tot;
-            const p_unripe = totJ > 0 ? (cData.unripe / totJ * 100) : 0;
-            const p_under = totJ > 0 ? (cData.under / totJ * 100) : 0;
-            const p_ripe = totJ > 0 ? (cData.normal / totJ * 100) : 0;
-            const p_over = totJ > 0 ? (cData.over / totJ * 100) : 0;
-            const p_empty = totJ > 0 ? (cData.empty / totJ * 100) : 0;
-            const p_long = totJ > 0 ? (cData.long / totJ * 100) : 0;
-            const p_rat = totJ > 0 ? (cData.rat / totJ * 100) : 0;
-
-            const lfTon = lfData.lf_ton || 0;
-            const ffbTonForLf = ffbTon > 0 ? ffbTon : (lfData.ffb_ton || 0);
-            const p_lf = ffbTonForLf > 0 ? ((lfTon / ffbTonForLf) * 100) : 0;
-
-            if (ffbTon <= 0 && totJ <= 0 && lfTon <= 0) return;
-
-            rowItems.push({
-                date: d,
-                estate: est,
-                abbr: getAbbr(est),
-                ffbTon: ffbTon,
-                totJ: totJ,
-                unripe: p_unripe,
-                under: p_under,
-                ripe: p_ripe,
-                over: p_over,
-                empty: p_empty,
-                long: p_long,
-                rat: p_rat,
-                lfTon: lfTon,
-                lf: p_lf
-            });
-        });
-
-        // Sort by Date ASC, Estate ASC
-        rowItems.sort((a, b) => {
-            if (a.date !== b.date) return a.date.localeCompare(b.date);
-            return a.estate.localeCompare(b.estate);
-        });
-
-        window.ffqDetailData = rowItems;
-
-        if (tbody) tbody.innerHTML = '';
-
-        if (rowItems.length === 0) {
-            if (tbody) tbody.innerHTML = '<tr><td colspan="12" style="padding: 20px; color: #64748b; font-style: italic;">Tidak ada data pada rentang tanggal dan estate yang dipilih.</td></tr>';
-            document.getElementById('ffqd-tot-ffb').innerText = '0.00';
-            document.getElementById('ffqd-avg-unripe').innerText = '0.00';
-            document.getElementById('ffqd-avg-under').innerText = '0.00';
-            document.getElementById('ffqd-avg-ripe').innerText = '0.00';
-            document.getElementById('ffqd-avg-over').innerText = '0.00';
-            document.getElementById('ffqd-avg-empty').innerText = '0.00';
-            document.getElementById('ffqd-avg-long').innerText = '0.00';
-            document.getElementById('ffqd-avg-rat').innerText = '0.00';
-            document.getElementById('ffqd-avg-lf').innerText = '0.00';
-            return;
-        }
-
-        let sumGradingWeight = 0;
-        let sumFfbTon = 0;
-        let sumLfTon = 0;
-        let sumUnripeW = 0;
-        let sumUnderW = 0;
-        let sumRipeW = 0;
-        let sumOverW = 0;
-        let sumEmptyW = 0;
-        let sumLongW = 0;
-        let sumRatW = 0;
-
-        rowItems.forEach((r, idx) => {
-            const tr = document.createElement('tr');
-            
-            // Total FFB & LF includes ALL rows (even if no grading)
-            sumFfbTon += r.ffbTon;
-            sumLfTon += r.lfTon;
-
-            // Grading parameters ONLY include rows with actual grading samples (r.totJ > 0)
-            if (r.totJ > 0) {
-                const wGrading = r.ffbTon > 0 ? r.ffbTon : (r.totJ > 0 ? (r.totJ / 100) : 1);
-                sumGradingWeight += wGrading;
-                sumUnripeW += r.unripe * wGrading;
-                sumUnderW += r.under * wGrading;
-                sumRipeW += r.ripe * wGrading;
-                sumOverW += r.over * wGrading;
-                sumEmptyW += r.empty * wGrading;
-                sumLongW += r.long * wGrading;
-                sumRatW += r.rat * wGrading;
-            }
-
-            tr.innerHTML = `
-                <td>${idx + 1}</td>
-                <td style="font-weight: 500;">${r.date}</td>
-                <td style="text-align: center; font-weight: 600;">${r.abbr}</td>
-                <td style="font-weight: 600;">${r.ffbTon.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                <td style="${r.totJ > 0 && r.unripe > 0 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.unripe.toFixed(2)}</td>
-                <td style="${r.totJ > 0 && r.under > 3 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.under.toFixed(2)}</td>
-                <td style="${r.totJ > 0 && r.ripe < 90 ? 'color:#ef4444; font-weight:bold;' : (r.totJ > 0 && r.ripe >= 90 ? 'color:#10b981; font-weight:bold;' : '')}">${r.ripe.toFixed(2)}</td>
-                <td style="${r.totJ > 0 && r.over > 7 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.over.toFixed(2)}</td>
-                <td style="${r.totJ > 0 && r.empty > 0 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.empty.toFixed(2)}</td>
-                <td style="${r.totJ > 0 && r.long >= 2 ? 'color:#ef4444; font-weight:bold;' : ''}">${r.long.toFixed(2)}</td>
-                <td>${r.rat.toFixed(2)}</td>
-                <td style="font-weight: 500;">${r.lf.toFixed(2)}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        // Compute Weighted Averages using sumGradingWeight for grading, and sumFfbTon for LF
-        const avgUnripe = sumGradingWeight > 0 ? (sumUnripeW / sumGradingWeight) : 0;
-        const avgUnder = sumGradingWeight > 0 ? (sumUnderW / sumGradingWeight) : 0;
-        const avgRipe = sumGradingWeight > 0 ? (sumRipeW / sumGradingWeight) : 0;
-        const avgOver = sumGradingWeight > 0 ? (sumOverW / sumGradingWeight) : 0;
-        const avgEmpty = sumGradingWeight > 0 ? (sumEmptyW / sumGradingWeight) : 0;
-        const avgLong = sumGradingWeight > 0 ? (sumLongW / sumGradingWeight) : 0;
-        const avgRat = sumGradingWeight > 0 ? (sumRatW / sumGradingWeight) : 0;
-        const avgLf = sumFfbTon > 0 ? ((sumLfTon / sumFfbTon) * 100) : 0;
-
-        document.getElementById('ffqd-tot-ffb').innerText = sumFfbTon.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        document.getElementById('ffqd-avg-unripe').innerText = avgUnripe.toFixed(2);
-        document.getElementById('ffqd-avg-under').innerText = avgUnder.toFixed(2);
-        document.getElementById('ffqd-avg-ripe').innerText = avgRipe.toFixed(2);
-        document.getElementById('ffqd-avg-over').innerText = avgOver.toFixed(2);
-        document.getElementById('ffqd-avg-empty').innerText = avgEmpty.toFixed(2);
-        document.getElementById('ffqd-avg-long').innerText = avgLong.toFixed(2);
-        document.getElementById('ffqd-avg-rat').innerText = avgRat.toFixed(2);
-        document.getElementById('ffqd-avg-lf').innerText = avgLf.toFixed(2);
-
-    } catch(err) {
-        console.error('Error loading FFQ Detail data:', err);
-        if (tbody) tbody.innerHTML = '<tr><td colspan="12" style="padding: 20px; color: #ef4444;">Gagal memuat data Detail FFQ: ' + err.message + '</td></tr>';
-    }
-};
-
-window.exportFFQDetailCSV = function() {
-    if (!window.ffqDetailData || window.ffqDetailData.length === 0) {
-        alert('Tidak ada data untuk diekspor.');
-        return;
-    }
-
-    const startInput = document.getElementById('fq-detail-start-date');
-    const endInput = document.getElementById('fq-detail-end-date');
-    const startDate = startInput ? startInput.value : 'start';
-    const endDate = endInput ? endInput.value : 'end';
-
-    let csv = 'No,Tanggal,Estate,FFB (Ton),Unripe (%),Underripe (%),Ripe (%),Over Ripe (%),Empty Bunch (%),Long Stalk (%),Rat Damage (%),LF (%)\n';
-
-    window.ffqDetailData.forEach((r, idx) => {
-        csv += `${idx + 1},"${r.date}","${r.abbr}",${r.ffbTon.toFixed(2)},${r.unripe.toFixed(2)},${r.under.toFixed(2)},${r.ripe.toFixed(2)},${r.over.toFixed(2)},${r.empty.toFixed(2)},${r.long.toFixed(2)},${r.rat.toFixed(2)},${r.lf.toFixed(2)}\n`;
-    });
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute('download', `Detail_FFQ_FFB_Crop_Quality_${startDate}_to_${endDate}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
 };
