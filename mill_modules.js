@@ -2036,24 +2036,25 @@ window.deleteFFBRow = async function(index, id) {
     try {
         const item = (Array.isArray(window.ffbQualityData) && window.ffbQualityData[index]) ? window.ffbQualityData[index] : null;
         const targetId = id || (item ? item.id : null);
-        let deleted = false;
+        
         if (targetId) {
             let res = await fetch(`/api/ffb_quality/${targetId}`, { method: 'DELETE' });
             if (!res.ok) {
-                res = await fetch(`/api/ffb_quality/delete/${targetId}`, { method: 'POST' });
+                await fetch(`/api/ffb_quality/delete/${targetId}`, { method: 'POST' });
             }
-            if (res.ok) deleted = true;
         }
-        if (!deleted && item) {
-            let res = await fetch('/api/ffb_quality/delete_item', {
+        if (item) {
+            await fetch('/api/ffb_quality/delete_item', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(item)
+                body: JSON.stringify({ ...item, id: targetId })
             });
-            if (res.ok) deleted = true;
         }
         if (Array.isArray(window.ffbQualityData) && index >= 0 && index < window.ffbQualityData.length) {
             window.ffbQualityData.splice(index, 1);
+        }
+        if (typeof window.saveFFBQuality === 'function') {
+            await window.saveFFBQuality();
         }
         const startDate = window.currentFfbStartDate || (item ? item.date : window.getLocalDate());
         const endDate = window.currentFfbEndDate || startDate;
@@ -2095,7 +2096,9 @@ window.loadFFBQuality = async function(start, end) {
 };
 
 window.saveFFBQuality = async function() {
-    const date = document.getElementById('fq-modal-date')?.value || window.getLocalDate();
+    const date = (window.ffbQualityData && window.ffbQualityData.length > 0 && window.ffbQualityData[0].date) 
+        ? window.ffbQualityData[0].date 
+        : (document.getElementById('fq-modal-date')?.value || window.currentFfbStartDate || window.getLocalDate());
     let mill = window.currentUser ? window.currentUser.estate : null; 
     if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
     
@@ -2406,7 +2409,9 @@ window.loadFFBCropQuality = async function(start, end) {
 };
 
 window.saveFFBCropQuality = async function() {
-    const date = window.ffbCropQualityData.length > 0 ? window.ffbCropQualityData[0].date : window.getLocalDate();
+    const date = (window.ffbCropQualityData && window.ffbCropQualityData.length > 0 && window.ffbCropQualityData[0].date) 
+        ? window.ffbCropQualityData[0].date 
+        : (document.getElementById('fqc-modal-date')?.value || window.currentFfbCropStartDate || window.getLocalDate());
     let mill = window.currentUser ? window.currentUser.estate : null; 
     if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
     
@@ -2616,24 +2621,25 @@ window.deleteFFBCropRow = async function(index, id) {
     try {
         const item = (Array.isArray(window.ffbCropQualityData) && window.ffbCropQualityData[index]) ? window.ffbCropQualityData[index] : null;
         const targetId = id || (item ? item.id : null);
-        let deleted = false;
+        
         if (targetId) {
             let res = await fetch(`/api/ffb_crop_quality/${targetId}`, { method: 'DELETE' });
             if (!res.ok) {
-                res = await fetch(`/api/ffb_crop_quality/delete/${targetId}`, { method: 'POST' });
+                await fetch(`/api/ffb_crop_quality/delete/${targetId}`, { method: 'POST' });
             }
-            if (res.ok) deleted = true;
         }
-        if (!deleted && item) {
-            let res = await fetch('/api/ffb_crop_quality/delete_item', {
+        if (item) {
+            await fetch('/api/ffb_crop_quality/delete_item', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(item)
+                body: JSON.stringify({ ...item, id: targetId })
             });
-            if (res.ok) deleted = true;
         }
         if (Array.isArray(window.ffbCropQualityData) && index >= 0 && index < window.ffbCropQualityData.length) {
             window.ffbCropQualityData.splice(index, 1);
+        }
+        if (typeof window.saveFFBCropQuality === 'function') {
+            await window.saveFFBCropQuality();
         }
         const startDate = window.currentFfbCropStartDate || (item ? item.date : window.getLocalDate());
         const endDate = window.currentFfbCropEndDate || startDate;

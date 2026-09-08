@@ -2126,8 +2126,8 @@ app.delete('/api/ffb_quality/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const targetId = parseInt(id) || id;
-        await pool.query('DELETE FROM ffb_quality WHERE id = $1', [targetId]);
-        res.json({ success: true });
+        const result = await pool.query('DELETE FROM ffb_quality WHERE id = $1', [targetId]);
+        res.json({ success: true, rowCount: result?.rowCount || 0 });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -2137,8 +2137,8 @@ app.post('/api/ffb_quality/delete/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const targetId = parseInt(id) || id;
-        await pool.query('DELETE FROM ffb_quality WHERE id = $1', [targetId]);
-        res.json({ success: true });
+        const result = await pool.query('DELETE FROM ffb_quality WHERE id = $1', [targetId]);
+        res.json({ success: true, rowCount: result?.rowCount || 0 });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -2147,12 +2147,37 @@ app.post('/api/ffb_quality/delete/:id', async (req, res) => {
 app.post('/api/ffb_quality/delete_item', async (req, res) => {
     try {
         const { id, date, mill, estate, divisi, blok, no_truck } = req.body;
+        let deleted = false;
         if (id) {
-            await pool.query('DELETE FROM ffb_quality WHERE id = $1', [parseInt(id) || id]);
-        } else {
-            const check = await pool.query('SELECT id FROM ffb_quality WHERE date = $1 AND mill = $2 AND estate = $3 AND no_truck = $4 LIMIT 1', [date, mill, estate, no_truck]);
-            if (check.rows.length > 0) {
-                await pool.query('DELETE FROM ffb_quality WHERE id = $1', [check.rows[0].id]);
+            const r = await pool.query('DELETE FROM ffb_quality WHERE id = $1', [parseInt(id) || id]);
+            if (r && r.rowCount > 0) deleted = true;
+        }
+        if (!deleted) {
+            try {
+                if (process.env.DATABASE_URL) {
+                    let q = 'DELETE FROM ffb_quality WHERE ctid IN (SELECT ctid FROM ffb_quality WHERE date = $1 AND estate = $2';
+                    let params = [date, estate];
+                    if (no_truck) {
+                        params.push(no_truck);
+                        q += ` AND no_truck = $${params.length}`;
+                    }
+                    q += ' LIMIT 1)';
+                    await pool.query(q, params);
+                } else {
+                    let q = 'DELETE FROM ffb_quality WHERE rowid IN (SELECT rowid FROM ffb_quality WHERE date = ? AND estate = ?';
+                    let params = [date, estate];
+                    if (no_truck) {
+                        params.push(no_truck);
+                        q += ' AND no_truck = ?';
+                    }
+                    q += ' LIMIT 1)';
+                    await pool.query(q, params);
+                }
+            } catch (errQ) {
+                const check = await pool.query('SELECT id FROM ffb_quality WHERE date = $1 AND estate = $2 ORDER BY id DESC LIMIT 1', [date, estate]);
+                if (check.rows.length > 0 && check.rows[0].id) {
+                    await pool.query('DELETE FROM ffb_quality WHERE id = $1', [check.rows[0].id]);
+                }
             }
         }
         res.json({ success: true });
@@ -2321,8 +2346,8 @@ app.delete('/api/ffb_crop_quality/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const targetId = parseInt(id) || id;
-        await pool.query('DELETE FROM ffb_crop_quality WHERE id = $1', [targetId]);
-        res.json({ success: true });
+        const result = await pool.query('DELETE FROM ffb_crop_quality WHERE id = $1', [targetId]);
+        res.json({ success: true, rowCount: result?.rowCount || 0 });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -2332,8 +2357,8 @@ app.post('/api/ffb_crop_quality/delete/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const targetId = parseInt(id) || id;
-        await pool.query('DELETE FROM ffb_crop_quality WHERE id = $1', [targetId]);
-        res.json({ success: true });
+        const result = await pool.query('DELETE FROM ffb_crop_quality WHERE id = $1', [targetId]);
+        res.json({ success: true, rowCount: result?.rowCount || 0 });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -2342,18 +2367,45 @@ app.post('/api/ffb_crop_quality/delete/:id', async (req, res) => {
 app.post('/api/ffb_crop_quality/delete_item', async (req, res) => {
     try {
         const { id, date, mill, estate, divisi, blok, no_truck, total_janjang } = req.body;
+        let deleted = false;
         if (id) {
-            await pool.query('DELETE FROM ffb_crop_quality WHERE id = $1', [parseInt(id) || id]);
-        } else {
-            let check;
-            if (no_truck) {
-                check = await pool.query('SELECT id FROM ffb_crop_quality WHERE date = $1 AND estate = $2 AND no_truck = $3 ORDER BY id DESC LIMIT 1', [date, estate, no_truck]);
-            }
-            if (!check || check.rows.length === 0) {
-                check = await pool.query('SELECT id FROM ffb_crop_quality WHERE date = $1 AND estate = $2 ORDER BY id DESC LIMIT 1', [date, estate]);
-            }
-            if (check && check.rows.length > 0) {
-                await pool.query('DELETE FROM ffb_crop_quality WHERE id = $1', [check.rows[0].id]);
+            const r = await pool.query('DELETE FROM ffb_crop_quality WHERE id = $1', [parseInt(id) || id]);
+            if (r && r.rowCount > 0) deleted = true;
+        }
+        if (!deleted) {
+            try {
+                if (process.env.DATABASE_URL) {
+                    let q = 'DELETE FROM ffb_crop_quality WHERE ctid IN (SELECT ctid FROM ffb_crop_quality WHERE date = $1 AND estate = $2';
+                    let params = [date, estate];
+                    if (no_truck) {
+                        params.push(no_truck);
+                        q += ` AND no_truck = $${params.length}`;
+                    }
+                    if (total_janjang) {
+                        params.push(parseInt(total_janjang) || 0);
+                        q += ` AND total_janjang = $${params.length}`;
+                    }
+                    q += ' LIMIT 1)';
+                    await pool.query(q, params);
+                } else {
+                    let q = 'DELETE FROM ffb_crop_quality WHERE rowid IN (SELECT rowid FROM ffb_crop_quality WHERE date = ? AND estate = ?';
+                    let params = [date, estate];
+                    if (no_truck) {
+                        params.push(no_truck);
+                        q += ' AND no_truck = ?';
+                    }
+                    if (total_janjang) {
+                        params.push(parseInt(total_janjang) || 0);
+                        q += ' AND total_janjang = ?';
+                    }
+                    q += ' LIMIT 1)';
+                    await pool.query(q, params);
+                }
+            } catch (errQ) {
+                const check = await pool.query('SELECT id FROM ffb_crop_quality WHERE date = $1 AND estate = $2 ORDER BY id DESC LIMIT 1', [date, estate]);
+                if (check.rows.length > 0 && check.rows[0].id) {
+                    await pool.query('DELETE FROM ffb_crop_quality WHERE id = $1', [check.rows[0].id]);
+                }
             }
         }
         res.json({ success: true });
