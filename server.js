@@ -430,6 +430,12 @@ async function initDB() {
         const permCount = await pool.query('SELECT count(*) AS count FROM role_permissions');
         if (parseInt(permCount.rows[0].count) === 0) {
             await seedRolePermissions(false);
+        } else {
+            try {
+                await pool.query("UPDATE role_permissions SET can_delete = 1 WHERE role = 'Manager Mill' AND module IN ('ffb_quality', 'processing', 'water', 'tonase', 'vehicle')");
+            } catch (e) {
+                console.warn("Could not auto-update Manager Mill permissions:", e);
+            }
         }
 
         console.log('Database initialized successfully.');
@@ -558,16 +564,16 @@ const defaultRolePermissionsMap = {
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
     'Manager Mill': {
-        dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
-        vehicle: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        vehicle: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
         pemupukan: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         upkeep: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
-        tonase: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        tonase: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
         harvesting: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
-        processing: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
-        water: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
-        ffb_quality: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
-        mill_dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        processing: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        water: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        ffb_quality: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        mill_dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
         master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
