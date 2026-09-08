@@ -415,9 +415,335 @@ async function initDB() {
                 ('A01', 1000, 850, 18.5),
                 ('B12', 800, 200, 19.2)`);
         }
+        // ROLE PERMISSIONS TABLE
+        await pool.query(`CREATE TABLE IF NOT EXISTS role_permissions (
+            id SERIAL PRIMARY KEY,
+            role TEXT NOT NULL,
+            module TEXT NOT NULL,
+            can_view INTEGER DEFAULT 0,
+            can_input INTEGER DEFAULT 0,
+            can_edit INTEGER DEFAULT 0,
+            can_delete INTEGER DEFAULT 0,
+            UNIQUE(role, module)
+        )`);
+
+        const permCount = await pool.query('SELECT count(*) AS count FROM role_permissions');
+        if (parseInt(permCount.rows[0].count) === 0) {
+            await seedRolePermissions(false);
+        }
+
         console.log('Database initialized successfully.');
     } catch (err) {
         console.error('Database initialization error:', err);
+    }
+}
+
+const defaultModulesList = [
+    'dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase',
+    'harvesting', 'processing', 'water', 'ffb_quality', 'mill_dashboard',
+    'master', 'users'
+];
+
+const defaultRolePermissionsMap = {
+    'Admin': {
+        dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        vehicle: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        pemupukan: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        upkeep: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        tonase: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        harvesting: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        processing: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        water: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        ffb_quality: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        mill_dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        master: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        users: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 }
+    },
+    'Director': {
+        dashboard: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        vehicle: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        pemupukan: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        upkeep: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        tonase: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        harvesting: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        processing: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        water: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        ffb_quality: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        mill_dashboard: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Senior Field Manager': {
+        dashboard: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        vehicle: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        pemupukan: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        upkeep: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        tonase: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        harvesting: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        processing: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Senior Mill Manager': {
+        dashboard: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        vehicle: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        pemupukan: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        upkeep: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        tonase: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        harvesting: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        processing: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        water: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        ffb_quality: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        mill_dashboard: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Office Head Assistant': {
+        dashboard: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        vehicle: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        pemupukan: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        upkeep: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        tonase: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        harvesting: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        processing: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        master: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Office Assistant (OAA)': {
+        dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        vehicle: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        pemupukan: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        upkeep: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        tonase: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        harvesting: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        processing: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        master: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Office Assistant Mill': {
+        dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        vehicle: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        pemupukan: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        upkeep: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        tonase: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        harvesting: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        processing: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        water: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        ffb_quality: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        mill_dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        master: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Manager': {
+        dashboard: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        vehicle: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        pemupukan: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        upkeep: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        tonase: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        harvesting: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        processing: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Manager Mill': {
+        dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        vehicle: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        pemupukan: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        upkeep: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        tonase: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        harvesting: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        processing: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        water: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        ffb_quality: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        mill_dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Supervisor Mill': {
+        dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        vehicle: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        pemupukan: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        upkeep: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        tonase: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        harvesting: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        processing: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        water: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        ffb_quality: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        mill_dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Askep': {
+        dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        vehicle: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        pemupukan: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        upkeep: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        tonase: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        harvesting: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        processing: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Assistant': {
+        dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        vehicle: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        pemupukan: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        upkeep: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        tonase: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        harvesting: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        processing: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Mandor': {
+        dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        vehicle: { can_view: 1, can_input: 1, can_edit: 0, can_delete: 0 },
+        pemupukan: { can_view: 1, can_input: 1, can_edit: 0, can_delete: 0 },
+        upkeep: { can_view: 1, can_input: 1, can_edit: 0, can_delete: 0 },
+        tonase: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        harvesting: { can_view: 1, can_input: 1, can_edit: 0, can_delete: 0 },
+        processing: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Krani Divisi': {
+        dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        vehicle: { can_view: 1, can_input: 1, can_edit: 0, can_delete: 0 },
+        pemupukan: { can_view: 1, can_input: 1, can_edit: 0, can_delete: 0 },
+        upkeep: { can_view: 1, can_input: 1, can_edit: 0, can_delete: 0 },
+        tonase: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        harvesting: { can_view: 1, can_input: 1, can_edit: 0, can_delete: 0 },
+        processing: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Krani Mill': {
+        dashboard: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        vehicle: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        pemupukan: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        upkeep: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        tonase: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        harvesting: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        processing: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        water: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        ffb_quality: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Grading': {
+        dashboard: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        vehicle: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        pemupukan: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        upkeep: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        tonase: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        harvesting: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        processing: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        water: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        ffb_quality: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        mill_dashboard: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Analis': {
+        dashboard: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        vehicle: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        pemupukan: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        upkeep: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        tonase: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        harvesting: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        processing: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        water: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        ffb_quality: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        mill_dashboard: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Supir': {
+        dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        vehicle: { can_view: 1, can_input: 1, can_edit: 0, can_delete: 0 },
+        pemupukan: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        upkeep: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        tonase: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        harvesting: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        processing: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Security': {
+        dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        vehicle: { can_view: 1, can_input: 1, can_edit: 0, can_delete: 0 },
+        pemupukan: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        upkeep: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        tonase: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        harvesting: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        processing: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    },
+    'Security Mill': {
+        dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        vehicle: { can_view: 1, can_input: 1, can_edit: 0, can_delete: 0 },
+        pemupukan: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        upkeep: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        tonase: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        harvesting: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        processing: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
+    }
+};
+
+async function seedRolePermissions(force = false) {
+    try {
+        if (force) {
+            await pool.query('DELETE FROM role_permissions');
+        }
+        for (const [role, modules] of Object.entries(defaultRolePermissionsMap)) {
+            for (const [module, perms] of Object.entries(modules)) {
+                await pool.query(
+                    `INSERT INTO role_permissions (role, module, can_view, can_input, can_edit, can_delete)
+                     VALUES ($1, $2, $3, $4, $5, $6)
+                     ON CONFLICT(role, module) DO NOTHING`,
+                    [role, module, perms.can_view || 0, perms.can_input || 0, perms.can_edit || 0, perms.can_delete || 0]
+                );
+            }
+        }
+    } catch(err) {
+        console.error("Error seeding role_permissions:", err);
     }
 }
 
@@ -513,6 +839,58 @@ app.delete('/api/users/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
         res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ROLE PERMISSIONS (RBAC) API
+app.get('/api/permissions', async (req, res) => {
+    try {
+        const rows = await pool.query('SELECT * FROM role_permissions ORDER BY role ASC, id ASC');
+        if (rows.rows.length === 0) {
+            await seedRolePermissions(false);
+            const refetched = await pool.query('SELECT * FROM role_permissions ORDER BY role ASC, id ASC');
+            return res.json(refetched.rows);
+        }
+        res.json(rows.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/permissions', async (req, res) => {
+    try {
+        const { permissions } = req.body;
+        if (!Array.isArray(permissions) || permissions.length === 0) {
+            return res.status(400).json({ error: 'Data permissions tidak valid' });
+        }
+        for (const p of permissions) {
+            // Check if record exists
+            const existing = await pool.query('SELECT id FROM role_permissions WHERE role = $1 AND module = $2', [p.role, p.module]);
+            if (existing.rows.length > 0) {
+                await pool.query(
+                    'UPDATE role_permissions SET can_view = $1, can_input = $2, can_edit = $3, can_delete = $4 WHERE role = $5 AND module = $6',
+                    [p.can_view ? 1 : 0, p.can_input ? 1 : 0, p.can_edit ? 1 : 0, p.can_delete ? 1 : 0, p.role, p.module]
+                );
+            } else {
+                await pool.query(
+                    'INSERT INTO role_permissions (role, module, can_view, can_input, can_edit, can_delete) VALUES ($1, $2, $3, $4, $5, $6)',
+                    [p.role, p.module, p.can_view ? 1 : 0, p.can_input ? 1 : 0, p.can_edit ? 1 : 0, p.can_delete ? 1 : 0]
+                );
+            }
+        }
+        res.json({ success: true, count: permissions.length });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/permissions/reset', async (req, res) => {
+    try {
+        await seedRolePermissions(true);
+        const rows = await pool.query('SELECT * FROM role_permissions ORDER BY role ASC, id ASC');
+        res.json({ success: true, permissions: rows.rows });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

@@ -117,12 +117,25 @@ const checkAuth = () => {
     const savedUser = localStorage.getItem('agrimonitor_user');
     if(savedUser) {
         currentUser = JSON.parse(savedUser);
+        if (!currentUser.assignedEstates) {
+            if (currentUser.estate === 'Semua Estate (Khusus Admin)' || currentUser.role === 'Admin' || currentUser.role === 'Director') {
+                currentUser.assignedEstates = ['ALL'];
+            } else if (currentUser.estate && currentUser.estate !== '-') {
+                currentUser.assignedEstates = currentUser.estate.split(',').map(e => e.trim());
+            } else {
+                currentUser.assignedEstates = [];
+            }
+        }
         window.currentUser = currentUser;
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('app-container').style.display = 'flex';
-        applyRBAC();
         document.querySelector('.user-name').innerText = currentUser.username;
         document.getElementById('display-role').innerText = currentUser.role;
+        
+        window.loadRolePermissions().then(() => {
+            applyRBAC();
+        });
+        applyRBAC();
         
         // Setup Header Estate Dropdown
         const dropdownContainer = document.getElementById('header-estate-dropdown-container');
@@ -212,15 +225,15 @@ const login = async (username, password, estate) => {
         if (result.success) {
             const dbUser = result.user;
             
-            // Validasi penempatan (kecuali Admin, -, atau Semua Estate)
+            // Validasi penempatan (kecuali Admin, Director, -, atau Semua Estate)
             let assignedEstates = [];
-            if (dbUser.estate === 'Semua Estate (Khusus Admin)' || dbUser.role === 'Admin') {
+            if (dbUser.estate === 'Semua Estate (Khusus Admin)' || dbUser.role === 'Admin' || dbUser.role === 'Director') {
                 assignedEstates = ['ALL'];
             } else if (dbUser.estate && dbUser.estate !== '-') {
                 assignedEstates = dbUser.estate.split(',').map(e => e.trim());
             }
             
-            if (dbUser.role !== 'Admin' && dbUser.estate !== '-' && dbUser.estate !== 'Semua Estate (Khusus Admin)' && !assignedEstates.includes(estate)) {
+            if (dbUser.role !== 'Admin' && dbUser.role !== 'Director' && dbUser.estate !== '-' && dbUser.estate !== 'Semua Estate (Khusus Admin)' && !assignedEstates.includes(estate)) {
                 errorEl.innerText = `Akses ditolak! Anda tidak diizinkan masuk ke ${estate}. Anda terdaftar di: ${dbUser.estate}`;
                 errorEl.style.display = 'block';
                 resetBtn();
@@ -280,7 +293,7 @@ window.toggleEstateUI = (roleId, dropdownId, containerId, labelId) => {
     const labelEl = document.getElementById(labelId);
     if (!roleEl || !dropdownEl || !containerEl || !labelEl) return;
     
-    const multiRoles = ['Admin', 'Senior Field Manager', 'Manager', 'Manager Mill'];
+    const multiRoles = ['Admin', 'Director', 'Senior Field Manager', 'Senior Mill Manager', 'Office Head Assistant', 'Manager', 'Manager Mill'];
     if (multiRoles.includes(roleEl.value)) {
         dropdownEl.style.display = 'none';
         dropdownEl.removeAttribute('required');
@@ -294,49 +307,107 @@ window.toggleEstateUI = (roleId, dropdownId, containerId, labelId) => {
     }
 };
 
+window.rolePermissions = {};
+window.rawPermissionsList = [];
+
+window.loadRolePermissions = async () => {
+    try {
+        const res = await fetch(`${API_URL}/permissions`);
+        if (res.ok) {
+            const list = await res.json();
+            window.rawPermissionsList = list;
+            window.rolePermissions = {};
+            list.forEach(p => {
+                if (!window.rolePermissions[p.role]) {
+                    window.rolePermissions[p.role] = {};
+                }
+                window.rolePermissions[p.role][p.module] = {
+                    can_view: p.can_view,
+                    can_input: p.can_input,
+                    can_edit: p.can_edit,
+                    can_delete: p.can_delete
+                };
+            });
+            localStorage.setItem('agrimonitor_role_permissions', JSON.stringify(window.rolePermissions));
+        } else {
+            const cached = localStorage.getItem('agrimonitor_role_permissions');
+            if (cached) window.rolePermissions = JSON.parse(cached);
+        }
+    } catch (e) {
+        console.warn("Failed to load permissions from server, using cache/fallback:", e);
+        const cached = localStorage.getItem('agrimonitor_role_permissions');
+        if (cached) window.rolePermissions = JSON.parse(cached);
+    }
+};
+
+window.hasPermission = (module, action = 'view') => {
+    if (!currentUser) return false;
+    const role = (currentUser.role || '').trim();
+    if (role.toLowerCase() === 'admin' || role.toLowerCase() === 'administrator') return true;
+    
+    if (window.rolePermissions && window.rolePermissions[role] && window.rolePermissions[role][module]) {
+        const p = window.rolePermissions[role][module];
+        if (action === 'view') return !!p.can_view;
+        if (action === 'input') return !!p.can_input;
+        if (action === 'edit') return !!p.can_edit;
+        if (action === 'delete') return !!p.can_delete;
+    }
+    
+    // Default fallback if permissions table not loaded yet
+    return defaultHasPermissionFallback(role, module, action);
+};
+
+function defaultHasPermissionFallback(role, module, action) {
+    const cleanRole = (role || '').trim();
+    if (cleanRole.toLowerCase() === 'admin' || cleanRole.toLowerCase() === 'administrator') return true;
+    
+    if (module === 'master') {
+        const isAuth = ['office assistant mill', 'office assistant (oaa)', 'office assistant', 'office head assistant'].includes(cleanRole.toLowerCase());
+        return isAuth;
+    }
+    if (module === 'users') return false;
+    
+    const readOnlyRoles = ['Senior Field Manager', 'Director', 'Senior Mill Manager', 'Office Head Assistant', 'Manager'];
+    if (readOnlyRoles.includes(cleanRole) && (action === 'input' || action === 'edit' || action === 'delete')) {
+        return false;
+    }
+    return true;
+}
+
+window.isMasterAuthorized = (user) => {
+    if (!user) return false;
+    const role = (user.role || '').trim();
+    if (role.toLowerCase() === 'admin' || role.toLowerCase() === 'administrator') return true;
+    if (window.rolePermissions && window.rolePermissions[role] && window.rolePermissions[role]['master']) {
+        const p = window.rolePermissions[role]['master'];
+        return !!p.can_view || !!p.can_input || !!p.can_edit;
+    }
+    const r = role.toLowerCase();
+    return r === 'office assistant mill' || r === 'office assistant (oaa)' || r === 'office assistant' || r === 'office head assistant';
+};
+const isMasterAuthorized = window.isMasterAuthorized;
+
 const applyRBAC = () => {
     if (!currentUser) return;
-    const role = currentUser.role;
-    const cleanRole = (role || '').trim();
+    const role = (currentUser.role || '').trim();
+    const cleanRole = role.toLowerCase();
     const navItems = document.querySelectorAll('.nav-item');
     
     // Default hiding all
     navItems.forEach(item => item.style.display = 'none');
     
-    // Unhide based on role
-    const showViews = (views) => {
-        views.forEach(v => {
-            const el = document.querySelector(`.nav-item[data-view="${v}"]`);
-            if(el) el.style.display = 'flex';
-        });
-    };
-    
-    if (cleanRole === 'Admin' || cleanRole === 'Administrator') {
-        showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'users', 'master', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
-    } else if (cleanRole === 'Senior Field Manager' || cleanRole === 'Manager') {
-        showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'master']);
-    } else if (cleanRole === 'Estate Manager' || cleanRole === 'Asisten Kepala' || cleanRole === 'Division Manager' || cleanRole === 'Assistant') {
-        showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting']);
-    } else if (cleanRole === 'Manager Mill' || cleanRole === 'Manager MIll') {
-        showViews(['dashboard', 'vehicle', 'tonase', 'master', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
-    } else if (cleanRole === 'Askep' || cleanRole === 'Office Assistant (OAA)') {
-        showViews(['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'master']);
-    } else if (cleanRole === 'Office Assistant Mill') {
-        showViews(['dashboard', 'vehicle', 'tonase', 'master', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
-    } else if (cleanRole.toLowerCase() === 'supervisor mill') {
-        showViews(['dashboard', 'vehicle', 'tonase', 'master', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
-    } else if (cleanRole === 'Mandor' || cleanRole === 'Krani Divisi') {
-        showViews(['vehicle', 'pemupukan', 'upkeep', 'harvesting']);
-    } else if (cleanRole === 'Krani Mill') {
-        showViews(['dashboard', 'tonase', 'ffb_quality', 'processing', 'water']);
-    } else if (cleanRole === 'Grading' || cleanRole === 'Analis & Grading') {
-        showViews(['dashboard', 'tonase', 'ffb_quality', 'processing', 'water', 'mill_dashboard']);
-    } else if (cleanRole === 'Analis') {
-        showViews(['dashboard', 'tonase', 'processing', 'water', 'ffb_quality', 'mill_dashboard']);
-    } else if (cleanRole === 'Supir') {
-        showViews(['vehicle', 'harvesting']);
-    } else if (cleanRole === 'Security' || cleanRole === 'Security Mill') {
-        showViews(['vehicle']);
+    const allModules = ['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'processing', 'water', 'ffb_quality', 'mill_dashboard', 'master', 'users'];
+    allModules.forEach(mod => {
+        if (window.hasPermission(mod, 'view')) {
+            const el = document.querySelector(`.nav-item[data-view="${mod}"]`);
+            if (el) el.style.display = 'flex';
+        }
+    });
+
+    // Master Data special check
+    const masterNav = document.querySelector('.nav-item[data-view="master"]');
+    if (masterNav) {
+        masterNav.style.display = isMasterAuthorized(currentUser) ? 'flex' : 'none';
     }
 };
 
@@ -2552,47 +2623,110 @@ Object.assign(views, {
     `,
     master: `
         <div class="animate-fade-in">
-            <div class="view-header">
-                <h2>Master Data <span class="estate-name-display" style="color:var(--primary); font-weight:bold;"></span></h2>
-                <p>Kelola daftar blok, divisi, truk, pupuk, dan supir yang muncul di form.</p>
+            <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+                <div>
+                    <h2>Master Data <span class="estate-name-display" style="color:var(--primary); font-weight:bold;"></span></h2>
+                    <p>Kelola daftar blok, divisi, truk, pupuk, supir, serta matriks otorisasi role.</p>
+                </div>
+                <!-- Sub Tabs Navigation -->
+                <div style="display:flex; background:#e2e8f0; padding:4px; border-radius:8px; gap:6px;">
+                    <button type="button" id="tab-btn-master-data" class="btn btn-primary" style="border-radius:6px; padding:6px 14px; font-weight:600; font-size:0.85rem;" onclick="window.switchMasterSubTab('data')">
+                        <i class="fa-solid fa-database"></i> Master Data Estate / Mill
+                    </button>
+                    <button type="button" id="tab-btn-master-permissions" class="btn" style="background:transparent; color:#334155; border-radius:6px; padding:6px 14px; font-weight:600; font-size:0.85rem;" onclick="window.switchMasterSubTab('permissions')">
+                        <i class="fa-solid fa-shield-halved"></i> Master Otorisasi Role (RBAC)
+                    </button>
+                </div>
             </div>
-            <div class="master-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top:20px;">
-                <!-- Divisi & Blok Hierarchical -->
-                <div class="glass-card master-estate-card" style="grid-column: 1 / -1;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3>Master Divisi & Blok</h3>
-                        <button type="button" class="btn btn-primary" onclick="promptAddDivisi()"><i class="fa-solid fa-plus"></i> Tambah Divisi Baru</button>
-                    </div>
-                    <div id="container-master-divisi" style="margin-top: 25px; display:flex; flex-direction:column; gap:20px;">
-                        <!-- Injected JS Divisi Cards -->
-                    </div>
-                </div>
-                <!-- Truk -->
-                <div class="glass-card master-estate-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3>Master Truk & Supir</h3>
-                        <button type="button" class="btn btn-primary" onclick="promptAddMaster('truk')"><i class="fa-solid fa-plus"></i> Tambah Truk & Supir</button>
-                    </div>
-                    <div id="container-master-truk" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; width: 100%;"></div>
-                </div>
-                <!-- Pupuk -->
-                <div class="glass-card master-estate-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3>Master Jenis Pupuk</h3>
-                        <button type="button" class="btn btn-primary" onclick="promptAddMaster('pupuk')"><i class="fa-solid fa-plus"></i> Tambah Pupuk</button>
-                    </div>
-                    <div id="container-master-pupuk"></div>
-                </div>
-                <!-- Supply Chain -->
-                <div class="glass-card master-mill-card" id="card-master-supply-chain" style="display:none; grid-column: 1 / -1;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3>Master Supply Chain</h3>
-                        <div style="display:flex; gap:10px;">
-                            <button type="button" class="btn" style="background:#64748b; color:#fff;" onclick="addSupplyChainMaster()"><i class="fa-solid fa-plus"></i> Tambah Supply Chain</button>
-                            <button type="button" class="btn btn-primary" onclick="saveSupplyChain()"><i class="fa-solid fa-save"></i> Simpan</button>
+
+            <!-- SUB-TAB 1: Data Kebun & Mill -->
+            <div id="subtab-master-data" style="display:block;">
+                <div class="master-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top:20px;">
+                    <!-- Divisi & Blok Hierarchical -->
+                    <div class="glass-card master-estate-card" style="grid-column: 1 / -1;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h3>Master Divisi & Blok</h3>
+                            <button type="button" class="btn btn-primary" onclick="promptAddDivisi()"><i class="fa-solid fa-plus"></i> Tambah Divisi Baru</button>
+                        </div>
+                        <div id="container-master-divisi" style="margin-top: 25px; display:flex; flex-direction:column; gap:20px;">
+                            <!-- Injected JS Divisi Cards -->
                         </div>
                     </div>
-                    <div id="container-master-supply-chain" style="margin-top: 15px; width: 100%; overflow-x: auto;"></div>
+                    <!-- Truk -->
+                    <div class="glass-card master-estate-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h3>Master Truk & Supir</h3>
+                            <button type="button" class="btn btn-primary" onclick="promptAddMaster('truk')"><i class="fa-solid fa-plus"></i> Tambah Truk & Supir</button>
+                        </div>
+                        <div id="container-master-truk" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; width: 100%;"></div>
+                    </div>
+                    <!-- Pupuk -->
+                    <div class="glass-card master-estate-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h3>Master Jenis Pupuk</h3>
+                            <button type="button" class="btn btn-primary" onclick="promptAddMaster('pupuk')"><i class="fa-solid fa-plus"></i> Tambah Pupuk</button>
+                        </div>
+                        <div id="container-master-pupuk"></div>
+                    </div>
+                    <!-- Supply Chain -->
+                    <div class="glass-card master-mill-card" id="card-master-supply-chain" style="display:none; grid-column: 1 / -1;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h3>Master Supply Chain</h3>
+                            <div style="display:flex; gap:10px;">
+                                <button type="button" class="btn" style="background:#64748b; color:#fff;" onclick="addSupplyChainMaster()"><i class="fa-solid fa-plus"></i> Tambah Supply Chain</button>
+                                <button type="button" class="btn btn-primary" onclick="saveSupplyChain()"><i class="fa-solid fa-save"></i> Simpan</button>
+                            </div>
+                        </div>
+                        <div id="container-master-supply-chain" style="margin-top: 15px; width: 100%; overflow-x: auto;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-TAB 2: Matriks Otorisasi Role -->
+            <div id="subtab-master-permissions" style="display:none; margin-top:20px;">
+                <div class="glass-card" style="padding:20px; border-radius:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; border-bottom:1px solid #e2e8f0; padding-bottom:15px; margin-bottom:15px;">
+                        <div>
+                            <h3 style="margin:0; font-size:1.25rem; display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-user-shield" style="color:var(--primary);"></i> Matriks Otorisasi Hak Akses Role
+                            </h3>
+                            <p style="margin:4px 0 0 0; color:#64748b; font-size:0.85rem;">Atur hak akses Display (Buka Menu), Input Form, Edit Data, dan Hapus Data per Role & Modul secara dinamis.</p>
+                        </div>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button type="button" class="btn" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1;" onclick="window.resetRolePermissionsToDefault()">
+                                <i class="fa-solid fa-rotate-left"></i> Reset Default
+                            </button>
+                            <button type="button" class="btn btn-primary" id="btn-save-permissions" onclick="window.saveAllRolePermissions()">
+                                <i class="fa-solid fa-floppy-disk"></i> Simpan Otorisasi
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Toolbar Filters & Quick Presets -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:20px; background:#f8fafc; padding:12px 16px; border-radius:8px; border:1px solid #e2e8f0;">
+                        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                            <label style="font-weight:600; font-size:0.9rem;">Filter Role:</label>
+                            <select id="perm-filter-role" class="form-control" style="width:auto; min-width:220px;" onchange="window.renderPermissionsMatrixTable()">
+                                <option value="ALL">-- Tampilkan Semua Role --</option>
+                            </select>
+                            <input type="text" id="perm-search-box" class="form-control" placeholder="Cari role / modul..." style="width:200px;" oninput="window.renderPermissionsMatrixTable()">
+                        </div>
+                        <!-- Quick Preset Buttons for Selected Role -->
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <span style="font-size:0.85rem; font-weight:600; color:#475569;">Preset Cepat:</span>
+                            <button type="button" class="btn btn-sm" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-size:0.8rem; padding:4px 10px;" onclick="window.applyPresetToFilter('full')">Full Access</button>
+                            <button type="button" class="btn btn-sm" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-size:0.8rem; padding:4px 10px;" onclick="window.applyPresetToFilter('readonly')">Display Only (Read-Only)</button>
+                            <button type="button" class="btn btn-sm" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0; font-size:0.8rem; padding:4px 10px;" onclick="window.applyPresetToFilter('estate')">Estate Only</button>
+                            <button type="button" class="btn btn-sm" style="background:#f3e8ff; color:#6b21a8; border:1px solid #e9d5ff; font-size:0.8rem; padding:4px 10px;" onclick="window.applyPresetToFilter('mill')">Mill Only</button>
+                            <button type="button" class="btn btn-sm" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; font-size:0.8rem; padding:4px 10px;" onclick="window.toggleAllPermCheckboxes(true)">Centang Semua</button>
+                            <button type="button" class="btn btn-sm" style="background:#fee2e2; color:#991b1b; border:1px solid #fecaca; font-size:0.8rem; padding:4px 10px;" onclick="window.toggleAllPermCheckboxes(false)">Batal Semua</button>
+                        </div>
+                    </div>
+
+                    <!-- Matrix Table Container (Sticky Header & Scrollable Body) -->
+                    <div id="permissions-matrix-container" style="max-height: calc(100vh - 300px); min-height: 420px; overflow-y: auto; overflow-x: auto; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; position: relative; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                        <!-- Injected via JavaScript -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -2617,7 +2751,10 @@ Object.assign(views, {
                         <div class="form-group">
                             <label>Role</label>
                             <select id="u-role" class="form-control" required onchange="window.toggleEstateUI('u-role', 'u-estate-dropdown', 'u-estate-container', 'u-estate-label')">
+                                <option>Director</option>
                                 <option>Senior Field Manager</option>
+                                <option>Senior Mill Manager</option>
+                                <option>Office Head Assistant</option>
                                 <option>Manager</option>
                                 <option>Manager Mill</option>
                                 <option>Supervisor Mill</option>
@@ -5113,6 +5250,10 @@ window.promptEditUser = (id) => {
                 <div class="form-group">
                     <label>Role</label>
                     <select id="eu-role" class="form-control" onchange="window.toggleEstateUI('eu-role', 'eu-estate-dropdown', 'eu-estate-container', 'eu-estate-label')">
+                        <option value="Director" ${user.role === 'Director' ? 'selected' : ''}>Director</option>
+                        <option value="Senior Field Manager" ${user.role === 'Senior Field Manager' ? 'selected' : ''}>Senior Field Manager</option>
+                        <option value="Senior Mill Manager" ${user.role === 'Senior Mill Manager' ? 'selected' : ''}>Senior Mill Manager</option>
+                        <option value="Office Head Assistant" ${user.role === 'Office Head Assistant' ? 'selected' : ''}>Office Head Assistant</option>
                         <option value="Manager" ${user.role === 'Manager' ? 'selected' : ''}>Manager</option>
                         <option value="Manager Mill" ${user.role === 'Manager Mill' ? 'selected' : ''}>Manager Mill</option>
                         <option value="Supervisor Mill" ${user.role === 'Supervisor Mill' ? 'selected' : ''}>Supervisor Mill</option>
@@ -5128,6 +5269,7 @@ window.promptEditUser = (id) => {
                         <option value="Security" ${user.role === 'Security' ? 'selected' : ''}>Security</option>
                         <option value="Security Mill" ${user.role === 'Security Mill' ? 'selected' : ''}>Security Mill</option>
                         <option value="Supir" ${user.role === 'Supir' ? 'selected' : ''}>Supir</option>
+                        <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Admin</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -5156,7 +5298,7 @@ window.promptEditUser = (id) => {
 
 window.editUser = async (id) => {
     const role = document.getElementById('eu-role').value;
-    const multiRoles = ['Admin', 'Senior Field Manager', 'Manager', 'Manager Mill'];
+    const multiRoles = ['Admin', 'Director', 'Senior Field Manager', 'Senior Mill Manager', 'Office Head Assistant', 'Manager', 'Manager Mill'];
     const estate = multiRoles.includes(role) 
         ? Array.from(document.querySelectorAll('input[name="eu_estate"]:checked')).map(cb => cb.value).join(', ')
         : document.getElementById('eu-estate-dropdown').value;
@@ -6683,7 +6825,7 @@ const bindForms = () => {
     if(formUser) formUser.onsubmit = async (e) => {
         e.preventDefault();
         const role = document.getElementById('u-role').value;
-        const multiRoles = ['Admin', 'Senior Field Manager', 'Manager', 'Manager Mill'];
+        const multiRoles = ['Admin', 'Director', 'Senior Field Manager', 'Senior Mill Manager', 'Office Head Assistant', 'Manager', 'Manager Mill'];
         const estate = multiRoles.includes(role)
             ? Array.from(document.querySelectorAll('input[name="u_estate"]:checked')).map(cb => cb.value).join(', ')
             : document.getElementById('u-estate-dropdown').value;
@@ -7171,6 +7313,13 @@ const navigate = (viewId) => {
     // Cleanup any orphaned modals in body from previous views to prevent duplicate IDs
     document.querySelectorAll('body > .modal-overlay').forEach(m => m.remove());
     
+    // Authorization check for Master Data
+    if (viewId === 'master' && !window.isMasterAuthorized(currentUser)) {
+        alert('Akses ditolak! Menu Master Data hanya dapat dibuka dan diedit oleh Admin dan Office Assistant.');
+        navigate('dashboard');
+        return;
+    }
+    
     const container = document.getElementById('view-container');
     const title = document.getElementById('page-title');
     
@@ -7185,6 +7334,7 @@ const navigate = (viewId) => {
         pemupukan: 'Pemupukan Monitoring',
         tonase: 'Tonase Monitoring',
         harvesting: 'Harvesting Monitoring',
+        master: 'Master Data',
         users: 'Master User Management',
         processing: 'Processing Monitoring',
         water: 'Water Analysis',
@@ -7206,7 +7356,7 @@ const navigate = (viewId) => {
         if(window.loadDashboardExtraData) window.loadDashboardExtraData();
         
         // Show mill sections for Mill users or Mill roles (Manager Mill, Supervisor Mill, Analis, Grading, etc.)
-        const millRoles = ['Manager Mill', 'Manager MIll', 'Supervisor Mill', 'supervisor Mill', 'Analis', 'Grading', 'Analis & Grading', 'Krani Mill', 'Office Assistant Mill', 'Admin', 'Administrator', 'Senior Field Manager'];
+        const millRoles = ['Manager Mill', 'Manager MIll', 'Supervisor Mill', 'supervisor Mill', 'Analis', 'Grading', 'Analis & Grading', 'Krani Mill', 'Office Assistant Mill', 'Admin', 'Administrator', 'Senior Field Manager', 'Senior Mill Manager', 'Director'];
         const isMillUser = (currentUser && currentUser.estate && currentUser.estate.toLowerCase().includes('mill')) || 
                            (currentUser && currentUser.role && millRoles.some(r => r.toLowerCase().trim() === currentUser.role.toLowerCase().trim())) ||
                            (currentUser && currentUser.estate === 'Semua Estate (Khusus Admin)');
@@ -7246,12 +7396,7 @@ const navigate = (viewId) => {
     
     
     if(viewId === 'master') {
-        if (currentUser && (currentUser.role === 'Senior Field Manager' || currentUser.role === 'Manager')) {
-            const masterGrid = document.querySelector('.master-grid');
-            if (masterGrid) {
-                masterGrid.classList.add('master-read-only');
-            }
-        }
+        renderMasterTables();
     }
     if(viewId === 'tonase') {
         if (currentUser.role === 'Krani Mill' || currentUser.role === 'Supervisor Mill' || currentUser.role === 'Manager Mill' || currentUser.role === 'Admin' || currentUser.role === 'Office Assistant Mill') {
@@ -7290,10 +7435,10 @@ const navigate = (viewId) => {
         bindForms(); 
         window.toggleEstateUI('u-role', 'u-estate-dropdown', 'u-estate-container', 'u-estate-label');
     }
-    if(viewId === 'master') { renderMasterTables(); }
     
-    // Read-only logic for Senior Field Manager
-    if (currentUser && currentUser.role === 'Senior Field Manager') {
+    // Global Read-only logic for Senior Field Manager, Director, Senior Mill Manager, Office Head Assistant
+    const estateReadOnlyRoles = ['Senior Field Manager', 'Director', 'Senior Mill Manager', 'Office Head Assistant'];
+    if (currentUser && estateReadOnlyRoles.includes(currentUser.role)) {
         const forms = container.querySelectorAll('.form-container');
         forms.forEach(f => f.style.display = 'none');
         const layouts = container.querySelectorAll('.module-layout');
@@ -7311,7 +7456,8 @@ const navigate = (viewId) => {
 
     // Specific read-only logic for Upkeep and Pemupukan (Only Assistant, Askep, and Admin can input rencana)
     if ((viewId === 'upkeep' || viewId === 'pemupukan') && currentUser) {
-        if (currentUser.role !== 'Assistant' && currentUser.role !== 'Askep' && currentUser.role !== 'Admin') {
+        const canInputPlan = ['Assistant', 'Askep', 'Admin'].includes(currentUser.role) && !estateReadOnlyRoles.includes(currentUser.role);
+        if (!canInputPlan) {
             const forms = container.querySelectorAll('.form-container');
             forms.forEach(f => f.style.display = 'none');
             const layouts = container.querySelectorAll('.module-layout');
@@ -7322,8 +7468,9 @@ const navigate = (viewId) => {
     // Harvesting specific read-only logic
     if (viewId === 'harvesting' && currentUser) {
         const role = currentUser.role;
-        const canInputMonthly = ['Assistant', 'Askep', 'Admin'].includes(role);
-        const canInputDaily = ['Mandor', 'Assistant', 'Askep', 'Admin'].includes(role);
+        const isRestrictedReadOnly = estateReadOnlyRoles.includes(role);
+        const canInputMonthly = ['Assistant', 'Askep', 'Admin'].includes(role) && !isRestrictedReadOnly;
+        const canInputDaily = ['Mandor', 'Assistant', 'Askep', 'Admin'].includes(role) && !isRestrictedReadOnly;
 
         const containerMonthly = document.getElementById('container-monthly-plan');
         if (containerMonthly) containerMonthly.style.display = canInputMonthly ? 'block' : 'none';
@@ -7409,10 +7556,370 @@ window.currentSelectedDivisi = window.currentSelectedDivisi || null;
 window.currentSelectedTruk = window.currentSelectedTruk || null;
 window.currentSelectedSupir = window.currentSelectedSupir || null;
 window.currentSelectedPupuk = window.currentSelectedPupuk || null;
+window.activeMasterSubTab = window.activeMasterSubTab || 'data';
+
+window.switchMasterSubTab = (tabName) => {
+    window.activeMasterSubTab = tabName;
+    const btnData = document.getElementById('tab-btn-master-data');
+    const btnPerm = document.getElementById('tab-btn-master-permissions');
+    const subtabData = document.getElementById('subtab-master-data');
+    const subtabPerm = document.getElementById('subtab-master-permissions');
+
+    if (!btnData || !btnPerm || !subtabData || !subtabPerm) return;
+
+    if (tabName === 'permissions') {
+        btnData.className = 'btn';
+        btnData.style.background = 'transparent';
+        btnData.style.color = '#334155';
+
+        btnPerm.className = 'btn btn-primary';
+        btnPerm.style.background = 'var(--primary)';
+        btnPerm.style.color = '#fff';
+
+        subtabData.style.display = 'none';
+        subtabPerm.style.display = 'block';
+
+        window.populateRoleFilterDropdown();
+        window.renderPermissionsMatrixTable();
+    } else {
+        btnData.className = 'btn btn-primary';
+        btnData.style.background = 'var(--primary)';
+        btnData.style.color = '#fff';
+
+        btnPerm.className = 'btn';
+        btnPerm.style.background = 'transparent';
+        btnPerm.style.color = '#334155';
+
+        subtabData.style.display = 'block';
+        subtabPerm.style.display = 'none';
+    }
+};
+
+const moduleMeta = [
+    { id: 'dashboard', name: 'Executive Dashboard (Kebun & Mill)', icon: 'fa-chart-pie', category: 'Executive' },
+    { id: 'vehicle', name: 'Vehicle Motion Monitoring', icon: 'fa-truck-fast', category: 'Estate' },
+    { id: 'pemupukan', name: 'Monitoring Pemupukan', icon: 'fa-seedling', category: 'Estate' },
+    { id: 'upkeep', name: 'Monitoring Upkeep (Rawat Tanaman)', icon: 'fa-leaf', category: 'Estate' },
+    { id: 'tonase', name: 'Tonase Timbangan / Jam', icon: 'fa-scale-balanced', category: 'Mill' },
+    { id: 'harvesting', name: 'Harvesting / Panen', icon: 'fa-basket-shopping', category: 'Estate' },
+    { id: 'processing', name: 'Processing Mill (Stasiun & Recovery)', icon: 'fa-industry', category: 'Mill' },
+    { id: 'water', name: 'Water Analysis & Lab', icon: 'fa-flask-vial', category: 'Mill' },
+    { id: 'ffb_quality', name: 'FFB Quality (Grading & Loose Fruit)', icon: 'fa-magnifying-glass-chart', category: 'Mill' },
+    { id: 'mill_dashboard', name: 'Mill Executive Dashboard', icon: 'fa-gauge-high', category: 'Mill' },
+    { id: 'master', name: 'Master Data (Divisi, Blok, Truk, Pupuk, SC)', icon: 'fa-database', category: 'General' },
+    { id: 'users', name: 'User Management (Admin)', icon: 'fa-users-gear', category: 'General' }
+];
+
+const allSystemRoles = [
+    'Admin',
+    'Director',
+    'Senior Field Manager',
+    'Senior Mill Manager',
+    'Office Head Assistant',
+    'Manager',
+    'Manager Mill',
+    'Supervisor Mill',
+    'Askep',
+    'Assistant',
+    'Office Assistant (OAA)',
+    'Office Assistant Mill',
+    'Mandor',
+    'Krani Divisi',
+    'Krani Mill',
+    'Grading',
+    'Analis',
+    'Supir',
+    'Security',
+    'Security Mill'
+];
+
+window.populateRoleFilterDropdown = () => {
+    const sel = document.getElementById('perm-filter-role');
+    if (!sel) return;
+    const currentVal = sel.value || 'ALL';
+    let html = '<option value="ALL">-- Tampilkan Semua Role --</option>';
+    allSystemRoles.forEach(r => {
+        html += `<option value="${r}" ${r === currentVal ? 'selected' : ''}>${r}</option>`;
+    });
+    sel.innerHTML = html;
+};
+
+window.renderPermissionsMatrixTable = () => {
+    const container = document.getElementById('permissions-matrix-container');
+    if (!container) return;
+
+    const filterRole = document.getElementById('perm-filter-role') ? document.getElementById('perm-filter-role').value : 'ALL';
+    const searchQuery = (document.getElementById('perm-search-box') ? document.getElementById('perm-search-box').value : '').toLowerCase().trim();
+
+    if (!window.rolePermissions || Object.keys(window.rolePermissions).length === 0) {
+        container.innerHTML = '<div style="padding:30px; text-align:center; color:#64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat matriks otorisasi...</div>';
+        window.loadRolePermissions().then(() => window.renderPermissionsMatrixTable());
+        return;
+    }
+
+    const rolesToRender = filterRole === 'ALL' 
+        ? allSystemRoles.filter(r => searchQuery === '' || r.toLowerCase().includes(searchQuery))
+        : [filterRole];
+
+    let tableHtml = `
+        <table class="data-table" style="width:100%; border-collapse:separate; border-spacing:0; text-align:left; font-size:0.875rem;">
+            <thead>
+                <tr>
+                    <th style="padding:12px; width:40px; text-align:center; position:sticky; top:0; background:#0f172a; color:#fff; z-index:20; border-bottom:2px solid #334155; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">NO</th>
+                    <th style="padding:12px; width:180px; position:sticky; top:0; background:#0f172a; color:#fff; z-index:20; border-bottom:2px solid #334155; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">ROLE PENGGUNA</th>
+                    <th style="padding:12px; min-width:240px; position:sticky; top:0; background:#0f172a; color:#fff; z-index:20; border-bottom:2px solid #334155; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">MODUL / FITUR APLIKASI</th>
+                    <th style="padding:12px; width:130px; text-align:center; position:sticky; top:0; background:#0f172a; color:#fff; z-index:20; border-bottom:2px solid #334155; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+                        <i class="fa-solid fa-eye" style="color:#38bdf8;"></i> BUKA / DISPLAY
+                    </th>
+                    <th style="padding:12px; width:130px; text-align:center; position:sticky; top:0; background:#0f172a; color:#fff; z-index:20; border-bottom:2px solid #334155; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+                        <i class="fa-solid fa-circle-plus" style="color:#4ade80;"></i> INPUT / TAMBAH
+                    </th>
+                    <th style="padding:12px; width:130px; text-align:center; position:sticky; top:0; background:#0f172a; color:#fff; z-index:20; border-bottom:2px solid #334155; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+                        <i class="fa-solid fa-pen-to-square" style="color:#fbbf24;"></i> EDIT / UBAH
+                    </th>
+                    <th style="padding:12px; width:130px; text-align:center; position:sticky; top:0; background:#0f172a; color:#fff; z-index:20; border-bottom:2px solid #334155; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+                        <i class="fa-solid fa-trash" style="color:#f87171;"></i> HAPUS
+                    </th>
+                    <th style="padding:12px; width:140px; text-align:center; position:sticky; top:0; background:#0f172a; color:#fff; z-index:20; border-bottom:2px solid #334155; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">AKSI CEPAT</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    let rowIndex = 0;
+
+    rolesToRender.forEach((role) => {
+        const rolePerms = window.rolePermissions[role] || {};
+        
+        moduleMeta.forEach((mod) => {
+            if (searchQuery !== '' && filterRole === 'ALL') {
+                const matchSearch = role.toLowerCase().includes(searchQuery) || mod.name.toLowerCase().includes(searchQuery) || mod.id.toLowerCase().includes(searchQuery);
+                if (!matchSearch) return;
+            }
+
+            rowIndex++;
+            const perm = rolePerms[mod.id] || { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 };
+
+            const bgRow = rowIndex % 2 === 0 ? '#f8fafc' : '#ffffff';
+            const roleBadgeColor = role.includes('Admin') ? '#ef4444' : (role.includes('Director') ? '#8b5cf6' : (role.includes('Manager') ? '#0284c7' : (role.includes('Assistant') ? '#10b981' : '#64748b')));
+
+            tableHtml += `
+                <tr style="background:${bgRow}; border-bottom:1px solid #e2e8f0;">
+                    <td style="padding:10px; text-align:center; color:#94a3b8; font-weight:600;">${rowIndex}</td>
+                    <td style="padding:10px; font-weight:700;">
+                        <span style="display:inline-block; padding:3px 8px; border-radius:4px; font-size:0.8rem; background:${roleBadgeColor}15; color:${roleBadgeColor}; border:1px solid ${roleBadgeColor}30;">
+                            ${role}
+                        </span>
+                    </td>
+                    <td style="padding:10px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid ${mod.icon}" style="color:var(--primary); width:18px;"></i>
+                            <span style="font-weight:600; color:#1e293b;">${mod.name}</span>
+                        </div>
+                    </td>
+                    <td style="padding:10px; text-align:center;">
+                        <input type="checkbox" style="width:18px; height:18px; cursor:pointer;" 
+                            ${perm.can_view ? 'checked' : ''} 
+                            onchange="window.onPermCheckboxChange('${role}', '${mod.id}', 'can_view', this.checked)">
+                    </td>
+                    <td style="padding:10px; text-align:center;">
+                        <input type="checkbox" style="width:18px; height:18px; cursor:pointer;" 
+                            ${perm.can_input ? 'checked' : ''} 
+                            onchange="window.onPermCheckboxChange('${role}', '${mod.id}', 'can_input', this.checked)">
+                    </td>
+                    <td style="padding:10px; text-align:center;">
+                        <input type="checkbox" style="width:18px; height:18px; cursor:pointer;" 
+                            ${perm.can_edit ? 'checked' : ''} 
+                            onchange="window.onPermCheckboxChange('${role}', '${mod.id}', 'can_edit', this.checked)">
+                    </td>
+                    <td style="padding:10px; text-align:center;">
+                        <input type="checkbox" style="width:18px; height:18px; cursor:pointer;" 
+                            ${perm.can_delete ? 'checked' : ''} 
+                            onchange="window.onPermCheckboxChange('${role}', '${mod.id}', 'can_delete', this.checked)">
+                    </td>
+                    <td style="padding:10px; text-align:center;">
+                        <button type="button" class="btn btn-sm" style="padding:2px 6px; font-size:0.75rem; background:#f1f5f9; border:1px solid #cbd5e1;" title="Beri Akses Penuh Modul Ini" onclick="window.setRowPermission('${role}', '${mod.id}', 'all')">Semua</button>
+                        <button type="button" class="btn btn-sm" style="padding:2px 6px; font-size:0.75rem; background:#f1f5f9; border:1px solid #cbd5e1;" title="Hanya Display" onclick="window.setRowPermission('${role}', '${mod.id}', 'view')">View</button>
+                        <button type="button" class="btn btn-sm" style="padding:2px 6px; font-size:0.75rem; background:#fee2e2; color:#991b1b; border:1px solid #fecaca;" title="Matikan Akses" onclick="window.setRowPermission('${role}', '${mod.id}', 'none')">Off</button>
+                    </td>
+                </tr>
+            `;
+        });
+    });
+
+    if (rowIndex === 0) {
+        tableHtml += `<tr><td colspan="8" style="padding:30px; text-align:center; color:#64748b;">Tidak ada data role/modul yang sesuai dengan filter pencarian.</td></tr>`;
+    }
+
+    tableHtml += `</tbody></table>`;
+    container.innerHTML = tableHtml;
+};
+
+window.onPermCheckboxChange = (role, module, action, isChecked) => {
+    if (!window.rolePermissions[role]) window.rolePermissions[role] = {};
+    if (!window.rolePermissions[role][module]) {
+        window.rolePermissions[role][module] = { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 };
+    }
+    window.rolePermissions[role][module][action] = isChecked ? 1 : 0;
+    
+    if (isChecked && action !== 'can_view') {
+        window.rolePermissions[role][module].can_view = 1;
+        const chkView = document.querySelector(`input[onchange*="'${role}', '${module}', 'can_view'"]`);
+        if (chkView) chkView.checked = true;
+    }
+};
+
+window.setRowPermission = (role, module, type) => {
+    if (!window.rolePermissions[role]) window.rolePermissions[role] = {};
+    if (!window.rolePermissions[role][module]) {
+        window.rolePermissions[role][module] = { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 };
+    }
+    if (type === 'all') {
+        window.rolePermissions[role][module] = { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 };
+    } else if (type === 'view') {
+        window.rolePermissions[role][module] = { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 };
+    } else if (type === 'none') {
+        window.rolePermissions[role][module] = { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 };
+    }
+    window.renderPermissionsMatrixTable();
+};
+
+window.applyPresetToFilter = (presetType) => {
+    const filterRole = document.getElementById('perm-filter-role') ? document.getElementById('perm-filter-role').value : 'ALL';
+    const targetRoles = filterRole === 'ALL' ? allSystemRoles : [filterRole];
+
+    const estateModules = ['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'master'];
+    const millModules = ['dashboard', 'vehicle', 'tonase', 'processing', 'water', 'ffb_quality', 'mill_dashboard', 'master'];
+
+    targetRoles.forEach(role => {
+        if (!window.rolePermissions[role]) window.rolePermissions[role] = {};
+        moduleMeta.forEach(mod => {
+            if (presetType === 'full') {
+                window.rolePermissions[role][mod.id] = { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 };
+            } else if (presetType === 'readonly') {
+                window.rolePermissions[role][mod.id] = { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 };
+            } else if (presetType === 'estate') {
+                if (estateModules.includes(mod.id)) {
+                    window.rolePermissions[role][mod.id] = { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 };
+                } else {
+                    window.rolePermissions[role][mod.id] = { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 };
+                }
+            } else if (presetType === 'mill') {
+                if (millModules.includes(mod.id)) {
+                    window.rolePermissions[role][mod.id] = { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 };
+                } else {
+                    window.rolePermissions[role][mod.id] = { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 };
+                }
+            }
+        });
+    });
+
+    window.renderPermissionsMatrixTable();
+};
+
+window.toggleAllPermCheckboxes = (enableAll) => {
+    const filterRole = document.getElementById('perm-filter-role') ? document.getElementById('perm-filter-role').value : 'ALL';
+    const targetRoles = filterRole === 'ALL' ? allSystemRoles : [filterRole];
+
+    targetRoles.forEach(role => {
+        if (!window.rolePermissions[role]) window.rolePermissions[role] = {};
+        moduleMeta.forEach(mod => {
+            const val = enableAll ? 1 : 0;
+            window.rolePermissions[role][mod.id] = { can_view: val, can_input: val, can_edit: val, can_delete: val };
+        });
+    });
+
+    window.renderPermissionsMatrixTable();
+};
+
+window.saveAllRolePermissions = async () => {
+    const btn = document.getElementById('btn-save-permissions');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+    }
+
+    try {
+        const payload = [];
+        allSystemRoles.forEach(role => {
+            const rPerms = window.rolePermissions[role] || {};
+            moduleMeta.forEach(mod => {
+                const p = rPerms[mod.id] || { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 };
+                payload.push({
+                    role: role,
+                    module: mod.id,
+                    can_view: p.can_view ? 1 : 0,
+                    can_input: p.can_input ? 1 : 0,
+                    can_edit: p.can_edit ? 1 : 0,
+                    can_delete: p.can_delete ? 1 : 0
+                });
+            });
+        });
+
+        const res = await fetch(`${API_URL}/permissions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ permissions: payload })
+        });
+
+        if (res.ok) {
+            alert('✅ Matriks Otorisasi Role Berhasil Disimpan dan Diterapkan!');
+            await window.loadRolePermissions();
+            applyRBAC();
+            window.renderPermissionsMatrixTable();
+        } else {
+            const data = await res.json();
+            alert('❌ Gagal menyimpan otorisasi: ' + (data.error || 'Terjadi kesalahan'));
+        }
+    } catch (e) {
+        console.error(e);
+        alert('❌ Terjadi kesalahan jaringan saat menyimpan.');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Otorisasi';
+        }
+    }
+};
+
+window.resetRolePermissionsToDefault = async () => {
+    if (!confirm('Apakah Anda yakin ingin mereset seluruh matriks otorisasi role ke pengaturan default sistem?')) return;
+
+    try {
+        const res = await fetch(`${API_URL}/permissions/reset`, { method: 'POST' });
+        if (res.ok) {
+            alert('✅ Matriks Otorisasi Berhasil Direset ke Default!');
+            await window.loadRolePermissions();
+            applyRBAC();
+            window.renderPermissionsMatrixTable();
+        } else {
+            alert('❌ Gagal mereset otorisasi.');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('❌ Terjadi kesalahan sistem.');
+    }
+};
 
 window.renderMasterTables = () => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        const container = document.getElementById('view-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="glass-card" style="padding: 40px; text-align: center; margin-top: 30px;">
+                    <i class="fa-solid fa-lock" style="font-size: 3rem; color: #ef4444; margin-bottom: 15px;"></i>
+                    <h2 style="color: #ef4444;">Akses Terkunci</h2>
+                    <p style="color: #64748b; font-size: 1.1rem; margin-top: 10px;">Hanya user Admin dan Office Assistant yang memiliki izin untuk membuka dan mengedit Master Data.</p>
+                </div>
+            `;
+        }
+        return;
+    }
+
     const estateDisplays = document.querySelectorAll('.estate-name-display');
     estateDisplays.forEach(el => el.innerText = currentUser.estate);
+    
+    window.switchMasterSubTab(window.activeMasterSubTab || 'data');
     
     const isMill = currentUser.estate.endsWith('Mill');
     document.querySelectorAll('.master-estate-card').forEach(el => el.style.display = isMill ? 'none' : 'block');
@@ -7708,6 +8215,10 @@ window.renderSelectedPupuk = () => {
 };
 
 window.promptAddMaster = async (type) => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     if (!currentUser.estate) return;
 
     let titleStr = type === 'truk' ? 'Truk' : (type === 'supir' ? 'Supir' : 'Jenis Pupuk');
@@ -7763,6 +8274,10 @@ window.promptAddMaster = async (type) => {
 };
 
 window.addMasterSingle = async (type) => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     const val = document.getElementById(`m-single-${type}`).value;
     if(!val || !val.trim()) return;
     
@@ -7800,6 +8315,10 @@ window.addMasterSingle = async (type) => {
 };
 
 window.addMasterBulk = async (type) => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     const text = document.getElementById(`m-bulk-${type}`).value;
     if(!text || !text.trim()) return;
     
@@ -7839,6 +8358,10 @@ window.addMasterBulk = async (type) => {
 };
 
 window.addSupplyChainMaster = () => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     let html = `
         <div id="modal-add-sc-master" class="modal-overlay">
             <div class="modal-content animate-fade-in" style="max-width: 400px;">
@@ -7862,6 +8385,10 @@ window.addSupplyChainMaster = () => {
 };
 
 window.submitAddSupplyChainMaster = async () => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     const name = document.getElementById('add-sc-name').value.trim();
     const abbr = document.getElementById('add-sc-abbr').value.trim();
     if (!name || !abbr) return alert('Nama dan Kode harus diisi!');
@@ -7887,6 +8414,10 @@ window.submitAddSupplyChainMaster = async () => {
 };
 
 window.saveSupplyChain = async () => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     const estatesMap = new Map();
     document.querySelectorAll('.sc-ffb-checkbox').forEach(cb => {
         const est = cb.getAttribute('data-estate');
@@ -7919,6 +8450,10 @@ window.saveSupplyChain = async () => {
 };
 
 window.toggleSupplyChain = async (estateName, isActive) => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     try {
         const res = await fetch(`${API_URL}/master/supply_chain/toggle`, {
             method: 'POST',
@@ -7934,6 +8469,10 @@ window.toggleSupplyChain = async (estateName, isActive) => {
 };
 
 window.promptAddDivisi = async () => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     const divisiName = prompt("Masukkan Nama Divisi Baru (ex: Divisi 1):");
     if (!divisiName || !divisiName.trim()) return;
     
@@ -7953,6 +8492,10 @@ window.promptAddDivisi = async () => {
 };
 
 window.addBlokBulk = async (divisiName) => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     const text = document.getElementById(`bulk-paste-${divisiName.replace(/\s+/g, '-')}`).value;
     if (!text || !text.trim()) return;
     
@@ -7993,6 +8536,10 @@ window.addBlokBulk = async (divisiName) => {
 
 window.addBlokToDivisi = async (e, divisiName) => {
     e.preventDefault();
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     if (!currentUser.estate) return;
     
     const safeDivName = divisiName.replace(/\s+/g, '-');
@@ -8016,6 +8563,10 @@ window.addBlokToDivisi = async (e, divisiName) => {
 };
 
 window.editMasterBlok = async (id, currentName, currentBjr) => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     const newBjr = prompt(`Edit nilai BJR (Kg) untuk blok ${currentName}:`, currentBjr);
     if (newBjr === null || newBjr.trim() === '') return;
     
@@ -8033,6 +8584,10 @@ window.editMasterBlok = async (id, currentName, currentBjr) => {
 };
 
 window.editBjr = async (id, currentBjr) => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     const newBjr = prompt("Masukkan nilai BJR baru:", currentBjr);
     if (newBjr === null || newBjr.trim() === '') return;
     
@@ -8051,6 +8606,10 @@ window.editBjr = async (id, currentBjr) => {
 
 window.addMaster = async (e, type) => {
     e.preventDefault();
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     if (!currentUser.estate) { alert('User tidak memiliki estate!'); return; }
     
     let payload = { estate: currentUser.estate };
@@ -8084,6 +8643,10 @@ window.addMaster = async (e, type) => {
 };
 
 window.editMaster = (type, id, currentName) => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     let modalId = `modal-edit-master-${type}-${id}`;
     let existingModal = document.getElementById(modalId);
     if(existingModal) existingModal.remove();
@@ -8133,6 +8696,10 @@ window.editMaster = (type, id, currentName) => {
 };
 
 window.saveEditMaster = async (type, id) => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     let payload = {};
     if (type === 'truk') {
         const newPlate = document.getElementById(`edit-val-${type}-${id}`).value;
@@ -8268,6 +8835,10 @@ window.populateSelects = () => {
 };
 
 window.deleteMaster = async (type, id) => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     if(!confirm('Hapus data ini?')) return;
     try {
         const res = await fetch(`${API_URL}/master/${type}/${id}`, { method: 'DELETE' });
@@ -8414,6 +8985,10 @@ window.getEstateCode = (estateName) => {
 };
 
 window.promptAddBlok = (divisiName) => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     const html = `
         <div class="modal-overlay" id="modal-add-blok">
             <div class="modal-content">
@@ -8447,6 +9022,10 @@ window.promptAddBlok = (divisiName) => {
 };
 
 window.addBlokSingle = async (divisiName) => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     const nama = document.getElementById('m-single-blok').value;
     const gross_area = document.getElementById('m-single-gross').value;
     const sph = document.getElementById('m-single-sph').value;
@@ -8467,6 +9046,10 @@ window.addBlokSingle = async (divisiName) => {
 };
 
 window.addBlokBulkFromModal = async (divisiName) => {
+    if (!window.isMasterAuthorized(currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
     const pasteData = document.getElementById('m-bulk-blok').value;
     if(!pasteData.trim()) return;
     
@@ -14885,9 +15468,9 @@ window.renderProcessingView = function() {
     window.loadProcessingData();
     
     // Disable inputs for read-only roles
-    const readOnlyRoles = ['Senior Field Manager'];
+    const readOnlyRoles = ['Senior Field Manager', 'Director', 'Senior Mill Manager', 'Office Head Assistant'];
     if (window.currentUser && readOnlyRoles.includes(window.currentUser.role)) {
-        document.querySelectorAll('#view-container .btn-success').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('#view-container .btn-success, #view-container .btn-tonase-action').forEach(el => el.style.display = 'none');
     }
 };
 
@@ -15693,9 +16276,9 @@ window.renderWaterView = function() {
     window.loadWaterData();
     
     // Disable inputs for read-only roles
-    const readOnlyRoles = ['Senior Field Manager'];
+    const readOnlyRoles = ['Senior Field Manager', 'Director', 'Senior Mill Manager', 'Office Head Assistant'];
     if (window.currentUser && readOnlyRoles.includes(window.currentUser.role)) {
-        document.querySelectorAll('#view-container .btn-success').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('#view-container .btn-success, #view-container .btn-tonase-action').forEach(el => el.style.display = 'none');
     }
 };
 
@@ -16550,9 +17133,9 @@ window.renderFFBQualityView = function() {
     window.switchFFBSubTab(window.activeFFBSubTab || 'loose');
 
     // Disable inputs for read-only roles
-    const readOnlyRoles = ['Senior Field Manager'];
+    const readOnlyRoles = ['Senior Field Manager', 'Director', 'Senior Mill Manager', 'Office Head Assistant'];
     if (window.currentUser && readOnlyRoles.includes(window.currentUser.role)) {
-        document.querySelectorAll('#view-container .btn-success').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('#view-container .btn-success, #view-container .btn-tonase-action').forEach(el => el.style.display = 'none');
     }
 };
 
@@ -19010,13 +19593,15 @@ window.renderDashFfbCropQuality = async function() {
         return;
     }
     const allowedRoles = [
-        'Senior Field Manager', 'Manager', 'Askep', 'Assistant', 
+        'Senior Field Manager', 'Senior Mill Manager', 'Director', 'Office Head Assistant',
+        'Senior Manager Estate', 'Manager', 'Askep', 'Assistant', 
         'Krani Divisi', 'Manager Mill', 'Manager MIll', 
         'supervisor Mill', 'Supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Analis', 'Grading', 
-        'Office Assistant Mill', 'Office Assistant (OAA)', 'Admin', 'Administrator'
+        'Office Assistant Mill', 'Office Assistant (OAA)', 'Office Assistant', 'Admin', 'Administrator'
     ];
     const userRole = (window.currentUser.role || '').toLowerCase().trim();
-    const isAllowed = allowedRoles.some(r => r.toLowerCase().trim() === userRole);
+    const isAllowed = (window.hasPermission && (window.hasPermission('ffb_quality', 'view') || window.hasPermission('dashboard', 'view'))) ||
+                      allowedRoles.some(r => r.toLowerCase().trim() === userRole);
     if (!isAllowed) {
         cardEl.style.display = 'none';
         return;
@@ -19063,10 +19648,14 @@ window.renderDashFfbCropQuality = async function() {
 
     let mill = 'Bunga Tanjung Mill';
     const headerDropdown = document.getElementById('header-estate-dropdown');
-    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill')) {
+    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill') && !headerDropdown.value.includes('Semua')) {
         mill = headerDropdown.value;
-    } else if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
-        mill = window.currentUser.estate;
+    } else if (window.currentUser && window.currentUser.estate) {
+        const est = window.currentUser.estate;
+        if (est.toLowerCase().includes('mill') && !est.includes('Semua')) {
+            const first = est.split(',')[0].trim();
+            if (first.toLowerCase().includes('mill')) mill = first;
+        }
     }
 
     try {
@@ -19333,13 +19922,15 @@ window.renderDashFfbFruitLooseAnalysis = async function() {
         return;
     }
     const allowedRoles = [
-        'Senior Field Manager', 'Manager', 'Askep', 'Assistant', 
+        'Senior Field Manager', 'Senior Mill Manager', 'Director', 'Office Head Assistant',
+        'Senior Manager Estate', 'Manager', 'Askep', 'Assistant', 
         'Krani Divisi', 'Manager Mill', 'Manager MIll', 
         'supervisor Mill', 'Supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Analis', 'Grading', 
-        'Office Assistant Mill', 'Office Assistant (OAA)', 'Admin', 'Administrator'
+        'Office Assistant Mill', 'Office Assistant (OAA)', 'Office Assistant', 'Admin', 'Administrator'
     ];
     const userRole = (window.currentUser.role || '').toLowerCase().trim();
-    const isAllowed = allowedRoles.some(r => r.toLowerCase().trim() === userRole);
+    const isAllowed = (window.hasPermission && (window.hasPermission('ffb_quality', 'view') || window.hasPermission('dashboard', 'view'))) ||
+                      allowedRoles.some(r => r.toLowerCase().trim() === userRole);
     if (!isAllowed) {
         cardEl.style.display = 'none';
         return;
@@ -19369,8 +19960,15 @@ window.renderDashFfbFruitLooseAnalysis = async function() {
     if (tbody) tbody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
 
     let mill = 'Bunga Tanjung Mill';
-    if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
-        mill = window.currentUser.estate;
+    const headerDropdown = document.getElementById('header-estate-dropdown');
+    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill') && !headerDropdown.value.includes('Semua')) {
+        mill = headerDropdown.value;
+    } else if (window.currentUser && window.currentUser.estate) {
+        const est = window.currentUser.estate;
+        if (est.toLowerCase().includes('mill') && !est.includes('Semua')) {
+            const first = est.split(',')[0].trim();
+            if (first.toLowerCase().includes('mill')) mill = first;
+        }
     }
 
     try {
@@ -19456,14 +20054,16 @@ window.renderFfbReceivedChart = async function() {
     }
 
     const allowedRoles = [
-        'Senior Field Manager', 'Manager', 'Askep', 'Assistant', 
+        'Senior Field Manager', 'Senior Mill Manager', 'Director', 'Office Head Assistant',
+        'Senior Manager Estate', 'Manager', 'Askep', 'Assistant', 
         'Krani Divisi', 'Manager Mill', 'Manager MIll', 
         'supervisor Mill', 'Supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Analis', 'Grading', 
-        'Office Assistant Mill', 'Office Assistant (OAA)', 'Admin', 'Administrator'
+        'Office Assistant Mill', 'Office Assistant (OAA)', 'Office Assistant', 'Admin', 'Administrator'
     ];
     
     const userRole = (window.currentUser.role || '').toLowerCase().trim();
-    const isAllowed = allowedRoles.some(r => r.toLowerCase().trim() === userRole);
+    const isAllowed = (window.hasPermission && (window.hasPermission('tonase', 'view') || window.hasPermission('dashboard', 'view'))) ||
+                      allowedRoles.some(r => r.toLowerCase().trim() === userRole);
     if (!isAllowed) {
         cardEl.style.display = 'none';
         return;
@@ -19504,8 +20104,15 @@ window.renderFfbReceivedChart = async function() {
     }
     
     let mill = 'Bunga Tanjung Mill';
-    if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
-        mill = window.currentUser.estate;
+    const headerDropdown = document.getElementById('header-estate-dropdown');
+    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill') && !headerDropdown.value.includes('Semua')) {
+        mill = headerDropdown.value;
+    } else if (window.currentUser && window.currentUser.estate) {
+        const est = window.currentUser.estate;
+        if (est.toLowerCase().includes('mill') && !est.includes('Semua')) {
+            const first = est.split(',')[0].trim();
+            if (first.toLowerCase().includes('mill')) mill = first;
+        }
     }
 
 
@@ -19676,8 +20283,15 @@ window.loadDashboardExtraData = async function(dateOverride) {
     
     if (window.currentUser) {
         const role = (window.currentUser.role || '').toLowerCase().trim();
-        const allowedRoles = ['Manager', 'Assistant', 'Askep', 'Supervisor Mill', 'supervisor Mill', 'Senior Field Manager', 'Senior Manager Estate', 'Krani Mill', 'Analis', 'Grading', 'Analis & Grading', 'Manager Mill', 'Manager MIll', 'Office Assistant Mill', 'Office Assistant (OAA)', 'Admin', 'Administrator'];
-        const isAllowed = allowedRoles.some(r => r.toLowerCase().trim() === role);
+        const allowedRoles = [
+            'Senior Field Manager', 'Senior Mill Manager', 'Director', 'Office Head Assistant',
+            'Senior Manager Estate', 'Manager', 'Askep', 'Assistant', 
+            'Krani Divisi', 'Manager Mill', 'Manager MIll', 
+            'supervisor Mill', 'Supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Analis', 'Grading', 
+            'Office Assistant Mill', 'Office Assistant (OAA)', 'Office Assistant', 'Admin', 'Administrator'
+        ];
+        const isAllowed = (window.hasPermission && (window.hasPermission('tonase', 'view') || window.hasPermission('dashboard', 'view'))) ||
+                          allowedRoles.some(r => r.toLowerCase().trim() === role);
         const card = document.getElementById('ffb-received-card');
         if (card) {
             card.style.display = isAllowed ? 'block' : 'none';
