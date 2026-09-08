@@ -331,7 +331,7 @@ window.rawPermissionsList = [];
 
 window.loadRolePermissions = async () => {
     try {
-        const res = await fetch(`${API_URL}/permissions`);
+        const res = await fetch(`${API_URL}/permissions?_t=${Date.now()}`);
         if (res.ok) {
             const list = await res.json();
             window.rawPermissionsList = list;
@@ -341,10 +341,10 @@ window.loadRolePermissions = async () => {
                     window.rolePermissions[p.role] = {};
                 }
                 window.rolePermissions[p.role][p.module] = {
-                    can_view: p.can_view,
-                    can_input: p.can_input,
-                    can_edit: p.can_edit,
-                    can_delete: p.can_delete
+                    can_view: parseInt(p.can_view) ? 1 : 0,
+                    can_input: parseInt(p.can_input) ? 1 : 0,
+                    can_edit: parseInt(p.can_edit) ? 1 : 0,
+                    can_delete: parseInt(p.can_delete) ? 1 : 0
                 };
             });
             localStorage.setItem('agrimonitor_role_permissions', JSON.stringify(window.rolePermissions));
@@ -17173,6 +17173,11 @@ window.switchFFBSubTab = function(tabId) {
         content.classList.add('active');
         content.style.display = 'block';
     }
+
+    const canInput = window.hasPermission ? window.hasPermission('ffb_quality', 'input') : false;
+    document.querySelectorAll('#view-container button[onclick*="openFFB"], #view-container .btn-success').forEach(el => {
+        el.style.display = canInput ? 'inline-flex' : 'none';
+    });
     
     try {
         if (tabId === 'loose') {
@@ -17192,11 +17197,10 @@ window.switchFFBSubTab = function(tabId) {
 window.renderFFBQualityView = function() {
     window.switchFFBSubTab(window.activeFFBSubTab || 'loose');
 
-    // Disable inputs for read-only roles
-    const readOnlyRoles = ['Senior Field Manager', 'Director', 'Senior Mill Manager', 'Office Head Assistant'];
-    if (window.currentUser && readOnlyRoles.includes(window.currentUser.role)) {
-        document.querySelectorAll('#view-container .btn-success, #view-container .btn-tonase-action').forEach(el => el.style.display = 'none');
-    }
+    const canInput = window.hasPermission ? window.hasPermission('ffb_quality', 'input') : false;
+    document.querySelectorAll('#view-container button[onclick*="openFFB"], #view-container .btn-success').forEach(el => {
+        el.style.display = canInput ? 'inline-flex' : 'none';
+    });
 };
 
 window.calculateFFBAverages = function() {
@@ -17252,12 +17256,8 @@ window.renderFFBTable = function(isSingleDay = true) {
     }
     const getAbbr = (estName) => abbrMap[estName] || (estName ? estName.replace(' Estate', 'E') : '-');
     
-    const userRole = window.currentUser ? (window.currentUser.role || '') : '';
-    const normRole = (userRole || '').trim().toLowerCase();
-    const isMillManager = normRole === 'manager mill' || normRole === 'managermill' || normRole.includes('manager mill');
-    const isAdmin = normRole === 'admin' || normRole === 'administrator';
-    const canDelete = (window.hasPermission && window.hasPermission('ffb_quality', 'delete')) || isAdmin || isMillManager;
-    const canEdit = (window.hasPermission && window.hasPermission('ffb_quality', 'edit')) || isAdmin || isMillManager || ['grading', 'analis', 'supervisor mill', 'krani mill', 'askep', 'assistant'].includes(normRole) || !userRole;
+    const canDelete = window.hasPermission ? window.hasPermission('ffb_quality', 'delete') : false;
+    const canEdit = window.hasPermission ? window.hasPermission('ffb_quality', 'edit') : false;
 
     window.ffbQualityData.forEach((data, index) => {
         const tr = document.createElement('tr');
@@ -17684,12 +17684,8 @@ window.renderFFBCropTable = function(isSingleDay = true) {
     }
     const getAbbr = (estName) => abbrMap[estName] || (estName ? estName.replace(' Estate', 'E') : '-');
 
-    const userRole = window.currentUser ? (window.currentUser.role || '') : '';
-    const normRole = (userRole || '').trim().toLowerCase();
-    const isMillManager = normRole === 'manager mill' || normRole === 'managermill' || normRole.includes('manager mill');
-    const isAdmin = normRole === 'admin' || normRole === 'administrator';
-    const canDelete = (window.hasPermission && window.hasPermission('ffb_quality', 'delete')) || isAdmin || isMillManager;
-    const canEdit = (window.hasPermission && window.hasPermission('ffb_quality', 'edit')) || isAdmin || isMillManager || ['grading', 'analis', 'supervisor mill', 'krani mill', 'askep', 'assistant'].includes(normRole) || !userRole;
+    const canDelete = window.hasPermission ? window.hasPermission('ffb_quality', 'delete') : false;
+    const canEdit = window.hasPermission ? window.hasPermission('ffb_quality', 'edit') : false;
 
     if (isSingleDay) {
         rawTable.style.display = 'table';
