@@ -1985,8 +1985,11 @@ window.renderFFBTable = function(isSingleDay = true) {
     const getAbbr = (estName) => abbrMap[estName] || (estName ? estName.replace(' Estate', 'E') : '-');
     
     const userRole = window.currentUser ? (window.currentUser.role || '') : '';
-    const canDelete = (window.hasPermission && window.hasPermission('ffb_quality', 'delete')) || ['Admin', 'Administrator'].includes(userRole);
-    const canEdit = (window.hasPermission && window.hasPermission('ffb_quality', 'edit')) || ['Admin', 'Administrator', 'Grading', 'Analis', 'Supervisor Mill', 'Krani Mill', 'Manager Mill', 'Askep', 'Assistant'].includes(userRole) || !userRole;
+    const normRole = (userRole || '').trim().toLowerCase();
+    const isMillManager = normRole === 'manager mill' || normRole === 'managermill' || normRole.includes('manager mill');
+    const isAdmin = normRole === 'admin' || normRole === 'administrator';
+    const canDelete = (window.hasPermission && window.hasPermission('ffb_quality', 'delete')) || isAdmin || isMillManager;
+    const canEdit = (window.hasPermission && window.hasPermission('ffb_quality', 'edit')) || isAdmin || isMillManager || ['grading', 'analis', 'supervisor mill', 'krani mill', 'askep', 'assistant'].includes(normRole) || !userRole;
 
     window.ffbQualityData.forEach((data, index) => {
         const tr = document.createElement('tr');
@@ -2030,17 +2033,21 @@ window.deleteFFBRow = async function(index, id) {
     if (confirm('Hapus baris data grading Loose Fruit ini?')) {
         try {
             if (id) {
-                await fetch(`/api/ffb_quality/${id}`, { method: 'DELETE' });
-            } else {
+                const res = await fetch(`/api/ffb_quality/${id}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    await fetch(`/api/ffb_quality/delete/${id}`, { method: 'POST' });
+                }
+            }
+            if (Array.isArray(window.ffbQualityData) && index >= 0 && index < window.ffbQualityData.length) {
                 window.ffbQualityData.splice(index, 1);
-                await window.saveFFBQuality();
             }
             const fqDateElem = document.getElementById('fq-date');
             const curDate = fqDateElem ? fqDateElem.value : window.getLocalDate();
             await window.loadFFBQuality(curDate, curDate);
+            alert('Baris data grading Loose Fruit berhasil dihapus.');
         } catch(e) {
             console.error('Error deleting row:', e);
-            alert('Gagal menghapus baris data.');
+            alert('Gagal menghapus baris data: ' + e.message);
         }
     }
 };
@@ -2410,8 +2417,11 @@ window.renderFFBCropTable = function(isSingleDay = true) {
     const getAbbr = (estName) => abbrMap[estName] || (estName ? estName.replace(' Estate', 'E') : '-');
 
     const userRole = window.currentUser ? (window.currentUser.role || '') : '';
-    const canDelete = (window.hasPermission && window.hasPermission('ffb_quality', 'delete')) || ['Admin', 'Administrator'].includes(userRole);
-    const canEdit = (window.hasPermission && window.hasPermission('ffb_quality', 'edit')) || ['Admin', 'Administrator', 'Grading', 'Analis', 'Supervisor Mill', 'Krani Mill', 'Manager Mill', 'Askep', 'Assistant'].includes(userRole) || !userRole;
+    const normRole = (userRole || '').trim().toLowerCase();
+    const isMillManager = normRole === 'manager mill' || normRole === 'managermill' || normRole.includes('manager mill');
+    const isAdmin = normRole === 'admin' || normRole === 'administrator';
+    const canDelete = (window.hasPermission && window.hasPermission('ffb_quality', 'delete')) || isAdmin || isMillManager;
+    const canEdit = (window.hasPermission && window.hasPermission('ffb_quality', 'edit')) || isAdmin || isMillManager || ['grading', 'analis', 'supervisor mill', 'krani mill', 'askep', 'assistant'].includes(normRole) || !userRole;
 
     if (isSingleDay) {
         rawTable.style.display = 'table';
@@ -2588,17 +2598,21 @@ window.deleteFFBCropRow = async function(index, id) {
     if (confirm('Hapus baris data grading Daily FFB Crop Quality ini?')) {
         try {
             if (id) {
-                await fetch(`/api/ffb_crop_quality/${id}`, { method: 'DELETE' });
-            } else {
+                const res = await fetch(`/api/ffb_crop_quality/${id}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    await fetch(`/api/ffb_crop_quality/delete/${id}`, { method: 'POST' });
+                }
+            }
+            if (Array.isArray(window.ffbCropQualityData) && index >= 0 && index < window.ffbCropQualityData.length) {
                 window.ffbCropQualityData.splice(index, 1);
-                await window.saveFFBCropQuality();
             }
             const fqDateElem = document.getElementById('fq-date');
             const curDate = fqDateElem ? fqDateElem.value : window.getLocalDate();
             await window.loadFFBCropQuality(curDate, curDate);
+            alert('Baris data grading Daily FFB Crop Quality berhasil dihapus.');
         } catch(e) {
             console.error('Error deleting crop row:', e);
-            alert('Gagal menghapus baris data.');
+            alert('Gagal menghapus baris data: ' + e.message);
         }
     }
 };

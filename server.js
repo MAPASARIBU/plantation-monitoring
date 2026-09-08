@@ -432,7 +432,7 @@ async function initDB() {
             await seedRolePermissions(false);
         } else {
             try {
-                await pool.query("UPDATE role_permissions SET can_delete = 1 WHERE role = 'Manager Mill' AND module IN ('ffb_quality', 'processing', 'water', 'tonase', 'vehicle')");
+                await pool.query("UPDATE role_permissions SET can_delete = 1 WHERE LOWER(role) LIKE '%manager%mill%' AND module IN ('ffb_quality', 'processing', 'water', 'tonase', 'vehicle', 'dashboard', 'mill_dashboard')");
             } catch (e) {
                 console.warn("Could not auto-update Manager Mill permissions:", e);
             }

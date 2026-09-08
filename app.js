@@ -362,14 +362,35 @@ window.loadRolePermissions = async () => {
 window.hasPermission = (module, action = 'view') => {
     if (!currentUser) return false;
     const role = (currentUser.role || '').trim();
-    if (role.toLowerCase() === 'admin' || role.toLowerCase() === 'administrator') return true;
+    const cleanRole = role.toLowerCase();
+    if (cleanRole === 'admin' || cleanRole === 'administrator') return true;
     
-    if (window.rolePermissions && window.rolePermissions[role] && window.rolePermissions[role][module]) {
-        const p = window.rolePermissions[role][module];
-        if (action === 'view') return !!p.can_view;
-        if (action === 'input') return !!p.can_input;
-        if (action === 'edit') return !!p.can_edit;
-        if (action === 'delete') return !!p.can_delete;
+    const targetModule = (module || '').trim().toLowerCase();
+    
+    if (window.rolePermissions && typeof window.rolePermissions === 'object') {
+        let rolePermObj = window.rolePermissions[role];
+        if (!rolePermObj) {
+            const matchedKey = Object.keys(window.rolePermissions).find(k => k.trim().toLowerCase() === cleanRole || k.trim().toLowerCase().replace(/\s+/g, '') === cleanRole.replace(/\s+/g, ''));
+            if (matchedKey) {
+                rolePermObj = window.rolePermissions[matchedKey];
+            }
+        }
+        
+        if (rolePermObj && typeof rolePermObj === 'object') {
+            let p = rolePermObj[module];
+            if (!p) {
+                const matchedMod = Object.keys(rolePermObj).find(m => m.trim().toLowerCase() === targetModule || m.trim().toLowerCase().replace(/\s+/g, '') === targetModule.replace(/\s+/g, ''));
+                if (matchedMod) {
+                    p = rolePermObj[matchedMod];
+                }
+            }
+            if (p) {
+                if (action === 'view') return !!p.can_view;
+                if (action === 'input') return !!p.can_input;
+                if (action === 'edit') return !!p.can_edit;
+                if (action === 'delete') return !!p.can_delete;
+            }
+        }
     }
     
     // Default fallback if permissions table not loaded yet
@@ -377,16 +398,23 @@ window.hasPermission = (module, action = 'view') => {
 };
 
 function defaultHasPermissionFallback(role, module, action) {
-    const cleanRole = (role || '').trim();
-    if (cleanRole.toLowerCase() === 'admin' || cleanRole.toLowerCase() === 'administrator') return true;
+    const cleanRole = (role || '').trim().toLowerCase();
+    if (cleanRole === 'admin' || cleanRole === 'administrator') return true;
     
     if (module === 'master') {
-        const isAuth = ['office assistant mill', 'office assistant (oaa)', 'office assistant', 'office head assistant'].includes(cleanRole.toLowerCase());
+        const isAuth = ['office assistant mill', 'office assistant (oaa)', 'office assistant', 'office head assistant'].includes(cleanRole);
         return isAuth;
     }
     if (module === 'users') return false;
     
-    const readOnlyRoles = ['Senior Field Manager', 'Director', 'Senior Mill Manager', 'Office Head Assistant', 'Manager'];
+    // Manager Mill has full access including delete for mill modules
+    if (cleanRole.includes('manager mill') || cleanRole === 'manager mill' || cleanRole === 'managermill') {
+        if (['ffb_quality', 'processing', 'water', 'tonase', 'vehicle', 'mill_dashboard', 'dashboard'].includes(module)) {
+            return true;
+        }
+    }
+    
+    const readOnlyRoles = ['senior field manager', 'director', 'senior mill manager', 'office head assistant'];
     if (readOnlyRoles.includes(cleanRole) && (action === 'input' || action === 'edit' || action === 'delete')) {
         return false;
     }
@@ -17225,8 +17253,11 @@ window.renderFFBTable = function(isSingleDay = true) {
     const getAbbr = (estName) => abbrMap[estName] || (estName ? estName.replace(' Estate', 'E') : '-');
     
     const userRole = window.currentUser ? (window.currentUser.role || '') : '';
-    const canDelete = (window.hasPermission && window.hasPermission('ffb_quality', 'delete')) || ['Admin', 'Administrator'].includes(userRole);
-    const canEdit = (window.hasPermission && window.hasPermission('ffb_quality', 'edit')) || ['Admin', 'Administrator', 'Grading', 'Analis', 'Supervisor Mill', 'Krani Mill', 'Manager Mill', 'Askep', 'Assistant'].includes(userRole) || !userRole;
+    const normRole = (userRole || '').trim().toLowerCase();
+    const isMillManager = normRole === 'manager mill' || normRole === 'managermill' || normRole.includes('manager mill');
+    const isAdmin = normRole === 'admin' || normRole === 'administrator';
+    const canDelete = (window.hasPermission && window.hasPermission('ffb_quality', 'delete')) || isAdmin || isMillManager;
+    const canEdit = (window.hasPermission && window.hasPermission('ffb_quality', 'edit')) || isAdmin || isMillManager || ['grading', 'analis', 'supervisor mill', 'krani mill', 'askep', 'assistant'].includes(normRole) || !userRole;
 
     window.ffbQualityData.forEach((data, index) => {
         const tr = document.createElement('tr');
@@ -17270,17 +17301,21 @@ window.deleteFFBRow = async function(index, id) {
     if (confirm('Hapus baris data grading Loose Fruit ini?')) {
         try {
             if (id) {
-                await fetch(`/api/ffb_quality/${id}`, { method: 'DELETE' });
-            } else {
+                const res = await fetch(`/api/ffb_quality/${id}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    await fetch(`/api/ffb_quality/delete/${id}`, { method: 'POST' });
+                }
+            }
+            if (Array.isArray(window.ffbQualityData) && index >= 0 && index < window.ffbQualityData.length) {
                 window.ffbQualityData.splice(index, 1);
-                await window.saveFFBQuality();
             }
             const fqDateElem = document.getElementById('fq-date');
             const curDate = fqDateElem ? fqDateElem.value : window.getLocalDate();
             await window.loadFFBQuality(curDate, curDate);
+            alert('Baris data grading Loose Fruit berhasil dihapus.');
         } catch(e) {
             console.error('Error deleting row:', e);
-            alert('Gagal menghapus baris data.');
+            alert('Gagal menghapus baris data: ' + e.message);
         }
     }
 };
@@ -17650,8 +17685,11 @@ window.renderFFBCropTable = function(isSingleDay = true) {
     const getAbbr = (estName) => abbrMap[estName] || (estName ? estName.replace(' Estate', 'E') : '-');
 
     const userRole = window.currentUser ? (window.currentUser.role || '') : '';
-    const canDelete = (window.hasPermission && window.hasPermission('ffb_quality', 'delete')) || ['Admin', 'Administrator'].includes(userRole);
-    const canEdit = (window.hasPermission && window.hasPermission('ffb_quality', 'edit')) || ['Admin', 'Administrator', 'Grading', 'Analis', 'Supervisor Mill', 'Krani Mill', 'Manager Mill', 'Askep', 'Assistant'].includes(userRole) || !userRole;
+    const normRole = (userRole || '').trim().toLowerCase();
+    const isMillManager = normRole === 'manager mill' || normRole === 'managermill' || normRole.includes('manager mill');
+    const isAdmin = normRole === 'admin' || normRole === 'administrator';
+    const canDelete = (window.hasPermission && window.hasPermission('ffb_quality', 'delete')) || isAdmin || isMillManager;
+    const canEdit = (window.hasPermission && window.hasPermission('ffb_quality', 'edit')) || isAdmin || isMillManager || ['grading', 'analis', 'supervisor mill', 'krani mill', 'askep', 'assistant'].includes(normRole) || !userRole;
 
     if (isSingleDay) {
         rawTable.style.display = 'table';
@@ -17828,17 +17866,21 @@ window.deleteFFBCropRow = async function(index, id) {
     if (confirm('Hapus baris data grading Daily FFB Crop Quality ini?')) {
         try {
             if (id) {
-                await fetch(`/api/ffb_crop_quality/${id}`, { method: 'DELETE' });
-            } else {
+                const res = await fetch(`/api/ffb_crop_quality/${id}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    await fetch(`/api/ffb_crop_quality/delete/${id}`, { method: 'POST' });
+                }
+            }
+            if (Array.isArray(window.ffbCropQualityData) && index >= 0 && index < window.ffbCropQualityData.length) {
                 window.ffbCropQualityData.splice(index, 1);
-                await window.saveFFBCropQuality();
             }
             const fqDateElem = document.getElementById('fq-date');
             const curDate = fqDateElem ? fqDateElem.value : window.getLocalDate();
             await window.loadFFBCropQuality(curDate, curDate);
+            alert('Baris data grading Daily FFB Crop Quality berhasil dihapus.');
         } catch(e) {
             console.error('Error deleting crop row:', e);
-            alert('Gagal menghapus baris data.');
+            alert('Gagal menghapus baris data: ' + e.message);
         }
     }
 };
