@@ -17224,9 +17224,9 @@ window.renderFFBTable = function(isSingleDay = true) {
     }
     const getAbbr = (estName) => abbrMap[estName] || (estName ? estName.replace(' Estate', 'E') : '-');
     
-    const userRole = window.currentUser ? window.currentUser.role : '';
-    const canDelete = ['Admin', 'Administrator'].includes(userRole);
-    const canEdit = ['Admin', 'Administrator', 'Grading', 'Analis', 'Supervisor Mill', 'Krani Mill', 'Manager Mill', 'Askep', 'Assistant'].includes(userRole) || !userRole;
+    const userRole = window.currentUser ? (window.currentUser.role || '') : '';
+    const canDelete = (window.hasPermission && window.hasPermission('ffb_quality', 'delete')) || ['Admin', 'Administrator'].includes(userRole);
+    const canEdit = (window.hasPermission && window.hasPermission('ffb_quality', 'edit')) || ['Admin', 'Administrator', 'Grading', 'Analis', 'Supervisor Mill', 'Krani Mill', 'Manager Mill', 'Askep', 'Assistant'].includes(userRole) || !userRole;
 
     window.ffbQualityData.forEach((data, index) => {
         const tr = document.createElement('tr');
@@ -17398,6 +17398,9 @@ window.onFFBModalEstateChange = async function(estate) {
 };
 
 window.openFFBModal = function() {
+    window.currentEditingFfbId = null;
+    window.currentEditingFfbIndex = null;
+
     const modal = document.getElementById('modal-ffb-quality');
     if (modal) {
         if (typeof document !== 'undefined' && document.body && modal.parentNode !== document.body) { document.body.appendChild(modal); }
@@ -17443,6 +17446,9 @@ window.openFFBModal = function() {
 window.openFFBEditModal = function(index) {
     const data = window.ffbQualityData[index];
     if (!data) return;
+
+    window.currentEditingFfbId = data.id || null;
+    window.currentEditingFfbIndex = index;
 
     const modal = document.getElementById('modal-ffb-quality');
     if (modal) {
@@ -17529,7 +17535,7 @@ window.submitFFBModal = async function() {
     let mill = window.currentUser ? window.currentUser.estate : null; 
     if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
 
-    const editId = document.getElementById('fq-modal-edit-id')?.value;
+    const editId = (document.getElementById('fq-modal-edit-id')?.value) || window.currentEditingFfbId;
     const payload = {
         date: saveDate,
         mill: mill,
@@ -17550,19 +17556,24 @@ window.submitFFBModal = async function() {
 
     try {
         if (editId) {
-            await fetch(`/api/ffb_quality/${editId}`, {
+            const res = await fetch(`/api/ffb_quality/${editId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+            if (!res.ok) throw new Error('Gagal update data');
         } else {
-            await fetch('/api/ffb_quality/add', {
+            const res = await fetch('/api/ffb_quality/add', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+            if (!res.ok) throw new Error('Gagal tambah data');
         }
-        document.getElementById('modal-ffb-quality').style.display = 'none';
+        window.currentEditingFfbId = null;
+        window.currentEditingFfbIndex = null;
+        const modalEl = document.getElementById('modal-ffb-quality');
+        if (modalEl) modalEl.style.display = 'none';
         if (fqDateElem) fqDateElem.value = saveDate;
         await window.loadFFBQuality(saveDate, saveDate);
     } catch(e) {
@@ -17638,9 +17649,9 @@ window.renderFFBCropTable = function(isSingleDay = true) {
     }
     const getAbbr = (estName) => abbrMap[estName] || (estName ? estName.replace(' Estate', 'E') : '-');
 
-    const userRole = window.currentUser ? window.currentUser.role : '';
-    const canDelete = ['Admin', 'Administrator'].includes(userRole);
-    const canEdit = ['Admin', 'Administrator', 'Grading', 'Analis', 'Supervisor Mill', 'Krani Mill', 'Manager Mill', 'Askep', 'Assistant'].includes(userRole) || !userRole;
+    const userRole = window.currentUser ? (window.currentUser.role || '') : '';
+    const canDelete = (window.hasPermission && window.hasPermission('ffb_quality', 'delete')) || ['Admin', 'Administrator'].includes(userRole);
+    const canEdit = (window.hasPermission && window.hasPermission('ffb_quality', 'edit')) || ['Admin', 'Administrator', 'Grading', 'Analis', 'Supervisor Mill', 'Krani Mill', 'Manager Mill', 'Askep', 'Assistant'].includes(userRole) || !userRole;
 
     if (isSingleDay) {
         rawTable.style.display = 'table';
@@ -17903,6 +17914,9 @@ window.onFFBCropModalEstateChange = async function(estate) {
 };
 
 window.openFFBCropModal = function() {
+    window.currentEditingCropId = null;
+    window.currentEditingCropIndex = null;
+
     const modal = document.getElementById('modal-ffb-crop-quality');
     if (modal) {
         if (typeof document !== 'undefined' && document.body && modal.parentNode !== document.body) { document.body.appendChild(modal); }
@@ -17945,6 +17959,9 @@ window.openFFBCropModal = function() {
 window.openFFBCropEditModal = function(index) {
     const data = window.ffbCropQualityData[index];
     if (!data) return;
+
+    window.currentEditingCropId = data.id || null;
+    window.currentEditingCropIndex = index;
 
     const modal = document.getElementById('modal-ffb-crop-quality');
     if (modal) {
@@ -18023,7 +18040,7 @@ window.submitFFBCropModal = async function() {
     let mill = window.currentUser ? window.currentUser.estate : null; 
     if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
 
-    const editId = document.getElementById('fqc-modal-edit-id')?.value;
+    const editId = (document.getElementById('fqc-modal-edit-id')?.value) || window.currentEditingCropId;
     const payload = {
         date: saveDate,
         mill: mill,
@@ -18043,19 +18060,24 @@ window.submitFFBCropModal = async function() {
 
     try {
         if (editId) {
-            await fetch(`/api/ffb_crop_quality/${editId}`, {
+            const res = await fetch(`/api/ffb_crop_quality/${editId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+            if (!res.ok) throw new Error('Gagal update data');
         } else {
-            await fetch('/api/ffb_crop_quality/add', {
+            const res = await fetch('/api/ffb_crop_quality/add', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+            if (!res.ok) throw new Error('Gagal tambah data');
         }
-        document.getElementById('modal-ffb-crop-quality').style.display = 'none';
+        window.currentEditingCropId = null;
+        window.currentEditingCropIndex = null;
+        const modalEl = document.getElementById('modal-ffb-crop-quality');
+        if (modalEl) modalEl.style.display = 'none';
         if (fqDateElem) fqDateElem.value = saveDate;
         await window.loadFFBCropQuality(saveDate, saveDate);
     } catch(err) {

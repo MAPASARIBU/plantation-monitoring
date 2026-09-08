@@ -1873,201 +1873,6 @@ views.ffb_quality = `
                 <label>Hingga Tanggal</label>
                 <input type="date" id="fq-range-end" class="form-control" required>
             </div>
-            </div>
-        </div>
-        <div id="ffb-monthly-table-wrapper" class="table-responsive">
-            <style>
-                #ffb-monthly-grading-table th, #ffb-monthly-grading-table td {
-                    padding: 6px 8px !important;
-                    text-align: center;
-                }
-                #ffb-monthly-grading-table th {
-                    white-space: nowrap;
-                }
-            </style>
-            <table class="data-table" id="ffb-monthly-grading-table" style="font-size: 0.8rem; width: 100%;">
-                <thead>
-                    <tr>
-                        <th style="width: 35px;">NO</th>
-                        <th style="text-align: left; min-width: 140px;">ESTATE</th>
-                        <th>JAN</th><th>FEB</th><th>MAR</th><th>APR</th>
-                        <th>MEI</th><th>JUN</th><th>JUL</th><th>AGU</th>
-                        <th>SEP</th><th>OKT</th><th>NOV</th><th>DES</th>
-                        <th style="background-color: #e2e8f0; font-weight: bold; min-width: 90px;">RATA-RATA</th>
-                        <th style="min-width: 100px;">TARGET</th>
-                        <th style="min-width: 120px;">EVALUASI & TREND</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Injected by JS -->
-                </tbody>
-                <tfoot>
-                    <!-- Injected by JS -->
-                </tfoot>
-            </table>
-        </div>
-    </div>
-
-    <!-- Monthly Trend Chart Card -->
-    <div class="glass-card" style="margin-bottom: 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-            <div>
-                <h3 style="margin: 0;" id="ffb-monthly-chart-title">Grafik Trend Kualitas Bulanan (12 Bulan)</h3>
-                <span style="font-size: 0.8rem; color: var(--text-secondary);">Garis putus-putus menunjukkan batas standar toleransi. Klik legenda estate untuk menyembunyikan/menampilkan garis.</span>
-            </div>
-        </div>
-        <div style="position: relative; height: 350px; width: 100%;">
-            <canvas id="chart-ffb-monthly-trend"></canvas>
-        </div>
-    </div>
-
-    <!-- Smart Diagnostic & Operational Insights -->
-    <div class="grading-insight-box" id="ffb-monthly-insights-card">
-        <h4><i class="fa-solid fa-lightbulb"></i> Analisis & Rekomendasi Operasional Mutu:</h4>
-        <ul id="ffb-monthly-insights-list">
-            <!-- Injected by JS -->
-        </ul>
-    </div>
-</div>
-
-<!-- Modal Input FFB Quality (Loose Fruit) -->
-<div class="modal-overlay" id="modal-ffb-quality" style="display:none; z-index: 1000;">
-    <div class="modal-content" style="width: 500px; max-width: 90%;">
-        <div class="modal-header">
-            <h3 style="margin: 0;" id="fq-modal-title">Tambah input Loose Fruit Quality</h3>
-            <button type="button" class="modal-close" onclick="document.getElementById('modal-ffb-quality').style.display='none'">&times;</button>
-        </div>
-        <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
-            <div class="form-group">
-                <label>Tanggal</label>
-                <input type="hidden" id="fq-modal-edit-id"><input type="date" id="fq-modal-date" class="form-control">
-            </div>
-            <div class="form-group">
-                <label>Pilihan Supply Chain</label>
-                <select id="fq-modal-estate" class="form-control" required onchange="window.onFFBModalEstateChange(this.value)"></select>
-            </div>
-            <div class="form-group">
-                <label>Divisi (Opsional)</label>
-                <div id="fq-modal-divisi-container">
-                    <input type="text" id="fq-modal-divisi" class="form-control" placeholder="(Optional)">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Nomor Truk</label>
-                <input type="text" id="fq-modal-truck" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label>Berat Sample (gram)</label>
-                <input type="number" step="any" id="fq-modal-bg" class="form-control" required oninput="calculateFFBModal()">
-            </div>
-            <div class="form-group">
-                <label>Brondolan Segar (gram)</label>
-                <input type="number" step="any" id="fq-modal-bd" class="form-control" required oninput="calculateFFBModal()">
-            </div>
-            <div class="form-group">
-                <label>Brondolan Tidak Segar (gram)</label>
-                <input type="number" step="any" id="fq-modal-tsegar" class="form-control" required oninput="calculateFFBModal()">
-            </div>
-            <div class="form-group">
-                <label>Brondolan Busuk (gram)</label>
-                <input type="number" step="any" id="fq-modal-busuk" class="form-control" required oninput="calculateFFBModal()">
-            </div>
-            <div class="form-group">
-                <label>Sampah (gram) (Otomatis)</label>
-                <input type="number" step="any" id="fq-modal-sampah" class="form-control" readonly style="background-color: #f1f5f9;">
-            </div>
-            <button class="btn btn-primary" id="fq-modal-submit-btn" onclick="submitFFBModal()" style="width:100%; justify-content:center; margin-top:10px;">Simpan</button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Input FFB Crop Quality -->
-<div class="modal-overlay" id="modal-ffb-crop-quality" style="display:none; z-index: 1000;">
-    <div class="modal-content" style="width: 500px; max-width: 90%;">
-        <div class="modal-header">
-            <h3 style="margin: 0;" id="fqc-modal-title">Tambah input FFB Crop Quality</h3>
-            <button type="button" class="modal-close" onclick="document.getElementById('modal-ffb-crop-quality').style.display='none'">&times;</button>
-        </div>
-        <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
-            <div class="form-group">
-                <label>Tanggal</label>
-                <input type="hidden" id="fqc-modal-edit-id"><input type="date" id="fqc-modal-date" class="form-control">
-            </div>
-            <div class="form-group">
-                <label>Pilihan Supply Chain</label>
-                <select id="fqc-modal-estate" class="form-control" required onchange="window.onFFBCropModalEstateChange(this.value)"></select>
-            </div>
-            <div class="form-group">
-                <label>Divisi (Opsional)</label>
-                <div id="fqc-modal-divisi-container">
-                    <input type="text" id="fqc-modal-divisi" class="form-control" placeholder="(Optional)">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Blok (Opsional)</label>
-                <div id="fqc-modal-blok-container">
-                    <input type="text" id="fqc-modal-blok" class="form-control" placeholder="(Optional)">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Nomor Truk</label>
-                <input type="text" id="fqc-modal-truck" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label>Total Janjang</label>
-                <input type="number" id="fqc-modal-total" class="form-control" required oninput="calculateFFBCropModal()">
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <div class="form-group">
-                    <label>Unripe (Jjg)</label>
-                    <input type="number" id="fqc-modal-unripe" class="form-control" required oninput="calculateFFBCropModal()">
-                </div>
-                <div class="form-group">
-                    <label>Underripe (Jjg)</label>
-                    <input type="number" id="fqc-modal-underripe" class="form-control" required oninput="calculateFFBCropModal()">
-                </div>
-                <div class="form-group">
-                    <label>Normal Ripe (Otomatis)</label>
-                    <input type="number" id="fqc-modal-normal" class="form-control" readonly style="background-color: #f1f5f9;">
-                </div>
-                <div class="form-group">
-                    <label>Over Ripe (Jjg)</label>
-                    <input type="number" id="fqc-modal-over" class="form-control" required oninput="calculateFFBCropModal()">
-                </div>
-                <div class="form-group">
-                    <label>Empty Bunch (Jjg)</label>
-                    <input type="number" id="fqc-modal-empty" class="form-control" required oninput="calculateFFBCropModal()">
-                </div>
-                <div class="form-group">
-                    <label>Long Stalk (Jjg)</label>
-                    <input type="number" id="fqc-modal-long" class="form-control" required oninput="calculateFFBCropModal()">
-                </div>
-                <div class="form-group" style="grid-column: span 2;">
-                    <label>Rat Damage (Jjg)</label>
-                    <input type="number" id="fqc-modal-rat" class="form-control" placeholder="0" oninput="calculateFFBCropModal()">
-                </div>
-            </div>
-            <button class="btn btn-primary" id="fqc-modal-submit-btn" onclick="submitFFBCropModal()" style="width:100%; justify-content:center; margin-top:10px;">Simpan</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal-overlay" id="modal-fq-range" style="display:none; z-index: 1000;">
-    <div class="modal-content" style="width: 400px; max-width: 90%;">
-        <div class="modal-header">
-            <h3 style="margin: 0;">Pilih Rentang Tanggal</h3>
-            <button type="button" class="modal-close" onclick="document.getElementById('modal-fq-range').style.display='none'">&times;</button>
-        </div>
-        <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
-            <input type="hidden" id="fq-range-target">
-            <div class="form-group">
-                <label>Dari Tanggal</label>
-                <input type="date" id="fq-range-start" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label>Hingga Tanggal</label>
-                <input type="date" id="fq-range-end" class="form-control" required>
-            </div>
             <button class="btn btn-primary" onclick="submitFqRangeModal()" style="width:100%; justify-content:center; margin-top:10px;">Tampilkan</button>
         </div>
     </div>
@@ -2179,9 +1984,9 @@ window.renderFFBTable = function(isSingleDay = true) {
     }
     const getAbbr = (estName) => abbrMap[estName] || (estName ? estName.replace(' Estate', 'E') : '-');
     
-    const userRole = window.currentUser ? window.currentUser.role : '';
-    const canDelete = ['Admin', 'Administrator'].includes(userRole);
-    const canEdit = ['Admin', 'Administrator', 'Grading', 'Analis', 'Supervisor Mill', 'Krani Mill', 'Manager Mill', 'Askep', 'Assistant'].includes(userRole) || !userRole;
+    const userRole = window.currentUser ? (window.currentUser.role || '') : '';
+    const canDelete = (window.hasPermission && window.hasPermission('ffb_quality', 'delete')) || ['Admin', 'Administrator'].includes(userRole);
+    const canEdit = (window.hasPermission && window.hasPermission('ffb_quality', 'edit')) || ['Admin', 'Administrator', 'Grading', 'Analis', 'Supervisor Mill', 'Krani Mill', 'Manager Mill', 'Askep', 'Assistant'].includes(userRole) || !userRole;
 
     window.ffbQualityData.forEach((data, index) => {
         const tr = document.createElement('tr');
@@ -2353,6 +2158,9 @@ window.onFFBModalEstateChange = async function(estate) {
 };
 
 window.openFFBModal = function() {
+    window.currentEditingFfbId = null;
+    window.currentEditingFfbIndex = null;
+
     const modal = document.getElementById('modal-ffb-quality');
     if (modal) {
         if (typeof document !== 'undefined' && document.body && modal.parentNode !== document.body) { document.body.appendChild(modal); }
@@ -2398,6 +2206,9 @@ window.openFFBModal = function() {
 window.openFFBEditModal = function(index) {
     const data = window.ffbQualityData[index];
     if (!data) return;
+
+    window.currentEditingFfbId = data.id || null;
+    window.currentEditingFfbIndex = index;
 
     const modal = document.getElementById('modal-ffb-quality');
     if (modal) {
@@ -2484,7 +2295,7 @@ window.submitFFBModal = async function() {
     let mill = window.currentUser ? window.currentUser.estate : null; 
     if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
 
-    const editId = document.getElementById('fq-modal-edit-id')?.value;
+    const editId = (document.getElementById('fq-modal-edit-id')?.value) || window.currentEditingFfbId;
     const payload = {
         date: saveDate,
         mill: mill,
@@ -2505,19 +2316,24 @@ window.submitFFBModal = async function() {
 
     try {
         if (editId) {
-            await fetch(`/api/ffb_quality/${editId}`, {
+            const res = await fetch(`/api/ffb_quality/${editId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+            if (!res.ok) throw new Error('Gagal update data');
         } else {
-            await fetch('/api/ffb_quality/add', {
+            const res = await fetch('/api/ffb_quality/add', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+            if (!res.ok) throw new Error('Gagal tambah data');
         }
-        document.getElementById('modal-ffb-quality').style.display = 'none';
+        window.currentEditingFfbId = null;
+        window.currentEditingFfbIndex = null;
+        const modalEl = document.getElementById('modal-ffb-quality');
+        if (modalEl) modalEl.style.display = 'none';
         if (fqDateElem) fqDateElem.value = saveDate;
         await window.loadFFBQuality(saveDate, saveDate);
     } catch(e) {
@@ -2593,9 +2409,9 @@ window.renderFFBCropTable = function(isSingleDay = true) {
     }
     const getAbbr = (estName) => abbrMap[estName] || (estName ? estName.replace(' Estate', 'E') : '-');
 
-    const userRole = window.currentUser ? window.currentUser.role : '';
-    const canDelete = ['Admin', 'Administrator'].includes(userRole);
-    const canEdit = ['Admin', 'Administrator', 'Grading', 'Analis', 'Supervisor Mill', 'Krani Mill', 'Manager Mill', 'Askep', 'Assistant'].includes(userRole) || !userRole;
+    const userRole = window.currentUser ? (window.currentUser.role || '') : '';
+    const canDelete = (window.hasPermission && window.hasPermission('ffb_quality', 'delete')) || ['Admin', 'Administrator'].includes(userRole);
+    const canEdit = (window.hasPermission && window.hasPermission('ffb_quality', 'edit')) || ['Admin', 'Administrator', 'Grading', 'Analis', 'Supervisor Mill', 'Krani Mill', 'Manager Mill', 'Askep', 'Assistant'].includes(userRole) || !userRole;
 
     if (isSingleDay) {
         rawTable.style.display = 'table';
@@ -2858,6 +2674,9 @@ window.onFFBCropModalEstateChange = async function(estate) {
 };
 
 window.openFFBCropModal = function() {
+    window.currentEditingCropId = null;
+    window.currentEditingCropIndex = null;
+
     const modal = document.getElementById('modal-ffb-crop-quality');
     if (modal) {
         if (typeof document !== 'undefined' && document.body && modal.parentNode !== document.body) { document.body.appendChild(modal); }
@@ -2900,6 +2719,9 @@ window.openFFBCropModal = function() {
 window.openFFBCropEditModal = function(index) {
     const data = window.ffbCropQualityData[index];
     if (!data) return;
+
+    window.currentEditingCropId = data.id || null;
+    window.currentEditingCropIndex = index;
 
     const modal = document.getElementById('modal-ffb-crop-quality');
     if (modal) {
@@ -2978,7 +2800,7 @@ window.submitFFBCropModal = async function() {
     let mill = window.currentUser ? window.currentUser.estate : null; 
     if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
 
-    const editId = document.getElementById('fqc-modal-edit-id')?.value;
+    const editId = (document.getElementById('fqc-modal-edit-id')?.value) || window.currentEditingCropId;
     const payload = {
         date: saveDate,
         mill: mill,
@@ -2998,19 +2820,24 @@ window.submitFFBCropModal = async function() {
 
     try {
         if (editId) {
-            await fetch(`/api/ffb_crop_quality/${editId}`, {
+            const res = await fetch(`/api/ffb_crop_quality/${editId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+            if (!res.ok) throw new Error('Gagal update data');
         } else {
-            await fetch('/api/ffb_crop_quality/add', {
+            const res = await fetch('/api/ffb_crop_quality/add', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+            if (!res.ok) throw new Error('Gagal tambah data');
         }
-        document.getElementById('modal-ffb-crop-quality').style.display = 'none';
+        window.currentEditingCropId = null;
+        window.currentEditingCropIndex = null;
+        const modalEl = document.getElementById('modal-ffb-crop-quality');
+        if (modalEl) modalEl.style.display = 'none';
         if (fqDateElem) fqDateElem.value = saveDate;
         await window.loadFFBCropQuality(saveDate, saveDate);
     } catch(err) {
