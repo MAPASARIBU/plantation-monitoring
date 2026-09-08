@@ -273,16 +273,35 @@ const logout = () => {
     checkAuth();
 };
 
-// RBAC (Role-Based Access Control) Filter
 window.changeActiveEstate = (estate) => {
     if (currentUser) {
         currentUser.estate = estate;
+        if (window.currentUser) window.currentUser.estate = estate;
         localStorage.setItem('agrimonitor_user', JSON.stringify(currentUser));
+        
         const activeNav = document.querySelector('.nav-item.active');
         const currentViewId = activeNav ? activeNav.getAttribute('data-view') : 'dashboard';
+        
+        // Re-navigate to current active view so title & layout update
         navigate(currentViewId);
-        loadData();
-        if (typeof loadMasterData === 'function') loadMasterData();
+        
+        // Load data specific to current view
+        if (currentViewId === 'dashboard') {
+            loadData();
+            if (typeof window.loadDashboardExtraData === 'function') window.loadDashboardExtraData();
+        } else if (currentViewId === 'processing') {
+            if (typeof window.renderProcessingView === 'function') window.renderProcessingView();
+        } else if (currentViewId === 'water') {
+            if (typeof window.renderWaterView === 'function') window.renderWaterView();
+        } else if (currentViewId === 'ffb_quality') {
+            if (typeof window.renderFFBQualityView === 'function') window.renderFFBQualityView();
+        } else if (currentViewId === 'tonase') {
+            if (typeof window.loadTonaseData === 'function') window.loadTonaseData();
+        } else if (currentViewId === 'master') {
+            if (typeof window.loadMasterData === 'function') window.loadMasterData();
+        } else {
+            loadData();
+        }
     }
 };
 
@@ -7355,19 +7374,24 @@ const navigate = (viewId) => {
         if(window.renderDashFfbFruitLooseAnalysis) window.renderDashFfbFruitLooseAnalysis();
         if(window.loadDashboardExtraData) window.loadDashboardExtraData();
         
-        // Show mill sections for Mill users or Mill roles (Manager Mill, Supervisor Mill, Analis, Grading, etc.)
-        const millRoles = ['Manager Mill', 'Manager MIll', 'Supervisor Mill', 'supervisor Mill', 'Analis', 'Grading', 'Analis & Grading', 'Krani Mill', 'Office Assistant Mill', 'Admin', 'Administrator', 'Senior Field Manager', 'Senior Mill Manager', 'Director'];
-        const isMillUser = (currentUser && currentUser.estate && currentUser.estate.toLowerCase().includes('mill')) || 
-                           (currentUser && currentUser.role && millRoles.some(r => r.toLowerCase().trim() === currentUser.role.toLowerCase().trim())) ||
-                           (currentUser && currentUser.estate === 'Semua Estate (Khusus Admin)');
+        // Show mill sections only when a Mill is the active selected unit
+        const isMillUnit = currentUser && currentUser.estate && currentUser.estate.toLowerCase().includes('mill');
         
         const millSec = document.getElementById('dashboard-mill-sections');
         if (millSec) {
-            if (isMillUser) {
-                millSec.style.display = 'block';
-            } else {
-                millSec.style.display = 'none';
-            }
+            millSec.style.display = isMillUnit ? 'block' : 'none';
+        }
+        const ffbRecCard = document.getElementById('ffb-received-card');
+        if (ffbRecCard) {
+            ffbRecCard.style.display = isMillUnit ? 'block' : 'none';
+        }
+        const ffbCropCard = document.getElementById('dash-ffb-crop-card');
+        if (ffbCropCard) {
+            ffbCropCard.style.display = isMillUnit ? 'block' : 'none';
+        }
+        const ffbLooseCard = document.getElementById('dash-ffb-fruit-loose-card');
+        if (ffbLooseCard) {
+            ffbLooseCard.style.display = isMillUnit ? 'block' : 'none';
         }
     }
     if(viewId === 'vehicle') { 
@@ -7546,7 +7570,11 @@ window.loadMasterData = async () => {
         const res = await fetch(`${API_URL}/master/${encodeURIComponent(currentUser.estate)}`);
         const data = await res.json();
         masterData = data;
-        renderMasterTables();
+        const activeNav = document.querySelector('.nav-item.active');
+        const currentViewId = activeNav ? activeNav.getAttribute('data-view') : '';
+        if (currentViewId === 'master') {
+            renderMasterTables();
+        }
     } catch (e) {
         console.error("Gagal load master data", e);
     }
@@ -7902,6 +7930,10 @@ window.resetRolePermissionsToDefault = async () => {
 };
 
 window.renderMasterTables = () => {
+    const activeNav = document.querySelector('.nav-item.active');
+    const currentViewId = activeNav ? activeNav.getAttribute('data-view') : '';
+    if (currentViewId !== 'master') return;
+
     if (!window.isMasterAuthorized(currentUser)) {
         const container = document.getElementById('view-container');
         if (container) {
