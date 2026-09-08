@@ -2028,31 +2028,48 @@ window.renderFFBTable = function(isSingleDay = true) {
 };
 
 window.deleteFFBRow = async function(index, id) {
-    if (confirm('Hapus baris data grading Loose Fruit ini?')) {
-        try {
-            if (id) {
-                const res = await fetch(`/api/ffb_quality/${id}`, { method: 'DELETE' });
-                if (!res.ok) {
-                    await fetch(`/api/ffb_quality/delete/${id}`, { method: 'POST' });
-                }
+    if (window.hasPermission && !window.hasPermission('ffb_quality', 'delete')) {
+        alert('Akses Ditolak: Anda tidak memiliki otoritas untuk menghapus data Loose Fruit.');
+        return;
+    }
+    if (!confirm('Hapus baris data grading Loose Fruit ini?')) return;
+    try {
+        const item = (Array.isArray(window.ffbQualityData) && window.ffbQualityData[index]) ? window.ffbQualityData[index] : null;
+        const targetId = id || (item ? item.id : null);
+        let deleted = false;
+        if (targetId) {
+            let res = await fetch(`/api/ffb_quality/${targetId}`, { method: 'DELETE' });
+            if (!res.ok) {
+                res = await fetch(`/api/ffb_quality/delete/${targetId}`, { method: 'POST' });
             }
-            if (Array.isArray(window.ffbQualityData) && index >= 0 && index < window.ffbQualityData.length) {
-                window.ffbQualityData.splice(index, 1);
-            }
-            const fqDateElem = document.getElementById('fq-date');
-            const curDate = fqDateElem ? fqDateElem.value : window.getLocalDate();
-            await window.loadFFBQuality(curDate, curDate);
-            alert('Baris data grading Loose Fruit berhasil dihapus.');
-        } catch(e) {
-            console.error('Error deleting row:', e);
-            alert('Gagal menghapus baris data: ' + e.message);
+            if (res.ok) deleted = true;
         }
+        if (!deleted && item) {
+            let res = await fetch('/api/ffb_quality/delete_item', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(item)
+            });
+            if (res.ok) deleted = true;
+        }
+        if (Array.isArray(window.ffbQualityData) && index >= 0 && index < window.ffbQualityData.length) {
+            window.ffbQualityData.splice(index, 1);
+        }
+        const startDate = window.currentFfbStartDate || (item ? item.date : window.getLocalDate());
+        const endDate = window.currentFfbEndDate || startDate;
+        await window.loadFFBQuality(startDate, endDate);
+        alert('Baris data grading Loose Fruit berhasil dihapus.');
+    } catch(e) {
+        console.error('Error deleting row:', e);
+        alert('Gagal menghapus baris data: ' + e.message);
     }
 };
 
 window.loadFFBQuality = async function(start, end) {
-    if (!start) start = window.getLocalDate();
-    if (!end) end = start;
+    if (!start) start = window.currentFfbStartDate || window.getLocalDate();
+    if (!end) end = window.currentFfbEndDate || start;
+    window.currentFfbStartDate = start;
+    window.currentFfbEndDate = end;
 
     let mill = window.currentUser ? window.currentUser.estate : null; 
     if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
@@ -2349,8 +2366,10 @@ window.submitFFBModal = async function() {
 
 // --- FFB CROP QUALITY ---
 window.loadFFBCropQuality = async function(start, end) {
-    if (!start) start = window.getLocalDate();
-    if (!end) end = start;
+    if (!start) start = window.currentFfbCropStartDate || window.getLocalDate();
+    if (!end) end = window.currentFfbCropEndDate || start;
+    window.currentFfbCropStartDate = start;
+    window.currentFfbCropEndDate = end;
 
     let mill = window.currentUser ? window.currentUser.estate : null; 
     if (!mill || !mill.endsWith('Mill')) mill = 'Bunga Tanjung Mill';
@@ -2589,25 +2608,40 @@ window.calculateFFBCropAverages = function() {
 };
 
 window.deleteFFBCropRow = async function(index, id) {
-    if (confirm('Hapus baris data grading Daily FFB Crop Quality ini?')) {
-        try {
-            if (id) {
-                const res = await fetch(`/api/ffb_crop_quality/${id}`, { method: 'DELETE' });
-                if (!res.ok) {
-                    await fetch(`/api/ffb_crop_quality/delete/${id}`, { method: 'POST' });
-                }
+    if (window.hasPermission && !window.hasPermission('ffb_quality', 'delete')) {
+        alert('Akses Ditolak: Anda tidak memiliki otoritas untuk menghapus data FFB Crop Quality.');
+        return;
+    }
+    if (!confirm('Hapus baris data grading Daily FFB Crop Quality ini?')) return;
+    try {
+        const item = (Array.isArray(window.ffbCropQualityData) && window.ffbCropQualityData[index]) ? window.ffbCropQualityData[index] : null;
+        const targetId = id || (item ? item.id : null);
+        let deleted = false;
+        if (targetId) {
+            let res = await fetch(`/api/ffb_crop_quality/${targetId}`, { method: 'DELETE' });
+            if (!res.ok) {
+                res = await fetch(`/api/ffb_crop_quality/delete/${targetId}`, { method: 'POST' });
             }
-            if (Array.isArray(window.ffbCropQualityData) && index >= 0 && index < window.ffbCropQualityData.length) {
-                window.ffbCropQualityData.splice(index, 1);
-            }
-            const fqDateElem = document.getElementById('fq-date');
-            const curDate = fqDateElem ? fqDateElem.value : window.getLocalDate();
-            await window.loadFFBCropQuality(curDate, curDate);
-            alert('Baris data grading Daily FFB Crop Quality berhasil dihapus.');
-        } catch(e) {
-            console.error('Error deleting crop row:', e);
-            alert('Gagal menghapus baris data: ' + e.message);
+            if (res.ok) deleted = true;
         }
+        if (!deleted && item) {
+            let res = await fetch('/api/ffb_crop_quality/delete_item', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(item)
+            });
+            if (res.ok) deleted = true;
+        }
+        if (Array.isArray(window.ffbCropQualityData) && index >= 0 && index < window.ffbCropQualityData.length) {
+            window.ffbCropQualityData.splice(index, 1);
+        }
+        const startDate = window.currentFfbCropStartDate || (item ? item.date : window.getLocalDate());
+        const endDate = window.currentFfbCropEndDate || startDate;
+        await window.loadFFBCropQuality(startDate, endDate);
+        alert('Baris data grading Daily FFB Crop Quality berhasil dihapus.');
+    } catch(e) {
+        console.error('Error deleting crop row:', e);
+        alert('Gagal menghapus baris data: ' + e.message);
     }
 };
 
