@@ -4608,15 +4608,15 @@ window.views.haccp = `
 <!-- ========================================================================= -->
 
 <!-- 1. MODAL INPUT KUESIONER PERSONAL HYGIENE -->
-<div class="modal-overlay" id="modal-haccp-hygiene-input" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 10500; overflow-y: auto; padding: 20px 10px;">
-    <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 820px; margin: 20px auto; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); overflow: hidden;">
+<div class="modal-overlay" id="modal-haccp-hygiene-input" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.65); z-index: 10500; overflow-y: auto; padding: 20px 10px; align-items: center; justify-content: center;">
+    <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 860px; margin: auto; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.25); max-height: calc(100vh - 40px); display: flex; flex-direction: column; overflow: hidden; position: relative;">
         <div class="modal-header" style="background: #0f172a; color: #ffffff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
             <h3 style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
                 <i class="fa-solid fa-file-medical text-primary"></i> Form Kuesioner Kesehatan Tamu PKS (Personal Hygiene)
             </h3>
             <button type="button" class="modal-close" onclick="closeHaccpHygieneInputModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;">&times;</button>
         </div>
-        <form id="form-haccp-hygiene" onsubmit="saveHaccpHygieneData(event)" style="padding: 20px;">
+        <form id="form-haccp-hygiene" onsubmit="saveHaccpHygieneData(event)" style="padding: 20px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch;">
             <!-- 1. Identitas Tamu -->
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 18px;">
                 <h4 style="margin: 0 0 12px 0; font-size: 0.95rem; color: #1e293b; font-weight: 700; border-bottom: 2px solid #cbd5e1; padding-bottom: 6px;">
@@ -4777,7 +4777,7 @@ window.views.haccp = `
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <div style="display: flex; justify-content: flex-end; gap: 10px; position: sticky; bottom: -20px; background: #ffffff; padding: 14px 0 4px 0; border-top: 1px solid #e2e8f0; margin-top: 15px; z-index: 10;">
                 <button type="button" class="btn btn-secondary" onclick="closeHaccpHygieneInputModal()" style="padding: 8px 18px; border-radius: 6px;">Batal</button>
                 <button type="submit" class="btn btn-primary" id="btn-save-haccp-hygiene" style="padding: 8px 22px; border-radius: 6px; font-weight: 600; background: #0284c7; color: #fff;">
                     <i class="fa-solid fa-floppy-disk"></i> Simpan Kuesioner
@@ -4788,8 +4788,8 @@ window.views.haccp = `
 </div>
 
 <!-- 2. MODAL VIEW & PRINT STANDAR ISO: PERSONAL HYGIENE -->
-<div class="modal-overlay" id="modal-haccp-hygiene-view" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 10600; overflow-y: auto; padding: 20px 10px;">
-    <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 880px; margin: 20px auto; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); overflow: hidden;">
+<div class="modal-overlay" id="modal-haccp-hygiene-view" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.65); z-index: 10600; overflow-y: auto; padding: 20px 10px; align-items: center; justify-content: center;">
+    <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 880px; margin: auto; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.25); max-height: calc(100vh - 40px); display: flex; flex-direction: column; overflow: hidden; position: relative;">
         <div class="modal-header" style="background: #1e293b; color: #ffffff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
             <h3 style="margin: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
                 <i class="fa-solid fa-file-lines text-primary"></i> Lembar Pemeriksaan Personal Hygiene di Area PKS
@@ -4802,7 +4802,7 @@ window.views.haccp = `
             </div>
         </div>
         
-        <div style="padding: 25px; overflow-x: auto; background: #f1f5f9;">
+        <div style="padding: 25px; overflow-x: auto; background: #f1f5f9;"; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch;>
             <!-- ISO DOCUMENT CONTAINER -->
             <div id="haccp-hygiene-iso-document" style="background: #ffffff; padding: 30px 35px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; font-family: 'Arial', sans-serif; color: #000000; line-height: 1.35; font-size: 11.5px;">
                 <!-- Header Control Box -->
@@ -4986,15 +4986,15 @@ window.views.haccp = `
 </div>
 
 <!-- 3. MODAL INPUT CHECKLIST TRANSPORT CPO - PK -->
-<div class="modal-overlay" id="modal-haccp-cpo-input" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 10500; overflow-y: auto; padding: 20px 10px;">
-    <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 880px; margin: 20px auto; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); overflow: hidden;">
+<div class="modal-overlay" id="modal-haccp-cpo-input" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.65); z-index: 10500; overflow-y: auto; padding: 20px 10px; align-items: center; justify-content: center;">
+    <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 880px; margin: auto; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.25); max-height: calc(100vh - 40px); display: flex; flex-direction: column; overflow: hidden; position: relative;">
         <div class="modal-header" style="background: #0f172a; color: #ffffff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
             <h3 style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
                 <i class="fa-solid fa-truck-droplet text-primary"></i> Form Checklist Pemeriksaan Kebersihan Transport CPO - PK
             </h3>
             <button type="button" class="modal-close" onclick="closeHaccpCpoInputModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;">&times;</button>
         </div>
-        <form id="form-haccp-cpo" onsubmit="saveHaccpCpoData(event)" style="padding: 20px;">
+        <form id="form-haccp-cpo" onsubmit="saveHaccpCpoData(event)" style="padding: 20px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch;">
             <!-- Metadata Kendaraan -->
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 18px;">
                 <h4 style="margin: 0 0 12px 0; font-size: 0.95rem; color: #1e293b; font-weight: 700; border-bottom: 2px solid #cbd5e1; padding-bottom: 6px;">
@@ -5248,7 +5248,7 @@ window.views.haccp = `
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <div style="display: flex; justify-content: flex-end; gap: 10px; position: sticky; bottom: -20px; background: #ffffff; padding: 14px 0 4px 0; border-top: 1px solid #e2e8f0; margin-top: 15px; z-index: 10;">
                 <button type="button" class="btn btn-secondary" onclick="closeHaccpCpoInputModal()" style="padding: 8px 18px; border-radius: 6px;">Batal</button>
                 <button type="submit" class="btn btn-primary" id="btn-save-haccp-cpo" style="padding: 8px 22px; border-radius: 6px; font-weight: 600; background: #0284c7; color: #fff;">
                     <i class="fa-solid fa-floppy-disk"></i> Simpan Hasil Pemeriksaan
@@ -5259,8 +5259,8 @@ window.views.haccp = `
 </div>
 
 <!-- 4. MODAL VIEW & PRINT STANDAR ISO: PEMERIKSAAN TANKI CPO -->
-<div class="modal-overlay" id="modal-haccp-cpo-view" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 10600; overflow-y: auto; padding: 20px 10px;">
-    <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 880px; margin: 20px auto; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); overflow: hidden;">
+<div class="modal-overlay" id="modal-haccp-cpo-view" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.65); z-index: 10600; overflow-y: auto; padding: 20px 10px; align-items: center; justify-content: center;">
+    <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 880px; margin: auto; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.25); max-height: calc(100vh - 40px); display: flex; flex-direction: column; overflow: hidden; position: relative;">
         <div class="modal-header" style="background: #1e293b; color: #ffffff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
             <h3 style="margin: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
                 <i class="fa-solid fa-file-circle-check text-primary"></i> Checklist Pemeriksaan Kebersihan Transport CPO - PK
@@ -5273,7 +5273,7 @@ window.views.haccp = `
             </div>
         </div>
         
-        <div style="padding: 25px; overflow-x: auto; background: #f1f5f9;">
+        <div style="padding: 25px; overflow-x: auto; background: #f1f5f9;"; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch;>
             <!-- ISO DOCUMENT CONTAINER -->
             <div id="haccp-cpo-iso-document" style="background: #ffffff; padding: 30px 35px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; font-family: 'Arial', sans-serif; color: #000000; line-height: 1.3; font-size: 11px;">
                 <!-- Header -->
@@ -5681,7 +5681,7 @@ window.openHaccpHygieneInputModal = function() {
     if (oInput) oInput.value = (window.currentUser && window.currentUser.username) ? window.currentUser.username : 'Security';
     
     window.setAllHygieneQuestions('tidak');
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
 };
 
 window.closeHaccpHygieneInputModal = function() {
@@ -5831,7 +5831,7 @@ window.viewHaccpHygieneLogsheet = function(id) {
     setElem('iso-sign-officer-date', item.date || '____ / ____ / ________');
     
     const modal = document.getElementById('modal-haccp-hygiene-view');
-    if (modal) modal.style.display = 'block';
+    if (modal) modal.style.display = 'flex';
 };
 
 window.closeHaccpHygieneViewModal = function() {
@@ -5932,7 +5932,7 @@ window.openHaccpCpoInputModal = function() {
     if (tInput) tInput.value = timeStr;
     
     window.setAllCpoChecklist('ya');
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
 };
 
 window.closeHaccpCpoInputModal = function() {
@@ -6106,7 +6106,7 @@ window.viewHaccpCpoLogsheet = function(id) {
     setElem('iso-sign-cpo-acknowledged', item.acknowledged_by || 'OA/MA/MHA/MM');
     
     const modal = document.getElementById('modal-haccp-cpo-view');
-    if (modal) modal.style.display = 'block';
+    if (modal) modal.style.display = 'flex';
 };
 
 window.closeHaccpCpoViewModal = function() {
