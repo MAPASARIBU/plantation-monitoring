@@ -4020,11 +4020,11 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
         theadHtml += '</tr>';
         thead.innerHTML = theadHtml;
 
-        // Rows Configuration
+        // Rows Configuration with SOP Standard Thresholds
         const rowsConfig = [
-            // Section a: Crude Oil Tank (% Oil)
+            // Section a: Crude Oil Tank (% Oil) - Range 35.0% - 39.0%
             { type: 'header', title: 'a. Crude Oil Tank (% Oil)', bg: '#f0fdf4', border: '#22c55e', color: '#166534' },
-            { type: 'data', label: 'Oil (%)', source: 'liquid', field: 'cot_oil', decimals: 1 },
+            { type: 'data', label: 'Oil (%)', source: 'liquid', field: 'cot_oil', decimals: 1, minLimit: 35.0, maxLimit: 39.0 },
             { type: 'data', label: 'Sludge (%)', source: 'liquid', field: 'cot_sludge', decimals: 1 },
             { type: 'data', label: 'Water (%)', source: 'liquid', field: 'cot_water', decimals: 1 },
             { type: 'data', label: 'Solid (%)', source: 'liquid', field: 'cot_solid', decimals: 1 },
@@ -4032,12 +4032,12 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
             // Section b: CONTINUOUS SETTLING TANK (CST)
             { type: 'header', title: 'b. CONTINUOUS SETTLING TANK (CST)', bg: '#eff6ff', border: '#3b82f6', color: '#1e40af' },
             { type: 'subheader', title: 'b.1. UNDERFLOW CST', bg: '#f8fafc', color: '#475569' },
-            { type: 'data', label: 'Oil (%)', source: 'liquid', field: 'cst1_oil', decimals: 1 },
+            { type: 'data', label: 'Oil (%)', source: 'liquid', field: 'cst1_oil', decimals: 1, maxLimit: 6.0 },
             { type: 'data', label: 'Sludge (%)', source: 'liquid', field: 'cst1_sludge', decimals: 1 },
             { type: 'data', label: 'Water (%)', source: 'liquid', field: 'cst1_water', decimals: 1 },
             { type: 'data', label: 'Solid (%)', source: 'liquid', field: 'cst1_solid', decimals: 1 },
             { type: 'subheader', title: 'b.2. Ketebalan Minyak CST (CM)', bg: '#f8fafc', color: '#475569' },
-            { type: 'data', label: 'Ketebalan Minyak (CM)', source: 'liquid', field: 'cst1_level_minyak', decimals: 1 },
+            { type: 'data', label: 'Ketebalan Minyak (CM)', source: 'liquid', field: 'cst1_level_minyak', decimals: 1, maxLimit: 40.0 },
 
             // Section c: SLUDGE TANK
             { type: 'header', title: 'c. SLUDGE TANK', bg: '#f0fdfa', border: '#14b8a6', color: '#115e59' },
@@ -4046,11 +4046,11 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
             { type: 'data', label: 'Water (%)', source: 'liquid', field: 'sludge_tank_water', decimals: 1 },
             { type: 'data', label: 'Solid (%)', source: 'liquid', field: 'sludge_tank_solid', decimals: 1 },
 
-            // Section d: TEMPERATURE
+            // Section d: TEMPERATURE - Range 90.0°C - 98.0°C
             { type: 'header', title: 'd. TEMPERATURE', bg: '#fffbeb', border: '#f59e0b', color: '#92400e' },
-            { type: 'data', label: 'Crude Oil Tank (°C)', source: 'liquid', field: 'cot_temp', decimals: 1 },
-            { type: 'data', label: 'Continuous Settling Tank (CST) (°C)', source: 'liquid', field: 'cst1_temp', decimals: 1 },
-            { type: 'data', label: 'Sludge Tank (°C)', source: 'liquid', field: 'sludge_tank_temp', decimals: 1 },
+            { type: 'data', label: 'Crude Oil Tank (°C)', source: 'liquid', field: 'cot_temp', decimals: 1, minLimit: 90.0, maxLimit: 98.0 },
+            { type: 'data', label: 'Continuous Settling Tank (CST) (°C)', source: 'liquid', field: 'cst1_temp', decimals: 1, minLimit: 90.0, maxLimit: 98.0 },
+            { type: 'data', label: 'Sludge Tank (°C)', source: 'liquid', field: 'sludge_tank_temp', decimals: 1, minLimit: 90.0, maxLimit: 98.0 },
 
             // Section e: CPO PRODUCTION QUALITY
             { type: 'header', title: 'e. CPO PRODUCTION QUALITY', bg: '#fdf2f8', border: '#ec4899', color: '#9d174d' },
@@ -4063,6 +4063,15 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
             { type: 'data', label: 'Moist (%) Maks 0.2 %', source: 'ffa', field: 'moist_a', fallback: 'moist', decimals: 2, maxLimit: 0.2 },
             { type: 'data', label: 'Dirt (%) Maks 0.02 %', source: 'ffa', field: 'dirt_a', decimals: 2, maxLimit: 0.02 }
         ];
+
+        const isOutOfSpec = (valStr, row) => {
+            if (!valStr || valStr === '-' || isNaN(valStr)) return false;
+            const num = parseFloat(valStr);
+            if (isNaN(num)) return false;
+            if (row.minLimit !== undefined && num < row.minLimit) return true;
+            if (row.maxLimit !== undefined && num > row.maxLimit) return true;
+            return false;
+        };
 
         let tbodyHtml = '';
         rowsConfig.forEach(row => {
@@ -4081,20 +4090,22 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
             } else if (row.type === 'data') {
                 const dec = row.decimals || 1;
                 const avgVal = getAvg(row.source, row.field, row.fallback, dec);
-                const isAvgOver = row.maxLimit !== undefined && avgVal !== '-' && parseFloat(avgVal) > row.maxLimit;
+                const isAvgOver = isOutOfSpec(avgVal, row);
                 const avgColor = isAvgOver ? '#dc2626' : '#0369a1';
+                const avgBg = isAvgOver ? '#fee2e2' : '#f0f9ff';
 
                 tbodyHtml += '<tr style="transition: background 0.15s ease;">';
                 tbodyHtml += '<td style="text-align: left; padding: 5px 12px 5px 30px; font-weight: 500; position: sticky; left: 0; background-color: #ffffff; z-index: 1; border-right: 2px solid #e2e8f0; border-bottom: 1px solid #f1f5f9; color: #334155;">' + row.label + '</td>';
                 daysArray.forEach(d => {
                     const val = getVal(row.source, row.field, d, row.fallback, dec);
                     const isMuted = val === '-';
-                    const isOver = row.maxLimit !== undefined && !isMuted && parseFloat(val) > row.maxLimit;
+                    const isOver = isOutOfSpec(val, row);
                     const textColor = isMuted ? '#94a3b8' : (isOver ? '#dc2626' : '#1e293b');
-                    const textWeight = isOver ? 'bold' : 'normal';
-                    tbodyHtml += '<td style="text-align: center; padding: 5px 2px; font-size: 0.78rem; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; color: ' + textColor + '; font-weight: ' + textWeight + ';">' + val + '</td>';
+                    const textWeight = isOver ? '700' : 'normal';
+                    const bgStyle = isOver ? 'background-color: #fee2e2;' : '';
+                    tbodyHtml += '<td style="text-align: center; padding: 5px 2px; font-size: 0.78rem; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; color: ' + textColor + '; font-weight: ' + textWeight + '; ' + bgStyle + '">' + val + '</td>';
                 });
-                tbodyHtml += '<td style="text-align: center; padding: 5px 4px; font-size: 0.8rem; font-weight: 700; color: ' + avgColor + '; background-color: ' + (isAvgOver ? '#fef2f2' : '#f0f9ff') + '; border-left: 2px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">' + avgVal + '</td>';
+                tbodyHtml += '<td style="text-align: center; padding: 5px 4px; font-size: 0.8rem; font-weight: 800; color: ' + avgColor + '; background-color: ' + avgBg + '; border-left: 2px solid #cbd5e1; border-bottom: 1px solid #cbd5e1;">' + avgVal + '</td>';
                 tbodyHtml += '</tr>';
             }
         });
