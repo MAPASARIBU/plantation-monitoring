@@ -70,7 +70,7 @@ if (process.env.DATABASE_URL) {
         query: (sql, params) => {
             return new Promise((resolve, reject) => {
                 const isInsert = sql.trim().toUpperCase().startsWith('INSERT');
-                const hasReturning = sql.toUpperCase().includes('RETURNING ID');
+                const hasReturning = /RETURNING\s+/i.test(sql);
                 
                 // Convert PostgreSQL $1, $2 to SQLite ? and SERIAL to INTEGER PRIMARY KEY AUTOINCREMENT
                 let sqliteSql = sql
@@ -81,7 +81,7 @@ if (process.env.DATABASE_URL) {
                 
                 if (isInsert || sql.trim().toUpperCase().startsWith('UPDATE') || sql.trim().toUpperCase().startsWith('DELETE') || sql.trim().toUpperCase().startsWith('CREATE') || sql.trim().toUpperCase().startsWith('ALTER')) {
                     if (hasReturning) {
-                        sqliteSql = sqliteSql.replace(/RETURNING\s+id/i, '');
+                        sqliteSql = sqliteSql.replace(/\s*RETURNING\s+[\s\S]*$/i, '').trim();
                     }
                     db.run(sqliteSql, params || [], function(err) {
                         if (err) return reject(err);
@@ -2667,14 +2667,15 @@ app.get('/api/haccp/personal-hygiene/range/:mill/:startDate/:endDate', async (re
         const { mill, startDate, endDate } = req.params;
         let query = 'SELECT * FROM haccp_personal_hygiene WHERE date >= $1 AND date <= $2';
         let params = [startDate, endDate];
-        if (mill && mill !== 'all' && mill !== 'Semua Estate (Khusus Admin)') {
-            query += ' AND mill = $3';
+        if (mill && mill !== 'all' && !mill.toLowerCase().includes('semua')) {
+            query += ' AND (LOWER(mill) = LOWER($3) OR mill IS NULL OR mill = \'\')';
             params.push(mill);
         }
         query += ' ORDER BY date DESC, time_in DESC, id DESC';
         const result = await pool.query(query, params);
         res.json(result.rows);
     } catch (err) {
+        console.error('Error in GET /api/haccp/personal-hygiene/range:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -2714,8 +2715,10 @@ app.post('/api/haccp/personal-hygiene', async (req, res) => {
             is_allowed !== undefined ? is_allowed : 1, notes || '', officer_name || ''
         ]);
 
-        res.json({ success: true, data: result.rows[0] });
+        const savedRow = (result.rows && result.rows.length > 0) ? result.rows[0] : { id: 1, ...req.body };
+        res.json({ success: true, data: savedRow });
     } catch (err) {
+        console.error('Error in POST /api/haccp/personal-hygiene:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -2736,14 +2739,15 @@ app.get('/api/haccp/cpo-tank/range/:mill/:startDate/:endDate', async (req, res) 
         const { mill, startDate, endDate } = req.params;
         let query = 'SELECT * FROM haccp_cpo_tank WHERE date >= $1 AND date <= $2';
         let params = [startDate, endDate];
-        if (mill && mill !== 'all' && mill !== 'Semua Estate (Khusus Admin)') {
-            query += ' AND mill = $3';
+        if (mill && mill !== 'all' && !mill.toLowerCase().includes('semua')) {
+            query += ' AND (LOWER(mill) = LOWER($3) OR mill IS NULL OR mill = \'\')';
             params.push(mill);
         }
         query += ' ORDER BY date DESC, time_check DESC, id DESC';
         const result = await pool.query(query, params);
         res.json(result.rows);
     } catch (err) {
+        console.error('Error in GET /api/haccp/cpo-tank/range:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -2779,8 +2783,10 @@ app.post('/api/haccp/cpo-tank', async (req, res) => {
             checklistStr, status_kelayakan || 'Layak', inspector_name || 'Security', acknowledged_by || 'OA/MA/MHA/MM', notes || ''
         ]);
 
-        res.json({ success: true, data: result.rows[0] });
+        const savedRow = (result.rows && result.rows.length > 0) ? result.rows[0] : { id: 1, ...req.body };
+        res.json({ success: true, data: savedRow });
     } catch (err) {
+        console.error('Error in POST /api/haccp/cpo-tank:', err);
         res.status(500).json({ error: err.message });
     }
 });

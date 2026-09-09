@@ -22788,6 +22788,7 @@ views.haccp = `
                         <select id="cpo-input-vehicle-type" class="form-control" required style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
                             <option value="Truck">Truck</option>
                             <option value="Fuso">Fuso</option>
+                            <option value="Tronton">Tronton</option>
                         </select>
                     </div>
                     <div>
@@ -23301,12 +23302,12 @@ window.switchHaccpSubTab = function(tabId) {
     window.activeHaccpSubTab = tabId;
     
     // Deactivate all
-    document.querySelectorAll('#view-container .subsheet-tab-btn').forEach(btn => {
+    document.querySelectorAll('#view-container .subsheet-tab-btn, .subsheet-tab-btn').forEach(btn => {
         btn.classList.remove('active');
         btn.style.background = '#e2e8f0';
         btn.style.color = '#475569';
     });
-    document.querySelectorAll('#view-container .subsheet-content').forEach(c => {
+    document.querySelectorAll('#view-container .subsheet-content, .subsheet-content').forEach(c => {
         c.classList.remove('active');
         c.style.display = 'none';
     });
@@ -23335,29 +23336,20 @@ window.switchHaccpSubTab = function(tabId) {
 
 window.renderHACCPView = function() {
     const today = window.getLocalDate ? window.getLocalDate() : new Date().toISOString().split('T')[0];
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    const thirtyDaysAgo = d.toISOString().split('T')[0];
     
     // Init date inputs if empty
     const hStart = document.getElementById('haccp-hygiene-start-date');
     const hEnd = document.getElementById('haccp-hygiene-end-date');
-    if (hStart && !hStart.value) {
-        const d = new Date();
-        d.setDate(d.getDate() - 7);
-        hStart.value = d.toISOString().split('T')[0];
-    }
-    if (hEnd && !hEnd.value) {
-        hEnd.value = today;
-    }
+    if (hStart && !hStart.value) hStart.value = thirtyDaysAgo;
+    if (hEnd && !hEnd.value) hEnd.value = today;
     
     const cStart = document.getElementById('haccp-cpo-start-date');
     const cEnd = document.getElementById('haccp-cpo-end-date');
-    if (cStart && !cStart.value) {
-        const d = new Date();
-        d.setDate(d.getDate() - 7);
-        cStart.value = d.toISOString().split('T')[0];
-    }
-    if (cEnd && !cEnd.value) {
-        cEnd.value = today;
-    }
+    if (cStart && !cStart.value) cStart.value = thirtyDaysAgo;
+    if (cEnd && !cEnd.value) cEnd.value = today;
 
     window.switchHaccpSubTab(window.activeHaccpSubTab || 'hygiene');
 };
@@ -23369,15 +23361,27 @@ window.renderHACCPView = function() {
 window.loadHaccpHygieneData = async function() {
     const tbody = document.getElementById('haccp-hygiene-tbody');
     const countBadge = document.getElementById('haccp-hygiene-count-badge');
-    const startDate = document.getElementById('haccp-hygiene-start-date')?.value;
-    const endDate = document.getElementById('haccp-hygiene-end-date')?.value;
+    const startInput = document.getElementById('haccp-hygiene-start-date');
+    const endInput = document.getElementById('haccp-hygiene-end-date');
+    const today = window.getLocalDate ? window.getLocalDate() : new Date().toISOString().split('T')[0];
     
-    if (!startDate || !endDate) return;
+    if (startInput && !startInput.value) {
+        const d = new Date();
+        d.setDate(d.getDate() - 30);
+        startInput.value = d.toISOString().split('T')[0];
+    }
+    if (endInput && !endInput.value) {
+        endInput.value = today;
+    }
+    
+    const startDate = (startInput && startInput.value) ? startInput.value : today;
+    const endDate = (endInput && endInput.value) ? endInput.value : today;
     
     if (tbody) tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 25px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data kuesioner tamu...</td></tr>';
     
     try {
-        const mill = (window.currentUser && window.currentUser.estate) ? window.currentUser.estate : 'Bunga Tanjung Mill';
+        const currentEstate = (window.currentUser && window.currentUser.estate) ? window.currentUser.estate : '';
+        const mill = (currentEstate && currentEstate.toLowerCase().includes('mill')) ? currentEstate : 'all';
         const res = await fetch(`${API_URL}/haccp/personal-hygiene/range/${encodeURIComponent(mill)}/${startDate}/${endDate}`);
         const data = await res.json();
         
@@ -23481,7 +23485,8 @@ window.saveHaccpHygieneData = async function(event) {
     }
     
     try {
-        const mill = (window.currentUser && window.currentUser.estate) ? window.currentUser.estate : 'Bunga Tanjung Mill';
+        const currentEstate = (window.currentUser && window.currentUser.estate) ? window.currentUser.estate : '';
+        const mill = (currentEstate && currentEstate.toLowerCase().includes('mill')) ? currentEstate : 'Bunga Tanjung Mill';
         const date = document.getElementById('hygiene-input-date')?.value;
         const time_in = document.getElementById('hygiene-input-time')?.value;
         const name = document.getElementById('hygiene-input-name')?.value;
@@ -23625,15 +23630,27 @@ window.printHaccpHygieneRecap = function() {
 window.loadHaccpCpoData = async function() {
     const tbody = document.getElementById('haccp-cpo-tbody');
     const countBadge = document.getElementById('haccp-cpo-count-badge');
-    const startDate = document.getElementById('haccp-cpo-start-date')?.value;
-    const endDate = document.getElementById('haccp-cpo-end-date')?.value;
+    const startInput = document.getElementById('haccp-cpo-start-date');
+    const endInput = document.getElementById('haccp-cpo-end-date');
+    const today = window.getLocalDate ? window.getLocalDate() : new Date().toISOString().split('T')[0];
     
-    if (!startDate || !endDate) return;
+    if (startInput && !startInput.value) {
+        const d = new Date();
+        d.setDate(d.getDate() - 30);
+        startInput.value = d.toISOString().split('T')[0];
+    }
+    if (endInput && !endInput.value) {
+        endInput.value = today;
+    }
+    
+    const startDate = (startInput && startInput.value) ? startInput.value : today;
+    const endDate = (endInput && endInput.value) ? endInput.value : today;
     
     if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 25px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data pemeriksaan tanki...</td></tr>';
     
     try {
-        const mill = (window.currentUser && window.currentUser.estate) ? window.currentUser.estate : 'Bunga Tanjung Mill';
+        const currentEstate = (window.currentUser && window.currentUser.estate) ? window.currentUser.estate : '';
+        const mill = (currentEstate && currentEstate.toLowerCase().includes('mill')) ? currentEstate : 'all';
         const res = await fetch(`${API_URL}/haccp/cpo-tank/range/${encodeURIComponent(mill)}/${startDate}/${endDate}`);
         const data = await res.json();
         
@@ -23732,7 +23749,8 @@ window.saveHaccpCpoData = async function(event) {
     }
     
     try {
-        const mill = (window.currentUser && window.currentUser.estate) ? window.currentUser.estate : 'Bunga Tanjung Mill';
+        const currentEstate = (window.currentUser && window.currentUser.estate) ? window.currentUser.estate : '';
+        const mill = (currentEstate && currentEstate.toLowerCase().includes('mill')) ? currentEstate : 'Bunga Tanjung Mill';
         const date = document.getElementById('cpo-input-date')?.value;
         const time_check = document.getElementById('cpo-input-time')?.value;
         const vehicle_type = document.getElementById('cpo-input-vehicle-type')?.value || 'Truck';
