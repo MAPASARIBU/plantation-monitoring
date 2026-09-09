@@ -3810,7 +3810,7 @@ views.mill_dashboard = `
         </div>
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <span style="font-weight: 600; color: #475569; font-size: 0.88rem;"><i class="fa-regular fa-calendar" style="margin-right: 4px; color: #0d8b4e;"></i> BULAN:</span>
-            <input type="month" id="dash-monthly-liquid-month" class="form-control" style="width: auto; padding: 5px 12px; font-size: 0.88rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 6px;">
+            <input type="month" id="dash-monthly-liquid-month" class="form-control" style="width: auto; padding: 5px 12px; font-size: 0.88rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 6px;" onchange="if(window.loadMonthlyLiquidMonitoring) window.loadMonthlyLiquidMonitoring(this.value)">
             <button class="btn btn-primary" onclick="if(window.loadMonthlyLiquidMonitoring) window.loadMonthlyLiquidMonitoring()" style="padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;"><i class="fa-solid fa-magnifying-glass"></i> Tampilkan</button>
             <button class="btn btn-secondary" onclick="printTable('dash-monthly-liquid-wrapper', 'Laporan Monthly Liquid Monitoring')" style="padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;"><i class="fa-solid fa-print"></i> Print</button>
         </div>
@@ -3820,7 +3820,7 @@ views.mill_dashboard = `
         <table class="data-table" id="dash-table-monthly-liquid" style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem;">
             <thead></thead>
             <tbody>
-                <tr><td colspan="34" style="text-align: center; padding: 25px; color: #64748b; font-style: italic;">Pilih bulan dan klik Tampilkan</td></tr>
+                <tr><td colspan="35" style="text-align: center; padding: 25px; color: #64748b; font-style: italic;"><i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i>Memuat data Monthly Liquid Monitoring...</td></tr>
             </tbody>
         </table>
     </div>
@@ -3837,7 +3837,7 @@ views.mill_dashboard = `
             </div>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                 <span style="font-weight: 600; color: #475569; font-size: 0.88rem;"><i class="fa-regular fa-calendar" style="margin-right: 4px; color: #0284c7;"></i> BULAN:</span>
-                <input type="month" id="dash-water-sebelum-month" class="form-control" style="width: auto; padding: 5px 12px; font-size: 0.88rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 6px;">
+                <input type="month" id="dash-water-sebelum-month" class="form-control" style="width: auto; padding: 5px 12px; font-size: 0.88rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 6px;" onchange="if(window.loadWaterSebelumTable) window.loadWaterSebelumTable(this.value)">
                 <button class="btn btn-primary" onclick="window.loadWaterSebelumTable()" style="padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;"><i class="fa-solid fa-magnifying-glass"></i> Tampilkan</button>
                 <button class="btn btn-secondary" onclick="printTable('dash-water-sebelum-wrapper', 'Laporan 1.1 Analisa Air Sebelum Proses')" style="padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;"><i class="fa-solid fa-print"></i> Print</button>
             </div>
@@ -3847,7 +3847,7 @@ views.mill_dashboard = `
             <table class="data-table" id="dash-table-water-sebelum" style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem;">
                 <thead></thead>
                 <tbody>
-                    <tr><td colspan="35" style="text-align: center; padding: 25px; color: #64748b; font-style: italic;">Pilih bulan dan klik Tampilkan</td></tr>
+                    <tr><td colspan="35" style="text-align: center; padding: 25px; color: #64748b; font-style: italic;"><i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i>Memuat data Analisa Air Sebelum Proses...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -3862,7 +3862,7 @@ views.mill_dashboard = `
             </div>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                 <span style="font-weight: 600; color: #475569; font-size: 0.88rem;"><i class="fa-regular fa-calendar" style="margin-right: 4px; color: #ea580c;"></i> BULAN:</span>
-                <input type="month" id="dash-water-boiler-month" class="form-control" style="width: auto; padding: 5px 12px; font-size: 0.88rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 6px;">
+                <input type="month" id="dash-water-boiler-month" class="form-control" style="width: auto; padding: 5px 12px; font-size: 0.88rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 6px;" onchange="if(window.loadWaterBoilerTable) window.loadWaterBoilerTable(this.value)">
                 <button class="btn btn-primary" onclick="window.loadWaterBoilerTable()" style="padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;"><i class="fa-solid fa-magnifying-glass"></i> Tampilkan</button>
                 <button class="btn btn-secondary" onclick="printTable('dash-water-boiler-wrapper', 'Laporan 1.2 Analisa Air Boiler (Rata-rata)')" style="padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;"><i class="fa-solid fa-print"></i> Print</button>
             </div>
@@ -3872,7 +3872,7 @@ views.mill_dashboard = `
             <table class="data-table" id="dash-table-water-boiler" style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem;">
                 <thead></thead>
                 <tbody>
-                    <tr><td colspan="35" style="text-align: center; padding: 25px; color: #64748b; font-style: italic;">Pilih bulan dan klik Tampilkan</td></tr>
+                    <tr><td colspan="35" style="text-align: center; padding: 25px; color: #64748b; font-style: italic;"><i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i>Memuat data Analisa Air Boiler...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -3911,11 +3911,11 @@ window.loadMonthlyLiquidMonitoring = async function(monthOverride) {
     const currentMonth = yyyy + '-' + mm;
 
     let month = monthOverride || (monthInput ? monthInput.value : null) || currentMonth;
-    if (monthInput && !monthInput.value) monthInput.value = month;
+    if (monthInput) monthInput.value = month;
 
     let mill = 'Bunga Tanjung Mill';
     const headerDropdown = document.getElementById('header-estate-dropdown');
-    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill')) {
+    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill') && !headerDropdown.value.includes('Semua')) {
         mill = headerDropdown.value;
     } else if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
         mill = window.currentUser.estate;
@@ -4115,11 +4115,11 @@ window.loadWaterSebelumTable = async function(monthOverride) {
     const currentMonth = yyyy + '-' + mm;
 
     let month = monthOverride || (monthInput ? monthInput.value : null) || currentMonth;
-    if (monthInput && !monthInput.value) monthInput.value = month;
+    if (monthInput) monthInput.value = month;
 
     let mill = 'Bunga Tanjung Mill';
     const headerDropdown = document.getElementById('header-estate-dropdown');
-    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill')) {
+    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill') && !headerDropdown.value.includes('Semua')) {
         mill = headerDropdown.value;
     } else if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
         mill = window.currentUser.estate;
@@ -4265,11 +4265,11 @@ window.loadWaterBoilerTable = async function(monthOverride) {
     const currentMonth = yyyy + '-' + mm;
 
     let month = monthOverride || (monthInput ? monthInput.value : null) || currentMonth;
-    if (monthInput && !monthInput.value) monthInput.value = month;
+    if (monthInput) monthInput.value = month;
 
     let mill = 'Bunga Tanjung Mill';
     const headerDropdown = document.getElementById('header-estate-dropdown');
-    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill')) {
+    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill') && !headerDropdown.value.includes('Semua')) {
         mill = headerDropdown.value;
     } else if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill') && window.currentUser.estate !== 'Semua Estate (Khusus Admin)') {
         mill = window.currentUser.estate;
@@ -4379,39 +4379,119 @@ window.loadWaterBoilerTable = async function(monthOverride) {
     }
 };
 
+// Helper to initialize all Dashboard date and month inputs to active date/month
+window.initDashboardDefaultDates = function(dateOverride) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const currentDay = `${yyyy}-${mm}-${dd}`;
+    const currentMonth = `${yyyy}-${mm}`;
+
+    const setVal = (id, val, force = false) => {
+        const el = document.getElementById(id);
+        if (el && (force || !el.value)) {
+            el.value = val;
+        }
+    };
+
+    setVal('dash-monthly-liquid-month', currentMonth, !!dateOverride);
+    setVal('dash-water-sebelum-month', currentMonth, !!dateOverride);
+    setVal('dash-water-boiler-month', currentMonth, !!dateOverride);
+    setVal('ffb-received-month-input', currentMonth, !!dateOverride);
+    setVal('dash-ffb-fruit-loose-start-date', currentDay, !!dateOverride);
+    setVal('dash-ffb-fruit-loose-end-date', currentDay, !!dateOverride);
+    setVal('dash-ffb-crop-start-date', currentDay, !!dateOverride);
+    setVal('dash-ffb-crop-end-date', currentDay, !!dateOverride);
+    setVal('ffb-received-date-input', currentDay, !!dateOverride);
+    setVal('dash-extra-date-input', currentDay, !!dateOverride);
+    setVal('dashboard-progress-historical-date', currentDay, !!dateOverride);
+};
+
 window.loadDashboardExtraData = async function(dateOverride) {
-    let date = dateOverride || document.getElementById('dash-date')?.value;
-    if(!date) {
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const dd = String(today.getDate()).padStart(2, '0');
-        date = yyyy + '-' + mm + '-' + dd;
-    }
-    
-    const dashMonth = date.substring(0, 7);
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const defaultDate = `${yyyy}-${mm}-${dd}`;
+    const currentMonth = `${yyyy}-${mm}`;
 
-    // Call the 3 FFB Cards Renderers
-    if (typeof window.renderFfbReceivedChart === 'function') {
-        window.renderFfbReceivedChart();
-    }
-    if (typeof window.renderDashFfbCropQuality === 'function') {
-        window.renderDashFfbCropQuality();
-    }
-    if (typeof window.renderDashFfbFruitLooseAnalysis === 'function') {
-        window.renderDashFfbFruitLooseAnalysis();
+    let date = dateOverride || defaultDate;
+    const dashMonth = date.substring(0, 7) || currentMonth;
+
+    if (typeof window.initDashboardDefaultDates === 'function') {
+        window.initDashboardDefaultDates(dateOverride);
     }
 
-    // Call Monthly Liquid Monitoring
-    if (typeof window.loadMonthlyLiquidMonitoring === 'function') {
-        window.loadMonthlyLiquidMonitoring(dashMonth);
+    // Role-based visibility check for cards
+    if (window.currentUser) {
+        const role = (window.currentUser.role || '').toLowerCase().trim();
+        const allowedRoles = [
+            'senior field manager', 'senior mill manager', 'director', 'office head assistant',
+            'senior manager estate', 'manager', 'askep', 'assistant', 
+            'krani divisi', 'manager mill', 
+            'supervisor mill', 'krani mill', 'analis & grading', 'analis', 'grading', 
+            'office assistant mill', 'office assistant (oaa)', 'office assistant', 'admin', 'administrator'
+        ];
+        const isAllowed = (window.hasPermission && (window.hasPermission('tonase', 'view') || window.hasPermission('dashboard', 'view'))) ||
+                          allowedRoles.includes(role);
+        const card = document.getElementById('ffb-received-card');
+        if (card) {
+            card.style.display = isAllowed ? 'block' : 'none';
+        }
     }
 
-    // Call Water Tables
-    if (typeof window.loadWaterSebelumTable === 'function') {
-        window.loadWaterSebelumTable(dashMonth);
+    // 1. Render FFB Received Chart safely
+    try {
+        if (typeof window.renderFfbReceivedChart === 'function') {
+            await window.renderFfbReceivedChart();
+        }
+    } catch (e) {
+        console.error('Error in renderFfbReceivedChart:', e);
     }
-    if (typeof window.loadWaterBoilerTable === 'function') {
-        window.loadWaterBoilerTable(dashMonth);
+
+    // 2. Render FFB Crop Quality Table safely
+    try {
+        if (typeof window.renderDashFfbCropQuality === 'function') {
+            await window.renderDashFfbCropQuality();
+        }
+    } catch (e) {
+        console.error('Error in renderDashFfbCropQuality:', e);
+    }
+
+    // 3. Render FFB Fruit Loose Table safely
+    try {
+        if (typeof window.renderDashFfbFruitLooseAnalysis === 'function') {
+            await window.renderDashFfbFruitLooseAnalysis();
+        }
+    } catch (e) {
+        console.error('Error in renderDashFfbFruitLooseAnalysis:', e);
+    }
+
+    // 4. Render Monthly Liquid Monitoring Table safely
+    try {
+        if (typeof window.loadMonthlyLiquidMonitoring === 'function') {
+            await window.loadMonthlyLiquidMonitoring(dashMonth);
+        }
+    } catch (e) {
+        console.error('Error in loadMonthlyLiquidMonitoring:', e);
+    }
+
+    // 5. Render Water Sebelum Table safely
+    try {
+        if (typeof window.loadWaterSebelumTable === 'function') {
+            await window.loadWaterSebelumTable(dashMonth);
+        }
+    } catch (e) {
+        console.error('Error in loadWaterSebelumTable:', e);
+    }
+
+    // 6. Render Water Boiler Table safely
+    try {
+        if (typeof window.loadWaterBoilerTable === 'function') {
+            await window.loadWaterBoilerTable(dashMonth);
+        }
+    } catch (e) {
+        console.error('Error in loadWaterBoilerTable:', e);
     }
 };
