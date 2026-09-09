@@ -619,7 +619,7 @@ Object.assign(views, {
 </div>
 
 <div class="glass-card" id="dash-ffb-crop-card" style="margin-top: 20px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px; gap: 10px;">
         <h3 style="margin: 0;">Daily FFB Crop Quality</h3>
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <label style="font-weight: bold; margin-bottom: 0;">Dari Tanggal:</label>
@@ -628,10 +628,11 @@ Object.assign(views, {
             <label style="font-weight: bold; margin-bottom: 0;">Hingga Tanggal:</label>
             <input type="date" id="dash-ffb-crop-end-date" class="form-control" style="width: auto;">
             
-            <button class="btn btn-success" onclick="if(window.renderDashFfbCropQuality) window.renderDashFfbCropQuality()">Tampilkan</button>
+            <button class="btn btn-success" onclick="if(window.renderDashFfbCropQuality) window.renderDashFfbCropQuality()"><i class="fa-solid fa-filter"></i> Tampilkan</button>
+            <button class="btn btn-secondary" onclick="window.printDashFfbCropQuality()"><i class="fa-solid fa-print"></i> Cetak Logsheet</button>
         </div>
     </div>
-    <div class="table-responsive" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+    <div id="dash-ffb-crop-wrapper" class="table-responsive" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
         <style>
             #dash-ffb-crop-table {
                 width: 100% !important;
@@ -724,7 +725,7 @@ Object.assign(views, {
 </div>
 
 <div class="glass-card" id="dash-ffb-fruit-loose-card" style="margin-top: 20px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px; gap: 10px;">
         <h3 style="margin: 0;">Daily FFB Quality Fruit Loose Analysis</h3>
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <label style="font-weight: bold; margin-bottom: 0;">Dari Tanggal:</label>
@@ -733,10 +734,11 @@ Object.assign(views, {
             <label style="font-weight: bold; margin-bottom: 0;">Hingga Tanggal:</label>
             <input type="date" id="dash-ffb-fruit-loose-end-date" class="form-control" style="width: auto;">
             
-            <button class="btn btn-success" onclick="if(window.renderDashFfbFruitLooseAnalysis) window.renderDashFfbFruitLooseAnalysis()">Tampilkan</button>
+            <button class="btn btn-success" onclick="if(window.renderDashFfbFruitLooseAnalysis) window.renderDashFfbFruitLooseAnalysis()"><i class="fa-solid fa-filter"></i> Tampilkan</button>
+            <button class="btn btn-secondary" onclick="window.printDashFfbFruitLooseAnalysis()"><i class="fa-solid fa-print"></i> Cetak Logsheet</button>
         </div>
     </div>
-    <div class="table-responsive" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+    <div id="dash-ffb-fruit-loose-wrapper" class="table-responsive" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
         <style>
             #dash-ffb-fruit-loose-table {
                 width: 100% !important;
@@ -20525,8 +20527,20 @@ window.submitFqRangeModal = function() {
     }
 };
 
+window.printDashFfbCropQuality = function() {
+    window.printTable('dash-ffb-crop-wrapper', 'LOGSHEET DAILY FFB CROP QUALITY');
+};
+
+window.printDashFfbFruitLooseAnalysis = function() {
+    window.printTable('dash-ffb-fruit-loose-wrapper', 'LOGSHEET DAILY FFB QUALITY FRUIT LOOSE ANALYSIS');
+};
+
 window.printTable = function(wrapperId, title) {
-    const wrapperEl = document.getElementById(wrapperId);
+    let wrapperEl = document.getElementById(wrapperId);
+    if (!wrapperEl) {
+        if (wrapperId === 'dash-ffb-crop-wrapper') wrapperEl = document.getElementById('dash-ffb-crop-table') || document.getElementById('dash-ffb-crop-card');
+        if (wrapperId === 'dash-ffb-fruit-loose-wrapper') wrapperEl = document.getElementById('dash-ffb-fruit-loose-table') || document.getElementById('dash-ffb-fruit-loose-card');
+    }
     if (!wrapperEl) {
         alert('Element tabel tidak ditemukan untuk dicetak (' + wrapperId + ').');
         return;
@@ -20567,7 +20581,21 @@ window.printTable = function(wrapperId, title) {
     } else if (wrapperId === 'ffq-detail-wrapper') {
         const s = document.getElementById('fq-detail-start-date')?.value;
         const e = document.getElementById('fq-detail-end-date')?.value;
-        if (s && e) periodStr = `${s} s/d ${e}`;
+        if (s && e) periodStr = (s === e) ? s : `${s} s/d ${e}`;
+    } else if (wrapperId === 'dash-ffb-crop-wrapper' || wrapperId === 'dash-ffb-crop-card' || wrapperId === 'dash-ffb-crop-table') {
+        const s = document.getElementById('dash-ffb-crop-start-date')?.value;
+        const e = document.getElementById('dash-ffb-crop-end-date')?.value;
+        if (s && e) periodStr = (s === e) ? s : `${s} s/d ${e}`;
+    } else if (wrapperId === 'dash-ffb-fruit-loose-wrapper' || wrapperId === 'dash-ffb-fruit-loose-card' || wrapperId === 'dash-ffb-fruit-loose-table') {
+        const s = document.getElementById('dash-ffb-fruit-loose-start-date')?.value;
+        const e = document.getElementById('dash-ffb-fruit-loose-end-date')?.value;
+        if (s && e) periodStr = (s === e) ? s : `${s} s/d ${e}`;
+    } else if (wrapperId === 'ffb-crop-wrapper') {
+        const d = document.getElementById('fq-crop-date')?.value;
+        if (d) periodStr = d;
+    } else if (wrapperId === 'ffb-quality-wrapper') {
+        const d = document.getElementById('fq-date')?.value;
+        if (d) periodStr = d;
     }
 
     if (monthVal && monthVal.includes('-')) {
@@ -20579,27 +20607,82 @@ window.printTable = function(wrapperId, title) {
 
     if (!periodStr) {
         const now = new Date();
-        periodStr = indoMonths[now.getMonth()] + ' ' + now.getFullYear();
+        periodStr = String(now.getDate()).padStart(2, '0') + ' ' + indoMonths[now.getMonth()] + ' ' + now.getFullYear();
     }
 
     // 4. Resolve Current User & Timestamp
-    const userName = (window.currentUser && window.currentUser.name) ? window.currentUser.name : ((window.currentUser && window.currentUser.username) ? window.currentUser.username : 'Operator Lab');
+    const userName = (window.currentUser && window.currentUser.name) ? window.currentUser.name : ((window.currentUser && window.currentUser.username) ? window.currentUser.username : 'Operator Grading');
     
     const now = new Date();
     const formattedDate = String(now.getDate()).padStart(2, '0') + ' ' + indoMonths[now.getMonth()] + ' ' + now.getFullYear();
     const formattedTime = formattedDate + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ' WIB';
 
-    // 5. Document ISO Code
-    let docCode = 'TTI/LAB/LS-01';
+    // 5. Document ISO Code & Role Configuration
     const lowerTitle = (title || '').toLowerCase();
-    if (lowerTitle.includes('liquid')) {
-        docCode = 'TTI-BTM/LAB-LIQ/LS-01';
+    const lowerWrapper = (wrapperId || '').toLowerCase();
+    
+    let docCode = 'TTI-SOP-MIL-QC-01';
+    let docRev = '00';
+    let role1 = 'Operator Grading / Krani QC';
+    let role2 = 'Supervisor Mill';
+    let role3 = 'Manager Mill';
+    let standardNormHtml = '';
+
+    if (lowerTitle.includes('crop') || lowerWrapper.includes('crop')) {
+        docCode = 'TTI-SOP-MIL-QC-01';
+        title = 'LOGSHEET DAILY FFB CROP QUALITY';
+        role1 = 'Operator Grading / Krani QC';
+        role2 = 'Supervisor Mill';
+        role3 = 'Manager Mill';
+        standardNormHtml = `
+        <div class="sop-norm-box">
+            <div class="norm-title"><i class="fa-solid fa-circle-check" style="color: #0d8b4e;"></i> STANDAR PARAMETER MUTU PANEN TBS (SOP QUALITY CONTROL):</div>
+            <div class="norm-items">
+                <div class="norm-item">Unripe: <strong>Max 0.00%</strong></div>
+                <div class="norm-item">Under Ripe: <strong>Max 3.00%</strong></div>
+                <div class="norm-item">Ripe (Masak): <strong>Min 90.00%</strong></div>
+                <div class="norm-item">Over Ripe: <strong>Max 7.00%</strong></div>
+                <div class="norm-item">Empty Bunch: <strong>Max 0.00%</strong></div>
+                <div class="norm-item">Longstalk: <strong>&lt; 2.00%</strong></div>
+                <div class="norm-item">Rat Damage: <strong>Toleransi Rendah</strong></div>
+            </div>
+        </div>`;
+    } else if (lowerTitle.includes('loose') || lowerTitle.includes('fruit') || lowerWrapper.includes('fruit') || lowerWrapper.includes('loose')) {
+        docCode = 'TTI-SOP-MIL-QC-02';
+        title = 'LOGSHEET DAILY FFB QUALITY FRUIT LOOSE ANALYSIS';
+        role1 = 'Operator Grading / Krani QC';
+        role2 = 'Supervisor Mill';
+        role3 = 'Manager Mill';
+        standardNormHtml = `
+        <div class="sop-norm-box">
+            <div class="norm-title"><i class="fa-solid fa-circle-check" style="color: #0d8b4e;"></i> STANDAR PARAMETER MUTU BRONDOLAN (SOP QUALITY CONTROL):</div>
+            <div class="norm-items">
+                <div class="norm-item">Brondolan Segar: <strong>Min 85.00%</strong></div>
+                <div class="norm-item">Brondolan Tdk Segar: <strong>Max 10.00%</strong></div>
+                <div class="norm-item">Brondolan Busuk: <strong>Max 5.00%</strong></div>
+                <div class="norm-item">Sampah & Kotoran: <strong>Max 2.00%</strong></div>
+            </div>
+        </div>`;
+    } else if (lowerTitle.includes('liquid')) {
+        docCode = 'TTI-SOP-MIL-LAB-01';
+        role1 = 'Operator Lab / Analis Proses';
+        role2 = 'Supervisor Mill';
+        role3 = 'Manager Mill';
     } else if (lowerTitle.includes('sebelum')) {
-        docCode = 'TTI-BTM/LAB-WTR/LS-01';
+        docCode = 'TTI-SOP-MIL-WTR-01';
+        role1 = 'Operator WTP / Analis Air';
+        role2 = 'Supervisor Mill';
+        role3 = 'Manager Mill';
     } else if (lowerTitle.includes('boiler')) {
-        docCode = 'TTI-BTM/LAB-BLR/LS-02';
-    } else if (lowerTitle.includes('ffb') || lowerTitle.includes('grading') || lowerTitle.includes('loose')) {
-        docCode = 'TTI-BTM/QC-FFB/LS-03';
+        docCode = 'TTI-SOP-MIL-BLR-02';
+        role1 = 'Operator Boiler & WTP';
+        role2 = 'Supervisor Mill';
+        role3 = 'Manager Mill';
+    } else if (lowerTitle.includes('detail') || lowerWrapper.includes('detail')) {
+        docCode = 'TTI-SOP-MIL-QC-03';
+        role1 = 'Operator Grading / Krani QC';
+        role2 = 'Supervisor Mill';
+        role3 = 'Manager Mill';
     }
 
     // 6. Generate Clean HTML Document
@@ -20637,7 +20720,7 @@ window.printTable = function(wrapperId, title) {
             padding: 0;
             background: #f1f5f9;
             color: #0f172a;
-            font-size: 7.8pt;
+            font-size: 8pt;
             line-height: 1.25;
         }
         
@@ -20731,27 +20814,27 @@ window.printTable = function(wrapperId, title) {
             justify-content: center;
         }
         .company-name {
-            font-size: 9pt;
+            font-size: 9.5pt;
             font-weight: 800;
             color: #0f172a;
             letter-spacing: 0.5px;
             line-height: 1.2;
         }
         .company-group {
-            font-size: 7.2pt;
+            font-size: 7.5pt;
             font-weight: 700;
             color: #0d8b4e;
             margin-top: 1px;
             letter-spacing: 0.3px;
         }
         .company-dept {
-            font-size: 6.5pt;
+            font-size: 6.8pt;
             color: #475569;
             margin-top: 2px;
             text-transform: uppercase;
         }
         .company-unit {
-            font-size: 7.2pt;
+            font-size: 7.5pt;
             font-weight: 700;
             color: #1e293b;
             margin-top: 3px;
@@ -20772,7 +20855,7 @@ window.printTable = function(wrapperId, title) {
             border-right: 2px solid #0f172a;
         }
         .logsheet-badge {
-            font-size: 6.8pt;
+            font-size: 7pt;
             font-weight: 700;
             color: #0d8b4e;
             background: #dcfce7;
@@ -20784,7 +20867,7 @@ window.printTable = function(wrapperId, title) {
             border: 1px solid #86efac;
         }
         .title-text {
-            font-size: 10.5pt;
+            font-size: 11pt;
             font-weight: 800;
             color: #0f172a;
             margin: 0;
@@ -20793,7 +20876,7 @@ window.printTable = function(wrapperId, title) {
             line-height: 1.2;
         }
         .period-text {
-            font-size: 7.8pt;
+            font-size: 8pt;
             font-weight: 600;
             color: #334155;
             margin-top: 3px;
@@ -20807,10 +20890,10 @@ window.printTable = function(wrapperId, title) {
         .meta-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 6.8pt;
+            font-size: 7pt;
         }
         .meta-table td {
-            padding: 1.5px 2px;
+            padding: 2px 2px;
             border: none !important;
             text-align: left;
             color: #334155;
@@ -20827,6 +20910,39 @@ window.printTable = function(wrapperId, title) {
             color: #0f172a;
         }
 
+        /* SOP Standards Banner */
+        .sop-norm-box {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 4px 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            font-size: 7pt;
+        }
+        .norm-title {
+            font-weight: 800;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .norm-items {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .norm-item {
+            color: #334155;
+        }
+        .norm-item strong {
+            color: #0f172a;
+        }
+
         /* 2. Table Area */
         .table-area {
             width: 100%;
@@ -20836,15 +20952,15 @@ window.printTable = function(wrapperId, title) {
         table {
             width: 100% !important;
             border-collapse: collapse !important;
-            font-size: 7pt !important;
+            font-size: 7.2pt !important;
             table-layout: auto;
         }
         th, td {
             position: static !important;
             border: 1px solid #000000 !important;
-            padding: 3px 2px !important;
+            padding: 3.5px 3px !important;
             text-align: center !important;
-            line-height: 1.15 !important;
+            line-height: 1.2 !important;
         }
         th {
             background-color: #1e293b !important;
@@ -20862,45 +20978,23 @@ window.printTable = function(wrapperId, title) {
             right: auto !important;
             box-shadow: none !important;
         }
-        /* First Column (Parameter Label) */
+        /* First Column (Parameter Label / Estate) */
         tbody tr td:first-child, thead tr th:first-child {
-            text-align: left !important;
-            padding-left: 6px !important;
-            font-weight: 600;
+            text-align: center !important;
+            font-weight: 700;
             white-space: nowrap;
         }
-        /* Header group row styles */
-        tbody tr[style*="background-color: #f0fdf4"],
-        tbody tr[style*="background-color: rgb(240, 253, 244)"],
-        tbody tr[style*="background-color: #eff6ff"],
-        tbody tr[style*="background-color: #ecfeff"],
-        tbody tr[style*="background-color: #eef2ff"],
-        tbody tr[style*="background-color: #fff7ed"],
-        tbody tr[style*="background-color: #fffbeb"],
-        tbody tr[style*="background-color: #fdf2f8"] {
-            font-weight: 700 !important;
-            font-size: 7.2pt !important;
+        tbody tr:nth-child(even) {
+            background-color: #f8fafc;
         }
-        tbody tr[style*="background-color: #f0fdf4"] td,
-        tbody tr[style*="background-color: #eff6ff"] td,
-        tbody tr[style*="background-color: #ecfeff"] td,
-        tbody tr[style*="background-color: #eef2ff"] td,
-        tbody tr[style*="background-color: #fff7ed"] td,
-        tbody tr[style*="background-color: #fffbeb"] td,
-        tbody tr[style*="background-color: #fdf2f8"] td {
-            background-color: #f1f5f9 !important;
-            color: #0f172a !important;
-            font-weight: 700 !important;
-            padding: 3px 6px !important;
-        }
-        /* Last column (AVG) */
-        tbody tr td:last-child {
+        tfoot tr {
+            background-color: #e2e8f0 !important;
             font-weight: 800 !important;
-            background-color: #f0f9ff !important;
-            border-left: 2px solid #000000 !important;
+            border-top: 2px solid #000000 !important;
         }
-        thead tr th:last-child {
-            border-left: 2px solid #000000 !important;
+        tfoot tr td {
+            font-weight: 800 !important;
+            background-color: #e2e8f0 !important;
         }
 
         /* 3. Logsheet Signature Section */
@@ -20937,7 +21031,7 @@ window.printTable = function(wrapperId, title) {
             background: #fafafa;
         }
         .sig-card-header {
-            font-size: 7.8pt;
+            font-size: 8pt;
             font-weight: 800;
             color: #0f172a;
             text-transform: uppercase;
@@ -20945,15 +21039,15 @@ window.printTable = function(wrapperId, title) {
             margin-bottom: 1px;
         }
         .sig-card-role {
-            font-size: 6.8pt;
-            color: #64748b;
-            font-weight: 600;
+            font-size: 7pt;
+            color: #0d8b4e;
+            font-weight: 700;
             margin-bottom: 6px;
             border-bottom: 1px solid #e2e8f0;
             padding-bottom: 3px;
         }
         .sig-card-space {
-            height: 46px;
+            height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -20965,7 +21059,7 @@ window.printTable = function(wrapperId, title) {
             font-style: italic;
         }
         .sig-card-name {
-            font-size: 7.8pt;
+            font-size: 8pt;
             font-weight: 700;
             color: #0f172a;
             margin-top: 2px;
@@ -20973,7 +21067,7 @@ window.printTable = function(wrapperId, title) {
         }
         .editable-name {
             display: inline-block;
-            min-width: 120px;
+            min-width: 130px;
             padding: 1px 4px;
             border-bottom: 1px dotted #94a3b8;
             outline: none;
@@ -20983,12 +21077,14 @@ window.printTable = function(wrapperId, title) {
             border-bottom: 1px solid #0d8b4e;
         }
         .sig-card-footer {
-            font-size: 6.2pt;
+            font-size: 6.5pt;
             color: #64748b;
-            margin-top: 3px;
+            margin-top: 4px;
             display: flex;
             justify-content: space-between;
             padding: 0 4px;
+            border-top: 1px dashed #e2e8f0;
+            padding-top: 2px;
         }
 
         /* 4. Footer Note */
@@ -20997,7 +21093,7 @@ window.printTable = function(wrapperId, title) {
             justify-content: space-between;
             align-items: center;
             margin-top: 6px;
-            font-size: 6.5pt;
+            font-size: 6.8pt;
             color: #64748b;
             border-top: 1px solid #cbd5e1;
             padding-top: 3px;
@@ -21036,12 +21132,12 @@ window.printTable = function(wrapperId, title) {
             <span class="tool-icon">🌿</span>
             <div>
                 <strong style="color: #4ade80;">AgriMonitor Logsheet Print Engine</strong>
-                <div style="font-size: 11px; color: #94a3b8;">Pratinjau Resmi Logsheet Pabrik & Laboratorium</div>
+                <div style="font-size: 11px; color: #94a3b8;">Pratinjau Resmi Logsheet Standar ISO PMKS</div>
             </div>
         </div>
         <div class="toolbar-tips">
             <i class="fa-solid fa-lightbulb" style="color: #facc15; margin-right: 4px;"></i>
-            <span><strong>Saran Cetak:</strong> Pilih Layout <strong>Landscape</strong>, Paper <strong>A4</strong>, dan centang <strong>"Background Graphics"</strong>. Nama penandatangan dapat diklik & diedit langsung di layar sebelum print.</span>
+            <span><strong>Saran Cetak:</strong> Pilih Layout <strong>Landscape</strong>, Kertas <strong>A4</strong>, dan centang <strong>"Background Graphics"</strong>. Nama penandatangan dapat diedit langsung di layar sebelum cetak.</span>
         </div>
         <div class="toolbar-actions">
             <button class="t-btn t-btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Cetak / Print Sekarang</button>
@@ -21061,7 +21157,7 @@ window.printTable = function(wrapperId, title) {
             </div>
             
             <div class="kop-title">
-                <div class="logsheet-badge">OFFICIAL DAILY / MONTHLY LOGSHEET</div>
+                <div class="logsheet-badge">OFFICIAL ISO LOGSHEET - QUALITY CONTROL</div>
                 <h1 class="title-text">${title}</h1>
                 <div class="period-text"><i class="fa-regular fa-calendar" style="margin-right: 4px; color: #0d8b4e;"></i> Periode: <strong>${periodStr.toUpperCase()}</strong></div>
             </div>
@@ -21069,29 +21165,32 @@ window.printTable = function(wrapperId, title) {
             <div class="kop-meta">
                 <table class="meta-table">
                     <tr><td>No. Dokumen</td><td>:</td><td>${docCode}</td></tr>
-                    <tr><td>Revisi</td><td>:</td><td>01</td></tr>
+                    <tr><td>Revisi</td><td>:</td><td>${docRev}</td></tr>
                     <tr><td>Tgl. Cetak</td><td>:</td><td>${formattedDate}</td></tr>
                     <tr><td>Halaman</td><td>:</td><td>1 dari 1</td></tr>
                 </table>
             </div>
         </div>
 
+        <!-- SOP Standards Banner if applicable -->
+        ${standardNormHtml}
+
         <!-- Table Area -->
         <div class="table-area">
             ${tableHtml}
         </div>
 
-        <!-- Signature Section (3 Pillars: Dibuat, Diperiksa, Diketahui/Disetujui) -->
+        <!-- Signature Section (3 Pillars: Dibuat Oleh, Diperiksa Oleh, Diketahui & Disetujui) -->
         <div class="logsheet-signatures">
             <div class="sig-top-meta">
                 <span>Pengesahan Logsheet Operasional: <strong>${unitName}</strong></span>
-                <span>Tanggal Terbit: <strong>${formattedDate}</strong></span>
+                <span>Tanggal Efektif: <strong>${formattedDate}</strong></span>
             </div>
             <div class="sig-grid">
                 <!-- 1. DIBUAT OLEH -->
                 <div class="sig-card">
                     <div class="sig-card-header">Dibuat Oleh:</div>
-                    <div class="sig-card-role">Operator Lab / Analis Proses</div>
+                    <div class="sig-card-role">${role1}</div>
                     <div class="sig-card-space">
                         <span class="watermark">TANDA TANGAN / PARAF</span>
                     </div>
@@ -21100,14 +21199,14 @@ window.printTable = function(wrapperId, title) {
                     </div>
                     <div class="sig-card-footer">
                         <span>NIK: ..................</span>
-                        <span>Tgl: ..................</span>
+                        <span>Tgl: ${formattedDate}</span>
                     </div>
                 </div>
 
                 <!-- 2. DIPERIKSA OLEH -->
                 <div class="sig-card">
                     <div class="sig-card-header">Diperiksa Oleh:</div>
-                    <div class="sig-card-role">Asisten Lab / Asisten Proses</div>
+                    <div class="sig-card-role">${role2}</div>
                     <div class="sig-card-space">
                         <span class="watermark">TANDA TANGAN / PARAF</span>
                     </div>
@@ -21123,7 +21222,7 @@ window.printTable = function(wrapperId, title) {
                 <!-- 3. DIKETAHUI & DISETUJUI -->
                 <div class="sig-card">
                     <div class="sig-card-header">Diketahui & Disetujui:</div>
-                    <div class="sig-card-role">Mill Manager / Kepala Pabrik</div>
+                    <div class="sig-card-role">${role3}</div>
                     <div class="sig-card-space">
                         <span class="watermark">TANDA TANGAN / PARAF</span>
                     </div>
@@ -21140,7 +21239,7 @@ window.printTable = function(wrapperId, title) {
 
         <!-- Footer Bar -->
         <div class="logsheet-footer-bar">
-            <div><i class="fa-solid fa-shield-halved" style="color: #0d8b4e;"></i> Dokumen Resmi Pengendalian Mutu & Operasional Pabrik Minyak Kelapa Sawit (PMKS).</div>
+            <div><i class="fa-solid fa-shield-halved" style="color: #0d8b4e;"></i> Dokumen Resmi Pengendalian Mutu & Operasional Pabrik Minyak Kelapa Sawit (PMKS) - Standar Mutu ISO / ISPO.</div>
             <div>Dicetak otomatis melalui AgriMonitor Portal pada ${formattedTime}</div>
         </div>
     </div>
@@ -21157,6 +21256,10 @@ window.printTable = function(wrapperId, title) {
 </html>`);
     w.document.close();
 };
+
+if (typeof printTable === 'undefined') {
+    window.printTable = window.printTable;
+}
 
 
 
