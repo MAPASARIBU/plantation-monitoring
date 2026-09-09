@@ -378,6 +378,47 @@ async function initDB() {
             // Ignore if column already exists
         }
 
+        // HACCP TABLES
+        await pool.query(`CREATE TABLE IF NOT EXISTS haccp_personal_hygiene (
+            id SERIAL PRIMARY KEY,
+            mill TEXT,
+            date TEXT,
+            time_in TEXT,
+            name TEXT,
+            institution TEXT,
+            purpose TEXT,
+            target_area TEXT,
+            q_demam TEXT,
+            q_batuk TEXT,
+            q_diare TEXT,
+            q_luka TEXT,
+            q_tifus TEXT,
+            q_obat TEXT,
+            q_hepatitis TEXT,
+            q_jaundice TEXT,
+            q_kontak_hep TEXT,
+            is_allowed INTEGER DEFAULT 1,
+            notes TEXT,
+            officer_name TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        await pool.query(`CREATE TABLE IF NOT EXISTS haccp_cpo_tank (
+            id SERIAL PRIMARY KEY,
+            mill TEXT,
+            date TEXT,
+            time_check TEXT,
+            vehicle_type TEXT,
+            vehicle_no TEXT,
+            driver_name TEXT,
+            checklist_data TEXT,
+            status_kelayakan TEXT,
+            inspector_name TEXT,
+            acknowledged_by TEXT,
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+
         // Seed Users
         const userCount = await pool.query('SELECT COUNT(*) FROM users');
         if (parseInt(userCount.rows[0].count) === 0) {
@@ -478,7 +519,7 @@ async function initDB() {
 const defaultModulesList = [
     'dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase',
     'harvesting', 'processing', 'water', 'ffb_quality', 'mill_dashboard',
-    'master', 'users'
+    'haccp', 'master', 'users'
 ];
 
 const defaultRolePermissionsMap = {
@@ -493,6 +534,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
         ffb_quality: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
         mill_dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        haccp: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
         master: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
         users: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 }
     },
@@ -507,6 +549,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
         ffb_quality: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
         mill_dashboard: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        haccp: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
         master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -521,6 +564,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        haccp: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
         master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -535,6 +579,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
         ffb_quality: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
         mill_dashboard: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        haccp: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
         master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -549,6 +594,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        haccp: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
         master: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -563,6 +609,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        haccp: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
         master: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -577,6 +624,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
         ffb_quality: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
         mill_dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        haccp: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
         master: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -591,6 +639,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        haccp: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
         master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -605,6 +654,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
         ffb_quality: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
         mill_dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
+        haccp: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 1 },
         master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -619,6 +669,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
         ffb_quality: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
         mill_dashboard: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
+        haccp: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
         master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -633,6 +684,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        haccp: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -647,6 +699,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        haccp: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -661,6 +714,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        haccp: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -675,6 +729,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        haccp: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -689,6 +744,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
         ffb_quality: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
         mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        haccp: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
         master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -703,6 +759,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
         ffb_quality: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
         mill_dashboard: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        haccp: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -717,6 +774,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
         ffb_quality: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
         mill_dashboard: { can_view: 1, can_input: 0, can_edit: 0, can_delete: 0 },
+        haccp: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -731,6 +789,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        haccp: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -745,6 +804,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        haccp: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
         master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     },
@@ -759,6 +819,7 @@ const defaultRolePermissionsMap = {
         water: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         ffb_quality: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         mill_dashboard: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
+        haccp: { can_view: 1, can_input: 1, can_edit: 1, can_delete: 0 },
         master: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 },
         users: { can_view: 0, can_input: 0, can_edit: 0, can_delete: 0 }
     }
@@ -2511,6 +2572,145 @@ app.get('/api/mill_dashboard/:mill/:date', async (req, res) => {
             cst_today: cst_today.rows,
             cst_month: cst_month.rows
         });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
+// ==========================================
+// HACCP DOCUMENT API ENDPOINTS
+// ==========================================
+
+// 1. PERSONAL HYGIENE
+app.get('/api/haccp/personal-hygiene/range/:mill/:startDate/:endDate', async (req, res) => {
+    try {
+        const { mill, startDate, endDate } = req.params;
+        let query = 'SELECT * FROM haccp_personal_hygiene WHERE date >= $1 AND date <= $2';
+        let params = [startDate, endDate];
+        if (mill && mill !== 'all' && mill !== 'Semua Estate (Khusus Admin)') {
+            query += ' AND mill = $3';
+            params.push(mill);
+        }
+        query += ' ORDER BY date DESC, time_in DESC, id DESC';
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/haccp/personal-hygiene/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await pool.query('SELECT * FROM haccp_personal_hygiene WHERE id = $1', [id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Data tidak ditemukan' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/haccp/personal-hygiene', async (req, res) => {
+    try {
+        const {
+            mill, date, time_in, name, institution, purpose, target_area,
+            q_demam, q_batuk, q_diare, q_luka, q_tifus, q_obat,
+            q_hepatitis, q_jaundice, q_kontak_hep,
+            is_allowed, notes, officer_name
+        } = req.body;
+
+        const result = await pool.query(`
+            INSERT INTO haccp_personal_hygiene (
+                mill, date, time_in, name, institution, purpose, target_area,
+                q_demam, q_batuk, q_diare, q_luka, q_tifus, q_obat,
+                q_hepatitis, q_jaundice, q_kontak_hep,
+                is_allowed, notes, officer_name
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+            RETURNING *
+        `, [
+            mill || 'Bunga Tanjung Mill', date, time_in, name, institution, purpose, target_area,
+            q_demam || 'tidak', q_batuk || 'tidak', q_diare || 'tidak', q_luka || 'tidak', q_tifus || 'tidak', q_obat || 'tidak',
+            q_hepatitis || 'tidak', q_jaundice || 'tidak', q_kontak_hep || 'tidak',
+            is_allowed !== undefined ? is_allowed : 1, notes || '', officer_name || ''
+        ]);
+
+        res.json({ success: true, data: result.rows[0] });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/haccp/personal-hygiene/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query('DELETE FROM haccp_personal_hygiene WHERE id = $1', [id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 2. PEMERIKSAAN TANKI CPO
+app.get('/api/haccp/cpo-tank/range/:mill/:startDate/:endDate', async (req, res) => {
+    try {
+        const { mill, startDate, endDate } = req.params;
+        let query = 'SELECT * FROM haccp_cpo_tank WHERE date >= $1 AND date <= $2';
+        let params = [startDate, endDate];
+        if (mill && mill !== 'all' && mill !== 'Semua Estate (Khusus Admin)') {
+            query += ' AND mill = $3';
+            params.push(mill);
+        }
+        query += ' ORDER BY date DESC, time_check DESC, id DESC';
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/haccp/cpo-tank/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await pool.query('SELECT * FROM haccp_cpo_tank WHERE id = $1', [id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Data tidak ditemukan' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/haccp/cpo-tank', async (req, res) => {
+    try {
+        const {
+            mill, date, time_check, vehicle_type, vehicle_no, driver_name,
+            checklist_data, status_kelayakan, inspector_name, acknowledged_by, notes
+        } = req.body;
+
+        const checklistStr = typeof checklist_data === 'object' ? JSON.stringify(checklist_data) : (checklist_data || '{}');
+
+        const result = await pool.query(`
+            INSERT INTO haccp_cpo_tank (
+                mill, date, time_check, vehicle_type, vehicle_no, driver_name,
+                checklist_data, status_kelayakan, inspector_name, acknowledged_by, notes
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+            RETURNING *
+        `, [
+            mill || 'Bunga Tanjung Mill', date, time_check, vehicle_type || 'Truck', vehicle_no, driver_name,
+            checklistStr, status_kelayakan || 'Layak', inspector_name || 'Security', acknowledged_by || 'OA/MA/MHA/MM', notes || ''
+        ]);
+
+        res.json({ success: true, data: result.rows[0] });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/haccp/cpo-tank/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query('DELETE FROM haccp_cpo_tank WHERE id = $1', [id]);
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

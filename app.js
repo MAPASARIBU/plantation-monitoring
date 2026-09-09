@@ -7470,7 +7470,8 @@ const navigate = (viewId) => {
         users: 'Master User Management',
         processing: 'Processing Monitoring',
         water: 'Water Analysis',
-        ffb_quality: 'FFB Quality'
+        ffb_quality: 'FFB Quality',
+        haccp: 'HACCP Document'
     };
     const baseTitle = titles[viewId] || 'Dashboard';
     title.innerText = currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)'
@@ -7532,6 +7533,7 @@ const navigate = (viewId) => {
     if(viewId === 'processing') { if(window.renderProcessingView) window.renderProcessingView(); }
     if(viewId === 'water') { if(window.renderWaterView) window.renderWaterView(); }
     if(viewId === 'ffb_quality') { if(window.renderFFBQualityView) window.renderFFBQualityView(); }
+    if(viewId === 'haccp') { if(window.renderHACCPView) window.renderHACCPView(); }
     
     
     if(viewId === 'master') {
@@ -7624,6 +7626,11 @@ const navigate = (viewId) => {
             layouts.forEach(l => l.style.gridTemplateColumns = '1fr');
         }
     }
+};
+
+window.navigate = navigate;
+window.switchModule = function(viewId) {
+    navigate(viewId);
 };
 
 // Initialization
@@ -7749,6 +7756,7 @@ const moduleMeta = [
     { id: 'water', name: 'Water Analysis & Lab', icon: 'fa-flask-vial', category: 'Mill' },
     { id: 'ffb_quality', name: 'FFB Quality (Grading & Loose Fruit)', icon: 'fa-magnifying-glass-chart', category: 'Mill' },
     { id: 'mill_dashboard', name: 'Mill Executive Dashboard', icon: 'fa-gauge-high', category: 'Mill' },
+    { id: 'haccp', name: 'HACCP Document (Personal Hygiene & CPO Tank)', icon: 'fa-file-shield', category: 'Mill' },
     { id: 'master', name: 'Master Data (Divisi, Blok, Truk, Pupuk, SC)', icon: 'fa-database', category: 'General' },
     { id: 'users', name: 'User Management (Admin)', icon: 'fa-users-gear', category: 'General' }
 ];

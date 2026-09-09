@@ -4486,3 +4486,1706 @@ window.loadDashboardExtraData = async function(dateOverride) {
         })()
     ]);
 };
+
+// =========================================================================
+// HACCP DOCUMENT MODULE (Personal Hygiene & Pemeriksaan Tanki CPO)
+// =========================================================================
+
+window.views = window.views || {};
+views.haccp = `
+<div class="animate-fade-in" style="padding-bottom: 30px;">
+    <!-- Sub-sheet Navigation Tabs -->
+    <div class="subsheet-tabs-container" style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; flex-wrap: wrap;">
+        <button class="subsheet-tab-btn active" id="tab-btn-haccp-hygiene" onclick="switchHaccpSubTab('hygiene')" style="padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; background: #0284c7; color: #ffffff; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+            <i class="fa-solid fa-user-shield"></i> 1. Personal Hygiene (Kuesioner Tamu)
+        </button>
+        <button class="subsheet-tab-btn" id="tab-btn-haccp-cpo-tank" onclick="switchHaccpSubTab('cpo_tank')" style="padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; background: #e2e8f0; color: #475569; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+            <i class="fa-solid fa-truck-droplet"></i> 2. Pemeriksaan Tanki CPO - PK
+        </button>
+    </div>
+
+    <!-- 1. SUB-SHEET: PERSONAL HYGIENE -->
+    <div id="haccp-subsheet-hygiene" class="subsheet-content active" style="display: block;">
+        <div class="glass-card" style="margin-bottom: 20px; padding: 16px 20px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <span style="font-weight: 600; color: #334155; font-size: 0.9rem;"><i class="fa-solid fa-calendar-days text-primary"></i> Filter Rentang Tanggal:</span>
+                    <input type="date" id="haccp-hygiene-start-date" class="form-control" style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.88rem;">
+                    <span style="color: #64748b; font-weight: 500;">s/d</span>
+                    <input type="date" id="haccp-hygiene-end-date" class="form-control" style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.88rem;">
+                    <button class="btn btn-primary" onclick="loadHaccpHygieneData()" style="padding: 7px 16px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-filter"></i> Tampilkan</button>
+                    <button class="btn btn-secondary" onclick="printHaccpHygieneRecap()" style="padding: 7px 16px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-print"></i> Cetak Rekap</button>
+                </div>
+                <div>
+                    <button class="btn btn-success" onclick="openHaccpHygieneInputModal()" style="padding: 8px 18px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; background: #16a34a; color: #fff;"><i class="fa-solid fa-user-plus"></i> + Input Kuesioner Tamu</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card" style="padding: 20px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow-x: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0; font-size: 1.15rem; color: #1e293b; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-clipboard-user text-primary"></i> Rekap Kuesioner Kesehatan Tamu PKS (Personal Hygiene)
+                </h3>
+                <span id="haccp-hygiene-count-badge" class="badge" style="background: #e0f2fe; color: #0369a1; padding: 5px 12px; border-radius: 20px; font-weight: 600; font-size: 0.8rem;">0 Tamu Terdata</span>
+            </div>
+            
+            <div id="haccp-hygiene-table-wrapper" class="table-responsive">
+                <table class="data-table" id="haccp-hygiene-table" style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #1e293b; color: #ffffff;">
+                            <th style="padding: 10px; text-align: center; width: 45px;">No</th>
+                            <th style="padding: 10px; text-align: center; width: 100px;">Tanggal</th>
+                            <th style="padding: 10px; text-align: center; width: 85px;">Jam Masuk</th>
+                            <th style="padding: 10px; text-align: left;">Nama Tamu</th>
+                            <th style="padding: 10px; text-align: left;">Instansi / Perusahaan</th>
+                            <th style="padding: 10px; text-align: left;">Tujuan Kunjungan</th>
+                            <th style="padding: 10px; text-align: left;">Area yang Dimasuki</th>
+                            <th style="padding: 10px; text-align: center; width: 130px;">Hasil Verifikasi</th>
+                            <th style="padding: 10px; text-align: center; width: 140px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="haccp-hygiene-tbody">
+                        <tr><td colspan="9" style="text-align: center; padding: 25px; color: #64748b;">Memuat data kuesioner tamu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. SUB-SHEET: PEMERIKSAAN TANKI CPO -->
+    <div id="haccp-subsheet-cpo-tank" class="subsheet-content" style="display: none;">
+        <div class="glass-card" style="margin-bottom: 20px; padding: 16px 20px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <span style="font-weight: 600; color: #334155; font-size: 0.9rem;"><i class="fa-solid fa-calendar-days text-primary"></i> Filter Rentang Tanggal:</span>
+                    <input type="date" id="haccp-cpo-start-date" class="form-control" style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.88rem;">
+                    <span style="color: #64748b; font-weight: 500;">s/d</span>
+                    <input type="date" id="haccp-cpo-end-date" class="form-control" style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.88rem;">
+                    <button class="btn btn-primary" onclick="loadHaccpCpoData()" style="padding: 7px 16px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-filter"></i> Tampilkan</button>
+                    <button class="btn btn-secondary" onclick="printHaccpCpoRecap()" style="padding: 7px 16px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-print"></i> Cetak Rekap</button>
+                </div>
+                <div>
+                    <button class="btn btn-success" onclick="openHaccpCpoInputModal()" style="padding: 8px 18px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; background: #16a34a; color: #fff;"><i class="fa-solid fa-truck-ramp-box"></i> + Input Pemeriksaan Tanki</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card" style="padding: 20px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow-x: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0; font-size: 1.15rem; color: #1e293b; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-clipboard-check text-primary"></i> Rekap Pemeriksaan Kebersihan Transport CPO - PK
+                </h3>
+                <span id="haccp-cpo-count-badge" class="badge" style="background: #e0f2fe; color: #0369a1; padding: 5px 12px; border-radius: 20px; font-weight: 600; font-size: 0.8rem;">0 Kendaraan Terperiksa</span>
+            </div>
+            
+            <div id="haccp-cpo-table-wrapper" class="table-responsive">
+                <table class="data-table" id="haccp-cpo-table" style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #1e293b; color: #ffffff;">
+                            <th style="padding: 10px; text-align: center; width: 45px;">No</th>
+                            <th style="padding: 10px; text-align: center; width: 100px;">Tanggal</th>
+                            <th style="padding: 10px; text-align: center; width: 85px;">Jam Periksa</th>
+                            <th style="padding: 10px; text-align: left;">Nama Pengemudi</th>
+                            <th style="padding: 10px; text-align: center; width: 110px;">Jenis Kendaraan</th>
+                            <th style="padding: 10px; text-align: center; width: 120px;">Nomor Truk</th>
+                            <th style="padding: 10px; text-align: center; width: 130px;">Keterangan</th>
+                            <th style="padding: 10px; text-align: center; width: 140px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="haccp-cpo-tbody">
+                        <tr><td colspan="8" style="text-align: center; padding: 25px; color: #64748b;">Memuat data pemeriksaan tanki...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODALS HACCP -->
+<!-- ========================================================================= -->
+
+<!-- 1. MODAL INPUT KUESIONER PERSONAL HYGIENE -->
+<div class="modal-overlay" id="modal-haccp-hygiene-input" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 10500; overflow-y: auto; padding: 20px 10px;">
+    <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 820px; margin: 20px auto; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); overflow: hidden;">
+        <div class="modal-header" style="background: #0f172a; color: #ffffff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-file-medical text-primary"></i> Form Kuesioner Kesehatan Tamu PKS (Personal Hygiene)
+            </h3>
+            <button type="button" class="modal-close" onclick="closeHaccpHygieneInputModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;">&times;</button>
+        </div>
+        <form id="form-haccp-hygiene" onsubmit="saveHaccpHygieneData(event)" style="padding: 20px;">
+            <!-- 1. Identitas Tamu -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 18px;">
+                <h4 style="margin: 0 0 12px 0; font-size: 0.95rem; color: #1e293b; font-weight: 700; border-bottom: 2px solid #cbd5e1; padding-bottom: 6px;">
+                    1. IDENTITAS TAMU
+                </h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">Tanggal Kunjungan *</label>
+                        <input type="date" id="hygiene-input-date" class="form-control" required style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">Jam Masuk *</label>
+                        <input type="time" id="hygiene-input-time" class="form-control" required style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">Nama Lengkap Tamu *</label>
+                        <input type="text" id="hygiene-input-name" class="form-control" placeholder="Contoh: Bpk. Hendra Wijaya" required style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">Instansi / Perusahaan *</label>
+                        <input type="text" id="hygiene-input-institution" class="form-control" placeholder="Contoh: PT. Sumber Tirta Mandiri" required style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">Tujuan Kunjungan *</label>
+                        <input type="text" id="hygiene-input-purpose" class="form-control" placeholder="Contoh: Maintenance Mesin Boiler" required style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">Area yang Akan Dimasuki *</label>
+                        <input type="text" id="hygiene-input-target-area" class="form-control" placeholder="Contoh: Area Pabrik & Workshop" required style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Pernyataan Kesehatan -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 18px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 2px solid #cbd5e1; padding-bottom: 6px; flex-wrap: wrap; gap: 8px;">
+                    <h4 style="margin: 0; font-size: 0.95rem; color: #1e293b; font-weight: 700;">
+                        2. PERNYATAAN KESEHATAN (Beri tanda pada jawaban yang sesuai)
+                    </h4>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="setAllHygieneQuestions('tidak')" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 4px; background: #e2e8f0; color: #0f172a; font-weight: 600;">
+                        <i class="fa-solid fa-check-double"></i> Set Semua TIDAK (Sehat)
+                    </button>
+                </div>
+
+                <!-- 1. Kondisi Kesehatan Umum -->
+                <div style="margin-bottom: 14px;">
+                    <div style="font-weight: 700; font-size: 0.85rem; color: #334155; margin-bottom: 6px;">1. Kondisi Kesehatan Umum</div>
+                    <table style="width: 100%; font-size: 0.82rem; border-collapse: collapse; background: #fff;">
+                        <thead>
+                            <tr style="background: #e2e8f0; color: #334155;">
+                                <th style="padding: 6px 10px; text-align: left;">Pertanyaan</th>
+                                <th style="padding: 6px 10px; text-align: center; width: 60px;">YA</th>
+                                <th style="padding: 6px 10px; text-align: center; width: 60px;">TIDAK</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 6px 10px;">Apakah Anda sedang mengalami demam atau merasa tidak enak badan?</td>
+                                <td style="text-align: center;"><input type="radio" name="q_demam" value="ya" required></td>
+                                <td style="text-align: center;"><input type="radio" name="q_demam" value="tidak" checked required></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 6px 10px;">Apakah Anda sedang mengalami batuk, flu atau sakit tenggorokan?</td>
+                                <td style="text-align: center;"><input type="radio" name="q_batuk" value="ya" required></td>
+                                <td style="text-align: center;"><input type="radio" name="q_batuk" value="tidak" checked required></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 6px 10px;">Apakah Anda mengalami diare, muntah atau gangguan pencernaan dalam 48 jam terakhir?</td>
+                                <td style="text-align: center;"><input type="radio" name="q_diare" value="ya" required></td>
+                                <td style="text-align: center;"><input type="radio" name="q_diare" value="tidak" checked required></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 6px 10px;">Apakah Anda memiliki luka terbuka, infeksi kulit atau penyakit kulit lainnya?</td>
+                                <td style="text-align: center;"><input type="radio" name="q_luka" value="ya" required></td>
+                                <td style="text-align: center;"><input type="radio" name="q_luka" value="tidak" checked required></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 6px 10px;">Apakah Anda sedang menderita atau baru sembuh dari tifus dalam 14 hari terakhir?</td>
+                                <td style="text-align: center;"><input type="radio" name="q_tifus" value="ya" required></td>
+                                <td style="text-align: center;"><input type="radio" name="q_tifus" value="tidak" checked required></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 6px 10px;">Apakah Anda sedang mengonsumsi obat terkait penyakit menular?</td>
+                                <td style="text-align: center;"><input type="radio" name="q_obat" value="ya" required></td>
+                                <td style="text-align: center;"><input type="radio" name="q_obat" value="tidak" checked required></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 2. Riwayat Penyakit Menular (Termasuk Hepatitis) -->
+                <div>
+                    <div style="font-weight: 700; font-size: 0.85rem; color: #334155; margin-bottom: 6px;">2. Riwayat Penyakit Menular (Termasuk Hepatitis)</div>
+                    <table style="width: 100%; font-size: 0.82rem; border-collapse: collapse; background: #fff;">
+                        <thead>
+                            <tr style="background: #e2e8f0; color: #334155;">
+                                <th style="padding: 6px 10px; text-align: left;">Pertanyaan</th>
+                                <th style="padding: 6px 10px; text-align: center; width: 60px;">Ya</th>
+                                <th style="padding: 6px 10px; text-align: center; width: 60px;">Tidak</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 6px 10px;">Apakah Anda sedang menderita penyakit Hepatitis A atau Hepatitis B?</td>
+                                <td style="text-align: center;"><input type="radio" name="q_hepatitis" value="ya" required></td>
+                                <td style="text-align: center;"><input type="radio" name="q_hepatitis" value="tidak" checked required></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 6px 10px;">Apakah Anda memiliki gejala kuning pada mata/ kulit (jaundice)?</td>
+                                <td style="text-align: center;"><input type="radio" name="q_jaundice" value="ya" required></td>
+                                <td style="text-align: center;"><input type="radio" name="q_jaundice" value="tidak" checked required></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 6px 10px;">Apakah Anda pernah kontak dekat dengan seseorang yang terkonfirmasi Hepatitis A/B dalam 30 hari terakhir?</td>
+                                <td style="text-align: center;"><input type="radio" name="q_kontak_hep" value="ya" required></td>
+                                <td style="text-align: center;"><input type="radio" name="q_kontak_hep" value="tidak" checked required></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 3. Pernyataan Tamu -->
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin-bottom: 18px; font-size: 0.85rem; color: #166534;">
+                <h4 style="margin: 0 0 6px 0; font-size: 0.9rem; font-weight: 700; color: #15803d;">3. PERNYATAAN TAMU</h4>
+                <p style="margin: 0; font-style: italic; line-height: 1.4;">
+                    "Saya menyatakan bahwa informasi yang saya berikan adalah benar. Jika ditemukan gejala sakit atau risiko penyakit menular, saya bersedia mengikuti arahan petugas, termasuk larangan masuk ke area tertentu."
+                </p>
+            </div>
+
+            <!-- 4. Verifikasi Petugas -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 20px;">
+                <h4 style="margin: 0 0 12px 0; font-size: 0.95rem; color: #1e293b; font-weight: 700; border-bottom: 2px solid #cbd5e1; padding-bottom: 6px;">
+                    4. VERIFIKASI PETUGAS
+                </h4>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                        Diperbolehkan masuk area produksi: *
+                    </label>
+                    <div style="display: flex; gap: 20px; align-items: center;">
+                        <label style="display: flex; align-items: center; gap: 6px; font-weight: 600; color: #166534; cursor: pointer;">
+                            <input type="radio" name="is_allowed" value="1" checked required> <i class="fa-solid fa-circle-check text-success"></i> YA (Boleh Masuk)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; font-weight: 600; color: #991b1b; cursor: pointer;">
+                            <input type="radio" name="is_allowed" value="0" required> <i class="fa-solid fa-circle-xmark text-danger"></i> TIDAK (Dilarang Masuk)
+                        </label>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">Catatan Tambahan (Opsional)</label>
+                        <input type="text" id="hygiene-input-notes" class="form-control" placeholder="Contoh: Tamu dalam kondisi sehat dan mengenakan APD lengkap" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">Nama Petugas Verifikasi *</label>
+                        <input type="text" id="hygiene-input-officer" class="form-control" placeholder="Nama Security / QC" required style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="closeHaccpHygieneInputModal()" style="padding: 8px 18px; border-radius: 6px;">Batal</button>
+                <button type="submit" class="btn btn-primary" id="btn-save-haccp-hygiene" style="padding: 8px 22px; border-radius: 6px; font-weight: 600; background: #0284c7; color: #fff;">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan Kuesioner
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 2. MODAL VIEW & PRINT STANDAR ISO: PERSONAL HYGIENE -->
+<div class="modal-overlay" id="modal-haccp-hygiene-view" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 10600; overflow-y: auto; padding: 20px 10px;">
+    <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 880px; margin: 20px auto; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); overflow: hidden;">
+        <div class="modal-header" style="background: #1e293b; color: #ffffff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-file-lines text-primary"></i> Lembar Pemeriksaan Personal Hygiene di Area PKS
+            </h3>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="btn btn-primary btn-sm" onclick="printHaccpElement('haccp-hygiene-iso-document', 'Kuesioner Personal Hygiene Tamu PKS')" style="padding: 6px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-print"></i> Cetak Dokumen
+                </button>
+                <button type="button" class="modal-close" onclick="closeHaccpHygieneViewModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;">&times;</button>
+            </div>
+        </div>
+        
+        <div style="padding: 25px; overflow-x: auto; background: #f1f5f9;">
+            <!-- ISO DOCUMENT CONTAINER -->
+            <div id="haccp-hygiene-iso-document" style="background: #ffffff; padding: 30px 35px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; font-family: 'Arial', sans-serif; color: #000000; line-height: 1.35; font-size: 11.5px;">
+                <!-- Header Control Box -->
+                <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #000000; margin-bottom: 18px;">
+                    <tr>
+                        <td style="width: 110px; text-align: center; vertical-align: middle; border-right: 1.5px solid #000; padding: 6px;">
+                            <div style="font-size: 26px; color: #1e3a8a; font-weight: 900; line-height: 1;"><i class="fa-solid fa-seedling"></i></div>
+                            <div style="font-weight: 900; font-size: 12px; letter-spacing: 1px; color: #1e3a8a; margin-top: 2px;">SIPEF</div>
+                        </td>
+                        <td style="text-align: center; vertical-align: middle; border-right: 1.5px solid #000; padding: 6px 10px;">
+                            <div style="font-weight: 800; font-size: 12.5px; text-transform: uppercase;">PT. AGRO MUKO - BUNGA TANJUNG PALM OIL MILL</div>
+                            <div style="font-weight: 900; font-size: 13.5px; margin: 3px 0; text-transform: uppercase;">DOKUMENTASI HACCP</div>
+                            <div style="font-weight: 800; font-size: 11.5px; text-transform: uppercase;">PANDUAN PERSONAL HYGIENE DI AREA PKS</div>
+                        </td>
+                        <td style="width: 250px; padding: 0; vertical-align: top;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 10.5px;">
+                                <tr style="border-bottom: 1px solid #000;">
+                                    <td style="padding: 3px 6px; font-weight: bold; width: 85px; border: none; border-right: 1px solid #000;">No Bagian</td>
+                                    <td style="padding: 3px 6px; font-weight: bold; border: none;">ENG-HACCP-BTOM-00-01-A-00-P-03</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #000;">
+                                    <td style="padding: 3px 6px; font-weight: bold; border: none; border-right: 1px solid #000;">Tgl Berlaku</td>
+                                    <td style="padding: 3px 6px; border: none;">19 November 2025</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #000;">
+                                    <td style="padding: 3px 6px; font-weight: bold; border: none; border-right: 1px solid #000;">No Revisi</td>
+                                    <td style="padding: 3px 6px; border: none;">00</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 3px 6px; font-weight: bold; border: none; border-right: 1px solid #000;">Halaman</td>
+                                    <td style="padding: 3px 6px; border: none;">1 dari 1</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+
+                <div style="font-weight: bold; font-size: 11.5px; margin-bottom: 12px;">Lampiran 2. Kuesioner Kesehatan Tamu PKS</div>
+
+                <!-- 1. IDENTITAS TAMU -->
+                <div style="margin-bottom: 14px;">
+                    <div style="font-weight: bold; font-size: 11.5px; margin-bottom: 4px;">1. IDENTITAS TAMU</div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                        <tr>
+                            <td style="width: 180px; padding: 2px 0; border: none;">• &nbsp; Nama</td>
+                            <td style="border: none;">: &nbsp; <span id="iso-hygiene-name" style="font-weight: bold;">-</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 2px 0; border: none;">• &nbsp; Instansi/Perusahaan</td>
+                            <td style="border: none;">: &nbsp; <span id="iso-hygiene-institution">-</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 2px 0; border: none;">• &nbsp; Tujuan Kunjungan</td>
+                            <td style="border: none;">: &nbsp; <span id="iso-hygiene-purpose">-</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 2px 0; border: none;">• &nbsp; Area yang Akan Dimasuki</td>
+                            <td style="border: none;">: &nbsp; <span id="iso-hygiene-target-area">-</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 2px 0; border: none;">• &nbsp; Tanggal / Jam Masuk</td>
+                            <td style="border: none;">: &nbsp; <span id="iso-hygiene-date">-</span> &nbsp; / &nbsp; <span id="iso-hygiene-time">-</span></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- 2. PERNYATAAN KESEHATAN -->
+                <div style="margin-bottom: 14px;">
+                    <div style="font-weight: bold; font-size: 11.5px; margin-bottom: 2px;">2. PERNYATAAN KESEHATAN</div>
+                    <div style="font-size: 11px; margin-bottom: 6px;">Mohon beri tanda (&check;) pada jawaban yang sesuai:</div>
+                    
+                    <!-- Tabel 1 -->
+                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 4px;">1. &nbsp; Kondisi Kesehatan Umum</div>
+                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px; font-size: 10.5px;">
+                        <thead>
+                            <tr style="background: #f8fafc; font-weight: bold;">
+                                <th style="border: 1px solid #000; padding: 4px 6px; text-align: center;">PERTANYAAN</th>
+                                <th style="border: 1px solid #000; padding: 4px 6px; width: 45px; text-align: center;">YA</th>
+                                <th style="border: 1px solid #000; padding: 4px 6px; width: 55px; text-align: center;">TIDAK</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Apakah Anda sedang mengalami demam atau merasa tidak enak badan?</td>
+                                <td id="iso-q-demam-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-q-demam-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Apakah Anda sedang mengalami batuk, flu atau sakit tenggorokan?</td>
+                                <td id="iso-q-batuk-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-q-batuk-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Apakah Anda mengalami diare, muntah atau gangguan pencernaan dalam 48 jam terakhir?</td>
+                                <td id="iso-q-diare-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-q-diare-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Apakah Anda memiliki luka terbuka, infeksi kulit atau penyakit kulit lainnya?</td>
+                                <td id="iso-q-luka-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-q-luka-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Apakah Anda sedang menderita atau baru sembuh dari tifus dalam 14 hari terakhir?</td>
+                                <td id="iso-q-tifus-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-q-tifus-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Apakah Anda sedang mengonsumsi obat terkait penyakit menular?</td>
+                                <td id="iso-q-obat-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-q-obat-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Tabel 2 -->
+                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 4px;">2. &nbsp; Riwayat Penyakit Menular (Termasuk Hepatitis)</div>
+                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 12px; font-size: 10.5px;">
+                        <thead>
+                            <tr style="background: #f8fafc; font-weight: bold;">
+                                <th style="border: 1px solid #000; padding: 4px 6px; text-align: center;">Pertanyaan</th>
+                                <th style="border: 1px solid #000; padding: 4px 6px; width: 45px; text-align: center;">Ya</th>
+                                <th style="border: 1px solid #000; padding: 4px 6px; width: 55px; text-align: center;">Tidak</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Apakah Anda sedang menderita penyakit Hepatitis A atau Hepatitis B?</td>
+                                <td id="iso-q-hepatitis-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-q-hepatitis-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Apakah Anda memiliki gejala kuning pada mata/ kulit (jaundice)?</td>
+                                <td id="iso-q-jaundice-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-q-jaundice-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Apakah Anda pernah kontak dekat dengan seseorang yang terkonfirmasi Hepatitis A/B dalam 30 hari terakhir?</td>
+                                <td id="iso-q-kontak_hep-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-q-kontak_hep-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 3. PERNYATAAN TAMU -->
+                <div style="margin-bottom: 14px;">
+                    <div style="font-weight: bold; font-size: 11.5px; margin-bottom: 2px;">3. &nbsp; PERNYATAAN TAMU</div>
+                    <div style="font-size: 10.5px; margin-bottom: 8px; text-align: justify;">
+                        Saya menyatakan bahwa informasi yang saya berikan adalah benar. Jika ditemukan gejala sakit atau risiko penyakit menular, saya bersedia mengikuti arahan petugas, termasuk larangan masuk ke area tertentu.
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
+                        <div style="text-align: center; width: 220px;">
+                            <div style="font-size: 11px; margin-bottom: 40px;">Tanda tangan tamu:</div>
+                            <div style="border-bottom: 1px dotted #000; margin-bottom: 4px; font-weight: bold;" id="iso-sign-guest-name">( .................................................. )</div>
+                            <div style="font-size: 10.5px;">Tanggal: <span id="iso-sign-guest-date">____ / ____ / ________</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. VERIFIKASI PETUGAS -->
+                <div>
+                    <div style="font-weight: bold; font-size: 11.5px; margin-bottom: 2px;">4. &nbsp; VERIFIKASI PETUGAS</div>
+                    <div style="font-size: 11px; margin-bottom: 4px;">
+                        Diperbolehkan masuk area produksi: <span id="iso-officer-decision" style="font-weight: 800; padding: 2px 8px; border: 1.5px solid #000; border-radius: 4px; margin-left: 6px;">Ya</span> (lingkari salah satunya)
+                    </div>
+                    <div style="font-size: 11px; margin-bottom: 8px;">
+                        Catatan tambahan: <span id="iso-officer-notes" style="border-bottom: 1px dotted #000; display: inline-block; min-width: 320px;">-</span>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
+                        <div style="text-align: center; width: 220px;">
+                            <div style="font-size: 11px; margin-bottom: 40px;">Tanda tangan petugas:</div>
+                            <div style="border-bottom: 1px dotted #000; margin-bottom: 4px; font-weight: bold;" id="iso-sign-officer-name">( .................................................. )</div>
+                            <div style="font-size: 10.5px;">Tanggal: <span id="iso-sign-officer-date">____ / ____ / ________</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. MODAL INPUT CHECKLIST TRANSPORT CPO - PK -->
+<div class="modal-overlay" id="modal-haccp-cpo-input" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 10500; overflow-y: auto; padding: 20px 10px;">
+    <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 880px; margin: 20px auto; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); overflow: hidden;">
+        <div class="modal-header" style="background: #0f172a; color: #ffffff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-truck-droplet text-primary"></i> Form Checklist Pemeriksaan Kebersihan Transport CPO - PK
+            </h3>
+            <button type="button" class="modal-close" onclick="closeHaccpCpoInputModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;">&times;</button>
+        </div>
+        <form id="form-haccp-cpo" onsubmit="saveHaccpCpoData(event)" style="padding: 20px;">
+            <!-- Metadata Kendaraan -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 18px;">
+                <h4 style="margin: 0 0 12px 0; font-size: 0.95rem; color: #1e293b; font-weight: 700; border-bottom: 2px solid #cbd5e1; padding-bottom: 6px;">
+                    DATA KENDARAAN & PENGEMUDI
+                </h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">Tanggal *</label>
+                        <input type="date" id="cpo-input-date" class="form-control" required style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">Jam Pemeriksaan *</label>
+                        <input type="time" id="cpo-input-time" class="form-control" required style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">Jenis Kendaraan *</label>
+                        <select id="cpo-input-vehicle-type" class="form-control" required style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+                            <option value="Truck">Truck</option>
+                            <option value="Fuso">Fuso</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">No. Kendaraan (Plat Polisi) *</label>
+                        <input type="text" id="cpo-input-vehicle-no" class="form-control" placeholder="Contoh: BD 8123 AM" required style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">Nama Pengemudi *</label>
+                        <input type="text" id="cpo-input-driver-name" class="form-control" placeholder="Contoh: Joko Susanto" required style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Action Bar -->
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="setAllCpoChecklist('ya')" style="padding: 5px 12px; font-size: 0.78rem; border-radius: 4px; background: #e0f2fe; color: #0369a1; font-weight: 700; border: 1px solid #bae6fd;">
+                    <i class="fa-solid fa-check-double"></i> Set Semua Standar Sesuai (Ya / Bersih)
+                </button>
+            </div>
+
+            <!-- Bagian A. Riwayat Muatan Sebelumnya -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: #1e293b; font-weight: 700;">A. Riwayat Muatan Sebelumnya</h4>
+                <table style="width: 100%; font-size: 0.82rem; border-collapse: collapse; background: #fff;">
+                    <thead>
+                        <tr style="background: #e2e8f0; color: #334155;">
+                            <th style="padding: 6px 8px; width: 35px; text-align: center;">No</th>
+                            <th style="padding: 6px 10px; text-align: left;">Pemeriksaan</th>
+                            <th style="padding: 6px 8px; width: 50px; text-align: center;">Ya</th>
+                            <th style="padding: 6px 8px; width: 55px; text-align: center;">Tidak</th>
+                            <th style="padding: 6px 10px; width: 220px; text-align: left;">Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">1</td>
+                            <td style="padding: 6px 10px;">Riwayat muatan sebelumnya diketahui</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_a1" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_a1" value="tidak" required></td>
+                            <td><input type="text" id="cpo_a1_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">2</td>
+                            <td style="padding: 6px 10px;">Muatan sebelumnya CPO</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_a2" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_a2" value="tidak" required></td>
+                            <td><input type="text" id="cpo_a2_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Bagian B. Pemeriksaan Kebersihan Kendaraan CPO -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: #1e293b; font-weight: 700;">B. Pemeriksaan Kebersihan Kendaraan CPO</h4>
+                <table style="width: 100%; font-size: 0.82rem; border-collapse: collapse; background: #fff;">
+                    <thead>
+                        <tr style="background: #e2e8f0; color: #334155;">
+                            <th style="padding: 6px 8px; width: 35px; text-align: center;">No</th>
+                            <th style="padding: 6px 10px; text-align: left;">Pemeriksaan</th>
+                            <th style="padding: 6px 8px; width: 50px; text-align: center;">Ya</th>
+                            <th style="padding: 6px 8px; width: 55px; text-align: center;">Tidak</th>
+                            <th style="padding: 6px 10px; width: 220px; text-align: left;">Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">1</td>
+                            <td style="padding: 6px 10px;">Kendaraan dalam kondisi bersih</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_b1" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_b1" value="tidak" required></td>
+                            <td><input type="text" id="cpo_b1_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">2</td>
+                            <td style="padding: 6px 10px;">Bebas kontaminasi</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_b2" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_b2" value="tidak" required></td>
+                            <td><input type="text" id="cpo_b2_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">3</td>
+                            <td style="padding: 6px 10px;">Tidak terdapat bau asing</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_b3" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_b3" value="tidak" required></td>
+                            <td><input type="text" id="cpo_b3_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">4</td>
+                            <td style="padding: 6px 10px;">Tidak terdapat karat dalam tanki</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_b4" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_b4" value="tidak" required></td>
+                            <td><input type="text" id="cpo_b4_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">5</td>
+                            <td style="padding: 6px 10px;">Tidak terdapat genangan air dalam tanki</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_b5" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_b5" value="tidak" required></td>
+                            <td><input type="text" id="cpo_b5_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">6</td>
+                            <td style="padding: 6px 10px;">Tidak terdapat kebocoran oli/grease</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_b6" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_b6" value="tidak" required></td>
+                            <td><input type="text" id="cpo_b6_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">7</td>
+                            <td style="padding: 6px 10px;">Manhole, Valve dan seal berfungsi baik</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_b7" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_b7" value="tidak" required></td>
+                            <td><input type="text" id="cpo_b7_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">8</td>
+                            <td style="padding: 6px 10px;">Cek muatan truck yang dianggap mencurigakan</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_b8" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_b8" value="tidak" required></td>
+                            <td><input type="text" id="cpo_b8_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Bagian C. Pemeriksaan Kebersihan Kendaraan PK -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 18px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: #1e293b; font-weight: 700;">C. Pemeriksaan Kebersihan Kendaraan PK</h4>
+                <table style="width: 100%; font-size: 0.82rem; border-collapse: collapse; background: #fff;">
+                    <thead>
+                        <tr style="background: #e2e8f0; color: #334155;">
+                            <th style="padding: 6px 8px; width: 35px; text-align: center;">No</th>
+                            <th style="padding: 6px 10px; text-align: left;">Pemeriksaan</th>
+                            <th style="padding: 6px 8px; width: 50px; text-align: center;">Ya</th>
+                            <th style="padding: 6px 8px; width: 55px; text-align: center;">Tidak</th>
+                            <th style="padding: 6px 10px; width: 220px; text-align: left;">Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">1</td>
+                            <td style="padding: 6px 10px;">Bak truck dalam kondisi bersih</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_c1" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_c1" value="tidak" required></td>
+                            <td><input type="text" id="cpo_c1_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">2</td>
+                            <td style="padding: 6px 10px;">Bebas sisa muatan sebelumnya</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_c2" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_c2" value="tidak" required></td>
+                            <td><input type="text" id="cpo_c2_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">3</td>
+                            <td style="padding: 6px 10px;">Bebas kontaminasi (kayu, besi, logam, batu, dll)</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_c3" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_c3" value="tidak" required></td>
+                            <td><input type="text" id="cpo_c3_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">4</td>
+                            <td style="padding: 6px 10px;">Terpal bersih, utuh dan kering</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_c4" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_c4" value="tidak" required></td>
+                            <td><input type="text" id="cpo_c4_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">5</td>
+                            <td style="padding: 6px 10px;">Tidak terdapat jamur atau bauk busuk</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_c5" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_c5" value="tidak" required></td>
+                            <td><input type="text" id="cpo_c5_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">6</td>
+                            <td style="padding: 6px 10px;">Tidak terdapat kebocoran oli/grease</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_c6" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_c6" value="tidak" required></td>
+                            <td><input type="text" id="cpo_c6_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">7</td>
+                            <td style="padding: 6px 10px;">Manhole, Valve dan seal berfungsi baik</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_c7" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_c7" value="tidak" required></td>
+                            <td><input type="text" id="cpo_c7_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="text-align: center;">8</td>
+                            <td style="padding: 6px 10px;">Cek muatan truck yang dianggap mencurigakan</td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_c8" value="ya" checked required></td>
+                            <td style="text-align: center;"><input type="radio" name="cpo_c8" value="tidak" required></td>
+                            <td><input type="text" id="cpo_c8_note" class="form-control" placeholder="Keterangan" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Status Kelayakan & Tanda Tangan -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 20px;">
+                <h4 style="margin: 0 0 12px 0; font-size: 0.95rem; color: #1e293b; font-weight: 700; border-bottom: 2px solid #cbd5e1; padding-bottom: 6px;">
+                    KESIMPULAN HASIL PEMERIKSAAN
+                </h4>
+                <div style="margin-bottom: 14px;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                        Status Kelayakan Kendaraan: *
+                    </label>
+                    <div style="display: flex; gap: 25px; align-items: center;">
+                        <label style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: #166534; cursor: pointer; font-size: 0.95rem;">
+                            <input type="radio" name="status_kelayakan" value="Layak" checked required> <i class="fa-solid fa-circle-check text-success"></i> LAYAK
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: #991b1b; cursor: pointer; font-size: 0.95rem;">
+                            <input type="radio" name="status_kelayakan" value="Tidak Layak" required> <i class="fa-solid fa-circle-xmark text-danger"></i> TIDAK LAYAK
+                        </label>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 10px;">
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">Diperiksa Oleh (Security) *</label>
+                        <input type="text" id="cpo-input-inspector" class="form-control" value="Security" required style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">Diketahui Oleh (OA/MA/MHA/MM) *</label>
+                        <input type="text" id="cpo-input-acknowledged" class="form-control" value="OA/MA/MHA/MM" required style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+                    </div>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">Catatan Tambahan (Opsional)</label>
+                    <input type="text" id="cpo-input-notes" class="form-control" placeholder="Catatan kondisi fisik kendaraan, segel, dll" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="closeHaccpCpoInputModal()" style="padding: 8px 18px; border-radius: 6px;">Batal</button>
+                <button type="submit" class="btn btn-primary" id="btn-save-haccp-cpo" style="padding: 8px 22px; border-radius: 6px; font-weight: 600; background: #0284c7; color: #fff;">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan Hasil Pemeriksaan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 4. MODAL VIEW & PRINT STANDAR ISO: PEMERIKSAAN TANKI CPO -->
+<div class="modal-overlay" id="modal-haccp-cpo-view" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 10600; overflow-y: auto; padding: 20px 10px;">
+    <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 880px; margin: 20px auto; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); overflow: hidden;">
+        <div class="modal-header" style="background: #1e293b; color: #ffffff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-file-circle-check text-primary"></i> Checklist Pemeriksaan Kebersihan Transport CPO - PK
+            </h3>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="btn btn-primary btn-sm" onclick="printHaccpElement('haccp-cpo-iso-document', 'Checklist Kebersihan Transport CPO - PK')" style="padding: 6px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-print"></i> Cetak Dokumen
+                </button>
+                <button type="button" class="modal-close" onclick="closeHaccpCpoViewModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;">&times;</button>
+            </div>
+        </div>
+        
+        <div style="padding: 25px; overflow-x: auto; background: #f1f5f9;">
+            <!-- ISO DOCUMENT CONTAINER -->
+            <div id="haccp-cpo-iso-document" style="background: #ffffff; padding: 30px 35px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; font-family: 'Arial', sans-serif; color: #000000; line-height: 1.3; font-size: 11px;">
+                <!-- Header -->
+                <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                    <div style="width: 100px; text-align: center;">
+                        <div style="font-size: 26px; color: #1e3a8a; font-weight: 900; line-height: 1;"><i class="fa-solid fa-seedling"></i></div>
+                        <div style="font-weight: 900; font-size: 11px; letter-spacing: 1px; color: #1e3a8a; margin-top: 2px;">SIPEF</div>
+                    </div>
+                    <div style="flex: 1; text-align: center; padding-right: 100px;">
+                        <div style="font-weight: 800; font-size: 14px; text-transform: capitalize;">Cheklist Pemeriksaan Kebersihan Transport CPO - PK</div>
+                        <div style="font-weight: 800; font-size: 12.5px; margin-top: 2px;">PT. Agromuko Bunga Tanjung Palm Oil Mill</div>
+                    </div>
+                </div>
+
+                <!-- Info Block -->
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 12px;">
+                    <tr>
+                        <td style="width: 140px; padding: 2px 0; border: none;">Tanggal</td>
+                        <td style="border: none;">: &nbsp; <span id="iso-cpo-date" style="font-weight: bold;">-</span></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 2px 0; border: none;">Jenis Kendaraan</td>
+                        <td style="border: none;">: &nbsp; <span id="iso-cpo-vehicle-type">-</span></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 2px 0; border: none;">No. Kendaraan</td>
+                        <td style="border: none;">: &nbsp; <span id="iso-cpo-vehicle-no" style="font-weight: bold;">-</span></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 2px 0; border: none;">Nama Pengemudi</td>
+                        <td style="border: none;">: &nbsp; <span id="iso-cpo-driver-name">-</span></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 2px 0; border: none;">Jam Pemeriksaan</td>
+                        <td style="border: none;">: &nbsp; <span id="iso-cpo-time">-</span></td>
+                    </tr>
+                </table>
+
+                <!-- Bagian A -->
+                <div style="margin-bottom: 12px;">
+                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 3px;">A. Riwayat Muatan Sebelumnya</div>
+                    <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #000; font-size: 10.5px;">
+                        <thead>
+                            <tr style="background: #f8fafc; font-weight: bold;">
+                                <th style="border: 1px solid #000; padding: 4px 6px; width: 35px; text-align: center;">No.</th>
+                                <th style="border: 1px solid #000; padding: 4px 8px; text-align: center;">Pemeriksaan</th>
+                                <th style="border: 1px solid #000; padding: 4px 6px; width: 45px; text-align: center;">Ya</th>
+                                <th style="border: 1px solid #000; padding: 4px 6px; width: 50px; text-align: center;">Tidak</th>
+                                <th style="border: 1px solid #000; padding: 4px 8px; width: 220px; text-align: center;">Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">1</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Riwayat muatan sebelumnya diketahui</td>
+                                <td id="iso-cpo-a1-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-a1-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-a1-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">2</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Muatan sebelumnya CPO</td>
+                                <td id="iso-cpo-a2-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-a2-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-a2-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Bagian B -->
+                <div style="margin-bottom: 12px;">
+                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 3px;">B. Pemeriksaan Kebersihan Kendaraan CPO</div>
+                    <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #000; font-size: 10.5px;">
+                        <thead>
+                            <tr style="background: #f8fafc; font-weight: bold;">
+                                <th style="border: 1px solid #000; padding: 4px 6px; width: 35px; text-align: center;">No.</th>
+                                <th style="border: 1px solid #000; padding: 4px 8px; text-align: center;">Pemeriksaan</th>
+                                <th style="border: 1px solid #000; padding: 4px 6px; width: 45px; text-align: center;">Ya</th>
+                                <th style="border: 1px solid #000; padding: 4px 6px; width: 50px; text-align: center;">Tidak</th>
+                                <th style="border: 1px solid #000; padding: 4px 8px; width: 220px; text-align: center;">Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">1</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Kendaraan dalam kondisi bersih</td>
+                                <td id="iso-cpo-b1-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-b1-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-b1-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">2</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Bebas kontaminasi</td>
+                                <td id="iso-cpo-b2-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-b2-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-b2-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">3</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Tidak terdapat bau asing</td>
+                                <td id="iso-cpo-b3-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-b3-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-b3-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">4</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Tidak terdapat karat dalam tanki</td>
+                                <td id="iso-cpo-b4-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-b4-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-b4-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">5</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Tidak terdapat genangan air dalam tanki</td>
+                                <td id="iso-cpo-b5-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-b5-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-b5-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">6</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Tidak terdapat kebocoran oli/grease</td>
+                                <td id="iso-cpo-b6-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-b6-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-b6-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">7</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Manhole, Valve dan seal berfungsi baik</td>
+                                <td id="iso-cpo-b7-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-b7-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-b7-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">8</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Cek muatan truck yang dianggap mencurigakan</td>
+                                <td id="iso-cpo-b8-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-b8-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-b8-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Bagian C -->
+                <div style="margin-bottom: 14px;">
+                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 3px;">C. Pemeriksaan Kebersihan Kendaraan PK</div>
+                    <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #000; font-size: 10.5px;">
+                        <thead>
+                            <tr style="background: #f8fafc; font-weight: bold;">
+                                <th style="border: 1px solid #000; padding: 4px 6px; width: 35px; text-align: center;">No.</th>
+                                <th style="border: 1px solid #000; padding: 4px 8px; text-align: center;">Pemeriksaan</th>
+                                <th style="border: 1px solid #000; padding: 4px 6px; width: 45px; text-align: center;">Ya</th>
+                                <th style="border: 1px solid #000; padding: 4px 6px; width: 50px; text-align: center;">Tidak</th>
+                                <th style="border: 1px solid #000; padding: 4px 8px; width: 220px; text-align: center;">Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">1</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Bak truck dalam kondisi bersih</td>
+                                <td id="iso-cpo-c1-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-c1-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-c1-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">2</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Bebas sisa muatan sebelumnya</td>
+                                <td id="iso-cpo-c2-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-c2-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-c2-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">3</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Bebas kontaminasi (kayu, besi, logam, batu, dll</td>
+                                <td id="iso-cpo-c3-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-c3-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-c3-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">4</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Terpal bersih, utuh dan kering</td>
+                                <td id="iso-cpo-c4-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-c4-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-c4-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">5</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Tidak terdapat jamur atau bauk busuk</td>
+                                <td id="iso-cpo-c5-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-c5-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-c5-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">6</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Tidak terdapat kebocoran oli/grease</td>
+                                <td id="iso-cpo-c6-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-c6-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-c6-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">7</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Manhole, Valve dan seal berfungsi baik</td>
+                                <td id="iso-cpo-c7-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-c7-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-c7-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000; text-align: center;">8</td>
+                                <td style="border: 1px solid #000; padding: 3px 6px;">Cek muatan truck yang dianggap mencurigakan</td>
+                                <td id="iso-cpo-c8-ya" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-c8-tidak" style="border: 1px solid #000; text-align: center; font-weight: bold;"></td>
+                                <td id="iso-cpo-c8-note" style="border: 1px solid #000; padding: 3px 6px;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Kesimpulan Status Kelayakan -->
+                <div style="margin-bottom: 16px; border: 1.5px solid #000; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-weight: bold; font-size: 11.5px;">KESIMPULAN KELAYAKAN KENDARAAN:</div>
+                    <div id="iso-cpo-status-badge" style="font-weight: 900; font-size: 13px; text-transform: uppercase;">LAYAK</div>
+                </div>
+
+                <!-- Tanda Tangan 2-Tier -->
+                <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 11px;">
+                    <tr>
+                        <td style="width: 50%; text-align: center; border: none; vertical-align: top;">
+                            <div style="font-weight: bold; margin-bottom: 45px;">Diperiksa oleh</div>
+                            <div style="font-weight: bold;" id="iso-sign-cpo-inspector">Security</div>
+                        </td>
+                        <td style="width: 50%; text-align: center; border: none; vertical-align: top;">
+                            <div style="font-weight: bold; margin-bottom: 45px;">Diketahui Oleh</div>
+                            <div style="font-weight: bold;" id="iso-sign-cpo-acknowledged">OA/MA/MHA/MM</div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+`;
+
+// Global State
+window.activeHaccpSubTab = 'hygiene';
+window.haccpHygieneData = [];
+window.haccpCpoData = [];
+
+// Sub-Tab Switcher
+window.switchHaccpSubTab = function(tabId) {
+    window.activeHaccpSubTab = tabId;
+    
+    // Deactivate all
+    document.querySelectorAll('#view-container .subsheet-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = '#e2e8f0';
+        btn.style.color = '#475569';
+    });
+    document.querySelectorAll('#view-container .subsheet-content').forEach(c => {
+        c.classList.remove('active');
+        c.style.display = 'none';
+    });
+    
+    // Activate target
+    const btn = document.getElementById('tab-btn-haccp-' + (tabId === 'cpo_tank' ? 'cpo-tank' : 'hygiene'));
+    if (btn) {
+        btn.classList.add('active');
+        btn.style.background = '#0284c7';
+        btn.style.color = '#ffffff';
+    }
+    
+    const content = document.getElementById('haccp-subsheet-' + (tabId === 'cpo_tank' ? 'cpo-tank' : 'hygiene'));
+    if (content) {
+        content.classList.add('active');
+        content.style.display = 'block';
+    }
+    
+    // Load data for active tab
+    if (tabId === 'hygiene') {
+        window.loadHaccpHygieneData();
+    } else if (tabId === 'cpo_tank') {
+        window.loadHaccpCpoData();
+    }
+};
+
+window.renderHACCPView = function() {
+    const today = window.getLocalDate ? window.getLocalDate() : new Date().toISOString().split('T')[0];
+    
+    // Init date inputs if empty
+    const hStart = document.getElementById('haccp-hygiene-start-date');
+    const hEnd = document.getElementById('haccp-hygiene-end-date');
+    if (hStart && !hStart.value) {
+        const d = new Date();
+        d.setDate(d.getDate() - 7);
+        hStart.value = d.toISOString().split('T')[0];
+    }
+    if (hEnd && !hEnd.value) {
+        hEnd.value = today;
+    }
+    
+    const cStart = document.getElementById('haccp-cpo-start-date');
+    const cEnd = document.getElementById('haccp-cpo-end-date');
+    if (cStart && !cStart.value) {
+        const d = new Date();
+        d.setDate(d.getDate() - 7);
+        cStart.value = d.toISOString().split('T')[0];
+    }
+    if (cEnd && !cEnd.value) {
+        cEnd.value = today;
+    }
+
+    window.switchHaccpSubTab(window.activeHaccpSubTab || 'hygiene');
+};
+
+// =========================================================================
+// 1. PERSONAL HYGIENE FUNCTIONS
+// =========================================================================
+
+window.loadHaccpHygieneData = async function() {
+    const tbody = document.getElementById('haccp-hygiene-tbody');
+    const countBadge = document.getElementById('haccp-hygiene-count-badge');
+    const startDate = document.getElementById('haccp-hygiene-start-date')?.value;
+    const endDate = document.getElementById('haccp-hygiene-end-date')?.value;
+    
+    if (!startDate || !endDate) return;
+    
+    if (tbody) tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 25px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data kuesioner tamu...</td></tr>';
+    
+    try {
+        const mill = (window.currentUser && window.currentUser.estate) ? window.currentUser.estate : 'Bunga Tanjung Mill';
+        const res = await fetch(`${API_URL}/haccp/personal-hygiene/range/${encodeURIComponent(mill)}/${startDate}/${endDate}`);
+        const data = await res.json();
+        
+        if (!Array.isArray(data)) throw new Error(data.error || 'Format data salah');
+        
+        window.haccpHygieneData = data;
+        if (countBadge) countBadge.innerText = `${data.length} Tamu Terdata`;
+        
+        if (data.length === 0) {
+            if (tbody) tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px; color: #94a3b8;">Belum ada kuesioner kesehatan tamu pada periode ini. Klik <b>+ Input Kuesioner Tamu</b> untuk menambahkan.</td></tr>';
+            return;
+        }
+        
+        const canDelete = window.hasPermission ? window.hasPermission('haccp', 'delete') : true;
+        
+        let html = '';
+        data.forEach((item, index) => {
+            const isAllowed = parseInt(item.is_allowed) === 1;
+            const badge = isAllowed 
+                ? '<span style="background: #dcfce7; color: #15803d; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle-check"></i> Boleh Masuk</span>'
+                : '<span style="background: #fee2e2; color: #b91c1c; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle-xmark"></i> Tidak Boleh</span>';
+            
+            html += `
+                <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 8px 10px; text-align: center; color: #64748b; font-weight: 600;">${index + 1}</td>
+                    <td style="padding: 8px 10px; text-align: center; font-weight: 500;">${item.date}</td>
+                    <td style="padding: 8px 10px; text-align: center; color: #475569;">${item.time_in || '-'}</td>
+                    <td style="padding: 8px 10px;">
+                        <a href="javascript:void(0)" onclick="viewHaccpHygieneLogsheet(${item.id})" style="color: #0284c7; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                            <i class="fa-solid fa-file-signature"></i> ${item.name}
+                        </a>
+                    </td>
+                    <td style="padding: 8px 10px; color: #334155;">${item.institution || '-'}</td>
+                    <td style="padding: 8px 10px; color: #334155;">${item.purpose || '-'}</td>
+                    <td style="padding: 8px 10px; color: #475569;">${item.target_area || '-'}</td>
+                    <td style="padding: 8px 10px; text-align: center;">${badge}</td>
+                    <td style="padding: 8px 10px; text-align: center;">
+                        <div style="display: flex; gap: 6px; justify-content: center;">
+                            <button class="btn btn-secondary btn-sm" onclick="viewHaccpHygieneLogsheet(${item.id})" title="Lihat & Print Logsheet" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 4px;">
+                                <i class="fa-solid fa-print"></i> Print
+                            </button>
+                            ${canDelete ? `
+                            <button class="btn btn-danger btn-sm" onclick="deleteHaccpHygieneData(${item.id})" title="Hapus" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; background: #ef4444; color: #fff;">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        if (tbody) tbody.innerHTML = html;
+    } catch (err) {
+        console.error('Error loading HACCP hygiene data:', err);
+        if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 25px; color: red;">Gagal memuat data: ${err.message}</td></tr>`;
+    }
+};
+
+window.openHaccpHygieneInputModal = function() {
+    const modal = document.getElementById('modal-haccp-hygiene-input');
+    if (!modal) return;
+    
+    // Set default values
+    const today = window.getLocalDate ? window.getLocalDate() : new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    
+    const dInput = document.getElementById('hygiene-input-date');
+    const tInput = document.getElementById('hygiene-input-time');
+    const oInput = document.getElementById('hygiene-input-officer');
+    
+    if (dInput) dInput.value = today;
+    if (tInput) tInput.value = timeStr;
+    if (oInput) oInput.value = (window.currentUser && window.currentUser.username) ? window.currentUser.username : 'Security';
+    
+    window.setAllHygieneQuestions('tidak');
+    modal.style.display = 'block';
+};
+
+window.closeHaccpHygieneInputModal = function() {
+    const modal = document.getElementById('modal-haccp-hygiene-input');
+    if (modal) modal.style.display = 'none';
+};
+
+window.setAllHygieneQuestions = function(val) {
+    const qNames = ['q_demam', 'q_batuk', 'q_diare', 'q_luka', 'q_tifus', 'q_obat', 'q_hepatitis', 'q_jaundice', 'q_kontak_hep'];
+    qNames.forEach(q => {
+        const el = document.querySelector(`input[name="${q}"][value="${val}"]`);
+        if (el) el.checked = true;
+    });
+};
+
+window.saveHaccpHygieneData = async function(event) {
+    if (event) event.preventDefault();
+    
+    const submitBtn = document.getElementById('btn-save-haccp-hygiene');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+    }
+    
+    try {
+        const mill = (window.currentUser && window.currentUser.estate) ? window.currentUser.estate : 'Bunga Tanjung Mill';
+        const date = document.getElementById('hygiene-input-date')?.value;
+        const time_in = document.getElementById('hygiene-input-time')?.value;
+        const name = document.getElementById('hygiene-input-name')?.value;
+        const institution = document.getElementById('hygiene-input-institution')?.value;
+        const purpose = document.getElementById('hygiene-input-purpose')?.value;
+        const target_area = document.getElementById('hygiene-input-target-area')?.value;
+        
+        const getRadioVal = (rName) => {
+            const el = document.querySelector(`input[name="${rName}"]:checked`);
+            return el ? el.value : 'tidak';
+        };
+        
+        const q_demam = getRadioVal('q_demam');
+        const q_batuk = getRadioVal('q_batuk');
+        const q_diare = getRadioVal('q_diare');
+        const q_luka = getRadioVal('q_luka');
+        const q_tifus = getRadioVal('q_tifus');
+        const q_obat = getRadioVal('q_obat');
+        const q_hepatitis = getRadioVal('q_hepatitis');
+        const q_jaundice = getRadioVal('q_jaundice');
+        const q_kontak_hep = getRadioVal('q_kontak_hep');
+        
+        const is_allowed = parseInt(document.querySelector('input[name="is_allowed"]:checked')?.value || '1');
+        const notes = document.getElementById('hygiene-input-notes')?.value || '';
+        const officer_name = document.getElementById('hygiene-input-officer')?.value || '';
+        
+        const payload = {
+            mill, date, time_in, name, institution, purpose, target_area,
+            q_demam, q_batuk, q_diare, q_luka, q_tifus, q_obat,
+            q_hepatitis, q_jaundice, q_kontak_hep,
+            is_allowed, notes, officer_name
+        };
+        
+        const res = await fetch(`${API_URL}/haccp/personal-hygiene`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await res.json();
+        if (!res.ok || result.error) throw new Error(result.error || 'Gagal menyimpan data');
+        
+        alert('Data Kuesioner Kesehatan Tamu berhasil disimpan!');
+        window.closeHaccpHygieneInputModal();
+        document.getElementById('form-haccp-hygiene')?.reset();
+        window.loadHaccpHygieneData();
+    } catch (err) {
+        console.error('Error saving HACCP hygiene data:', err);
+        alert('Gagal menyimpan: ' + err.message);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Kuesioner';
+        }
+    }
+};
+
+window.deleteHaccpHygieneData = async function(id) {
+    if (!confirm('Apakah Anda yakin ingin menghapus data kuesioner tamu ini?')) return;
+    try {
+        const res = await fetch(`${API_URL}/haccp/personal-hygiene/${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        if (!res.ok || result.error) throw new Error(result.error || 'Gagal menghapus');
+        window.loadHaccpHygieneData();
+    } catch (err) {
+        alert('Gagal menghapus: ' + err.message);
+    }
+};
+
+window.viewHaccpHygieneLogsheet = function(id) {
+    const item = window.haccpHygieneData.find(d => d.id == id);
+    if (!item) {
+        alert('Data tidak ditemukan');
+        return;
+    }
+    
+    // Populate modal ISO fields
+    const setElem = (elemId, val) => {
+        const el = document.getElementById(elemId);
+        if (el) el.innerText = val || '-';
+    };
+    
+    setElem('iso-hygiene-name', item.name);
+    setElem('iso-hygiene-institution', item.institution);
+    setElem('iso-hygiene-purpose', item.purpose);
+    setElem('iso-hygiene-target-area', item.target_area);
+    setElem('iso-hygiene-date', item.date);
+    setElem('iso-hygiene-time', item.time_in ? item.time_in + ' WIB' : '-');
+    
+    const setCheck = (qField, yaId, tidakId) => {
+        const isYa = (item[qField] || '').toLowerCase() === 'ya';
+        const elYa = document.getElementById(yaId);
+        const elTidak = document.getElementById(tidakId);
+        if (elYa) elYa.innerHTML = isYa ? '&#10003;' : '';
+        if (elTidak) elTidak.innerHTML = !isYa ? '&#10003;' : '';
+    };
+    
+    setCheck('q_demam', 'iso-q-demam-ya', 'iso-q-demam-tidak');
+    setCheck('q_batuk', 'iso-q-batuk-ya', 'iso-q-batuk-tidak');
+    setCheck('q_diare', 'iso-q-diare-ya', 'iso-q-diare-tidak');
+    setCheck('q_luka', 'iso-q-luka-ya', 'iso-q-luka-tidak');
+    setCheck('q_tifus', 'iso-q-tifus-ya', 'iso-q-tifus-tidak');
+    setCheck('q_obat', 'iso-q-obat-ya', 'iso-q-obat-tidak');
+    setCheck('q_hepatitis', 'iso-q-hepatitis-ya', 'iso-q-hepatitis-tidak');
+    setCheck('q_jaundice', 'iso-q-jaundice-ya', 'iso-q-jaundice-tidak');
+    setCheck('q_kontak_hep', 'iso-q-kontak_hep-ya', 'iso-q-kontak_hep-tidak');
+    
+    setElem('iso-sign-guest-name', `( ${item.name || '...................................'} )`);
+    setElem('iso-sign-guest-date', item.date || '____ / ____ / ________');
+    
+    const isAllowed = parseInt(item.is_allowed) === 1;
+    const decEl = document.getElementById('iso-officer-decision');
+    if (decEl) {
+        decEl.innerText = isAllowed ? 'YA (Diperbolehkan Masuk)' : 'TIDAK (Dilarang Masuk)';
+        decEl.style.color = isAllowed ? '#15803d' : '#b91c1c';
+        decEl.style.borderColor = isAllowed ? '#15803d' : '#b91c1c';
+    }
+    
+    setElem('iso-officer-notes', item.notes || '-');
+    setElem('iso-sign-officer-name', `( ${item.officer_name || 'Security'} )`);
+    setElem('iso-sign-officer-date', item.date || '____ / ____ / ________');
+    
+    const modal = document.getElementById('modal-haccp-hygiene-view');
+    if (modal) modal.style.display = 'block';
+};
+
+window.closeHaccpHygieneViewModal = function() {
+    const modal = document.getElementById('modal-haccp-hygiene-view');
+    if (modal) modal.style.display = 'none';
+};
+
+window.printHaccpHygieneRecap = function() {
+    window.printTable('haccp-hygiene-table-wrapper', 'Rekap Kuesioner Kesehatan Tamu PKS (Personal Hygiene)');
+};
+
+
+// =========================================================================
+// 2. PEMERIKSAAN TANKI CPO FUNCTIONS
+// =========================================================================
+
+window.loadHaccpCpoData = async function() {
+    const tbody = document.getElementById('haccp-cpo-tbody');
+    const countBadge = document.getElementById('haccp-cpo-count-badge');
+    const startDate = document.getElementById('haccp-cpo-start-date')?.value;
+    const endDate = document.getElementById('haccp-cpo-end-date')?.value;
+    
+    if (!startDate || !endDate) return;
+    
+    if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 25px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data pemeriksaan tanki...</td></tr>';
+    
+    try {
+        const mill = (window.currentUser && window.currentUser.estate) ? window.currentUser.estate : 'Bunga Tanjung Mill';
+        const res = await fetch(`${API_URL}/haccp/cpo-tank/range/${encodeURIComponent(mill)}/${startDate}/${endDate}`);
+        const data = await res.json();
+        
+        if (!Array.isArray(data)) throw new Error(data.error || 'Format data salah');
+        
+        window.haccpCpoData = data;
+        if (countBadge) countBadge.innerText = `${data.length} Kendaraan Terperiksa`;
+        
+        if (data.length === 0) {
+            if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: #94a3b8;">Belum ada data pemeriksaan tanki CPO pada periode ini. Klik <b>+ Input Pemeriksaan Tanki</b> untuk menambahkan.</td></tr>';
+            return;
+        }
+        
+        const canDelete = window.hasPermission ? window.hasPermission('haccp', 'delete') : true;
+        
+        let html = '';
+        data.forEach((item, index) => {
+            const isLayak = (item.status_kelayakan || '').toLowerCase() === 'layak';
+            const badge = isLayak 
+                ? '<span style="background: #dcfce7; color: #15803d; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle-check"></i> Layak</span>'
+                : '<span style="background: #fee2e2; color: #b91c1c; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle-xmark"></i> Tidak Layak</span>';
+            
+            html += `
+                <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 8px 10px; text-align: center; color: #64748b; font-weight: 600;">${index + 1}</td>
+                    <td style="padding: 8px 10px; text-align: center; font-weight: 500;">${item.date}</td>
+                    <td style="padding: 8px 10px; text-align: center; color: #475569;">${item.time_check || '-'}</td>
+                    <td style="padding: 8px 10px;">
+                        <a href="javascript:void(0)" onclick="viewHaccpCpoLogsheet(${item.id})" style="color: #0284c7; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                            <i class="fa-solid fa-truck-front"></i> ${item.driver_name}
+                        </a>
+                    </td>
+                    <td style="padding: 8px 10px; text-align: center; color: #334155;"><span class="badge" style="background:#f1f5f9; color:#334155; padding:3px 8px; border-radius:4px;">${item.vehicle_type || 'Truck'}</span></td>
+                    <td style="padding: 8px 10px; text-align: center; font-weight: 700; color: #0f172a;">${item.vehicle_no || '-'}</td>
+                    <td style="padding: 8px 10px; text-align: center;">${badge}</td>
+                    <td style="padding: 8px 10px; text-align: center;">
+                        <div style="display: flex; gap: 6px; justify-content: center;">
+                            <button class="btn btn-secondary btn-sm" onclick="viewHaccpCpoLogsheet(${item.id})" title="Lihat & Print Logsheet" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 4px;">
+                                <i class="fa-solid fa-print"></i> Print
+                            </button>
+                            ${canDelete ? `
+                            <button class="btn btn-danger btn-sm" onclick="deleteHaccpCpoData(${item.id})" title="Hapus" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; background: #ef4444; color: #fff;">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        if (tbody) tbody.innerHTML = html;
+    } catch (err) {
+        console.error('Error loading HACCP CPO data:', err);
+        if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 25px; color: red;">Gagal memuat data: ${err.message}</td></tr>`;
+    }
+};
+
+window.openHaccpCpoInputModal = function() {
+    const modal = document.getElementById('modal-haccp-cpo-input');
+    if (!modal) return;
+    
+    const today = window.getLocalDate ? window.getLocalDate() : new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    
+    const dInput = document.getElementById('cpo-input-date');
+    const tInput = document.getElementById('cpo-input-time');
+    if (dInput) dInput.value = today;
+    if (tInput) tInput.value = timeStr;
+    
+    window.setAllCpoChecklist('ya');
+    modal.style.display = 'block';
+};
+
+window.closeHaccpCpoInputModal = function() {
+    const modal = document.getElementById('modal-haccp-cpo-input');
+    if (modal) modal.style.display = 'none';
+};
+
+window.setAllCpoChecklist = function(val) {
+    const prefixes = ['cpo_a1', 'cpo_a2', 'cpo_b1', 'cpo_b2', 'cpo_b3', 'cpo_b4', 'cpo_b5', 'cpo_b6', 'cpo_b7', 'cpo_b8', 'cpo_c1', 'cpo_c2', 'cpo_c3', 'cpo_c4', 'cpo_c5', 'cpo_c6', 'cpo_c7', 'cpo_c8'];
+    prefixes.forEach(p => {
+        const el = document.querySelector(`input[name="${p}"][value="${val}"]`);
+        if (el) el.checked = true;
+    });
+};
+
+window.saveHaccpCpoData = async function(event) {
+    if (event) event.preventDefault();
+    
+    const submitBtn = document.getElementById('btn-save-haccp-cpo');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+    }
+    
+    try {
+        const mill = (window.currentUser && window.currentUser.estate) ? window.currentUser.estate : 'Bunga Tanjung Mill';
+        const date = document.getElementById('cpo-input-date')?.value;
+        const time_check = document.getElementById('cpo-input-time')?.value;
+        const vehicle_type = document.getElementById('cpo-input-vehicle-type')?.value || 'Truck';
+        const vehicle_no = document.getElementById('cpo-input-vehicle-no')?.value || '';
+        const driver_name = document.getElementById('cpo-input-driver-name')?.value || '';
+        
+        const getRadio = (name) => {
+            const el = document.querySelector(`input[name="${name}"]:checked`);
+            return el ? el.value : 'ya';
+        };
+        const getNote = (id) => document.getElementById(id)?.value || '';
+        
+        const checklist_data = {
+            a1: { status: getRadio('cpo_a1'), note: getNote('cpo_a1_note') },
+            a2: { status: getRadio('cpo_a2'), note: getNote('cpo_a2_note') },
+            b1: { status: getRadio('cpo_b1'), note: getNote('cpo_b1_note') },
+            b2: { status: getRadio('cpo_b2'), note: getNote('cpo_b2_note') },
+            b3: { status: getRadio('cpo_b3'), note: getNote('cpo_b3_note') },
+            b4: { status: getRadio('cpo_b4'), note: getNote('cpo_b4_note') },
+            b5: { status: getRadio('cpo_b5'), note: getNote('cpo_b5_note') },
+            b6: { status: getRadio('cpo_b6'), note: getNote('cpo_b6_note') },
+            b7: { status: getRadio('cpo_b7'), note: getNote('cpo_b7_note') },
+            b8: { status: getRadio('cpo_b8'), note: getNote('cpo_b8_note') },
+            c1: { status: getRadio('cpo_c1'), note: getNote('cpo_c1_note') },
+            c2: { status: getRadio('cpo_c2'), note: getNote('cpo_c2_note') },
+            c3: { status: getRadio('cpo_c3'), note: getNote('cpo_c3_note') },
+            c4: { status: getRadio('cpo_c4'), note: getNote('cpo_c4_note') },
+            c5: { status: getRadio('cpo_c5'), note: getNote('cpo_c5_note') },
+            c6: { status: getRadio('cpo_c6'), note: getNote('cpo_c6_note') },
+            c7: { status: getRadio('cpo_c7'), note: getNote('cpo_c7_note') },
+            c8: { status: getRadio('cpo_c8'), note: getNote('cpo_c8_note') }
+        };
+        
+        const status_kelayakan = document.querySelector('input[name="status_kelayakan"]:checked')?.value || 'Layak';
+        const inspector_name = document.getElementById('cpo-input-inspector')?.value || 'Security';
+        const acknowledged_by = document.getElementById('cpo-input-acknowledged')?.value || 'OA/MA/MHA/MM';
+        const notes = document.getElementById('cpo-input-notes')?.value || '';
+        
+        const payload = {
+            mill, date, time_check, vehicle_type, vehicle_no, driver_name,
+            checklist_data, status_kelayakan, inspector_name, acknowledged_by, notes
+        };
+        
+        const res = await fetch(`${API_URL}/haccp/cpo-tank`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await res.json();
+        if (!res.ok || result.error) throw new Error(result.error || 'Gagal menyimpan data');
+        
+        alert('Data Pemeriksaan Kebersihan Transport CPO - PK berhasil disimpan!');
+        window.closeHaccpCpoInputModal();
+        document.getElementById('form-haccp-cpo')?.reset();
+        window.loadHaccpCpoData();
+    } catch (err) {
+        console.error('Error saving HACCP CPO data:', err);
+        alert('Gagal menyimpan: ' + err.message);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Hasil Pemeriksaan';
+        }
+    }
+};
+
+window.deleteHaccpCpoData = async function(id) {
+    if (!confirm('Apakah Anda yakin ingin menghapus data pemeriksaan transport ini?')) return;
+    try {
+        const res = await fetch(`${API_URL}/haccp/cpo-tank/${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        if (!res.ok || result.error) throw new Error(result.error || 'Gagal menghapus');
+        window.loadHaccpCpoData();
+    } catch (err) {
+        alert('Gagal menghapus: ' + err.message);
+    }
+};
+
+window.viewHaccpCpoLogsheet = function(id) {
+    const item = window.haccpCpoData.find(d => d.id == id);
+    if (!item) {
+        alert('Data tidak ditemukan');
+        return;
+    }
+    
+    let chk = {};
+    try {
+        chk = typeof item.checklist_data === 'string' ? JSON.parse(item.checklist_data) : (item.checklist_data || {});
+    } catch (e) {
+        chk = {};
+    }
+    
+    const setElem = (elemId, val) => {
+        const el = document.getElementById(elemId);
+        if (el) el.innerText = val || '';
+    };
+    
+    setElem('iso-cpo-date', item.date);
+    setElem('iso-cpo-vehicle-type', item.vehicle_type || 'Truck');
+    setElem('iso-cpo-vehicle-no', item.vehicle_no);
+    setElem('iso-cpo-driver-name', item.driver_name);
+    setElem('iso-cpo-time', item.time_check ? item.time_check + ' WIB' : '-');
+    
+    const setRow = (key, yaId, tidakId, noteId) => {
+        const data = chk[key] || { status: 'ya', note: '' };
+        const isYa = (data.status || '').toLowerCase() === 'ya';
+        const elYa = document.getElementById(yaId);
+        const elTidak = document.getElementById(tidakId);
+        const elNote = document.getElementById(noteId);
+        if (elYa) elYa.innerHTML = isYa ? '&#10003;' : '';
+        if (elTidak) elTidak.innerHTML = !isYa ? '&#10003;' : '';
+        if (elNote) elNote.innerText = data.note || '';
+    };
+    
+    setRow('a1', 'iso-cpo-a1-ya', 'iso-cpo-a1-tidak', 'iso-cpo-a1-note');
+    setRow('a2', 'iso-cpo-a2-ya', 'iso-cpo-a2-tidak', 'iso-cpo-a2-note');
+    
+    setRow('b1', 'iso-cpo-b1-ya', 'iso-cpo-b1-tidak', 'iso-cpo-b1-note');
+    setRow('b2', 'iso-cpo-b2-ya', 'iso-cpo-b2-tidak', 'iso-cpo-b2-note');
+    setRow('b3', 'iso-cpo-b3-ya', 'iso-cpo-b3-tidak', 'iso-cpo-b3-note');
+    setRow('b4', 'iso-cpo-b4-ya', 'iso-cpo-b4-tidak', 'iso-cpo-b4-note');
+    setRow('b5', 'iso-cpo-b5-ya', 'iso-cpo-b5-tidak', 'iso-cpo-b5-note');
+    setRow('b6', 'iso-cpo-b6-ya', 'iso-cpo-b6-tidak', 'iso-cpo-b6-note');
+    setRow('b7', 'iso-cpo-b7-ya', 'iso-cpo-b7-tidak', 'iso-cpo-b7-note');
+    setRow('b8', 'iso-cpo-b8-ya', 'iso-cpo-b8-tidak', 'iso-cpo-b8-note');
+    
+    setRow('c1', 'iso-cpo-c1-ya', 'iso-cpo-c1-tidak', 'iso-cpo-c1-note');
+    setRow('c2', 'iso-cpo-c2-ya', 'iso-cpo-c2-tidak', 'iso-cpo-c2-note');
+    setRow('c3', 'iso-cpo-c3-ya', 'iso-cpo-c3-tidak', 'iso-cpo-c3-note');
+    setRow('c4', 'iso-cpo-c4-ya', 'iso-cpo-c4-tidak', 'iso-cpo-c4-note');
+    setRow('c5', 'iso-cpo-c5-ya', 'iso-cpo-c5-tidak', 'iso-cpo-c5-note');
+    setRow('c6', 'iso-cpo-c6-ya', 'iso-cpo-c6-tidak', 'iso-cpo-c6-note');
+    setRow('c7', 'iso-cpo-c7-ya', 'iso-cpo-c7-tidak', 'iso-cpo-c7-note');
+    setRow('c8', 'iso-cpo-c8-ya', 'iso-cpo-c8-tidak', 'iso-cpo-c8-note');
+    
+    const isLayak = (item.status_kelayakan || '').toLowerCase() === 'layak';
+    const stEl = document.getElementById('iso-cpo-status-badge');
+    if (stEl) {
+        stEl.innerText = isLayak ? 'LAYAK' : 'TIDAK LAYAK';
+        stEl.style.color = isLayak ? '#15803d' : '#b91c1c';
+    }
+    
+    setElem('iso-sign-cpo-inspector', item.inspector_name || 'Security');
+    setElem('iso-sign-cpo-acknowledged', item.acknowledged_by || 'OA/MA/MHA/MM');
+    
+    const modal = document.getElementById('modal-haccp-cpo-view');
+    if (modal) modal.style.display = 'block';
+};
+
+window.closeHaccpCpoViewModal = function() {
+    const modal = document.getElementById('modal-haccp-cpo-view');
+    if (modal) modal.style.display = 'none';
+};
+
+window.printHaccpCpoRecap = function() {
+    window.printTable('haccp-cpo-table-wrapper', 'Rekap Pemeriksaan Kebersihan Transport CPO - PK');
+};
+
+
+// =========================================================================
+// HACCP DEDICATED ISO PRINT HELPER
+// =========================================================================
+
+window.printHaccpElement = function(elementId, title) {
+    const printContent = document.getElementById(elementId);
+    if (!printContent) return;
+    
+    const printWindow = window.open('', '_blank', 'width=950,height=800');
+    if (!printWindow) {
+        alert('Pop-up terblokir! Izinkan pop-up pada browser Anda untuk mencetak.');
+        return;
+    }
+    
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>${title || 'Dokumentasi HACCP'}</title>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            <style>
+                @page {
+                    size: A4 portrait;
+                    margin: 12mm 15mm;
+                }
+                body {
+                    font-family: 'Arial', 'Helvetica', sans-serif;
+                    color: #000000;
+                    margin: 0;
+                    padding: 0;
+                    background: #ffffff;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
+                * {
+                    box-sizing: border-box;
+                }
+                table {
+                    border-collapse: collapse;
+                    width: 100%;
+                }
+                th, td {
+                    border: 1px solid #000000;
+                    padding: 4px 6px;
+                }
+                .no-border th, .no-border td {
+                    border: none !important;
+                }
+                @media print {
+                    .no-print { display: none !important; }
+                }
+            </style>
+        </head>
+        <body>
+            <div style="padding: 10px;">
+                ${printContent.innerHTML}
+            </div>
+            <script>
+                window.onload = function() {
+                    window.focus();
+                    window.print();
+                    setTimeout(function() { window.close(); }, 500);
+                };
+            </script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+};
+
