@@ -4,11 +4,12 @@ window.API_URL = window.API_URL || (window.location.protocol === 'file:' ? 'http
 window.API_URL = window.API_URL || (window.location.protocol === 'file:' ? 'http://localhost:3006/api' : '/api');
 if (!window.views) window.views = {};
 window.views = window.views || (typeof views !== 'undefined' ? views : {});
-const views = window.views;
+// const views = window.views;
+window.views = window.views || {};
 
 
 // 1. PROCESSING VIEW
-views.processing = `
+window.views.processing = `
 <div class="content-header">
     <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
         <input type="date" id="p-date" class="form-control" style="width: auto;" onchange="loadProcessingData()">
@@ -817,7 +818,7 @@ window.saveFfaHour = async function() {
 };
 
 // 2. WATER VIEW
-views.water = `
+window.views.water = `
 <div class="content-header">
     <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
         <input type="date" id="w-date" class="form-control" style="width: auto;">
@@ -1290,7 +1291,7 @@ window.saveWaterData = async function(type) {
 };
 
 // 3. FFB QUALITY VIEW
-views.ffb_quality = `
+window.views.ffb_quality = `
 <!-- Sub-Sheet Navigation Tabs -->
 <div class="subsheet-tab-bar">
     <button class="subsheet-tab-btn active" id="tab-btn-ffb-loose" onclick="switchFFBSubTab('loose')">
@@ -3789,7 +3790,7 @@ window.exportMonthlyGradingCSV = function() {
 
 
 // 4. MILL DASHBOARD
-views.mill_dashboard = `
+window.views.mill_dashboard = `
 <div class="animate-fade-in" style="padding-top: 10px;">
 
 <!-- Dashboard Extra Sections (Processing & Water) -->
@@ -4492,7 +4493,7 @@ window.loadDashboardExtraData = async function(dateOverride) {
 // =========================================================================
 
 window.views = window.views || {};
-views.haccp = `
+window.views.haccp = `
 <div class="animate-fade-in" style="padding-bottom: 30px;">
     <!-- Sub-sheet Navigation Tabs -->
     <div class="subsheet-tabs-container" style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; flex-wrap: wrap;">
