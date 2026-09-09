@@ -499,6 +499,10 @@ async function initDB() {
             UNIQUE(role, module)
         )`);
 
+        try {
+            await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_role_permissions_role_module ON role_permissions (role, module)`);
+        } catch (e) {}
+
         const permCount = await pool.query('SELECT count(*) AS count FROM role_permissions');
         if (parseInt(permCount.rows[0].count) === 0) {
             await seedRolePermissions(false);
@@ -826,22 +830,63 @@ const defaultRolePermissionsMap = {
 };
 
 async function seedRolePermissions(force = false) {
+    let client;
     try {
-        if (force) {
-            await pool.query('DELETE FROM role_permissions');
+        if (typeof pool.connect === 'function') {
+            client = await pool.connect();
         }
+        const runner = client || pool;
+
+        await runner.query('BEGIN');
+
+        if (force) {
+            await runner.query('DELETE FROM role_permissions');
+        }
+
+        const items = [];
         for (const [role, modules] of Object.entries(defaultRolePermissionsMap)) {
             for (const [module, perms] of Object.entries(modules)) {
-                await pool.query(
-                    `INSERT INTO role_permissions (role, module, can_view, can_input, can_edit, can_delete)
-                     VALUES ($1, $2, $3, $4, $5, $6)
-                     ON CONFLICT(role, module) DO NOTHING`,
-                    [role, module, perms.can_view || 0, perms.can_input || 0, perms.can_edit || 0, perms.can_delete || 0]
-                );
+                items.push({
+                    role,
+                    module,
+                    can_view: perms.can_view || 0,
+                    can_input: perms.can_input || 0,
+                    can_edit: perms.can_edit || 0,
+                    can_delete: perms.can_delete || 0
+                });
             }
         }
-    } catch(err) {
+
+        const chunkSize = 50;
+        for (let i = 0; i < items.length; i += chunkSize) {
+            const chunk = items.slice(i, i + chunkSize);
+            const valueClauses = [];
+            const values = [];
+            let paramIdx = 1;
+
+            chunk.forEach(p => {
+                valueClauses.push(`($${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++})`);
+                values.push(p.role, p.module, p.can_view, p.can_input, p.can_edit, p.can_delete);
+            });
+
+            const queryText = `
+                INSERT INTO role_permissions (role, module, can_view, can_input, can_edit, can_delete)
+                VALUES ${valueClauses.join(', ')}
+                ON CONFLICT (role, module) DO NOTHING
+            `;
+            await runner.query(queryText, values);
+        }
+
+        await runner.query('COMMIT');
+    } catch (err) {
+        if (client) {
+            try { await client.query('ROLLBACK'); } catch (e) {}
+        }
         console.error("Error seeding role_permissions:", err);
+    } finally {
+        if (client && typeof client.release === 'function') {
+            client.release();
+        }
     }
 }
 
@@ -960,29 +1005,63 @@ app.get('/api/permissions', async (req, res) => {
 });
 
 app.post('/api/permissions', async (req, res) => {
+    let client;
     try {
         const { permissions } = req.body;
         if (!Array.isArray(permissions) || permissions.length === 0) {
             return res.status(400).json({ error: 'Data permissions tidak valid' });
         }
-        for (const p of permissions) {
-            // Check if record exists
-            const existing = await pool.query('SELECT id FROM role_permissions WHERE role = $1 AND module = $2', [p.role, p.module]);
-            if (existing.rows.length > 0) {
-                await pool.query(
-                    'UPDATE role_permissions SET can_view = $1, can_input = $2, can_edit = $3, can_delete = $4 WHERE role = $5 AND module = $6',
-                    [p.can_view ? 1 : 0, p.can_input ? 1 : 0, p.can_edit ? 1 : 0, p.can_delete ? 1 : 0, p.role, p.module]
-                );
-            } else {
-                await pool.query(
-                    'INSERT INTO role_permissions (role, module, can_view, can_input, can_edit, can_delete) VALUES ($1, $2, $3, $4, $5, $6)',
-                    [p.role, p.module, p.can_view ? 1 : 0, p.can_input ? 1 : 0, p.can_edit ? 1 : 0, p.can_delete ? 1 : 0]
-                );
-            }
+
+        if (typeof pool.connect === 'function') {
+            client = await pool.connect();
         }
+        const runner = client || pool;
+
+        await runner.query('BEGIN');
+
+        const chunkSize = 50;
+        for (let i = 0; i < permissions.length; i += chunkSize) {
+            const chunk = permissions.slice(i, i + chunkSize);
+            const valueClauses = [];
+            const values = [];
+            let paramIdx = 1;
+
+            chunk.forEach(p => {
+                valueClauses.push(`($${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++})`);
+                values.push(
+                    p.role,
+                    p.module,
+                    p.can_view ? 1 : 0,
+                    p.can_input ? 1 : 0,
+                    p.can_edit ? 1 : 0,
+                    p.can_delete ? 1 : 0
+                );
+            });
+
+            const queryText = `
+                INSERT INTO role_permissions (role, module, can_view, can_input, can_edit, can_delete)
+                VALUES ${valueClauses.join(', ')}
+                ON CONFLICT (role, module) DO UPDATE SET
+                    can_view = EXCLUDED.can_view,
+                    can_input = EXCLUDED.can_input,
+                    can_edit = EXCLUDED.can_edit,
+                    can_delete = EXCLUDED.can_delete
+            `;
+            await runner.query(queryText, values);
+        }
+
+        await runner.query('COMMIT');
         res.json({ success: true, count: permissions.length });
     } catch (err) {
+        if (client) {
+            try { await client.query('ROLLBACK'); } catch (e) {}
+        }
+        console.error('Error saving role_permissions:', err);
         res.status(500).json({ error: err.message });
+    } finally {
+        if (client && typeof client.release === 'function') {
+            client.release();
+        }
     }
 });
 
