@@ -215,6 +215,7 @@ async function initDB() {
         try { await pool.query("ALTER TABLE master_blok ADD COLUMN sph REAL DEFAULT 0"); } catch(e) {}
         try { await pool.query("ALTER TABLE master_blok ADD COLUMN total_stand REAL DEFAULT 0"); } catch(e) {}
         await pool.query(`CREATE TABLE IF NOT EXISTS master_truk (id SERIAL PRIMARY KEY, estate TEXT, plate_number TEXT, supir TEXT)`);
+        await pool.query(`CREATE TABLE IF NOT EXISTS master_pupuk (id SERIAL PRIMARY KEY, estate TEXT, name TEXT)`);
         await pool.query(`CREATE TABLE IF NOT EXISTS master_supir (id SERIAL PRIMARY KEY, estate TEXT, name TEXT)`);
         await pool.query(`CREATE TABLE IF NOT EXISTS master_supply_chain (id SERIAL PRIMARY KEY, mill TEXT, estate TEXT, is_ffb BOOLEAN DEFAULT TRUE, is_efb BOOLEAN DEFAULT TRUE)`);
         try { await pool.query("ALTER TABLE master_supply_chain ADD COLUMN is_ffb BOOLEAN DEFAULT TRUE"); } catch(e) {}
