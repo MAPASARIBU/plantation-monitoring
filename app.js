@@ -7352,6 +7352,9 @@ window.printHistoricalChart = () => {
 
 // Apply draggable logic once DOM is loaded or when opened
 setTimeout(() => {
+    makeDraggable('dashboard-historical-modal', 'dashboard-historical-modal-header');
+}, 1000);
+
 // Helper to initialize all Dashboard date and month inputs to active date/month
 window.initDashboardDefaultDates = function(dateOverride) {
     const today = new Date();
