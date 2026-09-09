@@ -432,6 +432,13 @@ async function initDB() {
                 ('2026-05-30', 'D04', 'MOP Tahap 2', 300, 300)`);
         }
 
+        await pool.query(`CREATE TABLE IF NOT EXISTS harvesting (
+            id SERIAL PRIMARY KEY,
+            block TEXT,
+            targetJanjang REAL,
+            realizedJanjang REAL,
+            bjr REAL
+        )`);
         const hCount = await pool.query('SELECT COUNT(*) FROM harvesting');
         if (parseInt(hCount.rows[0].count) === 0) {
             await pool.query(`INSERT INTO harvesting (block, targetJanjang, realizedJanjang, bjr) VALUES 
