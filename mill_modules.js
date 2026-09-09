@@ -4441,57 +4441,37 @@ window.loadDashboardExtraData = async function(dateOverride) {
         }
     }
 
-    // 1. Render FFB Received Chart safely
-    try {
-        if (typeof window.renderFfbReceivedChart === 'function') {
-            await window.renderFfbReceivedChart();
-        }
-    } catch (e) {
-        console.error('Error in renderFfbReceivedChart:', e);
-    }
-
-    // 2. Render FFB Crop Quality Table safely
-    try {
-        if (typeof window.renderDashFfbCropQuality === 'function') {
-            await window.renderDashFfbCropQuality();
-        }
-    } catch (e) {
-        console.error('Error in renderDashFfbCropQuality:', e);
-    }
-
-    // 3. Render FFB Fruit Loose Table safely
-    try {
-        if (typeof window.renderDashFfbFruitLooseAnalysis === 'function') {
-            await window.renderDashFfbFruitLooseAnalysis();
-        }
-    } catch (e) {
-        console.error('Error in renderDashFfbFruitLooseAnalysis:', e);
-    }
-
-    // 4. Render Monthly Liquid Monitoring Table safely
-    try {
-        if (typeof window.loadMonthlyLiquidMonitoring === 'function') {
-            await window.loadMonthlyLiquidMonitoring(dashMonth);
-        }
-    } catch (e) {
-        console.error('Error in loadMonthlyLiquidMonitoring:', e);
-    }
-
-    // 5. Render Water Sebelum Table safely
-    try {
-        if (typeof window.loadWaterSebelumTable === 'function') {
-            await window.loadWaterSebelumTable(dashMonth);
-        }
-    } catch (e) {
-        console.error('Error in loadWaterSebelumTable:', e);
-    }
-
-    // 6. Render Water Boiler Table safely
-    try {
-        if (typeof window.loadWaterBoilerTable === 'function') {
-            await window.loadWaterBoilerTable(dashMonth);
-        }
-    } catch (e) {
-        console.error('Error in loadWaterBoilerTable:', e);
-    }
+    // Run all dashboard tables in parallel for instant loading
+    await Promise.allSettled([
+        (async () => {
+            if (typeof window.renderFfbReceivedChart === 'function') {
+                await window.renderFfbReceivedChart();
+            }
+        })(),
+        (async () => {
+            if (typeof window.renderDashFfbCropQuality === 'function') {
+                await window.renderDashFfbCropQuality();
+            }
+        })(),
+        (async () => {
+            if (typeof window.renderDashFfbFruitLooseAnalysis === 'function') {
+                await window.renderDashFfbFruitLooseAnalysis();
+            }
+        })(),
+        (async () => {
+            if (typeof window.loadMonthlyLiquidMonitoring === 'function') {
+                await window.loadMonthlyLiquidMonitoring(dashMonth);
+            }
+        })(),
+        (async () => {
+            if (typeof window.loadWaterSebelumTable === 'function') {
+                await window.loadWaterSebelumTable(dashMonth);
+            }
+        })(),
+        (async () => {
+            if (typeof window.loadWaterBoilerTable === 'function') {
+                await window.loadWaterBoilerTable(dashMonth);
+            }
+        })()
+    ]);
 };
