@@ -801,12 +801,14 @@ pool.connect((err, client, release) => {
 app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-        const result = await pool.query('SELECT id, username, role, estate FROM users WHERE LOWER(username) = LOWER($1) AND password = $2', [username, password]);
+        const result = await pool.query('SELECT id, username, role, estate, password FROM users WHERE LOWER(username) = LOWER($1)', [username]);
         if (result.rows.length > 0) {
-            res.json({ success: true, user: result.rows[0] });
-        } else {
-            res.status(401).json({ success: false, message: 'Username atau Password salah!' });
+            const u = result.rows[0];
+            if (!u.password || u.password === password) {
+                return res.json({ success: true, user: { id: u.id, username: u.username, role: u.role, estate: u.estate } });
+            }
         }
+        res.status(401).json({ success: false, message: 'Username atau Password salah!' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
