@@ -14534,7 +14534,10 @@ window.generateReportPrintHtml = ({
     kpis = [],
     sections = [],
     chartCanvasIds = [],
-    insightsListId = null
+    insightsListId = null,
+    customSignatures = null,
+    docCode = null,
+    docRev = '00'
 }) => {
     const printTime = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' });
     const userName = (currentUser && currentUser.name) ? `${currentUser.name} (${currentUser.role || 'Staff'})` : 'Administrator';
@@ -14610,14 +14613,17 @@ window.generateReportPrintHtml = ({
     // 5. Build Charts Grid HTML
     let chartsHtml = '';
     if (chartImages.length > 0) {
+        const isSingle = chartImages.length === 1;
+        const gridCols = isSingle ? '1fr' : 'repeat(auto-fit, minmax(360px, 1fr))';
+        const imgHeight = isSingle ? '280px' : '200px';
         chartsHtml = `
-            <div class="print-charts-grid">
+            <div class="print-charts-grid" style="grid-template-columns: ${gridCols};">
                 ${chartImages.map(c => `
                     <div class="print-chart-box">
                         <h4>${c.title}</h4>
                         ${c.sub ? `<span>${c.sub}</span>` : ''}
-                        <div class="print-chart-img-wrap">
-                            <img src="${c.imgSrc}" alt="${c.title}">
+                        <div class="print-chart-img-wrap" style="height: ${imgHeight};">
+                            <img src="${c.imgSrc}" alt="${c.title}" style="max-height: ${imgHeight}; width: 100%; object-fit: contain;">
                         </div>
                     </div>
                 `).join('')}
@@ -14626,28 +14632,44 @@ window.generateReportPrintHtml = ({
     }
 
     // 6. Signatures Block
-    const signatureHtml = `
-        <div class="print-signatures">
-            <div class="sig-box">
-                <div class="sig-role">Dibuat Oleh:</div>
-                <div class="sig-space"></div>
-                <div class="sig-name">( ${userName} )</div>
-                <div class="sig-title">Krani / Mandor Operasional</div>
+    let signatureHtml = '';
+    if (Array.isArray(customSignatures) && customSignatures.length > 0) {
+        signatureHtml = `
+            <div class="print-signatures" style="grid-template-columns: repeat(${customSignatures.length}, 1fr);">
+                ${customSignatures.map(s => `
+                    <div class="sig-box">
+                        <div class="sig-role">${s.role || 'Dibuat Oleh:'}</div>
+                        <div class="sig-space"></div>
+                        <div class="sig-name">( ${s.name || '........................................'} )</div>
+                        <div class="sig-title">${s.title || ''}</div>
+                    </div>
+                `).join('')}
             </div>
-            <div class="sig-box">
-                <div class="sig-role">Diperiksa Oleh:</div>
-                <div class="sig-space"></div>
-                <div class="sig-name">( ........................................ )</div>
-                <div class="sig-title">Asisten / Asisten Kepala (Askep)</div>
+        `;
+    } else {
+        signatureHtml = `
+            <div class="print-signatures">
+                <div class="sig-box">
+                    <div class="sig-role">Dibuat Oleh:</div>
+                    <div class="sig-space"></div>
+                    <div class="sig-name">( ${userName} )</div>
+                    <div class="sig-title">Krani / Mandor Operasional</div>
+                </div>
+                <div class="sig-box">
+                    <div class="sig-role">Diperiksa Oleh:</div>
+                    <div class="sig-space"></div>
+                    <div class="sig-name">( ........................................ )</div>
+                    <div class="sig-title">Asisten / Asisten Kepala (Askep)</div>
+                </div>
+                <div class="sig-box">
+                    <div class="sig-role">Disetujui Oleh:</div>
+                    <div class="sig-space"></div>
+                    <div class="sig-name">( ........................................ )</div>
+                    <div class="sig-title">Estate Manager / Mill Manager</div>
+                </div>
             </div>
-            <div class="sig-box">
-                <div class="sig-role">Disetujui Oleh:</div>
-                <div class="sig-space"></div>
-                <div class="sig-name">( ........................................ )</div>
-                <div class="sig-title">Estate Manager / Mill Manager</div>
-            </div>
-        </div>
-    `;
+        `;
+    }
 
     return `
 <!DOCTYPE html>
@@ -14907,6 +14929,7 @@ window.generateReportPrintHtml = ({
             <div><strong>Waktu Cetak:</strong> ${printTime}</div>
             <div><strong>Dicetak Oleh:</strong> ${userName}</div>
             <div><strong>Modul:</strong> ${moduleName}</div>
+            ${docCode ? `<div><strong>No. Dokumen:</strong> ${docCode} | <strong>Rev:</strong> ${docRev}</div>` : ''}
         </div>
     </div>
 
@@ -15289,61 +15312,136 @@ window.printHarvestingAnalytics = () => {
     }
 };
 
-// 6. PRINT: FFB QUALITY (Rekapitulasi Monthly Grading)
+// 6. PRINT: FFB QUALITY (Rekapitulasi Summary Monthly Grading 1 Tahun)
 window.printMonthlyGradingReport = () => {
-    const unitName = (currentUser && currentUser.estate) ? currentUser.estate : 'Bunga Tanjung Mill';
-    const yearSelect = document.getElementById('dash-fqc-year');
+    // 1. Resolve Unit Name
+    const headerDropdown = document.getElementById('header-estate-dropdown');
+    let unitName = 'Bunga Tanjung Mill';
+    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill')) {
+        unitName = headerDropdown.value;
+    } else if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill')) {
+        unitName = window.currentUser.estate;
+    } else if (headerDropdown && headerDropdown.value && headerDropdown.value !== '' && !headerDropdown.value.includes('Semua')) {
+        unitName = headerDropdown.value;
+    } else if (window.currentUser && window.currentUser.estate && !window.currentUser.estate.includes('Semua')) {
+        unitName = window.currentUser.estate;
+    }
+
+    // 2. Resolve Year & Parameter Selection
+    const yearSelect = document.getElementById('ffb-monthly-year') || document.getElementById('dash-fqc-year');
     const selectedYear = yearSelect ? yearSelect.value : new Date().getFullYear();
+
+    const paramSelect = document.getElementById('ffb-monthly-param');
+    let paramText = 'Ripe / Buah Matang (%) [Standar Min. 90%]';
+    if (paramSelect && paramSelect.options && paramSelect.selectedIndex >= 0) {
+        paramText = paramSelect.options[paramSelect.selectedIndex].text;
+    }
+
+    // 3. Resolve Executive 4 KPIs from DOM or Cache
+    let topEst = document.getElementById('ffb-kpi-top-estate')?.innerText;
+    let topSub = document.getElementById('ffb-kpi-top-detail')?.innerText;
+    let worstEst = document.getElementById('ffb-kpi-worst-estate')?.innerText;
+    let worstSub = document.getElementById('ffb-kpi-worst-detail')?.innerText;
+    let millAvg = document.getElementById('ffb-kpi-mill-avg')?.innerText;
+    let millSub = document.getElementById('ffb-kpi-mill-target')?.innerText;
+    let compVal = document.getElementById('ffb-kpi-compliance')?.innerText;
+    let compSub = document.getElementById('ffb-kpi-compliance-sub')?.innerText;
+
+    const res = window.ffbMonthlySummaryResult;
+    if (res && res.kpi && (!topEst || topEst === '-')) {
+        topEst = res.kpi.topEstate || topEst;
+        topSub = res.kpi.topDetail || topSub;
+        worstEst = res.kpi.worstEstate || worstEst;
+        worstSub = res.kpi.worstDetail || worstSub;
+        millAvg = res.kpi.millAvg || millAvg;
+        millSub = res.kpi.millTarget || millSub;
+        compVal = res.kpi.compliance || compVal;
+        compSub = res.kpi.complianceSub || compSub;
+    }
 
     const kpis = [
         {
-            title: 'Total Sampel Grading',
-            val: document.getElementById('dash-fqc-tot-sample')?.innerText || '0 Janjang',
-            sub: 'Total Janjang Diperiksa',
-            color: '#0284c7'
-        },
-        {
-            title: 'Total Tonase Masuk',
-            val: `${document.getElementById('dash-fqc-tot-tonase')?.innerText || '0.00'} Ton`,
-            sub: 'Total Suplai Buah',
-            color: '#059669'
-        },
-        {
-            title: 'Rata-rata Buah Masak',
-            val: `${document.getElementById('dash-fqc-tot-ripe')?.innerText || '0.00'}%`,
-            sub: 'Standar Min: 85.00%',
+            title: 'Top Performer Estate',
+            val: topEst || '-',
+            sub: topSub || 'Mutu terbaik tahun ini',
             color: '#16a34a'
         },
         {
-            title: 'Rata-rata Buah Mentah',
-            val: `${document.getElementById('dash-fqc-tot-unripe')?.innerText || '0.00'}%`,
-            sub: 'Maks Toleransi: 5.00%',
+            title: 'Perlu Perhatian',
+            val: worstEst || '-',
+            sub: worstSub || 'Deviasi tertinggi standar',
             color: '#ef4444'
+        },
+        {
+            title: 'Rata-Rata Pabrik (YTD)',
+            val: millAvg || '-',
+            sub: millSub || 'Target Capaian Pabrik',
+            color: '#0284c7'
+        },
+        {
+            title: 'Tingkat Kepatuhan Standar',
+            val: compVal || '-',
+            sub: compSub || 'Bulan lolos batas toleransi',
+            color: '#d97706'
         }
     ];
 
+    // 4. Resolve Table Section (Prefer ffb-monthly-grading-table)
+    const tableId = document.getElementById('ffb-monthly-grading-table') ? 'ffb-monthly-grading-table' : 'dash-fqc-monthly-table';
     const sections = [
         {
-            title: `Rekapitulasi Mutu Kualitas Panen TBS per Estate (Tahun ${selectedYear})`,
-            sub: 'Persentase mutu janjang panen tertimbang berdasarkan tonase penerimaan masing-masing estate.',
-            tableId: 'dash-fqc-monthly-table'
+            title: `Tabel Rekapitulasi Grading Bulanan 1 Tahun - ${paramText}`,
+            sub: `Menampilkan capaian 12 bulan per estate beserta rata-rata tertimbang, target, dan evaluasi trend (Tahun ${selectedYear}).`,
+            tableId: tableId
         }
     ];
 
+    // 5. Resolve Chart Canvas (Prefer chart-ffb-monthly-trend)
+    const chartId = document.getElementById('chart-ffb-monthly-trend') ? 'chart-ffb-monthly-trend' : 'chart-dash-fqc-trend';
     const chartCanvasIds = [
-        { id: 'chart-dash-fqc-trend', title: 'Trend Bulanan Kualitas Buah Masak vs Buah Mentah', sub: 'Perkembangan rasio kematangan buah sepanjang tahun.' }
+        { 
+            id: chartId, 
+            title: `Grafik Trend Kualitas Bulanan (12 Bulan) - ${paramText}`, 
+            sub: 'Perkembangan rasio mutu kriteria panen per estate sepanjang 12 bulan terhadap batas standar toleransi.' 
+        }
+    ];
+
+    // 6. Resolve Smart Diagnostic Insights List
+    const insightsListId = document.getElementById('ffb-monthly-insights-list') ? 'ffb-monthly-insights-list' : null;
+
+    // 7. Custom 3-Tier Signatures Block
+    const userName = (window.currentUser && window.currentUser.name) ? window.currentUser.name : ((window.currentUser && window.currentUser.username) ? window.currentUser.username : 'Operator Grading');
+    const customSignatures = [
+        {
+            role: 'Dibuat Oleh:',
+            title: 'Operator Grading / Krani QC',
+            name: userName
+        },
+        {
+            role: 'Diperiksa Oleh:',
+            title: 'Supervisor Mill',
+            name: '........................................'
+        },
+        {
+            role: 'Disetujui Oleh:',
+            title: 'Manager Mill',
+            name: '........................................'
+        }
     ];
 
     const html = window.generateReportPrintHtml({
-        reportTitle: 'LAPORAN REKAPITULASI MUTU KUALITAS TBS (MONTHLY FFB GRADING)',
-        moduleName: 'FFB Quality Monitoring',
+        reportTitle: `LAPORAN REKAPITULASI SUMMARY MONTHLY GRADING - ${paramText.toUpperCase()}`,
+        moduleName: 'FFB Quality - Summary Monthly Grading',
         unitName,
         dateStr: `Tahun ${selectedYear}`,
-        scopeStr: 'TAHUNAN (1 TAHUN PENUH)',
+        scopeStr: 'TAHUNAN (12 BULAN LENGKAP)',
+        docCode: 'TTI-SOP-MIL-QC-04',
+        docRev: '00',
         kpis,
         sections,
         chartCanvasIds,
-        insightsListId: null
+        insightsListId,
+        customSignatures
     });
 
     const printWin = window.open('', '_blank');
