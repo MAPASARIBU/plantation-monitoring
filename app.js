@@ -409,7 +409,7 @@ function defaultHasPermissionFallback(role, module, action) {
     
     // Manager Mill has full access including delete for mill modules
     if (cleanRole.includes('manager mill') || cleanRole === 'manager mill' || cleanRole === 'managermill') {
-        if (['ffb_quality', 'processing', 'water', 'tonase', 'vehicle', 'mill_dashboard', 'dashboard'].includes(module)) {
+        if (['ffb_quality', 'processing', 'water', 'tonase', 'vehicle', 'mill_dashboard', 'dashboard', 'haccp'].includes(module)) {
             return true;
         }
     }
@@ -443,7 +443,7 @@ const applyRBAC = () => {
     // Default hiding all
     navItems.forEach(item => item.style.display = 'none');
     
-    const allModules = ['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'processing', 'water', 'ffb_quality', 'mill_dashboard', 'master', 'users'];
+    const allModules = ['dashboard', 'vehicle', 'pemupukan', 'upkeep', 'tonase', 'harvesting', 'processing', 'water', 'ffb_quality', 'mill_dashboard', 'haccp', 'master', 'users'];
     allModules.forEach(mod => {
         if (window.hasPermission(mod, 'view')) {
             const el = document.querySelector(`.nav-item[data-view="${mod}"]`);
