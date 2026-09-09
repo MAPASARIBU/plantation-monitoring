@@ -631,17 +631,18 @@ Object.assign(views, {
             <button class="btn btn-success" onclick="if(window.renderDashFfbCropQuality) window.renderDashFfbCropQuality()">Tampilkan</button>
         </div>
     </div>
-    <div class="table-responsive" style="display: flex; justify-content: center; width: 100%; overflow-x: auto;">
+    <div class="table-responsive" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
         <style>
             #dash-ffb-crop-table {
-                width: auto !important;
-                max-width: 900px;
+                width: 100% !important;
+                min-width: 780px;
                 font-size: 0.82rem;
-                border-collapse: collapse;
-                margin: 10px auto 5px auto !important;
+                border-collapse: separate !important;
+                border-spacing: 0 !important;
+                margin: 10px 0 5px 0 !important;
             }
             #dash-ffb-crop-table th, #dash-ffb-crop-table td {
-                padding: 4px 6px !important;
+                padding: 6px 8px !important;
                 text-align: center;
                 border: 1px solid #e2e8f0;
             }
@@ -650,11 +651,37 @@ Object.assign(views, {
                 font-weight: bold;
                 color: #334155;
             }
+            #dash-ffb-crop-table thead tr:first-child th:first-child {
+                position: sticky !important;
+                left: 0 !important;
+                z-index: 6 !important;
+                background-color: #f1f5f9 !important;
+                border-right: 2px solid #cbd5e1 !important;
+                box-shadow: 2px 0 5px rgba(0,0,0,0.08) !important;
+            }
+            #dash-ffb-crop-table tbody td:first-child {
+                position: sticky !important;
+                left: 0 !important;
+                z-index: 4 !important;
+                background-color: #ffffff !important;
+                font-weight: 700 !important;
+                border-right: 2px solid #cbd5e1 !important;
+                box-shadow: 2px 0 5px rgba(0,0,0,0.08) !important;
+            }
+            #dash-ffb-crop-table tfoot tr td:first-child {
+                position: sticky !important;
+                left: 0 !important;
+                z-index: 5 !important;
+                background-color: #f1f5f9 !important;
+                font-weight: 800 !important;
+                border-right: 2px solid #cbd5e1 !important;
+                box-shadow: 2px 0 5px rgba(0,0,0,0.08) !important;
+            }
         </style>
-                <table class="data-table" id="dash-ffb-crop-table">
+        <table class="data-table" id="dash-ffb-crop-table">
             <thead>
                 <tr>
-                    <th rowspan="2" style="width: 80px; min-width: 70px;">ESTATE</th>
+                    <th rowspan="2" style="width: 80px; min-width: 80px;">ESTATE</th>
                     <th rowspan="2" style="width: 75px;">FFB<br><span style="font-size:0.75rem; font-weight:normal;">(TON)</span></th>
                     <th colspan="1" style="width: 80px;">UN RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 0%)</span></th>
                     <th colspan="1" style="width: 90px;">UNDER RIPE<br><span style="font-size:0.75rem; font-weight:normal;">(Max. 3%)</span></th>
@@ -709,17 +736,18 @@ Object.assign(views, {
             <button class="btn btn-success" onclick="if(window.renderDashFfbFruitLooseAnalysis) window.renderDashFfbFruitLooseAnalysis()">Tampilkan</button>
         </div>
     </div>
-    <div class="table-responsive" style="display: flex; justify-content: center; width: 100%; overflow-x: auto;">
+    <div class="table-responsive" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
         <style>
             #dash-ffb-fruit-loose-table {
-                width: auto !important;
-                max-width: 580px;
+                width: 100% !important;
+                min-width: 520px;
                 font-size: 0.82rem;
-                border-collapse: collapse;
-                margin: 10px auto 5px auto !important;
+                border-collapse: separate !important;
+                border-spacing: 0 !important;
+                margin: 10px 0 5px 0 !important;
             }
             #dash-ffb-fruit-loose-table th, #dash-ffb-fruit-loose-table td {
-                padding: 4px 6px !important;
+                padding: 6px 8px !important;
                 text-align: center;
                 border: 1px solid #e2e8f0;
             }
@@ -727,6 +755,32 @@ Object.assign(views, {
                 background-color: #f8fafc;
                 font-weight: bold;
                 color: #334155;
+            }
+            #dash-ffb-fruit-loose-table thead tr:first-child th:first-child {
+                position: sticky !important;
+                left: 0 !important;
+                z-index: 6 !important;
+                background-color: #f1f5f9 !important;
+                border-right: 2px solid #cbd5e1 !important;
+                box-shadow: 2px 0 5px rgba(0,0,0,0.08) !important;
+            }
+            #dash-ffb-fruit-loose-table tbody td:first-child {
+                position: sticky !important;
+                left: 0 !important;
+                z-index: 4 !important;
+                background-color: #ffffff !important;
+                font-weight: 700 !important;
+                border-right: 2px solid #cbd5e1 !important;
+                box-shadow: 2px 0 5px rgba(0,0,0,0.08) !important;
+            }
+            #dash-ffb-fruit-loose-table tfoot tr td:first-child {
+                position: sticky !important;
+                left: 0 !important;
+                z-index: 5 !important;
+                background-color: #f1f5f9 !important;
+                font-weight: 800 !important;
+                border-right: 2px solid #cbd5e1 !important;
+                box-shadow: 2px 0 5px rgba(0,0,0,0.08) !important;
             }
         </style>
         <table class="data-table" id="dash-ffb-fruit-loose-table">
