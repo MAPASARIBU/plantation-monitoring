@@ -28,6 +28,29 @@ app.use(express.static(path.join(__dirname), {
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
+// Load .env file if exists
+const fs = require('fs');
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+    try {
+        const envContent = fs.readFileSync(envPath, 'utf8');
+        envContent.split(/\r?\n/).forEach(line => {
+            const trimmed = line.trim();
+            if (trimmed && !trimmed.startsWith('#')) {
+                const eqIdx = trimmed.indexOf('=');
+                if (eqIdx > 0) {
+                    const key = trimmed.substring(0, eqIdx).trim();
+                    const val = trimmed.substring(eqIdx + 1).trim();
+                    process.env[key] = val;
+                }
+            }
+        });
+        console.log("Loaded environment variables from .env file");
+    } catch (e) {
+        console.error("Error loading .env file:", e.message);
+    }
+}
+
 // Database Setup
 let pool;
 
