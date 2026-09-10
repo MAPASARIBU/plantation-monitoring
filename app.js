@@ -2854,6 +2854,7 @@ Object.assign(views, {
                         <div class="form-group">
                             <label>Role</label>
                             <select id="u-role" class="form-control" required onchange="window.toggleEstateUI('u-role', 'u-estate-dropdown', 'u-estate-container', 'u-estate-label')">
+                                <option>Admin</option>
                                 <option>Director</option>
                                 <option>Senior Field Manager</option>
                                 <option>Senior Mill Manager</option>
@@ -2862,9 +2863,9 @@ Object.assign(views, {
                                 <option>Manager Mill</option>
                                 <option>Supervisor Mill</option>
                                 <option>Askep</option>
+                                <option>Assistant</option>
                                 <option>Office Assistant (OAA)</option>
                                 <option>Office Assistant Mill</option>
-                                <option>Assistant</option>
                                 <option>Mandor</option>
                                 <option>Krani Divisi</option>
                                 <option>Krani Mill</option>
@@ -2872,7 +2873,7 @@ Object.assign(views, {
                                 <option>Analis</option>
                                 <option>Supir</option>
                                 <option>Security</option>
-                                <option>Admin</option>
+                                <option>Security Mill</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -5353,6 +5354,7 @@ window.promptEditUser = (id) => {
                 <div class="form-group">
                     <label>Role</label>
                     <select id="eu-role" class="form-control" onchange="window.toggleEstateUI('eu-role', 'eu-estate-dropdown', 'eu-estate-container', 'eu-estate-label')">
+                        <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Admin</option>
                         <option value="Director" ${user.role === 'Director' ? 'selected' : ''}>Director</option>
                         <option value="Senior Field Manager" ${user.role === 'Senior Field Manager' ? 'selected' : ''}>Senior Field Manager</option>
                         <option value="Senior Mill Manager" ${user.role === 'Senior Mill Manager' ? 'selected' : ''}>Senior Mill Manager</option>
@@ -5369,10 +5371,9 @@ window.promptEditUser = (id) => {
                         <option value="Krani Mill" ${user.role === 'Krani Mill' ? 'selected' : ''}>Krani Mill</option>
                         <option value="Grading" ${user.role === 'Grading' ? 'selected' : ''}>Grading</option>
                         <option value="Analis" ${user.role === 'Analis' ? 'selected' : ''}>Analis</option>
+                        <option value="Supir" ${user.role === 'Supir' ? 'selected' : ''}>Supir</option>
                         <option value="Security" ${user.role === 'Security' ? 'selected' : ''}>Security</option>
                         <option value="Security Mill" ${user.role === 'Security Mill' ? 'selected' : ''}>Security Mill</option>
-                        <option value="Supir" ${user.role === 'Supir' ? 'selected' : ''}>Supir</option>
-                        <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Admin</option>
                     </select>
                 </div>
                 <div class="form-group">
