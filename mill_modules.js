@@ -5562,19 +5562,16 @@ window.switchHaccpSubTab = function(tabId) {
 
 window.renderHACCPView = function() {
     const today = window.getLocalDate ? window.getLocalDate() : new Date().toISOString().split('T')[0];
-    const d = new Date();
-    d.setDate(d.getDate() - 30);
-    const thirtyDaysAgo = d.toISOString().split('T')[0];
     
     // Init date inputs if empty
     const hStart = document.getElementById('haccp-hygiene-start-date');
     const hEnd = document.getElementById('haccp-hygiene-end-date');
-    if (hStart && !hStart.value) hStart.value = thirtyDaysAgo;
+    if (hStart && !hStart.value) hStart.value = today;
     if (hEnd && !hEnd.value) hEnd.value = today;
     
     const cStart = document.getElementById('haccp-cpo-start-date');
     const cEnd = document.getElementById('haccp-cpo-end-date');
-    if (cStart && !cStart.value) cStart.value = thirtyDaysAgo;
+    if (cStart && !cStart.value) cStart.value = today;
     if (cEnd && !cEnd.value) cEnd.value = today;
 
     window.switchHaccpSubTab(window.activeHaccpSubTab || 'hygiene');
@@ -5592,9 +5589,7 @@ window.loadHaccpHygieneData = async function() {
     const today = window.getLocalDate ? window.getLocalDate() : new Date().toISOString().split('T')[0];
     
     if (startInput && !startInput.value) {
-        const d = new Date();
-        d.setDate(d.getDate() - 30);
-        startInput.value = d.toISOString().split('T')[0];
+        startInput.value = today;
     }
     if (endInput && !endInput.value) {
         endInput.value = today;
@@ -5861,9 +5856,7 @@ window.loadHaccpCpoData = async function() {
     const today = window.getLocalDate ? window.getLocalDate() : new Date().toISOString().split('T')[0];
     
     if (startInput && !startInput.value) {
-        const d = new Date();
-        d.setDate(d.getDate() - 30);
-        startInput.value = d.toISOString().split('T')[0];
+        startInput.value = today;
     }
     if (endInput && !endInput.value) {
         endInput.value = today;
