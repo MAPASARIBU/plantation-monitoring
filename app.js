@@ -100,11 +100,19 @@ const loadData = async () => {
 };
 
 const loadUsers = async () => {
-    if (currentUser && currentUser.role === 'Admin') {
+    if (currentUser && (currentUser.role && currentUser.role.toLowerCase() === 'admin')) {
         try {
             const res = await fetch(`${API_URL}/users`);
             if (res.ok) {
-                db.users = await res.json();
+                const allUsers = await res.json();
+                const pmRoles = [
+                    'admin', 'director', 'senior field manager', 'senior mill manager', 
+                    'office head assistant', 'manager', 'manager mill', 'supervisor mill', 
+                    'askep', 'assistant', 'office assistant (oaa)', 'office assistant mill', 
+                    'mandor', 'krani divisi', 'krani mill', 'grading', 'analis', 'supir', 
+                    'security', 'security mill'
+                ];
+                db.users = allUsers.filter(u => u.role && pmRoles.includes(u.role.trim().toLowerCase()));
                 if (document.getElementById('tbody-users')) renderUsersTable();
             }
         } catch (e) { console.error(e); }
@@ -118,7 +126,7 @@ const checkAuth = () => {
     if(savedUser) {
         currentUser = JSON.parse(savedUser);
         if (!currentUser.assignedEstates) {
-            if (currentUser.estate === 'Semua Estate (Khusus Admin)' || currentUser.role === 'Admin' || currentUser.role === 'Director') {
+            if (currentUser.estate === 'Semua Estate (Khusus Admin)' || (currentUser.role && currentUser.role.toLowerCase() === 'admin') || currentUser.role === 'Director') {
                 currentUser.assignedEstates = ['ALL'];
             } else if (currentUser.estate && currentUser.estate !== '-') {
                 currentUser.assignedEstates = currentUser.estate.split(',').map(e => e.trim());
@@ -165,12 +173,12 @@ const checkAuth = () => {
         
         // Load data after auth
         loadData();
-        if (currentUser.role === 'Admin') loadUsers();
+        if ((currentUser.role && currentUser.role.toLowerCase() === 'admin')) loadUsers();
         loadMasterData().then(() => {
             // Navigate based on role
             if(currentUser.role === 'Supir' || currentUser.role === 'Security') {
                 navigate('vehicle');
-            } else if (currentUser.role === 'Admin') {
+            } else if ((currentUser.role && currentUser.role.toLowerCase() === 'admin')) {
                 navigate('users');
             } else {
                 navigate('dashboard');
@@ -2731,18 +2739,7 @@ Object.assign(views, {
                     <h2>Master Data <span class="estate-name-display" style="color:var(--primary); font-weight:bold;"></span></h2>
                     <p>Kelola daftar blok, divisi, truk, pupuk, supir, serta matriks otorisasi role.</p>
                 </div>
-                <!-- Sub Tabs Navigation -->
-                <div style="display:flex; background:#e2e8f0; padding:4px; border-radius:8px; gap:6px;">
-                    <button type="button" id="tab-btn-master-data" class="btn btn-primary" style="border-radius:6px; padding:6px 14px; font-weight:600; font-size:0.85rem;" onclick="window.switchMasterSubTab('data')">
-                        <i class="fa-solid fa-database"></i> Master Data Estate / Mill
-                    </button>
-                    <button type="button" id="tab-btn-master-permissions" class="btn" style="background:transparent; color:#334155; border-radius:6px; padding:6px 14px; font-weight:600; font-size:0.85rem;" onclick="window.switchMasterSubTab('permissions')">
-                        <i class="fa-solid fa-shield-halved"></i> Master Otorisasi Role (RBAC)
-                    </button>
                 </div>
-            </div>
-
-            <!-- SUB-TAB 1: Data Kebun & Mill -->
             <div id="subtab-master-data" style="display:block;">
                 <div class="master-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top:20px;">
                     <!-- Divisi & Blok Hierarchical -->
@@ -2785,8 +2782,138 @@ Object.assign(views, {
                 </div>
             </div>
 
+            </div>
+    `,
+    users: `
+        <div class="animate-fade-in" style="padding-top: 10px;">
+            <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom: 20px;">
+                <div>
+                    <h2>User Management <span class="estate-name-display" style="color:var(--primary); font-weight:bold;"></span></h2>
+                    <p>Kelola daftar user sistem dan matriks otorisasi hak akses role.</p>
+                </div>
+                <!-- Sub Tabs Navigation -->
+                <div style="display:flex; background:#e2e8f0; padding:4px; border-radius:8px; gap:6px;">
+                    <button type="button" id="tab-btn-users-data" class="btn btn-primary" style="border-radius:6px; padding:6px 14px; font-weight:600; font-size:0.85rem;" onclick="window.switchUsersSubTab('data')">
+                        <i class="fa-solid fa-users"></i> Daftar User Sistem
+                    </button>
+                    <button type="button" id="tab-btn-users-permissions" class="btn" style="background:transparent; color:#334155; border-radius:6px; padding:6px 14px; font-weight:600; font-size:0.85rem;" onclick="window.switchUsersSubTab('permissions')">
+                        <i class="fa-solid fa-shield-halved"></i> Matriks Otorisasi Role
+                    </button>
+                </div>
+            </div>
+
+            <!-- SUB-TAB 1: Daftar User Sistem -->
+            <div id="subtab-users-data" style="display:block;">
+                <div id="modal-user-input" class="modal-overlay" style="display:none;">
+                    <div class="modal-content animate-fade-in">
+                        <div class="modal-header">
+                            <h3>Tambah User Baru</h3>
+                            <button type="button" class="modal-close" onclick="document.getElementById('modal-user-input').style.display='none';">&times;</button>
+                        </div>
+                        <form id="form-user" style="margin-top: 20px;">
+                            <div class="form-group">
+                                <label>Username</label>
+                                <input type="text" id="u-username" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Password (Sementara)</label>
+                                <input type="text" id="u-password" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Role</label>
+                                <select id="u-role" class="form-control" required onchange="window.toggleEstateUI('u-role', 'u-estate-dropdown', 'u-estate-container', 'u-estate-label')">
+                                    <option>Admin</option>
+                                    <option>Director</option>
+                                    <option>Senior Field Manager</option>
+                                    <option>Senior Mill Manager</option>
+                                    <option>Office Head Assistant</option>
+                                    <option>Manager</option>
+                                    <option>Manager Mill</option>
+                                    <option>Supervisor Mill</option>
+                                    <option>Askep</option>
+                                    <option>Assistant</option>
+                                    <option>Office Assistant (OAA)</option>
+                                    <option>Office Assistant Mill</option>
+                                    <option>Mandor</option>
+                                    <option>Krani Divisi</option>
+                                    <option>Krani Mill</option>
+                                    <option>Grading</option>
+                                    <option>Analis</option>
+                                    <option>Supir</option>
+                                    <option>Security</option>
+                                    <option>Security Mill</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label id="u-estate-label">Penempatan Estate / Mill (Bisa Pilih Banyak)</label>
+                                <select id="u-estate-dropdown" class="form-control" style="display: none;">
+                                    <option value="" disabled selected>-- Pilih Estate / Mill --</option>
+                                    <option>Semua Estate (Khusus Admin)</option>
+                                    <option>Bunga Tanjung Estate</option>
+                                    <option>Sungai Teramang Estate</option>
+                                    <option>Air Bikuk Estate</option>
+                                    <option>Air Buluh Estate</option>
+                                    <option>Malin Deman Estate</option>
+                                    <option>Batu Kuda Estate</option>
+                                    <option>Sungai Jerinjing Estate</option>
+                                    <option>Muko Muko Estate</option>
+                                    <option>Talang Petai Estate</option>
+                                    <option>Sungai Kiang Estate</option>
+                                    <option>Tanah Rekah Estate</option>
+                                    <option>Air Majunto Estate</option>
+                                    <option>Small Holder</option>
+                                    <option>Bunga Tanjung Mill</option>
+                                    <option>Muko Muko Mill</option>
+                                </select>
+                                <div id="u-estate-container" class="form-control" style="height: 150px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-color);">
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Semua Estate (Khusus Admin)"> Semua Estate (Khusus Admin)</label>
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Bunga Tanjung Estate"> Bunga Tanjung Estate</label>
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Teramang Estate"> Sungai Teramang Estate</label>
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Bikuk Estate"> Air Bikuk Estate</label>
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Buluh Estate"> Air Buluh Estate</label>
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Malin Deman Estate"> Malin Deman Estate</label>
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Batu Kuda Estate"> Batu Kuda Estate</label>
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Jerinjing Estate"> Sungai Jerinjing Estate</label>
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Muko Muko Estate"> Muko Muko Estate</label>
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Talang Petai Estate"> Talang Petai Estate</label>
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Kiang Estate"> Sungai Kiang Estate</label>
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Tanah Rekah Estate"> Tanah Rekah Estate</label>
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Majunto Estate"> Air Majunto Estate</label>
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Small Holder"> Small Holder</label>
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Bunga Tanjung Mill"> Bunga Tanjung Mill</label>
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Muko Muko Mill"> Muko Muko Mill</label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                                <i class="fa-solid fa-user-plus"></i> Tambah User
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="glass-card table-wrapper" style="width: 100%;">
+                    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2>Daftar User Sistem</h2>
+                        <button type="button" class="btn btn-primary" id="btn-input-user" onclick="document.getElementById('modal-user-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Tambah User</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th>ESTATE-MILL</th>
+                                    <th style="width: 80px; text-align: center;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-users"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- SUB-TAB 2: Matriks Otorisasi Role -->
-            <div id="subtab-master-permissions" style="display:none; margin-top:20px;">
+            <div id="subtab-users-permissions" style="display:none; margin-top:20px;">
                 <div class="glass-card" style="padding:20px; border-radius:12px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; border-bottom:1px solid #e2e8f0; padding-bottom:15px; margin-bottom:15px;">
                         <div>
@@ -2830,116 +2957,6 @@ Object.assign(views, {
                     <div id="permissions-matrix-container" style="max-height: calc(100vh - 300px); min-height: 420px; overflow-y: auto; overflow-x: auto; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; position: relative; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
                         <!-- Injected via JavaScript -->
                     </div>
-                </div>
-            </div>
-        </div>
-    `,
-    users: `
-        <div class="animate-fade-in" style="padding-top: 10px;">
-            <div id="modal-user-input" class="modal-overlay" style="display:none;">
-                <div class="modal-content animate-fade-in">
-                    <div class="modal-header">
-                        <h3>Tambah User Baru</h3>
-                        <button type="button" class="modal-close" onclick="document.getElementById('modal-user-input').style.display='none';">&times;</button>
-                    </div>
-                    <form id="form-user" style="margin-top: 20px;">
-                        <div class="form-group">
-                            <label>Username</label>
-                            <input type="text" id="u-username" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Password (Sementara)</label>
-                            <input type="text" id="u-password" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Role</label>
-                            <select id="u-role" class="form-control" required onchange="window.toggleEstateUI('u-role', 'u-estate-dropdown', 'u-estate-container', 'u-estate-label')">
-                                <option>Admin</option>
-                                <option>Director</option>
-                                <option>Senior Field Manager</option>
-                                <option>Senior Mill Manager</option>
-                                <option>Office Head Assistant</option>
-                                <option>Manager</option>
-                                <option>Manager Mill</option>
-                                <option>Supervisor Mill</option>
-                                <option>Askep</option>
-                                <option>Assistant</option>
-                                <option>Office Assistant (OAA)</option>
-                                <option>Office Assistant Mill</option>
-                                <option>Mandor</option>
-                                <option>Krani Divisi</option>
-                                <option>Krani Mill</option>
-                                <option>Grading</option>
-                                <option>Analis</option>
-                                <option>Supir</option>
-                                <option>Security</option>
-                                <option>Security Mill</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label id="u-estate-label">Penempatan Estate / Mill (Bisa Pilih Banyak)</label>
-                            <select id="u-estate-dropdown" class="form-control" style="display: none;">
-                                <option value="" disabled selected>-- Pilih Estate / Mill --</option>
-                                <option>Semua Estate (Khusus Admin)</option>
-                                <option>Bunga Tanjung Estate</option>
-                                <option>Sungai Teramang Estate</option>
-                                <option>Air Bikuk Estate</option>
-                                <option>Air Buluh Estate</option>
-                                <option>Malin Deman Estate</option>
-                                <option>Batu Kuda Estate</option>
-                                <option>Sungai Jerinjing Estate</option>
-                                <option>Muko Muko Estate</option>
-                                <option>Talang Petai Estate</option>
-                                <option>Sungai Kiang Estate</option>
-                                <option>Tanah Rekah Estate</option>
-                                <option>Air Majunto Estate</option>
-                                <option>Small Holder</option>
-                                <option>Bunga Tanjung Mill</option>
-                                <option>Muko Muko Mill</option>
-                            </select>
-                            <div id="u-estate-container" class="form-control" style="height: 150px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-color);">
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Semua Estate (Khusus Admin)"> Semua Estate (Khusus Admin)</label>
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Bunga Tanjung Estate"> Bunga Tanjung Estate</label>
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Teramang Estate"> Sungai Teramang Estate</label>
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Bikuk Estate"> Air Bikuk Estate</label>
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Buluh Estate"> Air Buluh Estate</label>
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Malin Deman Estate"> Malin Deman Estate</label>
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Batu Kuda Estate"> Batu Kuda Estate</label>
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Jerinjing Estate"> Sungai Jerinjing Estate</label>
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Muko Muko Estate"> Muko Muko Estate</label>
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Talang Petai Estate"> Talang Petai Estate</label>
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Kiang Estate"> Sungai Kiang Estate</label>
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Tanah Rekah Estate"> Tanah Rekah Estate</label>
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Majunto Estate"> Air Majunto Estate</label>
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Small Holder"> Small Holder</label>
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Bunga Tanjung Mill"> Bunga Tanjung Mill</label>
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Muko Muko Mill"> Muko Muko Mill</label>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                            <i class="fa-solid fa-user-plus"></i> Tambah User
-                        </button>
-                    </form>
-                </div>
-            </div>
-            <div class="glass-card table-wrapper" style="width: 100%;">
-                <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
-                    <h2>Daftar User Sistem</h2>
-                    <button type="button" class="btn btn-primary" id="btn-input-user" onclick="document.getElementById('modal-user-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Tambah User</button>
-                </div>
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Username</th>
-                                <th>Role</th>
-                                <th>ESTATE-MILL</th>
-                                <th style="width: 80px; text-align: center;">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-users"></tbody>
-                    </table>
                 </div>
             </div>
         </div>
@@ -4014,7 +4031,7 @@ const renderVehicleTable = () => {
     
     const btnInput = document.getElementById('btn-input-vehicle');
     if (btnInput) {
-        if (currentUser.role === 'Supir' || currentUser.role === 'Mandor' || currentUser.role === 'Admin') {
+        if (currentUser.role === 'Supir' || currentUser.role === 'Mandor' || (currentUser.role && currentUser.role.toLowerCase() === 'admin')) {
             btnInput.style.display = 'flex';
             btnInput.disabled = false;
             btnInput.style.opacity = '1';
@@ -4044,7 +4061,7 @@ const renderVehicleTable = () => {
         const tDepart = v.timedepart || v.timeDepart;
         const tArrive = v.timearrive || v.timeArrive;
         const duration = calculateDuration(tDepart, tArrive);
-        const canClickArrive = (currentUser.role.includes('Security') || currentUser.role === 'Security Mill' || currentUser.role === 'Admin');
+        const canClickArrive = (currentUser.role.includes('Security') || currentUser.role === 'Security Mill' || (currentUser.role && currentUser.role.toLowerCase() === 'admin'));
         const actionBtn = (!tArrive && canClickArrive) ? 
             `<button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem;" onclick="setArrival(${v.id})">Tiba di PKS</button>` : 
             (!tArrive ? `<span class="status-badge" style="background:#f59e0b">Di Perjalanan</span>` : `<span class="status-badge status-done">Selesai</span>`);
@@ -4193,7 +4210,7 @@ const renderPemupukanTable = () => {
 
         let actionBtn = '-';
         let hapusBtn = '';
-        if (currentUser && currentUser.role && (currentUser.role.includes('Manager') || currentUser.role === 'Admin')) {
+        if (currentUser && currentUser.role && (currentUser.role.includes('Manager') || (currentUser.role && currentUser.role.toLowerCase() === 'admin'))) {
             hapusBtn = `<button class="btn btn-logout btn-hapus-hover" style="padding: 2px 6px; font-size: 0.7rem; background: #dc2626; color: white; border-radius: 4px; border:none; margin-top:3px; width: 100%;" onclick="deletePemupukan(${p.id})"><i class="fa-solid fa-trash"></i> Hapus</button>`;
         }
 
@@ -4451,7 +4468,7 @@ const renderHarvestingTable = () => {
         let statusEl = '';
         if (h.status === 'Draft') {
             statusEl = `<span class="status-badge" style="background:#fef3c7; color:#d97706; padding:2px 6px;">${h.status}</span>`;
-            if (currentUser.role === 'Mandor' || currentUser.role === 'Admin') {
+            if (currentUser.role === 'Mandor' || (currentUser.role && currentUser.role.toLowerCase() === 'admin')) {
                 statusEl += ` <button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-left:5px;" onclick="publishHarvesting(${h.id})">Publish</button>`;
             }
         } else if (h.status === 'Published' || h.status === 'Open' || h.status === 'In Progress') {
@@ -4463,7 +4480,7 @@ const renderHarvestingTable = () => {
             }
         } else if (h.status === 'Selesai') {
             statusEl = `<span class="status-badge" style="background:#dcfce7; color:#15803d; padding:2px 6px;">${h.status}</span>`;
-            if (currentUser.role === 'Asisten Divisi' || currentUser.role === 'Admin') {
+            if (currentUser.role === 'Asisten Divisi' || (currentUser.role && currentUser.role.toLowerCase() === 'admin')) {
                 statusEl += ` <button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-left:5px; background-color:#16a34a; border:none;" onclick="closeHarvesting(${h.id})">Close</button>`;
             }
         } else {
@@ -4508,7 +4525,7 @@ const renderHarvestingTable = () => {
                 let statusEl = `<span class="status-badge" style="background:#d1fae5; color:#065f46; padding:2px 6px;">${h.status}</span>`;
                 if (h.status === 'Selesai') {
                     statusEl = `<span class="status-badge" style="background:#dcfce7; color:#15803d; padding:2px 6px;">${h.status}</span>`;
-                    if (currentUser.role === 'Asisten Divisi' || currentUser.role === 'Admin') {
+                    if (currentUser.role === 'Asisten Divisi' || (currentUser.role && currentUser.role.toLowerCase() === 'admin')) {
                         statusEl += ` <button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-left:5px; background-color:#16a34a; border:none;" onclick="closeHarvesting(${h.id})">Close</button>`;
                     }
                 }
@@ -4748,7 +4765,7 @@ window.printHarvestingDaily = () => {
 };
 
 window.openPrintClosedHarvestingModal = async () => {
-    const canSeeAll = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Manager' || currentUser.role === 'Senior Field Manager');
+    const canSeeAll = currentUser && ((currentUser.role && currentUser.role.toLowerCase() === 'admin') || currentUser.role === 'Manager' || currentUser.role === 'Senior Field Manager');
     
     const estateList = [
         "Bunga Tanjung Estate", "Sungai Teramang Estate", "Air Bikuk Estate", "Batu Kuda Estate",
@@ -4818,7 +4835,7 @@ window.executePrintClosedHarvesting = () => {
     }
 
     let estatesInvolved = new Set();
-    const canSeeAll = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Manager' || currentUser.role === 'Senior Field Manager');
+    const canSeeAll = currentUser && ((currentUser.role && currentUser.role.toLowerCase() === 'admin') || currentUser.role === 'Manager' || currentUser.role === 'Senior Field Manager');
     
     if (canSeeAll) {
         const cbs = document.querySelectorAll('input[name="print-closed-estate-cb"]:checked');
@@ -4962,7 +4979,7 @@ window.executePrintClosedHarvesting = () => {
 
 window.openPrintRekapModal = async () => {
     // Tentukan apakah user bisa melihat beberapa estate
-    const canSeeAll = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Manager' || currentUser.role === 'Senior Field Manager');
+    const canSeeAll = currentUser && ((currentUser.role && currentUser.role.toLowerCase() === 'admin') || currentUser.role === 'Manager' || currentUser.role === 'Senior Field Manager');
     
     const estateList = [
         "Bunga Tanjung Estate", "Sungai Teramang Estate", "Air Bikuk Estate", "Batu Kuda Estate",
@@ -5052,7 +5069,7 @@ window.executePrintRekap = () => {
     const startDate = document.getElementById('print-rekap-start').value;
     const endDate = document.getElementById('print-rekap-end').value;
     
-    const canSeeAll = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Manager' || currentUser.role === 'Senior Field Manager');
+    const canSeeAll = currentUser && ((currentUser.role && currentUser.role.toLowerCase() === 'admin') || currentUser.role === 'Manager' || currentUser.role === 'Senior Field Manager');
     let targetEstates = [];
     if (canSeeAll) {
         const estateCbs = document.querySelectorAll('input[name="print-rekap-estate-cb"]:checked');
@@ -5307,7 +5324,7 @@ const renderUsersTable = () => {
     tbody.innerHTML = '';
     const btnInput = document.getElementById('btn-input-user');
     if (btnInput) {
-        if (currentUser.role === 'Admin') {
+        if ((currentUser.role && currentUser.role.toLowerCase() === 'admin')) {
             btnInput.style.display = 'inline-block';
         } else {
             btnInput.style.display = 'none';
@@ -7541,7 +7558,7 @@ const navigate = (viewId) => {
         renderMasterTables();
     }
     if(viewId === 'tonase') {
-        if (currentUser.role === 'Krani Mill' || currentUser.role === 'Supervisor Mill' || currentUser.role === 'Manager Mill' || currentUser.role === 'Admin' || currentUser.role === 'Office Assistant Mill') {
+        if (currentUser.role === 'Krani Mill' || currentUser.role === 'Supervisor Mill' || currentUser.role === 'Manager Mill' || (currentUser.role && currentUser.role.toLowerCase() === 'admin') || currentUser.role === 'Office Assistant Mill') {
             document.querySelectorAll('.btn-tonase-action').forEach(b => b.style.display = 'inline-block');
             if (!document.getElementById('t-date').value) {
                 document.getElementById('t-date').value = window.getLocalDate();
@@ -7576,6 +7593,7 @@ const navigate = (viewId) => {
         renderUsersTable(); 
         bindForms(); 
         window.toggleEstateUI('u-role', 'u-estate-dropdown', 'u-estate-container', 'u-estate-label');
+        if(window.switchUsersSubTab) window.switchUsersSubTab(window.activeUsersSubTab || 'data');
     }
     
     // Global Read-only logic for Senior Field Manager, Director, Senior Mill Manager, Office Head Assistant
@@ -7707,6 +7725,46 @@ window.currentSelectedDivisi = window.currentSelectedDivisi || null;
 window.currentSelectedTruk = window.currentSelectedTruk || null;
 window.currentSelectedSupir = window.currentSelectedSupir || null;
 window.currentSelectedPupuk = window.currentSelectedPupuk || null;
+
+window.activeUsersSubTab = window.activeUsersSubTab || 'data';
+
+window.switchUsersSubTab = (tabName) => {
+    window.activeUsersSubTab = tabName;
+    const btnData = document.getElementById('tab-btn-users-data');
+    const btnPerm = document.getElementById('tab-btn-users-permissions');
+    const subtabData = document.getElementById('subtab-users-data');
+    const subtabPerm = document.getElementById('subtab-users-permissions');
+
+    if (!btnData || !btnPerm || !subtabData || !subtabPerm) return;
+
+    if (tabName === 'permissions') {
+        btnData.className = 'btn';
+        btnData.style.background = 'transparent';
+        btnData.style.color = '#334155';
+
+        btnPerm.className = 'btn btn-primary';
+        btnPerm.style.background = 'var(--primary)';
+        btnPerm.style.color = '#fff';
+
+        subtabData.style.display = 'none';
+        subtabPerm.style.display = 'block';
+
+        window.populateRoleFilterDropdown();
+        window.renderPermissionsMatrixTable();
+    } else {
+        btnData.className = 'btn btn-primary';
+        btnData.style.background = 'var(--primary)';
+        btnData.style.color = '#fff';
+
+        btnPerm.className = 'btn';
+        btnPerm.style.background = 'transparent';
+        btnPerm.style.color = '#334155';
+
+        subtabData.style.display = 'block';
+        subtabPerm.style.display = 'none';
+    }
+};
+
 window.activeMasterSubTab = window.activeMasterSubTab || 'data';
 
 window.switchMasterSubTab = (tabName) => {
