@@ -4187,11 +4187,8 @@ const renderPemupukanTable = () => {
 
     const btnInput = document.getElementById('btn-input-pemupukan');
     if (btnInput) {
-        if (currentUser.role.includes('Security') || currentUser.role.includes('Manager')) {
-            btnInput.style.display = 'none';
-        } else {
-            btnInput.style.display = 'flex';
-        }
+        const canInput = window.hasPermission ? window.hasPermission('pemupukan', 'input') : false;
+        btnInput.style.display = canInput ? 'flex' : 'none';
     }
 
     const renderRow = (p) => {
@@ -4210,7 +4207,8 @@ const renderPemupukanTable = () => {
 
         let actionBtn = '-';
         let hapusBtn = '';
-        if (currentUser && currentUser.role && (currentUser.role.includes('Manager') || (currentUser.role && currentUser.role.toLowerCase() === 'admin'))) {
+        const canDelete = window.hasPermission ? window.hasPermission('pemupukan', 'delete') : false;
+        if (canDelete) {
             hapusBtn = `<button class="btn btn-logout btn-hapus-hover" style="padding: 2px 6px; font-size: 0.7rem; background: #dc2626; color: white; border-radius: 4px; border:none; margin-top:3px; width: 100%;" onclick="deletePemupukan(${p.id})"><i class="fa-solid fa-trash"></i> Hapus</button>`;
         }
 
@@ -4222,9 +4220,11 @@ const renderPemupukanTable = () => {
                 </div>
             `;
         } else {
+            const canEdit = window.hasPermission ? window.hasPermission('pemupukan', 'edit') : false;
+            let updateHtml = canEdit ? `<button class="btn btn-primary" style="padding: 2px 6px; font-size: 0.7rem; background:#f59e0b; border:none; width: 100%;" onclick="openPemupukanRealizationModal(${p.id}, '${p.block}', '${p.plan}', ${tKg}, ${rKg}, ${tHa}, ${rHa}, ${tWorkers}, ${rWorkers})"><i class="fa-solid fa-pen-to-square"></i> Update</button>` : '';
             actionBtn = `
                 <div class="action-group-hover" style="display:flex; flex-direction:column; gap:3px; min-height: 40px; justify-content: center;">
-                    <button class="btn btn-primary" style="padding: 2px 6px; font-size: 0.7rem; background:#f59e0b; border:none; width: 100%;" onclick="openPemupukanRealizationModal(${p.id}, '${p.block}', '${p.plan}', ${tKg}, ${rKg}, ${tHa}, ${rHa}, ${tWorkers}, ${rWorkers})"><i class="fa-solid fa-pen-to-square"></i> Update</button>
+                    ${updateHtml}
                     ${hapusBtn}
                 </div>
             `;
