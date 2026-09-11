@@ -4103,11 +4103,8 @@ const renderUpkeepTable = () => {
     
     const btnInput = document.getElementById('btn-input-upkeep');
     if (btnInput) {
-        if (currentUser.role.includes('Security') || currentUser.role.includes('Manager')) {
-            btnInput.style.display = 'none';
-        } else {
-            btnInput.style.display = 'flex';
-        }
+        const canInput = window.hasPermission ? window.hasPermission('upkeep', 'input') : false;
+        btnInput.style.display = canInput ? 'flex' : 'none';
     }
     
     const renderRow = (u) => {
@@ -4124,7 +4121,8 @@ const renderUpkeepTable = () => {
             actionBtn = `<span class="status-badge status-done" style="margin-right: 5px;">Selesai</span>`;
         } else if (currentUser && currentUser.role) {
             const roleL = currentUser.role.toLowerCase();
-            if (['asisten divisi', 'assistant', 'assistant divisi', 'asst divisi', 'krani divisi', 'mandor', 'mandor divisi', 'admin'].includes(roleL)) {
+            const canEdit = window.hasPermission ? window.hasPermission('upkeep', 'edit') : false;
+            if (canEdit) {
                 actionBtn = `
                 <div style="display:flex; justify-content:center; width: 100%;">
                     <button type="button" class="btn" style="padding: 2px 6px; font-size: 0.7rem; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; justify-content:center;" onclick="promptAddUpkeepProgress(${u.id}, '${u.block}', '${safeType}', ${u.target}, ${u.realized}, ${tWorkers})"><i class="fa-solid fa-pen-to-square"></i> Update</button>
@@ -4409,13 +4407,9 @@ const renderHarvestingTable = () => {
     const btnHm = document.getElementById('btn-input-hm');
     const btnHd = document.getElementById('btn-input-hd');
     if (btnHm && btnHd) {
-        if (currentUser.role.includes('Security') || currentUser.role.includes('Manager') || currentUser.role === 'Supir') {
-            btnHm.style.display = 'none';
-            btnHd.style.display = 'none';
-        } else {
-            btnHm.style.display = 'inline-block';
-            btnHd.style.display = 'inline-block';
-        }
+        const canInput = window.hasPermission ? window.hasPermission('harvesting', 'input') : false;
+        btnHm.style.display = canInput ? 'inline-block' : 'none';
+        btnHd.style.display = canInput ? 'inline-block' : 'none';
     }
     
     const sortFn = (a, b) => {
@@ -4468,19 +4462,22 @@ const renderHarvestingTable = () => {
         let statusEl = '';
         if (h.status === 'Draft') {
             statusEl = `<span class="status-badge" style="background:#fef3c7; color:#d97706; padding:2px 6px;">${h.status}</span>`;
-            if (currentUser.role === 'Mandor' || (currentUser.role && currentUser.role.toLowerCase() === 'admin')) {
+            const canEdit = window.hasPermission ? window.hasPermission('harvesting', 'edit') : false;
+            if (canEdit) {
                 statusEl += ` <button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-left:5px;" onclick="publishHarvesting(${h.id})">Publish</button>`;
             }
         } else if (h.status === 'Published' || h.status === 'Open' || h.status === 'In Progress') {
             const roleL = currentUser.role ? currentUser.role.toLowerCase() : '';
-            if (['kerani buah', 'krani divisi', 'admin', 'asisten divisi', 'assistant', 'assistant divisi', 'asst divisi', 'supir', 'mandor', 'mandor divisi'].includes(roleL)) {
+            const canEdit = window.hasPermission ? window.hasPermission('harvesting', 'edit') : false;
+            if (canEdit) {
                 statusEl = `<button type="button" class="btn btn-primary" style="padding:2px 8px; font-size:0.8rem; background-color:orange; border:none; border-radius:15px; font-weight:bold;" onclick="openAddHarvestingRealizationModal(${h.id}, '${h.block}', ${h.est_janjang || 0}, ${h.plan_pemanen || 0}, ${h.est_kg || 0}, '${h.divisi}')">Update</button>`;
             } else {
                 statusEl = `<span class="status-badge" style="background:#d1fae5; color:#065f46; padding:2px 6px;">${h.status}</span>`;
             }
         } else if (h.status === 'Selesai') {
             statusEl = `<span class="status-badge" style="background:#dcfce7; color:#15803d; padding:2px 6px;">${h.status}</span>`;
-            if (currentUser.role === 'Asisten Divisi' || (currentUser.role && currentUser.role.toLowerCase() === 'admin')) {
+            const canEdit = window.hasPermission ? window.hasPermission('harvesting', 'edit') : false;
+            if (canEdit) {
                 statusEl += ` <button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-left:5px; background-color:#16a34a; border:none;" onclick="closeHarvesting(${h.id})">Close</button>`;
             }
         } else {
@@ -4525,9 +4522,10 @@ const renderHarvestingTable = () => {
                 let statusEl = `<span class="status-badge" style="background:#d1fae5; color:#065f46; padding:2px 6px;">${h.status}</span>`;
                 if (h.status === 'Selesai') {
                     statusEl = `<span class="status-badge" style="background:#dcfce7; color:#15803d; padding:2px 6px;">${h.status}</span>`;
-                    if (currentUser.role === 'Asisten Divisi' || (currentUser.role && currentUser.role.toLowerCase() === 'admin')) {
-                        statusEl += ` <button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-left:5px; background-color:#16a34a; border:none;" onclick="closeHarvesting(${h.id})">Close</button>`;
-                    }
+                    const canEdit = window.hasPermission ? window.hasPermission('harvesting', 'edit') : false;
+            if (canEdit) {
+                statusEl += ` <button type="button" class="btn btn-primary" style="padding:2px 6px; font-size:0.7rem; margin-left:5px; background-color:#16a34a; border:none;" onclick="closeHarvesting(${h.id})">Close</button>`;
+            }
                 }
                 
                 const dateStr = typeof h.date === 'string' && h.date.includes('T') ? h.date.split('T')[0] : h.date;
