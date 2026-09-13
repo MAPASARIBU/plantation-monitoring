@@ -5329,7 +5329,41 @@ const renderUsersTable = () => {
         }
     }
     
-    [...db.users].forEach(u => {
+    const topTierRoles = ['admin', 'director', 'senior mill manager', 'senior field manager'];
+    
+    const sortedUsers = [...db.users].sort((a, b) => {
+        const roleA = (a.role || '').trim().toLowerCase();
+        const roleB = (b.role || '').trim().toLowerCase();
+        
+        const isTopA = topTierRoles.includes(roleA) || (a.estate && a.estate.includes('Semua Estate'));
+        const isTopB = topTierRoles.includes(roleB) || (b.estate && b.estate.includes('Semua Estate'));
+        
+        // 1. Top tier roles first
+        if (isTopA && !isTopB) return -1;
+        if (!isTopA && isTopB) return 1;
+        
+        if (isTopA && isTopB) {
+            // Sort among top roles by role name then username
+            if (roleA !== roleB) return roleA.localeCompare(roleB);
+            return (a.username || '').localeCompare(b.username || '');
+        }
+        
+        // 2. Group by Estate-Mill (Alphabetical)
+        const estateA = (a.estate || '').trim().toLowerCase();
+        const estateB = (b.estate || '').trim().toLowerCase();
+        
+        if (estateA !== estateB) {
+            // Put those without estate at the bottom
+            if (!estateA || estateA === '-') return 1;
+            if (!estateB || estateB === '-') return -1;
+            return estateA.localeCompare(estateB);
+        }
+        
+        // 3. Sort by Username Alphabetical
+        return (a.username || '').localeCompare(b.username || '');
+    });
+
+    sortedUsers.forEach(u => {
         const actionBtns = (u.username !== 'admin' && currentUser.role !== 'Senior Field Manager') ? 
             `<div style="display:flex; gap:4px; justify-content:center;">
                 <button class="btn btn-primary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="promptEditUser(${u.id})"><i class="fa-solid fa-pen"></i></button>
