@@ -5331,15 +5331,52 @@ const renderUsersTable = () => {
     
     [...db.users].forEach(u => {
         const actionBtns = (u.username !== 'admin' && currentUser.role !== 'Senior Field Manager') ? 
-            `<button class="btn btn-primary" style="padding: 4px 8px; font-size: 0.8rem; margin-right:5px;" onclick="promptEditUser(${u.id})"><i class="fa-solid fa-pen"></i></button>` +
-            `<button class="btn btn-logout" style="padding: 4px 8px; font-size: 0.8rem; color: #ef4444;" onclick="deleteUser(${u.id})"><i class="fa-solid fa-trash"></i></button>` : '-';
+            `<div style="display:flex; gap:4px; justify-content:center;">
+                <button class="btn btn-primary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="promptEditUser(${u.id})"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn btn-logout" style="padding: 4px 8px; font-size: 0.8rem; color: #ef4444;" onclick="deleteUser(${u.id})"><i class="fa-solid fa-trash"></i></button>
+            </div>` : '-';
+            
+        // ERP Style Formatting for Estates
+        let estatesHtml = '-';
+        if (u.estate && u.estate !== '-') {
+            const estateArray = u.estate.split(',').map(e => e.trim());
+            // If it's the giant "Semua Estate" string, let's simplify it visually
+            if (u.estate.includes('Semua Estate (Khusus Admin)') && estateArray.length > 5) {
+                estatesHtml = `<span style="background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;"><i class="fa-solid fa-globe"></i> Semua Mill & Estate (Akses Penuh)</span>`;
+            } else {
+                estatesHtml = `<div style="display: flex; flex-wrap: wrap; gap: 4px;">` + 
+                    estateArray.map(e => {
+                        let isMill = e.toLowerCase().includes('mill');
+                        let bg = isMill ? '#f0fdf4' : '#f8fafc';
+                        let color = isMill ? '#166534' : '#334155';
+                        let border = isMill ? '#bbf7d0' : '#cbd5e1';
+                        let icon = isMill ? 'fa-industry' : 'fa-seedling';
+                        return `<span style="background: ${bg}; color: ${color}; border: 1px solid ${border}; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;"><i class="fa-solid ${icon}" style="font-size:0.65rem;"></i> ${e}</span>`;
+                    }).join('') + `</div>`;
+            }
+        }
+        
+        let roleBg = u.role && u.role.toLowerCase().includes('manager') ? '#dbeafe' : '#f1f5f9';
+        let roleColor = u.role && u.role.toLowerCase().includes('manager') ? '#1e40af' : '#475569';
+
         tbody.innerHTML += `
-            <tr>
-                <td>${u.id}</td>
-                <td><strong>${u.username}</strong></td>
-                <td><span class="status-badge" style="background: rgba(0,0,0,0.1)">${u.role}</span></td>
-                <td><small>${u.estate || '-'}</small></td>
-                <td>${actionBtns}</td>
+            <tr style="border-bottom: 1px solid #e2e8f0; transition: background 0.2s;">
+                <td style="vertical-align: middle; width: 50px; text-align: center; color: #64748b; font-size: 0.85rem;">${u.id}</td>
+                <td style="vertical-align: middle; width: 150px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold;">
+                            ${u.username.substring(0,2).toUpperCase()}
+                        </div>
+                        <strong style="color: #1e293b; font-size: 0.9rem;">${u.username}</strong>
+                    </div>
+                </td>
+                <td style="vertical-align: middle; width: 180px;">
+                    <span style="background: ${roleBg}; color: ${roleColor}; font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; font-weight: 600; border: 1px solid ${roleBg === '#dbeafe' ? '#bfdbfe' : '#e2e8f0'}; display: inline-block;">
+                        ${u.role}
+                    </span>
+                </td>
+                <td style="vertical-align: middle;">${estatesHtml}</td>
+                <td style="vertical-align: middle;">${actionBtns}</td>
             </tr>
         `;
     });

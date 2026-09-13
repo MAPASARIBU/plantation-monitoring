@@ -969,11 +969,13 @@ app.put('/api/change-password', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Username tidak ditemukan' });
         }
         
-        if (userCheck.rows[0].password !== oldPassword) {
+        const u = userCheck.rows[0];
+        
+        if (u.password && u.password !== oldPassword) {
             return res.status(401).json({ success: false, message: 'Password lama salah!' });
         }
         
-        await pool.query('UPDATE users SET password = $1 WHERE id = $2', [newPassword, userCheck.rows[0].id]);
+        await pool.query('UPDATE users SET password = $1 WHERE id = $2', [newPassword, u.id]);
         res.json({ success: true, message: 'Password berhasil diubah' });
     } catch (err) {
         res.status(500).json({ error: err.message });
