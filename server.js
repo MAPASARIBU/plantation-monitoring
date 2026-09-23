@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3006;
+const PORT = process.env.PORT || 3007;
 
 // Middleware
 app.use((req, res, next) => {
@@ -1117,11 +1117,46 @@ app.get('/api/master/:estate', async (req, res) => {
     }
 });
 
-app.post('/api/master/supply_chain_list', async (req, res) => {
+app.get('/api/master_supply_chain_all', async (req, res) => { try { const sc = await pool.query('SELECT * FROM master_supply_chain'); res.json(sc.rows); } catch (err) { res.status(500).json({ error: err.message }); } });
+
+app.get('/api/master_locations', async (req, res) => {
     try {
+        const scList = await pool.query('SELECT * FROM master_supply_chain_list ORDER BY name ASC');
+        res.json(scList.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/master/supply_chain_list/:oldName', async (req, res) => {
+    try {
+        const { oldName } = req.params;
         const { name, abbr } = req.body;
         if (!name || !abbr) return res.status(400).json({ error: 'Name and Abbreviation are required' });
-        await pool.query('INSERT INTO master_supply_chain_list (name, abbr) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET abbr = $2', [name, abbr]);
+        await pool.query('UPDATE master_supply_chain_list SET name = $1, abbr = $2 WHERE name = $3', [name, abbr, oldName]);
+        await pool.query('UPDATE master_supply_chain SET estate = $1 WHERE estate = $2', [name, oldName]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/master/supply_chain_list/:name', async (req, res) => {
+    try {
+        const { name } = req.params;
+        await pool.query('DELETE FROM master_supply_chain_list WHERE name = $1', [name]);
+        await pool.query('DELETE FROM master_supply_chain WHERE estate = $1', [name]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/master/supply_chain_list', async (req, res) => {
+    try {
+        const { name, abbr, region } = req.body;
+        if (!name || !abbr) return res.status(400).json({ error: 'Name and Abbreviation are required' });
+        await pool.query('INSERT INTO master_supply_chain_list (name, abbr, region) VALUES ($1, $2, $3) ON CONFLICT (name) DO UPDATE SET abbr = $2, region = COALESCE($3, master_supply_chain_list.region)', [name, abbr, region]);
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });

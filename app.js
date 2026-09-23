@@ -1,33 +1,97 @@
 // API Base URL
-const API_URL = window.location.protocol === 'file:' ? 'http://localhost:3006/api' : '/api';
+const API_URL = window.location.protocol === 'file:' ? 'http://localhost:3007/api' : '/api';
 window.API_URL = API_URL;
 
-window.updateLocationList = function() {
+window.REGION_DATA = {
+    BENGKULU: {
+        mills: ['Bunga Tanjung Mill', 'Muko Muko Mill'],
+        estates: [
+            'Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bikuk Estate',
+            'Batu Kuda Estate', 'Air Buluh Estate', 'Malin Deman Estate',
+            'Tanah Rekah Estate', 'Muko Muko Estate', 'Sungai Jerinjing Estate',
+            'Sei Jerinjing Estate', 'Talang Petai Estate', 'Sungai Kiang Estate', 
+            'Air Majunto Estate', 'Small Holder', 'Pihak Ke-3 Mill Bunga Tanjung',
+            'KMD', 'KHJLT', 'PLAB', 'PLAM', 'Sei Betung Estate'
+        ]
+    },
+    NORTH_SUMATERA: {
+        mills: ['Bukit Maraja Mill', 'Parlabian Mill', 'Umbul Wisesa Mill'],
+        estates: ['Bukit Maraja Estate', 'Parlabian Estate', 'Umbul Wisesa Estate']
+    },
+    SOUTH_SUMATERA: {
+        mills: ['Dendy Marker Mill', 'Agro Muara Rupit Mill', 'Agro Kati Lama Mill'],
+        estates: ['Dendy Marker Estate', 'Agro Muara Rupit Estate', 'Agro Kati Lama Estate']
+    }
+};
+
+window.getRegionForUnit = function(unitName) {
+    if (!unitName) return null;
+    const nameUpper = unitName.toUpperCase();
+    for (let region in window.REGION_DATA) {
+        if (window.REGION_DATA[region].mills.some(m => m.toUpperCase() === nameUpper) || 
+            window.REGION_DATA[region].estates.some(e => e.toUpperCase() === nameUpper)) {
+            return region;
+        }
+    }
+    return null; // Unknown / 3rd party
+};
+
+
+window.updateLocationList = async function() {
+    const regionEl = document.getElementById('login-region');
     const locationTypeEl = document.getElementById('login-location-type');
     const estateDropdown = document.getElementById('login-estate');
     if (!locationTypeEl || !estateDropdown) return;
     
+    const region = regionEl ? regionEl.value : 'BENGKULU';
     const type = (locationTypeEl.value || '').toUpperCase();
-    estateDropdown.innerHTML = '';
+    estateDropdown.innerHTML = '<option value="" disabled selected>Loading...</option>';
     
     if (type === 'MILL') {
-        estateDropdown.innerHTML = '<option value="" disabled selected>LIST MILL</option>' +
-            '<option>Bunga Tanjung Mill</option>' +
-            '<option>Muko Muko Mill</option>';
-    } else {
-        estateDropdown.innerHTML = '<option value="" disabled selected>LIST ESTATE</option>' +
-            '<option>Bunga Tanjung Estate</option>' +
-            '<option>Sungai Teramang Estate</option>' +
-            '<option>Air Bikuk Estate</option>' +
-            '<option>Batu Kuda Estate</option>' +
-            '<option>Air Buluh Estate</option>' +
-            '<option>Malin Deman Estate</option>' +
-            '<option>Tanah Rekah Estate</option>' +
-            '<option>Muko Muko Estate</option>' +
-            '<option>Sei Jerinjing Estate</option>' +
-            '<option>Talang Petai Estate</option>' +
-            '<option>Sungai Kiang Estate</option>' +
-            '<option>Air Majunto Estate</option>';
+        // KHUSUS MILL: SUNTIK HARDCODE DARI REGION_DATA
+        estateDropdown.innerHTML = `<option value="" disabled selected>LIST MILL</option>`;
+        if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
+            window.REGION_DATA[region].mills.forEach(mill => {
+                estateDropdown.innerHTML += `<option value="${mill}">${mill}</option>`;
+            });
+        }
+        return;
+    }
+    
+    // KHUSUS ESTATE: MURNI DARI DATABASE SUPPLY CHAIN UNTUK MILL DI REGION TERSEBUT
+    try {
+        const res = await fetch(window.API_URL.replace('/api', '/api/master_supply_chain_all'));
+        if (!res.ok) throw new Error('API failed');
+        const list = await res.json();
+        
+        estateDropdown.innerHTML = `<option value="" disabled selected>LIST ESTATE</option>`;
+        
+        // Ambil daftar mill di region yang dipilih
+        const millsInRegion = (window.REGION_DATA[region] && window.REGION_DATA[region].mills) ? window.REGION_DATA[region].mills : [];
+        
+        // Filter estate yang mensupply ke mill-mill di region ini
+        const validEstates = new Set();
+        list.forEach(item => {
+            if (millsInRegion.includes(item.mill)) {
+                validEstates.add(item.estate);
+            }
+        });
+        
+        const sortedEstates = Array.from(validEstates).sort((a,b) => a.localeCompare(b));
+        
+        sortedEstates.forEach(estateName => {
+            estateDropdown.innerHTML += `<option value="${estateName}">${estateName}</option>`;
+        });
+        
+    } catch (e) {
+        console.error(e);
+        estateDropdown.innerHTML = `<option value="" disabled selected>LIST ESTATE</option>`;
+        // Fallback jika API mati
+        if (window.REGION_DATA[region] && window.REGION_DATA[region].estates) {
+            window.REGION_DATA[region].estates.forEach(estate => {
+                estateDropdown.innerHTML += `<option value="${estate}">${estate}</option>`;
+            });
+        }
     }
 };
 
@@ -2134,7 +2198,8 @@ Object.assign(views, {
                             </button>
                         </div>
                         <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="date" id="monitor-tonase-date" class="form-control" onchange="renderTonaseMonitorTable()">
+                            <select id="monitor-tonase-mill" class="form-control" onchange="renderTonaseMonitorTable()" style="display: none;"></select>
+                            <input type="date" id="monitor-tonase-date\" class="form-control" onchange="renderTonaseMonitorTable()">
                             <select id="monitor-tonase-hour" class="form-control" onchange="renderTonaseMonitorTable()">
                                 <option value="06:00">06:00</option>
                                 <option value="07:00">07:00</option>
@@ -2846,6 +2911,11 @@ Object.assign(views, {
                             </div>
                             <div class="form-group">
                                 <label id="u-estate-label">Penempatan Estate / Mill (Bisa Pilih Banyak)</label>
+                                <select id="u-region-dropdown" class="form-control" style="margin-bottom: 10px;" onchange="window.updateUserModalEstates()">
+                                    <option value="BENGKULU" selected>REGION BENGKULU</option>
+                                    <option value="NORTH_SUMATERA">REGION NORTH SUMATERA</option>
+                                    <option value="SOUTH_SUMATERA">REGION SOUTH SUMATERA</option>
+                                </select>
                                 <select id="u-estate-dropdown" class="form-control" style="display: none;">
                                     <option value="" disabled selected>-- Pilih Estate / Mill --</option>
                                     <option>Semua Estate (Khusus Admin)</option>
@@ -2865,24 +2935,7 @@ Object.assign(views, {
                                     <option>Bunga Tanjung Mill</option>
                                     <option>Muko Muko Mill</option>
                                 </select>
-                                <div id="u-estate-container" class="form-control" style="height: 150px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-color);">
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Semua Estate (Khusus Admin)"> Semua Estate (Khusus Admin)</label>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Bunga Tanjung Estate"> Bunga Tanjung Estate</label>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Teramang Estate"> Sungai Teramang Estate</label>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Bikuk Estate"> Air Bikuk Estate</label>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Buluh Estate"> Air Buluh Estate</label>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Malin Deman Estate"> Malin Deman Estate</label>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Batu Kuda Estate"> Batu Kuda Estate</label>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Jerinjing Estate"> Sungai Jerinjing Estate</label>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Muko Muko Estate"> Muko Muko Estate</label>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Talang Petai Estate"> Talang Petai Estate</label>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Sungai Kiang Estate"> Sungai Kiang Estate</label>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Tanah Rekah Estate"> Tanah Rekah Estate</label>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Air Majunto Estate"> Air Majunto Estate</label>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Small Holder"> Small Holder</label>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Bunga Tanjung Mill"> Bunga Tanjung Mill</label>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Muko Muko Mill"> Muko Muko Mill</label>
-                                </div>
+                                <div id="u-estate-container" class="form-control" style="height: 150px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-color);"></div>
                             </div>
                             <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
                                 <i class="fa-solid fa-user-plus"></i> Tambah User
@@ -2893,7 +2946,7 @@ Object.assign(views, {
                 <div class="glass-card table-wrapper" style="width: 100%;">
                     <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
                         <h2>Daftar User Sistem</h2>
-                        <button type="button" class="btn btn-primary" id="btn-input-user" onclick="document.getElementById('modal-user-input').style.display='flex';" style="display:none;"><i class="fa-solid fa-plus"></i> Tambah User</button>
+                        <button type="button" class="btn btn-primary" id="btn-input-user" onclick="document.getElementById('modal-user-input').style.display='flex'; window.updateUserModalEstates();" style="display:none;"><i class="fa-solid fa-plus"></i> Tambah User</button>
                     </div>
                     <div class="table-container">
                         <table class="data-table">
@@ -5416,14 +5469,43 @@ const renderUsersTable = () => {
     });
 };
 
-window.promptEditUser = (id) => {
+window.promptEditUser = async (id) => {
     const user = db.users.find(u => u.id === id);
     if (!user) return;
     
+    let allEstates = [];
+    try {
+        const res = await fetch(window.API_URL.replace('/api', '/api/master_locations'));
+        const list = await res.json();
+        list.forEach(item => {
+            const nameUpper = item.name.toUpperCase();
+            if (!nameUpper.includes('MILL') && !nameUpper.includes('POM')) {
+                allEstates.push(item.name);
+            }
+        });
+    } catch(e) {
+        // Fallback
+        for (let region in window.REGION_DATA) {
+            if (window.REGION_DATA[region].estates) {
+                allEstates = allEstates.concat(window.REGION_DATA[region].estates);
+            }
+        }
+    }
+    
+    // Add Mills
+    for (let region in window.REGION_DATA) {
+        if (window.REGION_DATA[region].mills) {
+            allEstates = allEstates.concat(window.REGION_DATA[region].mills);
+        }
+    }
+    
+    // Remove duplicates
+    allEstates = [...new Set(allEstates)].sort((a,b) => a.localeCompare(b));
+    
     const userEstates = user.estate ? user.estate.split(',').map(e => e.trim()) : [];
     let estatesOptions = `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="eu_estate" value="Semua Estate (Khusus Admin)" ${userEstates.includes('Semua Estate (Khusus Admin)') ? 'checked' : ''}> Semua Estate (Khusus Admin)</label>`;
-    const allEstates = ['Bunga Tanjung Estate', 'Sungai Teramang Estate', 'Air Bikuk Estate', 'Air Buluh Estate', 'Malin Deman Estate', 'Batu Kuda Estate', 'Sungai Jerinjing Estate', 'Muko Muko Estate', 'Talang Petai Estate', 'Sungai Kiang Estate', 'Tanah Rekah Estate', 'Air Majunto Estate', 'Small Holder', 'Bunga Tanjung Mill', 'Muko Muko Mill'];
     let dropdownOptions = '';
+    
     allEstates.forEach(est => {
         dropdownOptions += `<option value="${est}" ${user.estate === est ? 'selected' : ''}>${est}</option>`;
         estatesOptions += `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="eu_estate" value="${est}" ${userEstates.includes(est) ? 'checked' : ''}> ${est}</label>`;
@@ -7056,24 +7138,44 @@ const initDashboardChart = async () => {
     if(!ctx) return;
     
     try {
-        let mill = currentUser.estate;
-        if (!mill || !mill.endsWith('Mill')) {
-            mill = 'Bunga Tanjung Mill';
-        }
-        // Use today's date
         const dateObj = new Date();
         const date = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
         
-        const [res, masterRes] = await Promise.all([
-            fetch(`${API_URL}/tonase/${mill}/${date}`),
-            fetch(`${API_URL}/master/${mill}`)
-        ]);
-        let resData = await window.parseTonaseResponse(res);
-        const masterData = await masterRes.json();
-        const supplyChainFFB = (masterData.supply_chain || []).filter(s => s.is_ffb !== false).map(s => s.estate);
+        let resData = [];
+        let supplyChainFFB = [];
+        const isMill = currentUser.estate && (currentUser.estate.toUpperCase().includes('MILL') || currentUser.estate.toUpperCase().includes('POM'));
+        
+        // Setup default variables for active trucks logic later
+        let masterData = { supply_chain: [] }; 
+        
+        if (isMill || currentUser.estate === 'Semua Estate (Khusus Admin)') {
+            let millToFetch = isMill ? currentUser.estate : 'Bunga Tanjung Mill';
+            const [res, masterRes] = await Promise.all([
+                fetch(`${window.API_URL}/tonase/${millToFetch}/${date}`),
+                fetch(`${window.API_URL}/master/${millToFetch}`)
+            ]);
+            resData = await window.parseTonaseResponse(res);
+            masterData = await masterRes.json();
+            supplyChainFFB = (masterData.supply_chain || []).filter(s => s.is_ffb !== false).map(s => s.estate);
+        } else {
+            // User is an ESTATE
+            const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
+            const regionMills = (window.REGION_DATA[region] && window.REGION_DATA[region].mills) ? window.REGION_DATA[region].mills : [];
+            
+            // Fetch tonase from ALL mills in the region
+            const promises = regionMills.map(m => fetch(`${window.API_URL}/tonase/${m}/${date}`));
+            const responses = await Promise.all(promises);
+            for (let res of responses) {
+                const data = await window.parseTonaseResponse(res);
+                resData = resData.concat(data);
+            }
+            
+            supplyChainFFB = [currentUser.estate]; // Only care about this estate's progress
+        }
+
         
         // Filter by estate if user is not a Mill
-        const isMill = currentUser.estate && currentUser.estate.endsWith('Mill');
+        /* isMill already declared */
         if (!isMill && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
             resData = resData.filter(item => item.estate === currentUser.estate);
         }
@@ -7328,10 +7430,31 @@ window.loadDashboardHistoricalChart = async () => {
     if (printBtn) printBtn.style.display = 'none';
     
     try {
+        
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
-        if (!mill || !mill.endsWith('Mill')) {
-            mill = 'Bunga Tanjung Mill';
+        
+        if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            // User is not a Mill, show the dropdown so they can pick a Mill in their region
+            if (millDropdown) {
+                if (millDropdown.options.length === 0) {
+                    const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
+                    if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
+                        window.REGION_DATA[region].mills.forEach(m => {
+                            millDropdown.innerHTML += `<option value="${m}">${m}</option>`;
+                        });
+                    }
+                }
+                millDropdown.style.display = 'block';
+                mill = millDropdown.value;
+            }
+        } else {
+            // User IS a mill, hide dropdown and force their mill
+            if (millDropdown) millDropdown.style.display = 'none';
         }
+        
+        if (!mill) mill = 'Bunga Tanjung Mill';
+
         
         const [masterRes, tonaseRes] = await Promise.all([
             fetch(`${API_URL}/master/${mill}`),
@@ -8212,8 +8335,27 @@ window.renderMasterTables = () => {
     if (isMill) {
         const scContainer = document.getElementById('container-master-supply-chain');
         if (scContainer) {
-            const allEstates = masterData.supply_chain_list || [];
+            const allEstatesRaw = masterData.supply_chain_list || [];
             const currentSC = masterData.supply_chain || [];
+            
+            const userRegion = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
+            
+            const allEstates = allEstatesRaw.filter(estObj => {
+                let estRegion = estObj.region;
+                if (!estRegion) {
+                    estRegion = window.getRegionForUnit(estObj.name);
+                }
+                if (estRegion) {
+                    const upper = estRegion.toUpperCase();
+                    if (upper.includes('BENGKULU')) estRegion = 'BENGKULU';
+                    else if (upper.includes('NORTH')) estRegion = 'NORTH_SUMATERA';
+                    else if (upper.includes('SOUTH')) estRegion = 'SOUTH_SUMATERA';
+                }
+                // Show if it belongs to the same region OR if it's an unknown/3rd party (estRegion === null)
+                return estRegion === userRegion || !estRegion;
+            });
+            
+            const canEdit = window.isMasterAuthorized(currentUser);
             
             let scHtml = `
             <table class="data-table" style="width:100%; border-collapse:collapse; text-align:left;">
@@ -8235,16 +8377,25 @@ window.renderMasterTables = () => {
                 const isFfb = scEntry ? scEntry.is_ffb : false;
                 const isEfb = scEntry ? scEntry.is_efb : false;
                 
+                const hoverAttr = canEdit ? `onmouseenter="this.querySelector('.sc-actions').style.display='inline-block'" onmouseleave="this.querySelector('.sc-actions').style.display='none'"` : '';
+                
                 scHtml += `
-                    <tr>
+                    <tr ${hoverAttr}>
                         <td style="padding: 10px;">${idx + 1}</td>
-                        <td style="padding: 10px; font-weight:bold;">${est.toUpperCase()}</td>
+                        <td style="padding: 10px; font-weight:bold;">
+                            ${est.toUpperCase()}
+                            ${canEdit ? `
+                            <span class="sc-actions" style="display:none; margin-left: 10px;">
+                                <i class="fa-solid fa-edit" style="color:#0369a1; cursor:pointer;" onclick="editSupplyChainMaster('${est}', '${abbr}')"></i>
+                                <i class="fa-solid fa-trash" style="color:#e11d48; cursor:pointer; margin-left:5px;" onclick="deleteSupplyChainMaster('${est}')"></i>
+                            </span>` : ''}
+                        </td>
                         <td style="padding: 10px;">${abbr}</td>
                         <td style="padding: 10px; text-align:center;">
-                            <input type="checkbox" class="sc-ffb-checkbox" data-estate="${est}" ${isFfb ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer;">
+                            <input type="checkbox" class="sc-ffb-checkbox" data-estate="${est}" ${isFfb ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer;" ${canEdit ? '' : 'disabled'}>
                         </td>
                         <td style="padding: 10px; text-align:center;">
-                            <input type="checkbox" class="sc-efb-checkbox" data-estate="${est}" ${isEfb ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer;">
+                            <input type="checkbox" class="sc-efb-checkbox" data-estate="${est}" ${isEfb ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer;" ${canEdit ? '' : 'disabled'}>
                         </td>
                     </tr>
                 `;
@@ -8680,7 +8831,7 @@ window.submitAddSupplyChainMaster = async () => {
         const res = await fetch(`${API_URL}/master/supply_chain_list`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, abbr })
+            body: JSON.stringify({ name, abbr, region: window.getRegionForUnit(currentUser.estate) })
         });
         const data = await res.json();
         if (res.ok) {
@@ -9594,10 +9745,31 @@ window.openHistoricalModal = async () => {
     document.getElementById('historical-date').value = window.getLocalDate();
     
     // Populate estate dropdown
-    let mill = currentUser.estate;
-    if (!mill || !mill.endsWith('Mill')) {
-        mill = 'Bunga Tanjung Mill';
-    }
+    
+        const millDropdown = document.getElementById('monitor-tonase-mill');
+        let mill = currentUser.estate;
+        
+        if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            // User is not a Mill, show the dropdown so they can pick a Mill in their region
+            if (millDropdown) {
+                if (millDropdown.options.length === 0) {
+                    const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
+                    if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
+                        window.REGION_DATA[region].mills.forEach(m => {
+                            millDropdown.innerHTML += `<option value="${m}">${m}</option>`;
+                        });
+                    }
+                }
+                millDropdown.style.display = 'block';
+                mill = millDropdown.value;
+            }
+        } else {
+            // User IS a mill, hide dropdown and force their mill
+            if (millDropdown) millDropdown.style.display = 'none';
+        }
+        
+        if (!mill) mill = 'Bunga Tanjung Mill';
+
     try {
         const masterRes = await fetch(`${API_URL}/master/${mill}`);
         const masterData = await masterRes.json();
@@ -9615,10 +9787,31 @@ window.openHistoricalModal = async () => {
 };
 
 window.loadHistoricalChartData = async () => {
-    let mill = currentUser.estate;
-    if (!mill || !mill.endsWith('Mill')) {
-        mill = 'Bunga Tanjung Mill';
-    }
+    
+        const millDropdown = document.getElementById('monitor-tonase-mill');
+        let mill = currentUser.estate;
+        
+        if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            // User is not a Mill, show the dropdown so they can pick a Mill in their region
+            if (millDropdown) {
+                if (millDropdown.options.length === 0) {
+                    const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
+                    if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
+                        window.REGION_DATA[region].mills.forEach(m => {
+                            millDropdown.innerHTML += `<option value="${m}">${m}</option>`;
+                        });
+                    }
+                }
+                millDropdown.style.display = 'block';
+                mill = millDropdown.value;
+            }
+        } else {
+            // User IS a mill, hide dropdown and force their mill
+            if (millDropdown) millDropdown.style.display = 'none';
+        }
+        
+        if (!mill) mill = 'Bunga Tanjung Mill';
+
     const date = document.getElementById('historical-date').value;
     if (!date) {
         alert('Pilih tanggal terlebih dahulu');
@@ -9693,10 +9886,31 @@ window.openEfbHistoricalModal = async () => {
     document.getElementById('efb-historical-end-date').value = today;
     
     // Populate estate dropdown
-    let mill = currentUser.estate;
-    if (!mill || !mill.endsWith('Mill')) {
-        mill = 'Bunga Tanjung Mill';
-    }
+    
+        const millDropdown = document.getElementById('monitor-tonase-mill');
+        let mill = currentUser.estate;
+        
+        if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            // User is not a Mill, show the dropdown so they can pick a Mill in their region
+            if (millDropdown) {
+                if (millDropdown.options.length === 0) {
+                    const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
+                    if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
+                        window.REGION_DATA[region].mills.forEach(m => {
+                            millDropdown.innerHTML += `<option value="${m}">${m}</option>`;
+                        });
+                    }
+                }
+                millDropdown.style.display = 'block';
+                mill = millDropdown.value;
+            }
+        } else {
+            // User IS a mill, hide dropdown and force their mill
+            if (millDropdown) millDropdown.style.display = 'none';
+        }
+        
+        if (!mill) mill = 'Bunga Tanjung Mill';
+
     try {
         const masterRes = await fetch(`${API_URL}/master/${mill}`);
         const masterData = await masterRes.json();
@@ -9714,10 +9928,31 @@ window.openEfbHistoricalModal = async () => {
 };
 
 window.loadEfbHistoricalChartData = async () => {
-    let mill = currentUser.estate;
-    if (!mill || !mill.endsWith('Mill')) {
-        mill = 'Bunga Tanjung Mill';
-    }
+    
+        const millDropdown = document.getElementById('monitor-tonase-mill');
+        let mill = currentUser.estate;
+        
+        if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            // User is not a Mill, show the dropdown so they can pick a Mill in their region
+            if (millDropdown) {
+                if (millDropdown.options.length === 0) {
+                    const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
+                    if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
+                        window.REGION_DATA[region].mills.forEach(m => {
+                            millDropdown.innerHTML += `<option value="${m}">${m}</option>`;
+                        });
+                    }
+                }
+                millDropdown.style.display = 'block';
+                mill = millDropdown.value;
+            }
+        } else {
+            // User IS a mill, hide dropdown and force their mill
+            if (millDropdown) millDropdown.style.display = 'none';
+        }
+        
+        if (!mill) mill = 'Bunga Tanjung Mill';
+
     const startDate = document.getElementById('efb-historical-start-date').value;
     const endDate = document.getElementById('efb-historical-end-date').value;
     if (!startDate || !endDate) {
@@ -9974,10 +10209,31 @@ window.loadTonaseInputData = async () => {
     container.innerHTML = '<div style="text-align:center; padding: 20px;">Memuat data...</div>';
     
     try {
+        
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
-        if (!mill || !mill.endsWith('Mill')) {
-            mill = 'Bunga Tanjung Mill';
+        
+        if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            // User is not a Mill, show the dropdown so they can pick a Mill in their region
+            if (millDropdown) {
+                if (millDropdown.options.length === 0) {
+                    const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
+                    if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
+                        window.REGION_DATA[region].mills.forEach(m => {
+                            millDropdown.innerHTML += `<option value="${m}">${m}</option>`;
+                        });
+                    }
+                }
+                millDropdown.style.display = 'block';
+                mill = millDropdown.value;
+            }
+        } else {
+            // User IS a mill, hide dropdown and force their mill
+            if (millDropdown) millDropdown.style.display = 'none';
         }
+        
+        if (!mill) mill = 'Bunga Tanjung Mill';
+
         const masterRes = await fetch(`${API_URL}/master/${mill}`);
         const masterData = await masterRes.json();
         const supplyChainFFB = masterData.supply_chain.filter(s => s.is_ffb !== false).map(s => s.estate);
@@ -10170,10 +10426,31 @@ window.loadTonaseInputData = async () => {
 
 window.saveTonaseData = async () => {
     const date = document.getElementById('t-date').value;
-    let mill = currentUser.estate;
-    if (!mill || !mill.endsWith('Mill')) {
-        mill = 'Bunga Tanjung Mill';
-    }
+    
+        const millDropdown = document.getElementById('monitor-tonase-mill');
+        let mill = currentUser.estate;
+        
+        if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            // User is not a Mill, show the dropdown so they can pick a Mill in their region
+            if (millDropdown) {
+                if (millDropdown.options.length === 0) {
+                    const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
+                    if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
+                        window.REGION_DATA[region].mills.forEach(m => {
+                            millDropdown.innerHTML += `<option value="${m}">${m}</option>`;
+                        });
+                    }
+                }
+                millDropdown.style.display = 'block';
+                mill = millDropdown.value;
+            }
+        } else {
+            // User IS a mill, hide dropdown and force their mill
+            if (millDropdown) millDropdown.style.display = 'none';
+        }
+        
+        if (!mill) mill = 'Bunga Tanjung Mill';
+
     
     if (!date) {
         alert("Pilih Tanggal terlebih dahulu.");
@@ -10395,10 +10672,31 @@ window.renderTonaseMonitorTable = async (isHistorical = false) => {
     container.innerHTML = '<div style="text-align:center; padding: 20px;">Memuat data monitoring...</div>';
     
     try {
+        
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
-        if (!mill || !mill.endsWith('Mill')) {
-            mill = 'Bunga Tanjung Mill';
+        
+        if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            // User is not a Mill, show the dropdown so they can pick a Mill in their region
+            if (millDropdown) {
+                if (millDropdown.options.length === 0) {
+                    const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
+                    if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
+                        window.REGION_DATA[region].mills.forEach(m => {
+                            millDropdown.innerHTML += `<option value="${m}">${m}</option>`;
+                        });
+                    }
+                }
+                millDropdown.style.display = 'block';
+                mill = millDropdown.value;
+            }
+        } else {
+            // User IS a mill, hide dropdown and force their mill
+            if (millDropdown) millDropdown.style.display = 'none';
         }
+        
+        if (!mill) mill = 'Bunga Tanjung Mill';
+
         
         const [masterRes, tonaseRes, dmRes] = await Promise.all([
             fetch(`${API_URL}/master/${mill}`),
@@ -10630,10 +10928,31 @@ window.loadPrimeTimeChart = async () => {
     const month = dateStr.substring(0, 7); // YYYY-MM
     
     try {
+        
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
-        if (!mill || !mill.endsWith('Mill')) {
-            mill = 'Bunga Tanjung Mill';
+        
+        if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            // User is not a Mill, show the dropdown so they can pick a Mill in their region
+            if (millDropdown) {
+                if (millDropdown.options.length === 0) {
+                    const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
+                    if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
+                        window.REGION_DATA[region].mills.forEach(m => {
+                            millDropdown.innerHTML += `<option value="${m}">${m}</option>`;
+                        });
+                    }
+                }
+                millDropdown.style.display = 'block';
+                mill = millDropdown.value;
+            }
+        } else {
+            // User IS a mill, hide dropdown and force their mill
+            if (millDropdown) millDropdown.style.display = 'none';
         }
+        
+        if (!mill) mill = 'Bunga Tanjung Mill';
+
         
         const primeSel = document.getElementById('prime-estate');
         if (primeSel && primeSel.options.length <= 1) {
@@ -10841,10 +11160,31 @@ window.loadHistoricalPlanningChart = async () => {
     const month = monthInput.value; // YYYY-MM
     
     try {
+        
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
-        if (!mill || !mill.endsWith('Mill')) {
-            mill = 'Bunga Tanjung Mill';
+        
+        if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            // User is not a Mill, show the dropdown so they can pick a Mill in their region
+            if (millDropdown) {
+                if (millDropdown.options.length === 0) {
+                    const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
+                    if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
+                        window.REGION_DATA[region].mills.forEach(m => {
+                            millDropdown.innerHTML += `<option value="${m}">${m}</option>`;
+                        });
+                    }
+                }
+                millDropdown.style.display = 'block';
+                mill = millDropdown.value;
+            }
+        } else {
+            // User IS a mill, hide dropdown and force their mill
+            if (millDropdown) millDropdown.style.display = 'none';
         }
+        
+        if (!mill) mill = 'Bunga Tanjung Mill';
+
         
         const primeSel = document.getElementById('prime-estate');
         const selectedEstate = primeSel ? primeSel.value : 'ALL';
@@ -11013,10 +11353,31 @@ window.renderDailyArrivalTable = async () => {
     if (!tbody || !tfoot) return;
     
     try {
+        
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
-        if (!mill || !mill.endsWith('Mill')) {
-            mill = 'Bunga Tanjung Mill';
+        
+        if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            // User is not a Mill, show the dropdown so they can pick a Mill in their region
+            if (millDropdown) {
+                if (millDropdown.options.length === 0) {
+                    const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
+                    if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
+                        window.REGION_DATA[region].mills.forEach(m => {
+                            millDropdown.innerHTML += `<option value="${m}">${m}</option>`;
+                        });
+                    }
+                }
+                millDropdown.style.display = 'block';
+                mill = millDropdown.value;
+            }
+        } else {
+            // User IS a mill, hide dropdown and force their mill
+            if (millDropdown) millDropdown.style.display = 'none';
         }
+        
+        if (!mill) mill = 'Bunga Tanjung Mill';
+
         
         const primeSel = document.getElementById('prime-estate');
         const selectedEstate = primeSel ? primeSel.value : 'ALL';
@@ -11804,32 +12165,61 @@ window.exportDashboard = function() {
     });
 };
 
-window.updateLocationList = function() {
+window.updateLocationList = async function() {
+    const regionEl = document.getElementById('login-region');
     const locationTypeEl = document.getElementById('login-location-type');
     const estateDropdown = document.getElementById('login-estate');
     if (!locationTypeEl || !estateDropdown) return;
     
-    const type = locationTypeEl.value.toUpperCase();
-    estateDropdown.innerHTML = '';
+    const region = regionEl ? regionEl.value : 'BENGKULU';
+    const type = (locationTypeEl.value || '').toUpperCase();
+    estateDropdown.innerHTML = '<option value="" disabled selected>Loading...</option>';
     
     if (type === 'MILL') {
-        estateDropdown.innerHTML = '<option value="" disabled selected>LIST MILL</option>' +
-            '<option>Bunga Tanjung Mill</option>' +
-            '<option>Muko Muko Mill</option>';
-    } else {
-        estateDropdown.innerHTML = '<option value="" disabled selected>LIST ESTATE</option>' +
-            '<option>Bunga Tanjung Estate</option>' +
-            '<option>Sungai Teramang Estate</option>' +
-            '<option>Air Bikuk Estate</option>' +
-            '<option>Batu Kuda Estate</option>' +
-            '<option>Air Buluh Estate</option>' +
-            '<option>Malin Deman Estate</option>' +
-            '<option>Tanah Rekah Estate</option>' +
-            '<option>Muko Muko Estate</option>' +
-            '<option>Sei Jerinjing Estate</option>' +
-            '<option>Talang Petai Estate</option>' +
-            '<option>Sungai Kiang Estate</option>' +
-            '<option>Air Majunto Estate</option>';
+        // KHUSUS MILL: SUNTIK HARDCODE DARI REGION_DATA
+        estateDropdown.innerHTML = `<option value="" disabled selected>LIST MILL</option>`;
+        if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
+            window.REGION_DATA[region].mills.forEach(mill => {
+                estateDropdown.innerHTML += `<option value="${mill}">${mill}</option>`;
+            });
+        }
+        return;
+    }
+    
+    // KHUSUS ESTATE: MURNI DARI DATABASE SUPPLY CHAIN UNTUK MILL DI REGION TERSEBUT
+    try {
+        const res = await fetch(window.API_URL.replace('/api', '/api/master_supply_chain_all'));
+        if (!res.ok) throw new Error('API failed');
+        const list = await res.json();
+        
+        estateDropdown.innerHTML = `<option value="" disabled selected>LIST ESTATE</option>`;
+        
+        // Ambil daftar mill di region yang dipilih
+        const millsInRegion = (window.REGION_DATA[region] && window.REGION_DATA[region].mills) ? window.REGION_DATA[region].mills : [];
+        
+        // Filter estate yang mensupply ke mill-mill di region ini
+        const validEstates = new Set();
+        list.forEach(item => {
+            if (millsInRegion.includes(item.mill)) {
+                validEstates.add(item.estate);
+            }
+        });
+        
+        const sortedEstates = Array.from(validEstates).sort((a,b) => a.localeCompare(b));
+        
+        sortedEstates.forEach(estateName => {
+            estateDropdown.innerHTML += `<option value="${estateName}">${estateName}</option>`;
+        });
+        
+    } catch (e) {
+        console.error(e);
+        estateDropdown.innerHTML = `<option value="" disabled selected>LIST ESTATE</option>`;
+        // Fallback jika API mati
+        if (window.REGION_DATA[region] && window.REGION_DATA[region].estates) {
+            window.REGION_DATA[region].estates.forEach(estate => {
+                estateDropdown.innerHTML += `<option value="${estate}">${estate}</option>`;
+            });
+        }
     }
 };
 
@@ -11958,10 +12348,31 @@ window.loadHistoricalActualChart = async () => {
     const selectedDate = type === 'harian' ? dateInput.value : null;
     
     try {
+        
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
-        if (!mill || !mill.endsWith('Mill')) {
-            mill = 'Bunga Tanjung Mill';
+        
+        if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            // User is not a Mill, show the dropdown so they can pick a Mill in their region
+            if (millDropdown) {
+                if (millDropdown.options.length === 0) {
+                    const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
+                    if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
+                        window.REGION_DATA[region].mills.forEach(m => {
+                            millDropdown.innerHTML += `<option value="${m}">${m}</option>`;
+                        });
+                    }
+                }
+                millDropdown.style.display = 'block';
+                mill = millDropdown.value;
+            }
+        } else {
+            // User IS a mill, hide dropdown and force their mill
+            if (millDropdown) millDropdown.style.display = 'none';
         }
+        
+        if (!mill) mill = 'Bunga Tanjung Mill';
+
         
         const primeSel = document.getElementById('prime-estate');
         const selectedEstate = primeSel ? primeSel.value : 'ALL';
@@ -12164,10 +12575,31 @@ window.loadDashboardProgressHistoricalChart = async () => {
     document.getElementById('dashboard-progress-historical-chart-container').style.display = 'block';
     
     try {
+        
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
-        if (!mill || !mill.endsWith('Mill')) {
-            mill = 'Bunga Tanjung Mill';
+        
+        if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            // User is not a Mill, show the dropdown so they can pick a Mill in their region
+            if (millDropdown) {
+                if (millDropdown.options.length === 0) {
+                    const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
+                    if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
+                        window.REGION_DATA[region].mills.forEach(m => {
+                            millDropdown.innerHTML += `<option value="${m}">${m}</option>`;
+                        });
+                    }
+                }
+                millDropdown.style.display = 'block';
+                mill = millDropdown.value;
+            }
+        } else {
+            // User IS a mill, hide dropdown and force their mill
+            if (millDropdown) millDropdown.style.display = 'none';
         }
+        
+        if (!mill) mill = 'Bunga Tanjung Mill';
+
         const res = await fetch(`${API_URL}/tonase/${mill}/${selectedDate}`);
         const data = await window.parseTonaseResponse(res);
         
@@ -12335,10 +12767,31 @@ window.loadTonaseSummaryData = async () => {
     const scope = scopeSelect ? scopeSelect.value : 'daily';
     const month = selectedDate.substring(0, 7); // YYYY-MM
     
-    let mill = currentUser.estate;
-    if (!mill || !mill.endsWith('Mill')) {
-        mill = 'Bunga Tanjung Mill';
-    }
+    
+        const millDropdown = document.getElementById('monitor-tonase-mill');
+        let mill = currentUser.estate;
+        
+        if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            // User is not a Mill, show the dropdown so they can pick a Mill in their region
+            if (millDropdown) {
+                if (millDropdown.options.length === 0) {
+                    const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
+                    if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
+                        window.REGION_DATA[region].mills.forEach(m => {
+                            millDropdown.innerHTML += `<option value="${m}">${m}</option>`;
+                        });
+                    }
+                }
+                millDropdown.style.display = 'block';
+                mill = millDropdown.value;
+            }
+        } else {
+            // User IS a mill, hide dropdown and force their mill
+            if (millDropdown) millDropdown.style.display = 'none';
+        }
+        
+        if (!mill) mill = 'Bunga Tanjung Mill';
+
     
     const estateTableBody = document.querySelector('#tsum-estate-table tbody');
     if (estateTableBody) {
@@ -15591,9 +16044,9 @@ window.printMonthlyGradingReport = () => {
 // --- UNIFIED MILL MODULES (Processing, Water Analysis, FFB Quality) ---
 // ==========================================================================
 // --- MILL MODULES (Processing, Water, FFB Quality, Dashboard) ---
-window.API_URL = window.API_URL || (window.location.protocol === 'file:' ? 'http://localhost:3006/api' : '/api');
+window.API_URL = window.API_URL || (window.location.protocol === 'file:' ? 'http://localhost:3007/api' : '/api');
 // API_URL used from global or window
-window.API_URL = window.API_URL || (window.location.protocol === 'file:' ? 'http://localhost:3006/api' : '/api');
+window.API_URL = window.API_URL || (window.location.protocol === 'file:' ? 'http://localhost:3007/api' : '/api');
 if (!window.views) window.views = {};
 window.views = window.views || (typeof views !== 'undefined' ? views : {});
 
@@ -22715,7 +23168,7 @@ views.haccp = `
                             <div style="font-weight: 900; font-size: 12px; letter-spacing: 1px; color: #1e3a8a; margin-top: 2px;">SIPEF</div>
                         </td>
                         <td style="text-align: center; vertical-align: middle; border-right: 1.5px solid #000; padding: 6px 10px;">
-                            <div style="font-weight: 800; font-size: 12.5px; text-transform: uppercase;">PT. AGRO MUKO - BUNGA TANJUNG PALM OIL MILL</div>
+                            <div style="font-weight: 800; font-size: 12.5px; text-transform: uppercase;">SIPEF - </div>
                             <div style="font-weight: 900; font-size: 13.5px; margin: 3px 0; text-transform: uppercase;">DOKUMENTASI HACCP</div>
                             <div style="font-weight: 800; font-size: 11.5px; text-transform: uppercase;">PANDUAN PERSONAL HYGIENE DI AREA PKS</div>
                         </td>
@@ -23187,7 +23640,7 @@ views.haccp = `
                     </div>
                     <div style="flex: 1; text-align: center; padding-right: 100px;">
                         <div style="font-weight: 800; font-size: 14px; text-transform: capitalize;">Cheklist Pemeriksaan Kebersihan Transport CPO - PK</div>
-                        <div style="font-weight: 800; font-size: 12.5px; margin-top: 2px;">PT. Agromuko Bunga Tanjung Palm Oil Mill</div>
+                        <div style="font-weight: 800; font-size: 12.5px; margin-top: 2px;">SIPEF - </div>
                     </div>
                 </div>
 
@@ -24110,3 +24563,111 @@ window.printHaccpElement = function(elementId, title) {
     printWindow.document.close();
 };
 
+
+window.updateUserModalEstates = async function() {
+    const regionEl = document.getElementById('u-region-dropdown');
+    const container = document.getElementById('u-estate-container');
+    if (!regionEl || !container) return;
+    
+    const region = regionEl.value;
+    
+    let html = '<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="Semua Estate (Khusus Admin)"> Semua Estate (Khusus Admin)</label>';
+    
+    try {
+        const res = await fetch(window.API_URL.replace('/api', '/api/master_locations'));
+        const list = await res.json();
+        
+        const filtered = list.filter(item => item.region === region).sort((a,b) => a.name.localeCompare(b.name));
+        
+        filtered.forEach(item => {
+            const nameUpper = item.name.toUpperCase();
+            const isMill = nameUpper.includes('MILL') || nameUpper.includes('POM');
+            // Hanya masukkan estate dari database (jangan mill)
+            if (!isMill) {
+                html += `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="${item.name}"> ${item.name}</label>`;
+            }
+        });
+        
+    } catch(e) {
+        // Fallback to REGION_DATA estates
+        const data = window.REGION_DATA[region];
+        if (data && data.estates) {
+            data.estates.forEach(estate => {
+                html += `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="${estate}"> ${estate}</label>`;
+            });
+        }
+    }
+    
+    // ALWAYS inject Mills from REGION_DATA
+    const data = window.REGION_DATA[region];
+    if (data && data.mills) {
+        data.mills.forEach(mill => {
+            html += `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u_estate" value="${mill}"> ${mill}</label>`;
+        });
+    }
+    
+    container.innerHTML = html;
+};
+
+window.editSupplyChainMaster = async function(oldName, oldAbbr) {
+    if (!window.isMasterAuthorized(window.currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
+    const newName = prompt('Ubah Nama Estate:', oldName);
+    if (newName === null) return;
+    const newAbbr = prompt('Ubah Kode (Singkatan):', oldAbbr);
+    if (newAbbr === null) return;
+    
+    const name = newName.trim();
+    const abbr = newAbbr.trim();
+    
+    if (!name || !abbr) {
+        alert('Nama dan Kode tidak boleh kosong!');
+        return;
+    }
+    
+    try {
+        const res = await fetch(window.API_URL + '/master/supply_chain_list/' + encodeURIComponent(oldName), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, abbr })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert('Supply Chain Master berhasil diubah!');
+            if (typeof window.loadMasterData === 'function') await window.loadMasterData();
+        } else {
+            alert(data.error || 'Gagal mengubah data');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Gagal menghubungi server.');
+    }
+};
+
+window.deleteSupplyChainMaster = async function(name) {
+    if (!window.isMasterAuthorized(window.currentUser)) {
+        alert('Akses Ditolak: Hanya Admin dan Office Assistant yang dapat mengubah Master Data.');
+        return;
+    }
+    if (!confirm('Apakah Anda yakin ingin menghapus ' + name + ' dari Master Supply Chain? (Ini juga akan menghapusnya dari relasi Mill)')) {
+        return;
+    }
+    
+    try {
+        const res = await fetch(window.API_URL + '/master/supply_chain_list/' + encodeURIComponent(name), {
+            method: 'DELETE'
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert('Supply Chain Master berhasil dihapus!');
+            if (typeof window.loadMasterData === 'function') await window.loadMasterData();
+        } else {
+            alert(data.error || 'Gagal menghapus data');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Gagal menghubungi server.');
+    }
+};

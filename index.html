@@ -17,34 +17,7 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="styles.css?v=20260909_1608">
     <!-- Inline Login Utilities -->
-    <script>
-        window.updateLocationList = function() {
-            var locationTypeEl = document.getElementById('login-location-type');
-            var estateDropdown = document.getElementById('login-estate');
-            if (!locationTypeEl || !estateDropdown) return;
-            var type = (locationTypeEl.value || '').toUpperCase();
-            estateDropdown.innerHTML = '';
-            if (type === 'MILL') {
-                estateDropdown.innerHTML = '<option value="" disabled selected>LIST MILL</option>' +
-                    '<option>Bunga Tanjung Mill</option>' +
-                    '<option>Muko Muko Mill</option>';
-            } else {
-                estateDropdown.innerHTML = '<option value="" disabled selected>LIST ESTATE</option>' +
-                    '<option>Bunga Tanjung Estate</option>' +
-                    '<option>Sungai Teramang Estate</option>' +
-                    '<option>Air Bikuk Estate</option>' +
-                    '<option>Batu Kuda Estate</option>' +
-                    '<option>Air Buluh Estate</option>' +
-                    '<option>Malin Deman Estate</option>' +
-                    '<option>Tanah Rekah Estate</option>' +
-                    '<option>Muko Muko Estate</option>' +
-                    '<option>Sei Jerinjing Estate</option>' +
-                    '<option>Talang Petai Estate</option>' +
-                    '<option>Sungai Kiang Estate</option>' +
-                    '<option>Air Majunto Estate</option>';
-            }
-        };
-    </script>
+
 </head>
 <body>
     <!-- Login Screen -->
@@ -55,28 +28,23 @@
                     <i class="fa-solid fa-leaf"></i>
                 </div>
                 <h2>AgriMonitor</h2>
-                <h3 style="font-size: 1rem; color: #1f2937; margin: 10px 0 5px; text-transform: uppercase;">PT Tolan Tiga - Region Bengkulu</h3>
+                <h3 style="font-size: 1rem; color: #1f2937; margin: 10px 0 5px; text-transform: uppercase;">PT Tolan Tiga</h3>
             </div>
             <form id="login-form" autocomplete="off" onsubmit="event.preventDefault(); window.handleLoginSubmit(event); return false;">
-                <div class="form-group" style="display: flex; gap: 10px;">
+                <div class="form-group">
+                    <select id="login-region" class="form-control" style="text-align: center; font-weight: bold; width: 100%;" onchange="window.updateLocationList()">
+                        <option value="BENGKULU" selected>REGION BENGKULU</option>
+                        <option value="NORTH_SUMATERA">REGION NORTH SUMATERA</option>
+                        <option value="SOUTH_SUMATERA">REGION SOUTH SUMATERA</option>
+                    </select>
+                </div>
+                <div class="form-group" style="display: flex; gap: 10px; margin-top: 10px;">
                     <select id="login-location-type" class="form-control" style="text-align: center; font-weight: bold; flex: 1;" onchange="window.updateLocationList()">
                         <option value="Estate" selected>ESTATE</option>
                         <option value="Mill">MILL</option>
                     </select>
                     <select id="login-estate" class="form-control" required style="text-align: center; font-weight: bold; flex: 2;">
-                        <option value="" disabled selected>LIST ESTATE</option>
-                        <option>Bunga Tanjung Estate</option>
-                        <option>Sungai Teramang Estate</option>
-                        <option>Air Bikuk Estate</option>
-                        <option>Batu Kuda Estate</option>
-                        <option>Air Buluh Estate</option>
-                        <option>Malin Deman Estate</option>
-                        <option>Tanah Rekah Estate</option>
-                        <option>Muko Muko Estate</option>
-                        <option>Sei Jerinjing Estate</option>
-                        <option>Talang Petai Estate</option>
-                        <option>Sungai Kiang Estate</option>
-                        <option>Air Majunto Estate</option>
+                        <!-- Options populated by app.js -->
                     </select>
                 </div>
                 <div class="form-group">
@@ -249,7 +217,7 @@
     <!-- Auto Redirect & Cache Busting -->
     <script>
         if (window.location.port === "3000") {
-            window.location.href = "http://localhost:3006";
+            window.location.href = "http://localhost:3007";
         }
     </script>
     
