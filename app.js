@@ -12341,6 +12341,47 @@ setTimeout(() => {
     }
 }, 100);
 
+window.openChangePasswordModal = function() {
+    const modal = document.getElementById('modal-change-password');
+    if (!modal) return;
+    
+    // Reset form
+    if(document.getElementById('cp-old')) document.getElementById('cp-old').value = '';
+    if(document.getElementById('cp-new')) document.getElementById('cp-new').value = '';
+    if(document.getElementById('cp-confirm')) document.getElementById('cp-confirm').value = '';
+    const errEl = document.getElementById('cp-error');
+    if(errEl) {
+        errEl.style.display = 'none';
+        errEl.style.color = '#ef4444';
+        errEl.innerText = '';
+    }
+    const btn = document.getElementById('btn-submit-cp');
+    if(btn) {
+        btn.disabled = false;
+        btn.innerText = 'Update Password';
+        btn.style.backgroundColor = '';
+    }
+    
+    const cpUnEl = document.getElementById('cp-hidden-username');
+    let un = '';
+    if (window.currentUser && window.currentUser.username) {
+        un = window.currentUser.username;
+        if(cpUnEl && cpUnEl.parentElement) cpUnEl.parentElement.style.display = 'none';
+    } else {
+        const loginUnEl = document.getElementById('login-username');
+        if (loginUnEl) un = loginUnEl.value;
+        if(cpUnEl && cpUnEl.parentElement) cpUnEl.parentElement.style.display = 'block';
+    }
+    if (cpUnEl) cpUnEl.value = un;
+    
+    const loginSandiEl = document.getElementById('login-sandi');
+    if (!window.currentUser && loginSandiEl && loginSandiEl.value) {
+        if(document.getElementById('cp-old')) document.getElementById('cp-old').value = loginSandiEl.value;
+    }
+    
+    modal.style.display = 'flex';
+};
+
 window.handleChangePassword = async function(e) {
     e.preventDefault();
     
