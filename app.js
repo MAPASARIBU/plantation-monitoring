@@ -889,6 +889,22 @@ Object.assign(views, {
     </div>
 </div>
 
+<div class="glass-card" id="dash-monthly-ffb-loose-card" style="margin-top: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px; gap: 10px;">
+        <h3 style="margin: 0;">Monthly FFB Quality Fruit Loose Analysis</h3>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <label style="font-weight: bold; margin-bottom: 0;">Bulan:</label>
+            <input type="month" id="dash-monthly-ffb-loose-month" class="form-control" style="width: auto;">
+            
+            <button class="btn btn-success" onclick="if(window.renderDashMonthlyFfbLooseAnalysis) window.renderDashMonthlyFfbLooseAnalysis()"><i class="fa-solid fa-filter"></i> Tampilkan</button>
+            <button class="btn btn-secondary" onclick="window.printDashMonthlyFfbLooseAnalysis()"><i class="fa-solid fa-print"></i> Cetak Logsheet</button>
+        </div>
+    </div>
+    <div id="dash-monthly-ffb-loose-wrapper" class="table-responsive" style="width: 100%; overflow-x: auto; position: relative;">
+        <canvas id="monthlyFfbLooseChart" style="min-height: 400px; width: 100%;"></canvas>
+    </div>
+</div>
+
 <!-- Dashboard Extra Sections (Processing & Water) -->
 <div id="dashboard-mill-sections">
 <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; border-top: 2px solid #e2e8f0; padding-top: 20px;">
@@ -19952,6 +19968,22 @@ window.exportMonthlyGradingCSV = function() {
 views.mill_dashboard = `
 <div class="animate-fade-in" style="padding-top: 10px;">
 
+<div class="glass-card" id="dash-monthly-ffb-loose-card" style="margin-top: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px; gap: 10px;">
+        <h3 style="margin: 0;">Monthly FFB Quality Fruit Loose Analysis</h3>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <label style="font-weight: bold; margin-bottom: 0;">Bulan:</label>
+            <input type="month" id="dash-monthly-ffb-loose-month" class="form-control" style="width: auto;">
+            
+            <button class="btn btn-success" onclick="if(window.renderDashMonthlyFfbLooseAnalysis) window.renderDashMonthlyFfbLooseAnalysis()"><i class="fa-solid fa-filter"></i> Tampilkan</button>
+            <button class="btn btn-secondary" onclick="window.printDashMonthlyFfbLooseAnalysis()"><i class="fa-solid fa-print"></i> Cetak Logsheet</button>
+        </div>
+    </div>
+    <div id="dash-monthly-ffb-loose-wrapper" class="table-responsive" style="width: 100%; overflow-x: auto; position: relative;">
+        <canvas id="monthlyFfbLooseChart" style="min-height: 400px; width: 100%;"></canvas>
+    </div>
+</div>
+
 <!-- Dashboard Extra Sections (Processing & Water) -->
 <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 2px solid #e2e8f0; padding-top: 20px;">
     <div style="display: flex; flex-direction: column;">
@@ -21332,6 +21364,334 @@ window.submitFqRangeModal = function() {
 
 window.printDashFfbCropQuality = function() {
     window.printTable('dash-ffb-crop-wrapper', 'LOGSHEET DAILY FFB CROP QUALITY');
+};
+
+
+window.renderDashMonthlyFfbLooseAnalysis = async function() {
+    const cardEl = document.getElementById('dash-monthly-ffb-loose-card');
+    if (!cardEl) return;
+    
+    if (!window.currentUser || !window.currentUser.role) {
+        cardEl.style.display = 'none';
+        return;
+    }
+    const allowedRoles = [
+        'Senior Field Manager', 'Senior Mill Manager', 'Director', 'Office Head Assistant',
+        'Senior Manager Estate', 'Manager', 'Askep', 'Assistant', 
+        'Krani Divisi', 'Manager Mill', 'Manager MIll', 
+        'supervisor Mill', 'Supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Analis', 'Grading', 
+        'Office Assistant Mill', 'Office Assistant (OAA)', 'Office Assistant', 'Admin', 'Administrator'
+    ];
+    const userRole = (window.currentUser.role || '').toLowerCase().trim();
+    const isAllowed = (window.hasPermission && (window.hasPermission('ffb_quality', 'view') || window.hasPermission('dashboard', 'view'))) ||
+                      allowedRoles.some(r => r.toLowerCase().trim() === userRole);
+    if (!isAllowed) {
+        cardEl.style.display = 'none';
+        return;
+    }
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const defaultMonth = `${yyyy}-${mm}`;
+
+    let monthInput = document.getElementById('dash-monthly-ffb-loose-month')?.value;
+    if (!monthInput) {
+        monthInput = defaultMonth;
+        if (document.getElementById('dash-monthly-ffb-loose-month')) {
+            document.getElementById('dash-monthly-ffb-loose-month').value = monthInput;
+        }
+    }
+
+    cardEl.style.display = 'block';
+    
+    let mill = 'Bunga Tanjung Mill';
+    const headerDropdown = document.getElementById('header-estate-dropdown');
+    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill') && !headerDropdown.value.includes('Semua')) {
+        mill = headerDropdown.value;
+    } else if (window.currentUser && window.currentUser.estate) {
+        const est = window.currentUser.estate;
+        if (est.toLowerCase().includes('mill') && !est.includes('Semua')) {
+            const first = est.split(',')[0].trim();
+            if (first.toLowerCase().includes('mill')) mill = first;
+        }
+    }
+
+    const m = parseInt(monthInput.split('-')[1]);
+    const y = parseInt(monthInput.split('-')[0]);
+    const startDate = `${monthInput}-01`;
+    const lastDay = new Date(y, m, 0).getDate();
+    const endDate = `${monthInput}-${String(lastDay).padStart(2, '0')}`;
+
+    try {
+        const res = await fetch(`/api/ffb_quality/range/${encodeURIComponent(mill)}/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`);
+        if (!res.ok) throw new Error('Network error fetching ffb quality fruit loose monthly');
+        const rawData = await res.json();
+
+        let abbrMap = {};
+        if (typeof masterData !== 'undefined' && masterData.supply_chain_list) {
+            masterData.supply_chain_list.forEach(item => {
+                abbrMap[item.name] = item.abbr;
+            });
+        }
+        const getAbbr = (estName) => abbrMap[estName] || estName.replace(' Estate', 'E');
+
+        const days = Array.from({length: lastDay}, (_, i) => i + 1);
+        const estDailyData = {};
+        const dailyTotal = {};
+
+        days.forEach(d => {
+            dailyTotal[d] = { bg: 0, bd: 0 };
+        });
+
+        rawData.forEach(row => {
+            const e = row.estate || 'Unknown';
+            if (!estDailyData[e]) {
+                estDailyData[e] = {};
+                days.forEach(d => estDailyData[e][d] = {bg: 0, bd: 0});
+            }
+            
+            const rowDateStr = row.date.split('T')[0];
+            const rowDay = parseInt(rowDateStr.split('-')[2]);
+            
+            const bg = parseFloat(row.bg_gram) || 0;
+            const bd = parseFloat(row.bd_gram) || 0;
+            
+            if (estDailyData[e][rowDay]) {
+                estDailyData[e][rowDay].bg += bg;
+                estDailyData[e][rowDay].bd += bd;
+            }
+            if (dailyTotal[rowDay]) {
+                dailyTotal[rowDay].bg += bg;
+                dailyTotal[rowDay].bd += bd;
+            }
+        });
+        
+        const datasets = [];
+        const colors = [
+            '#0ea5e9', '#f59e0b', '#10b981', '#8b5cf6', '#ec4899',
+            '#14b8a6', '#f97316', '#6366f1', '#84cc16', '#3b82f6'
+        ];
+        
+        let colorIdx = 0;
+        
+        Object.keys(estDailyData).forEach(est => {
+            const dataPts = days.map(d => {
+                const bg = estDailyData[est][d].bg;
+                const bd = estDailyData[est][d].bd;
+                return bg > 0 ? parseFloat((bd / bg * 100).toFixed(2)) : null;
+            });
+            
+            datasets.push({
+                label: getAbbr(est),
+                data: dataPts,
+                borderColor: colors[colorIdx % colors.length],
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                pointRadius: 4,
+                pointBackgroundColor: '#ffffff',
+                spanGaps: true
+            });
+            colorIdx++;
+        });
+        
+        const avgDataPts = days.map(d => {
+            const bg = dailyTotal[d].bg;
+            const bd = dailyTotal[d].bd;
+            return bg > 0 ? parseFloat((bd / bg * 100).toFixed(2)) : null;
+        });
+        
+        datasets.push({
+            label: 'Rata-rata Mill (Total)',
+            data: avgDataPts,
+            borderColor: '#334155',
+            backgroundColor: 'transparent',
+            borderWidth: 3,
+            borderDash: [5, 5],
+            pointRadius: 5,
+            pointBackgroundColor: '#ffffff',
+            spanGaps: true,
+            zIndex: 10
+        });
+
+        // Add 70% Standard Line as a dataset for compatibility
+        datasets.push({
+            label: 'Standard (70%)',
+            data: days.map(() => 70),
+            borderColor: '#ef4444', // Red line
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            pointRadius: 0,
+            hitRadius: 0,
+            hoverRadius: 0,
+            zIndex: 0
+        });
+
+        const ctx = document.getElementById('monthlyFfbLooseChart');
+        if (!ctx) return;
+        
+        if (window.monthlyFfbLooseChartInstance) {
+            window.monthlyFfbLooseChartInstance.destroy();
+        }
+
+        window.monthlyFfbLooseChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: days.map(d => d.toString()),
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `Trend % Brondolan Segar (${monthInput})`,
+                        font: { size: 16 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y + '%';
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 12 }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Tanggal',
+                            font: { weight: 'bold' }
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Persentase (%)',
+                            font: { weight: 'bold' }
+                        },
+                        min: 0,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+    } catch(err) {
+        console.error(err);
+    }
+};
+
+window.printDashMonthlyFfbLooseAnalysis = function() {
+    const canvas = document.getElementById('monthlyFfbLooseChart');
+    if (!canvas) {
+        alert('Grafik tidak ditemukan!');
+        return;
+    }
+    
+    // Resolve Mill Name for ISO Header
+    let unitName = 'Bunga Tanjung Mill';
+    const headerDropdown = document.getElementById('header-estate-dropdown');
+    if (headerDropdown && headerDropdown.value && headerDropdown.value.toLowerCase().includes('mill')) {
+        unitName = headerDropdown.value;
+    } else if (window.currentUser && window.currentUser.estate && window.currentUser.estate.toLowerCase().includes('mill')) {
+        unitName = window.currentUser.estate;
+    } else if (headerDropdown && headerDropdown.value && headerDropdown.value !== '' && !headerDropdown.value.includes('Semua')) {
+        unitName = headerDropdown.value;
+    }
+    
+    const monthVal = document.getElementById('dash-monthly-ffb-loose-month')?.value || '';
+    let periodStr = monthVal;
+    if (monthVal && monthVal.includes('-')) {
+        const indoMonths = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        const parts = monthVal.split('-');
+        const y = parts[0];
+        const mIdx = parseInt(parts[1], 10) - 1;
+        periodStr = (indoMonths[mIdx] || '') + ' ' + y;
+    }
+    
+    try {
+        const imgData = canvas.toDataURL('image/png', 1.0);
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert('Pop-up terblokir! Izinkan pop-up pada browser Anda untuk mencetak.');
+            return;
+        }
+        
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <title>LOGSHEET MONTHLY FFB QUALITY FRUIT LOOSE ANALYSIS</title>
+                    <style>
+                        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 20px; color: #333; margin: 0; }
+                        .iso-header { border: 2px solid #333; margin-bottom: 20px; width: 100%; border-collapse: collapse; }
+                        .iso-header td { border: 1px solid #333; padding: 10px; vertical-align: middle; }
+                        .iso-title { font-weight: bold; font-size: 16px; text-align: center; text-transform: uppercase; }
+                        .iso-meta { font-size: 12px; }
+                        .logo-cell { width: 120px; text-align: center; }
+                        .content-area { text-align: center; margin-top: 30px; }
+                        img.chart-img { max-width: 100%; height: auto; border: 1px solid #e2e8f0; padding: 10px; margin-top: 20px; }
+                        @media print {
+                            body { -webkit-print-color-adjust: exact; padding: 0; }
+                            @page { size: landscape; margin: 1cm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <table class="iso-header">
+                        <tr>
+                            <td class="logo-cell" rowspan="3">
+                                <h2 style="margin:0; color:#16a34a; font-style:italic;">PT Sipef</h2>
+                                <div style="font-size:10px;">Indonesia</div>
+                            </td>
+                            <td class="iso-title" rowspan="3">LOGSHEET MONTHLY FFB QUALITY FRUIT LOOSE ANALYSIS<br/><br/>${unitName}</td>
+                            <td class="iso-meta" style="width: 120px;">No. Dokumen</td>
+                            <td class="iso-meta" style="width: 150px;">: -</td>
+                        </tr>
+                        <tr>
+                            <td class="iso-meta">Revisi</td>
+                            <td class="iso-meta">: 00</td>
+                        </tr>
+                        <tr>
+                            <td class="iso-meta">Berlaku Efektif</td>
+                            <td class="iso-meta">: -</td>
+                        </tr>
+                    </table>
+                    
+                    <div class="content-area">
+                        <h3 style="margin: 0; font-size: 18px;">Periode: ${periodStr}</h3>
+                        <img class="chart-img" src="${imgData}" />
+                    </div>
+                    
+                    <script>
+                        setTimeout(() => { 
+                            window.print(); 
+                            window.close(); 
+                        }, 800);
+                    </script>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+    } catch(e) {
+        console.error(e);
+        alert('Gagal membuat gambar grafik untuk diprint.');
+    }
 };
 
 window.printDashFfbFruitLooseAnalysis = function() {
@@ -22938,6 +23298,11 @@ window.loadDashboardExtraData = async function(dateOverride) {
         (async () => {
             if (typeof window.renderDashFfbFruitLooseAnalysis === 'function') {
                 await window.renderDashFfbFruitLooseAnalysis();
+            }
+        })(),
+        (async () => {
+            if (typeof window.renderDashMonthlyFfbLooseAnalysis === 'function') {
+                await window.renderDashMonthlyFfbLooseAnalysis();
             }
         })(),
         (async () => {
@@ -24787,3 +25152,4 @@ window.deleteSupplyChainMaster = async function(name) {
         alert('Gagal menghubungi server.');
     }
 };
+
