@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="styles.css?v=20260909_1608">
+    <link rel="stylesheet" href="styles.css?v=20261006_1549">
     <!-- Inline Login Utilities -->
 
 </head>
@@ -58,7 +58,7 @@
                 <div id="login-error" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 10px; display: none;"></div>
                 <button type="button" id="btn-login-submit" onclick="window.handleLoginSubmit(event)" class="btn btn-primary btn-block">Masuk <i class="fa-solid fa-arrow-right"></i></button>
                 <div style="text-align: center; margin-top: 15px;">
-                    <a href="javascript:void(0)" onclick="document.getElementById('cp-old').value = document.getElementById('login-sandi').value; document.getElementById('cp-hidden-username').value = document.getElementById('login-username').value; document.getElementById('modal-change-password').style.display='flex'" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-key"></i> Ganti Password</a>
+                    <a href="javascript:void(0)" onclick="window.openChangePasswordModal()" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-key"></i> Ganti Password</a>
                 </div>
             </form>
         </div>
@@ -161,7 +161,7 @@
                             <span class="user-name">John Doe</span>
                             <span class="user-role" id="display-role">Senior Field Manager</span>
                             <span id="display-date" style="font-size: 0.75rem; color: var(--primary-color); font-weight: 600; margin-top: 2px;">Senin, 1 Juni 2026</span>
-                            <button onclick="document.getElementById('modal-change-password').style.display='flex'" style="margin-top: 5px; background: transparent; border: 1px solid var(--primary-color); color: var(--primary-color); border-radius: 4px; padding: 2px 8px; font-size: 0.7rem; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='var(--primary-color)'; this.style.color='white';" onmouseout="this.style.background='transparent'; this.style.color='var(--primary-color)';"><i class="fa-solid fa-key"></i> Ganti Password</button>
+                            <button type="button" onclick="window.openChangePasswordModal()" style="margin-top: 5px; background: transparent; border: 1px solid var(--primary-color); color: var(--primary-color); border-radius: 4px; padding: 2px 8px; font-size: 0.7rem; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='var(--primary-color)'; this.style.color='white';" onmouseout="this.style.background='transparent'; this.style.color='var(--primary-color)';"><i class="fa-solid fa-key"></i> Ganti Password</button>
                         </div>
                     </div>
                 </div>
@@ -177,15 +177,14 @@
     </div>
 
     <!-- Modal Change Password -->
-    <div class="modal-overlay" id="modal-change-password" style="display:none; z-index: 10000;">
+    <div class="modal-overlay" id="modal-change-password" data-persistent="true" style="display:none; z-index: 10000;">
         <div class="modal-content" style="width: 400px; margin: 40px auto;">
             <div class="modal-header" style="cursor: move;">
                 <h3 style="margin:0;"><i class="fa-solid fa-lock"></i> Ganti Password</h3>
                 <button type="button" class="modal-close" onclick="document.getElementById('modal-change-password').style.display = 'none'">&times;</button>
             </div>
             <div id="form-change-password" style="margin-top: 15px;">
-                <!-- Hidden username field to prevent browser password manager from prompting -->
-                <input type="text" id="cp-hidden-username" autocomplete="username" style="opacity: 0; position: absolute; left: -9999px;">
+                <div class="form-group" style="margin-bottom: 15px;" id="cp-username-group"><label style="display:block; margin-bottom:5px;">Nama Pengguna (Username)</label><input type="text" id="cp-hidden-username" class="form-control" placeholder="Masukkan username" autocomplete="username"></div>
 
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label style="display:block; margin-bottom:5px;">Password Lama</label>
@@ -222,7 +221,18 @@
     </script>
     
     <!-- Custom JS -->
-    <script src="app.js?v=20260909_014"></script>
-    <script src="mill_modules.js?v=20260909_014"></script>
+    <script src="app.js?v=20261006_1642"></script>
+    <script src="mill_modules.js?v=20261006_1642"></script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+

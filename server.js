@@ -933,7 +933,7 @@ app.get('/api/users', async (req, res) => {
 app.post('/api/users', async (req, res) => {
     try {
         const { username, password, role, estate } = req.body;
-        const result = await pool.query('INSERT INTO users (username, password, role, estate) VALUES ($1,$2,$3,$4) RETURNING id', [username, password, role, estate]);
+        const result = await pool.query('INSERT INTO users (username, password, role, estate, password_hash, name) VALUES ($1,$2,$3,$4,$5,$1) RETURNING id', [username, password, role, estate, password || '']);
         res.json({ id: result.rows[0].id, username, role, estate });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -1097,7 +1097,9 @@ app.get('/api/master/:estate', async (req, res) => {
         }
         
         let supply_chain = { rows: [] };
-        if (estate.endsWith('Mill')) {
+        if (estate === 'ALL' || estate === 'Semua Estate (Khusus Admin)') {
+            supply_chain = await pool.query('SELECT * FROM master_supply_chain');
+        } else if (estate.endsWith('Mill')) {
             supply_chain = await pool.query('SELECT * FROM master_supply_chain WHERE mill = $1', [estate]);
         }
         
@@ -1694,7 +1696,7 @@ app.put('/api/harvesting/daily/:id/realization', async (req, res) => {
 app.get('/api/tonase/:mill/:date', async (req, res) => {
     try {
         const { mill, date } = req.params;
-        const result = await pool.query('SELECT * FROM tonase_hourly WHERE mill = $1 AND date = $2', [mill, date]);
+        const result = await pool.query('SELECT * FROM tonase_hourly WHERE ($1 = \'ALL\' OR mill = $1) AND date = $2', [mill, date]);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -1706,7 +1708,7 @@ app.get('/api/tonase/:mill/month/:month', async (req, res) => {
     try {
         const { mill, month } = req.params;
         // month format: YYYY-MM
-        const result = await pool.query("SELECT * FROM tonase_hourly WHERE mill = $1 AND date LIKE $2 || '%'", [mill, month]);
+        const result = await pool.query("SELECT * FROM tonase_hourly WHERE ($1 = 'ALL' OR mill = $1) AND date LIKE $2 || '%'", [mill, month]);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -1733,7 +1735,7 @@ app.get('/api/tonase/range/:mill/:startDate/:endDate', async (req, res) => {
         };
         startDate = norm(startDate);
         endDate = norm(endDate);
-        const result = await pool.query("SELECT * FROM tonase_hourly WHERE mill = $1 AND date >= $2 AND date <= $3 ORDER BY date ASC, time_hour ASC", [mill, startDate, endDate]);
+        const result = await pool.query("SELECT * FROM tonase_hourly WHERE ($1 = 'ALL' OR mill = $1) AND date >= $2 AND date <= $3 ORDER BY date ASC, time_hour ASC", [mill, startDate, endDate]);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -2843,3 +2845,5 @@ app.delete('/api/haccp/cpo-tank/:id', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
+
