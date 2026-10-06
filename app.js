@@ -893,6 +893,7 @@ Object.assign(views, {
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px; gap: 10px;">
         <h3 style="margin: 0;">Monthly FFB Quality Fruit Loose Analysis</h3>
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <span id="dash-monthly-ffb-loose-trend-title" style="font-weight: bold; font-size: 1.1rem; color: #1e293b; margin-right: 15px; border-right: 2px solid #cbd5e1; padding-right: 15px;">Trend % Brondolan Segar</span>
             <label style="font-weight: bold; margin-bottom: 0;">Bulan:</label>
             <input type="month" id="dash-monthly-ffb-loose-month" class="form-control" style="width: auto;">
             
@@ -900,7 +901,7 @@ Object.assign(views, {
             <button class="btn btn-secondary" onclick="window.printDashMonthlyFfbLooseAnalysis()"><i class="fa-solid fa-print"></i> Cetak Logsheet</button>
         </div>
     </div>
-    <div id="dash-monthly-ffb-loose-wrapper" class="table-responsive" style="width: 85%; max-width: 1200px; margin: 0 auto; position: relative; height: 280px;">
+    <div id="dash-monthly-ffb-loose-wrapper" class="table-responsive" style="width: 85%; max-width: 1200px; margin: 0 auto; position: relative; height: 350px;">
         <canvas id="monthlyFfbLooseChart"></canvas>
     </div>
 </div>
@@ -7713,6 +7714,14 @@ const navigate = (viewId) => {
     populateSelects();
     
     if(viewId === 'dashboard') {
+    if (viewId === 'dashboard' || viewId === 'mill_dashboard') {
+        setTimeout(() => {
+            if (typeof window.renderDashMonthlyFfbLooseAnalysis === 'function') {
+                window.renderDashMonthlyFfbLooseAnalysis();
+            }
+        }, 500);
+    }
+
         if (typeof window.initDashboardDefaultDates === 'function') {
             window.initDashboardDefaultDates();
         }
@@ -19972,6 +19981,7 @@ views.mill_dashboard = `
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px; gap: 10px;">
         <h3 style="margin: 0;">Monthly FFB Quality Fruit Loose Analysis</h3>
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <span id="dash-monthly-ffb-loose-trend-title" style="font-weight: bold; font-size: 1.1rem; color: #1e293b; margin-right: 15px; border-right: 2px solid #cbd5e1; padding-right: 15px;">Trend % Brondolan Segar</span>
             <label style="font-weight: bold; margin-bottom: 0;">Bulan:</label>
             <input type="month" id="dash-monthly-ffb-loose-month" class="form-control" style="width: auto;">
             
@@ -19979,7 +19989,7 @@ views.mill_dashboard = `
             <button class="btn btn-secondary" onclick="window.printDashMonthlyFfbLooseAnalysis()"><i class="fa-solid fa-print"></i> Cetak Logsheet</button>
         </div>
     </div>
-    <div id="dash-monthly-ffb-loose-wrapper" class="table-responsive" style="width: 85%; max-width: 1200px; margin: 0 auto; position: relative; height: 280px;">
+    <div id="dash-monthly-ffb-loose-wrapper" class="table-responsive" style="width: 85%; max-width: 1200px; margin: 0 auto; position: relative; height: 350px;">
         <canvas id="monthlyFfbLooseChart"></canvas>
     </div>
 </div>
@@ -20696,6 +20706,12 @@ window.renderDashFfbCropQuality = async function() {
     }
 
     cardEl.style.display = 'block';
+    let trendTitle = document.getElementById('dash-monthly-ffb-loose-trend-title');
+    if (trendTitle) {
+        trendTitle.innerText = `Trend % Brondolan Segar (${monthInput})`;
+    }
+
+
 
     const tbody = document.querySelector('#dash-ffb-crop-table tbody');
     if (tbody) tbody.innerHTML = '<tr><td colspan="10">Loading...</td></tr>';
@@ -21009,6 +21025,12 @@ window.renderDashFfbFruitLooseAnalysis = async function() {
     }
 
     cardEl.style.display = 'block';
+    let trendTitle = document.getElementById('dash-monthly-ffb-loose-trend-title');
+    if (trendTitle) {
+        trendTitle.innerText = `Trend % Brondolan Segar (${monthInput})`;
+    }
+
+
 
     const tbody = document.querySelector('#dash-ffb-fruit-loose-table tbody');
     if (tbody) tbody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
@@ -21123,6 +21145,12 @@ window.renderFfbReceivedChart = async function() {
         return;
     } else {
         cardEl.style.display = 'block';
+    let trendTitle = document.getElementById('dash-monthly-ffb-loose-trend-title');
+    if (trendTitle) {
+        trendTitle.innerText = `Trend % Brondolan Segar (${monthInput})`;
+    }
+
+
     }
 
     const timeSelect = document.getElementById('ffb-received-time-select');
@@ -21404,6 +21432,12 @@ window.renderDashMonthlyFfbLooseAnalysis = async function() {
     }
 
     cardEl.style.display = 'block';
+    let trendTitle = document.getElementById('dash-monthly-ffb-loose-trend-title');
+    if (trendTitle) {
+        trendTitle.innerText = `Trend % Brondolan Segar (${monthInput})`;
+    }
+
+
     
     let mill = 'Bunga Tanjung Mill';
     const headerDropdown = document.getElementById('header-estate-dropdown');
@@ -21549,8 +21583,7 @@ window.renderDashMonthlyFfbLooseAnalysis = async function() {
                 },
                 plugins: {
                     title: {
-                        display: true,
-                        text: `Trend % Brondolan Segar (${monthInput})`,
+                        display: false,
                         font: { size: 16 }
                     },
                     tooltip: {
