@@ -900,8 +900,8 @@ Object.assign(views, {
             <button class="btn btn-secondary" onclick="window.printDashMonthlyFfbLooseAnalysis()"><i class="fa-solid fa-print"></i> Cetak Logsheet</button>
         </div>
     </div>
-    <div id="dash-monthly-ffb-loose-wrapper" class="table-responsive" style="width: 100%; overflow-x: auto; position: relative;">
-        <canvas id="monthlyFfbLooseChart" style="min-height: 400px; width: 100%;"></canvas>
+    <div id="dash-monthly-ffb-loose-wrapper" class="table-responsive" style="width: 85%; max-width: 1200px; margin: 0 auto; position: relative; height: 280px;">
+        <canvas id="monthlyFfbLooseChart"></canvas>
     </div>
 </div>
 
@@ -19979,8 +19979,8 @@ views.mill_dashboard = `
             <button class="btn btn-secondary" onclick="window.printDashMonthlyFfbLooseAnalysis()"><i class="fa-solid fa-print"></i> Cetak Logsheet</button>
         </div>
     </div>
-    <div id="dash-monthly-ffb-loose-wrapper" class="table-responsive" style="width: 100%; overflow-x: auto; position: relative;">
-        <canvas id="monthlyFfbLooseChart" style="min-height: 400px; width: 100%;"></canvas>
+    <div id="dash-monthly-ffb-loose-wrapper" class="table-responsive" style="width: 85%; max-width: 1200px; margin: 0 auto; position: relative; height: 280px;">
+        <canvas id="monthlyFfbLooseChart"></canvas>
     </div>
 </div>
 
