@@ -1982,6 +1982,24 @@ app.get('/api/processing/monthly/:mill/:month', async (req, res) => {
     }
 });
 
+// PROCESSING DELETE
+app.delete('/api/processing/liquid/:id', async (req, res) => {
+    try {
+        await pool.query('DELETE FROM processing_liquid WHERE id=', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/processing/ffa/:id', async (req, res) => {
+    try {
+        await pool.query('DELETE FROM processing_ffa WHERE id=', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 // PROCESSING LIQUID
 app.get('/api/processing/liquid/:mill/:date', async (req, res) => {
     try {
@@ -2845,5 +2863,6 @@ app.delete('/api/haccp/cpo-tank/:id', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
 
 

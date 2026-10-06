@@ -12597,7 +12597,8 @@ window.loadHistoricalActualChart = async () => {
                     maintainAspectRatio: false,
                     scales: {
                         x: { stacked: true, title: { display: true, text: 'TANGGAL' } },
-                        y: { stacked: true, min: 0, max: 100, title: { display: true, text: 'PERSENTASE (%)' }, ticks: { callback: v => v + '%' } }
+                        y: { stacked: true, min: 20,
+                        max: 100, title: { display: true, text: 'PERSENTASE (%)' }, ticks: { callback: v => v + '%' } }
                     },
                     plugins: {
                         datalabels: {
@@ -12663,7 +12664,8 @@ window.loadHistoricalActualChart = async () => {
                     maintainAspectRatio: false,
                     scales: {
                         x: { title: { display: true, text: 'Time Period', color: '#1e3a8a', font: { weight: 'bold' } }, ticks: { callback: function(val) { return this.getLabelForValue(val).split('\n'); } } },
-                        y: { title: { display: true, text: 'FFB Received %', color: '#1e3a8a', font: { weight: 'bold' } }, min: 0, max: 100, ticks: { stepSize: 50, callback: v => v + '%' } }
+                        y: { title: { display: true, text: 'FFB Received %', color: '#1e3a8a', font: { weight: 'bold' } }, min: 20,
+                        max: 100, ticks: { stepSize: 50, callback: v => v + '%' } }
                     },
                     plugins: {
                         legend: { display: false },
@@ -13510,7 +13512,7 @@ window.renderTonaseSummaryCharts = (estateStats, intervalStats) => {
                         type: 'linear',
                         position: 'right',
                         title: { display: true, text: 'Kumulatif (%)' },
-                        min: 0,
+                        min: 20,
                         max: 100,
                         grid: { drawOnChartArea: false },
                         ticks: { callback: v => v + '%' }
@@ -16652,7 +16654,8 @@ window.renderProcessingCharts = function(L) {
                         font: { weight: 'bold', size: 11 }
                     }
                 },
-                scales: { y: { min: 0, max: 100 } }
+                scales: { y: { min: 20,
+                        max: 100 } }
             }
         });
     }
@@ -16753,6 +16756,7 @@ function latestVal(arr, prop) {
     return (last[prop] !== null && last[prop] !== undefined && last[prop] !== '') ? parseFloat(last[prop]).toFixed(2) : '-';
 }
 
+
 window.updateProcessingSummary = function() {
     const lBody = document.getElementById('summary-liquid-tbody');
     const fBody = document.getElementById('summary-ffa-tbody');
@@ -16760,15 +16764,43 @@ window.updateProcessingSummary = function() {
     let L = Array.isArray(window.currentLiquidData) ? window.currentLiquidData : [];
     let F = Array.isArray(window.currentFfaData) ? window.currentFfaData : [];
     
+    let hasEdit = window.hasPermission && window.hasPermission('processing', 'edit');
+    let hasDelete = window.hasPermission && window.hasPermission('processing', 'delete');
+    let isMaster = currentUser && currentUser.role && currentUser.role.toLowerCase() === 'admin';
+    if(isMaster) { hasEdit = true; hasDelete = true; } // Admin safety
+    
+    // Check if table headers have 'Aksi' column yet, if not, add them
+    let liquidTable = document.getElementById('summary-liquid-table');
+    if (liquidTable && !liquidTable.innerHTML.includes('rowspan="2">Aksi</th>')) {
+        let thead = liquidTable.querySelector('thead tr');
+        if (thead) thead.innerHTML += '<th rowspan="2">Aksi</th>';
+    }
+    
+    let ffaTable = document.getElementById('summary-ffa-table');
+    if (ffaTable && !ffaTable.innerHTML.includes('rowspan="2">Aksi</th>')) {
+        let thead = ffaTable.querySelector('thead tr');
+        if (thead) thead.innerHTML += '<th rowspan="2">Aksi</th>';
+    }
+
     // Render Liquid (All hours + padding)
     let lHtml = '';
     L.forEach(row => {
         let h = row.time_hour;
-        lHtml += `<tr>
+        
+        let actions = '';
+        if (hasEdit || hasDelete) {
+            actions += `<div class="action-buttons" style="display:none; gap:5px; justify-content:center;">`;
+            if (hasEdit) actions += `<button class="btn btn-sm btn-primary" title="Edit" onclick="openEditLiquid('${h}')"><i class="fa-solid fa-pen"></i></button>`;
+            if (hasDelete) actions += `<button class="btn btn-sm btn-danger" title="Delete" onclick="deleteProcessingData('liquid', ${row.id})"><i class="fa-solid fa-trash"></i></button>`;
+            actions += `</div>`;
+        }
+        
+        lHtml += `<tr onmouseenter="this.querySelector('.action-buttons') ? this.querySelector('.action-buttons').style.display='flex' : ''" onmouseleave="this.querySelector('.action-buttons') ? this.querySelector('.action-buttons').style.display='none' : ''">
             <td><strong>${h}</strong></td>
             <td>${row.cot_oil||''}</td><td>${row.cot_sludge||''}</td><td>${row.cot_water||''}</td><td>${row.cot_solid||''}</td><td>${row.cot_temp||''}</td>
             <td>${row.cst1_oil||''}</td><td>${row.cst1_sludge||''}</td><td>${row.cst1_water||''}</td><td>${row.cst1_solid||''}</td><td>${row.cst1_temp||''}</td><td>${row.cst1_level_minyak||''}</td>
             <td>${row.sludge_tank_oil||''}</td><td>${row.sludge_tank_sludge||''}</td><td>${row.sludge_tank_water||''}</td><td>${row.sludge_tank_solid||''}</td><td>${row.sludge_tank_temp||''}</td>
+            ${hasEdit || hasDelete ? `<td style="vertical-align:middle;">${actions}</td>` : ''}
         </tr>`;
     });
     
@@ -16781,6 +16813,7 @@ window.updateProcessingSummary = function() {
             <td></td><td></td><td></td><td></td><td></td>
             <td></td><td></td><td></td><td></td><td></td><td></td>
             <td></td><td></td><td></td><td></td><td></td>
+            ${hasEdit || hasDelete ? '<td></td>' : ''}
         </tr>`;
     }
     
@@ -16791,33 +16824,89 @@ window.updateProcessingSummary = function() {
             <td><strong>${avgOrSum(L, 'cot_oil')}</strong></td><td><strong>${avgOrSum(L, 'cot_sludge')}</strong></td><td><strong>${avgOrSum(L, 'cot_water')}</strong></td><td><strong>${avgOrSum(L, 'cot_solid')}</strong></td><td><strong>${avgOrSum(L, 'cot_temp')}</strong></td>
             <td><strong>${avgOrSum(L, 'cst1_oil')}</strong></td><td><strong>${avgOrSum(L, 'cst1_sludge')}</strong></td><td><strong>${avgOrSum(L, 'cst1_water')}</strong></td><td><strong>${avgOrSum(L, 'cst1_solid')}</strong></td><td><strong>${avgOrSum(L, 'cst1_temp')}</strong></td><td><strong>${avgOrSum(L, 'cst1_level_minyak')}</strong></td>
             <td><strong>${avgOrSum(L, 'sludge_tank_oil')}</strong></td><td><strong>${avgOrSum(L, 'sludge_tank_sludge')}</strong></td><td><strong>${avgOrSum(L, 'sludge_tank_water')}</strong></td><td><strong>${avgOrSum(L, 'sludge_tank_solid')}</strong></td><td><strong>${avgOrSum(L, 'sludge_tank_temp')}</strong></td>
+            ${hasEdit || hasDelete ? '<td></td>' : ''}
         </tr>`;
     }
     
-    lBody.innerHTML = lHtml;
+    if(lBody) lBody.innerHTML = lHtml;
     
     // Call charts rendering
-    window.renderProcessingCharts(L);
+    if(typeof window.renderProcessingCharts === 'function') window.renderProcessingCharts(L);
     
     let html = '';
     F.forEach(row => {
+        let h = row.time_hour;
+        let actions = '';
+        if (hasEdit || hasDelete) {
+            actions += `<div class="action-buttons" style="display:none; gap:5px; justify-content:center;">`;
+            if (hasEdit) actions += `<button class="btn btn-sm btn-primary" title="Edit" onclick="openEditFfa('${h}')"><i class="fa-solid fa-pen"></i></button>`;
+            if (hasDelete) actions += `<button class="btn btn-sm btn-danger" title="Delete" onclick="deleteProcessingData('ffa', ${row.id})"><i class="fa-solid fa-trash"></i></button>`;
+            actions += `</div>`;
+        }
+        
         html += `
-        <tr>
-            <td><strong>Jam ${row.time_hour}</strong></td>
+        <tr onmouseenter="this.querySelector('.action-buttons') ? this.querySelector('.action-buttons').style.display='flex' : ''" onmouseleave="this.querySelector('.action-buttons') ? this.querySelector('.action-buttons').style.display='none' : ''">
+            <td><strong>Jam ${h}</strong></td>
             <td>${row.ffa_b||'-'}</td><td>${row.moist_b||'-'}</td><td>${row.dirt_b||'-'}</td>
             <td>${row.ffa_a||'-'}</td><td>${row.moist_a||'-'}</td><td>${row.dirt_a||'-'}</td>
+            ${hasEdit || hasDelete ? `<td style="vertical-align:middle;">${actions}</td>` : ''}
         </tr>`;
     });
-    html += `
-        <tr style="background-color: #f1f5f9;">
-            <td><strong>Rata-rata Hari Ini</strong></td>
-            <td>${avgOrSum(F, 'ffa_b')}</td><td>${avgOrSum(F, 'moist_b')}</td><td>${avgOrSum(F, 'dirt_b')}</td>
-            <td>${avgOrSum(F, 'ffa_a')}</td><td>${avgOrSum(F, 'moist_a')}</td><td>${avgOrSum(F, 'dirt_a')}</td>
-        </tr>
-    `;
-    fBody.innerHTML = html;
+    
+    if (F.length > 0) {
+        html += `
+            <tr style="background-color: #f1f5f9;">
+                <td><strong>Rata-rata Hari Ini</strong></td>
+                <td>${avgOrSum(F, 'ffa_b')}</td><td>${avgOrSum(F, 'moist_b')}</td><td>${avgOrSum(F, 'dirt_b')}</td>
+                <td>${avgOrSum(F, 'ffa_a')}</td><td>${avgOrSum(F, 'moist_a')}</td><td>${avgOrSum(F, 'dirt_a')}</td>
+                ${hasEdit || hasDelete ? '<td></td>' : ''}
+            </tr>
+        `;
+    }
+    
+    if(fBody) fBody.innerHTML = html;
 }
 
+window.openEditLiquid = function(hour) {
+    if(typeof window.openLiquidModal === 'function') {
+        window.openLiquidModal();
+        let hourSelect = document.getElementById('ml-hour');
+        if(hourSelect) {
+            hourSelect.value = hour;
+            if(typeof window.loadLiquidHour === 'function') {
+                window.loadLiquidHour();
+            }
+        }
+    }
+};
+
+window.openEditFfa = function(hour) {
+    if(typeof window.openFfaModal === 'function') {
+        window.openFfaModal();
+        let hourSelect = document.getElementById('mf-hour');
+        if(hourSelect) {
+            hourSelect.value = hour;
+            if(typeof window.loadFfaHour === 'function') {
+                window.loadFfaHour();
+            }
+        }
+    }
+};
+
+window.deleteProcessingData = async function(type, id) {
+    if(!confirm('Apakah anda yakin ingin menghapus data ini?')) return;
+    try {
+        const res = await fetch(`/api/processing/${type}/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if(data.success) {
+            if(typeof window.loadProcessingData === 'function') window.loadProcessingData();
+        } else {
+            alert('Gagal menghapus data: ' + data.error);
+        }
+    } catch(err) {
+        alert('Terjadi kesalahan: ' + err.message);
+    }
+};
 function updateProcessingHistorical() {
     const lBody = document.querySelector('#hist-liquid-table tbody');
     const fBody = document.querySelector('#hist-ffa-table tbody');
@@ -20436,7 +20525,7 @@ window.loadDashboardExtraData = async function(dateOverride) {
                     scales: {
                         x: {
                             title: { display: true, text: 'Rata-rata Brondolan Segar (%)', font: { weight: 'bold' } },
-                            min: 0,
+                            min: 20,
                             max: 100
                         },
                         y: {
@@ -20553,7 +20642,8 @@ window.renderDashboardProcessingCharts = function(liquidData, ffaData) {
                     { label: 'Ketebalan Minyak CST (mm)', data: dataLiquidCstMinyak, borderColor: '#34A853', backgroundColor: 'transparent', borderWidth: 2, pointStyle: 'circle', pointRadius: 4, pointHoverRadius: 6, datalabels: { align: 'top', anchor: 'end' } }
                 ]
             },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 20,
+                        max: 100 } },
                 plugins: {
                     datalabels: datalabelsConfig,
                     annotation: {
@@ -21612,7 +21702,7 @@ window.renderDashMonthlyFfbLooseAnalysis = async function() {
                             text: 'Persentase (%)',
                             font: { weight: 'bold' }
                         },
-                        min: 0,
+                        min: 20,
                         max: 100,
                         ticks: {
                             callback: function(value) {
