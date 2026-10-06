@@ -7675,7 +7675,7 @@ window.initDashboardDefaultDates = function(dateOverride) {
 // Navigation
 const navigate = (viewId) => {
     // Cleanup any orphaned modals in body from previous views to prevent duplicate IDs
-    document.querySelectorAll('body > .modal-overlay').forEach(m => m.remove());
+    document.querySelectorAll('body > .modal-overlay:not([data-persistent="true"])').forEach(m => m.remove());
     
     // Authorization check for Master Data
     if (viewId === 'master' && !window.isMasterAuthorized(currentUser)) {
@@ -25323,5 +25323,6 @@ window.deleteSupplyChainMaster = async function(name) {
         alert('Gagal menghubungi server.');
     }
 };
+
 
 
