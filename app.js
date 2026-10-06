@@ -313,14 +313,6 @@ const login = async (username, password, estate) => {
             }
             
             errorEl.style.display = 'none';
-    const userGroup = document.getElementById('cp-username-group');
-    if(userGroup) {
-        if(window.currentUser) {
-            userGroup.style.display = 'none';
-        } else {
-            userGroup.style.display = 'block';
-        }
-    }
             dbUser.assignedEstates = assignedEstates;
             currentUser = dbUser;
             window.currentUser = currentUser;
@@ -4092,13 +4084,19 @@ const renderVehicleTable = () => {
     
     const btnInput = document.getElementById('btn-input-vehicle');
     if (btnInput) {
-        const canInput = window.hasPermission ? window.hasPermission('vehicle', 'input') : false;
-        if (canInput) {
+        if (currentUser.role === 'Supir' || currentUser.role === 'Mandor' || (currentUser.role && currentUser.role.toLowerCase() === 'admin')) {
             btnInput.style.display = 'flex';
             btnInput.disabled = false;
             btnInput.style.opacity = '1';
             btnInput.style.cursor = 'pointer';
             btnInput.onclick = () => { document.getElementById('modal-vehicle-input').style.display='flex'; };
+        } else if (currentUser.role === 'Assistant' || currentUser.role === 'Senior Field Manager') {
+            btnInput.style.display = 'flex';
+            btnInput.disabled = true;
+            btnInput.style.opacity = '0.5';
+            btnInput.style.cursor = 'not-allowed';
+            btnInput.onclick = null;
+            btnInput.title = 'Hanya Supir dan Mandor yang dapat menginput pergerakan';
         } else {
             btnInput.style.display = 'none';
         }
@@ -4116,7 +4114,7 @@ const renderVehicleTable = () => {
         const tDepart = v.timedepart || v.timeDepart;
         const tArrive = v.timearrive || v.timeArrive;
         const duration = calculateDuration(tDepart, tArrive);
-        const canClickArrive = window.hasPermission ? window.hasPermission('vehicle', 'edit') : false;
+        const canClickArrive = (currentUser.role.includes('Security') || currentUser.role === 'Security Mill' || (currentUser.role && currentUser.role.toLowerCase() === 'admin'));
         const actionBtn = (!tArrive && canClickArrive) ? 
             `<button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem;" onclick="setArrival(${v.id})">Tiba di PKS</button>` : 
             (!tArrive ? `<span class="status-badge" style="background:#f59e0b">Di Perjalanan</span>` : `<span class="status-badge status-done">Selesai</span>`);
@@ -7433,10 +7431,18 @@ window.loadDashboardHistoricalChart = async () => {
     
     try {
         
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
+        
         if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            let foundMill = null;
+            if (window.masterData && window.masterData.supply_chain) {
+                const sc = window.masterData.supply_chain.find(x => x.estate === currentUser.estate);
+                if (sc && sc.mill) foundMill = sc.mill;
+            }
+            mill = foundMill || 'Bunga Tanjung Mill';
             mill = 'ALL';
-            const millDropdown = document.getElementById('monitor-tonase-mill');
+            
             if (millDropdown) {
                 if (millDropdown.options.length === 0) {
                     const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
@@ -7446,13 +7452,11 @@ window.loadDashboardHistoricalChart = async () => {
                         });
                     }
                 }
-                millDropdown.style.display = 'block';
                 if (millDropdown.offsetParent !== null) {
                     mill = millDropdown.value || mill;
                 }
             }
         } else {
-            const millDropdown = document.getElementById('monitor-tonase-mill');
             if (millDropdown) millDropdown.style.display = 'none';
         }
 
@@ -7654,7 +7658,7 @@ window.initDashboardDefaultDates = function(dateOverride) {
 // Navigation
 const navigate = (viewId) => {
     // Cleanup any orphaned modals in body from previous views to prevent duplicate IDs
-    document.querySelectorAll('body > .modal-overlay:not([data-persistent="true"])').forEach(m => m.remove());
+    document.querySelectorAll('body > .modal-overlay').forEach(m => m.remove());
     
     // Authorization check for Master Data
     if (viewId === 'master' && !window.isMasterAuthorized(currentUser)) {
@@ -7751,8 +7755,7 @@ const navigate = (viewId) => {
         renderMasterTables();
     }
     if(viewId === 'tonase') {
-        const canInputTonase = window.hasPermission ? window.hasPermission('tonase', 'input') : false;
-        if (canInputTonase) {
+        if (currentUser.role === 'Krani Mill' || currentUser.role === 'Supervisor Mill' || currentUser.role === 'Manager Mill' || (currentUser.role && currentUser.role.toLowerCase() === 'admin') || currentUser.role === 'Office Assistant Mill') {
             document.querySelectorAll('.btn-tonase-action').forEach(b => b.style.display = 'inline-block');
             if (!document.getElementById('t-date').value) {
                 document.getElementById('t-date').value = window.getLocalDate();
@@ -7791,8 +7794,8 @@ const navigate = (viewId) => {
     }
     
     // Global Read-only logic for Senior Field Manager, Director, Senior Mill Manager, Office Head Assistant
-    const canInputView = window.hasPermission ? window.hasPermission(viewId, 'input') : false;
-    if (!canInputView) {
+    const estateReadOnlyRoles = ['Senior Field Manager', 'Director', 'Senior Mill Manager', 'Office Head Assistant'];
+    if (currentUser && estateReadOnlyRoles.includes(currentUser.role)) {
         const forms = container.querySelectorAll('.form-container');
         forms.forEach(f => f.style.display = 'none');
         const layouts = container.querySelectorAll('.module-layout');
@@ -9748,10 +9751,18 @@ window.openHistoricalModal = async () => {
     
     // Populate estate dropdown
     
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
+        
         if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            let foundMill = null;
+            if (window.masterData && window.masterData.supply_chain) {
+                const sc = window.masterData.supply_chain.find(x => x.estate === currentUser.estate);
+                if (sc && sc.mill) foundMill = sc.mill;
+            }
+            mill = foundMill || 'Bunga Tanjung Mill';
             mill = 'ALL';
-            const millDropdown = document.getElementById('monitor-tonase-mill');
+            
             if (millDropdown) {
                 if (millDropdown.options.length === 0) {
                     const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
@@ -9761,13 +9772,11 @@ window.openHistoricalModal = async () => {
                         });
                     }
                 }
-                millDropdown.style.display = 'block';
                 if (millDropdown.offsetParent !== null) {
                     mill = millDropdown.value || mill;
                 }
             }
         } else {
-            const millDropdown = document.getElementById('monitor-tonase-mill');
             if (millDropdown) millDropdown.style.display = 'none';
         }
 
@@ -9789,10 +9798,18 @@ window.openHistoricalModal = async () => {
 
 window.loadHistoricalChartData = async () => {
     
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
+        
         if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            let foundMill = null;
+            if (window.masterData && window.masterData.supply_chain) {
+                const sc = window.masterData.supply_chain.find(x => x.estate === currentUser.estate);
+                if (sc && sc.mill) foundMill = sc.mill;
+            }
+            mill = foundMill || 'Bunga Tanjung Mill';
             mill = 'ALL';
-            const millDropdown = document.getElementById('monitor-tonase-mill');
+            
             if (millDropdown) {
                 if (millDropdown.options.length === 0) {
                     const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
@@ -9802,13 +9819,11 @@ window.loadHistoricalChartData = async () => {
                         });
                     }
                 }
-                millDropdown.style.display = 'block';
                 if (millDropdown.offsetParent !== null) {
                     mill = millDropdown.value || mill;
                 }
             }
         } else {
-            const millDropdown = document.getElementById('monitor-tonase-mill');
             if (millDropdown) millDropdown.style.display = 'none';
         }
 
@@ -9829,7 +9844,12 @@ window.loadHistoricalChartData = async () => {
         const selectedEstate = document.getElementById('historical-estate').value;
         
         tonaseData.forEach(item => {
-            if (selectedEstate !== 'ALL' && item.estate !== selectedEstate) return;
+            const isMillUser = currentUser && currentUser.estate && currentUser.estate.endsWith('Mill');
+            if (!isMillUser && currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+                if (item.estate !== currentUser.estate) return;
+            } else if (selectedEstate !== 'ALL') {
+                if (item.estate !== selectedEstate) return;
+            }
             
             const idx = labels.indexOf(item.time_hour);
             if (idx !== -1) {
@@ -9887,10 +9907,18 @@ window.openEfbHistoricalModal = async () => {
     
     // Populate estate dropdown
     
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
+        
         if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            let foundMill = null;
+            if (window.masterData && window.masterData.supply_chain) {
+                const sc = window.masterData.supply_chain.find(x => x.estate === currentUser.estate);
+                if (sc && sc.mill) foundMill = sc.mill;
+            }
+            mill = foundMill || 'Bunga Tanjung Mill';
             mill = 'ALL';
-            const millDropdown = document.getElementById('monitor-tonase-mill');
+            
             if (millDropdown) {
                 if (millDropdown.options.length === 0) {
                     const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
@@ -9900,13 +9928,11 @@ window.openEfbHistoricalModal = async () => {
                         });
                     }
                 }
-                millDropdown.style.display = 'block';
                 if (millDropdown.offsetParent !== null) {
                     mill = millDropdown.value || mill;
                 }
             }
         } else {
-            const millDropdown = document.getElementById('monitor-tonase-mill');
             if (millDropdown) millDropdown.style.display = 'none';
         }
 
@@ -9928,10 +9954,18 @@ window.openEfbHistoricalModal = async () => {
 
 window.loadEfbHistoricalChartData = async () => {
     
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
+        
         if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            let foundMill = null;
+            if (window.masterData && window.masterData.supply_chain) {
+                const sc = window.masterData.supply_chain.find(x => x.estate === currentUser.estate);
+                if (sc && sc.mill) foundMill = sc.mill;
+            }
+            mill = foundMill || 'Bunga Tanjung Mill';
             mill = 'ALL';
-            const millDropdown = document.getElementById('monitor-tonase-mill');
+            
             if (millDropdown) {
                 if (millDropdown.options.length === 0) {
                     const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
@@ -9941,13 +9975,11 @@ window.loadEfbHistoricalChartData = async () => {
                         });
                     }
                 }
-                millDropdown.style.display = 'block';
                 if (millDropdown.offsetParent !== null) {
                     mill = millDropdown.value || mill;
                 }
             }
         } else {
-            const millDropdown = document.getElementById('monitor-tonase-mill');
             if (millDropdown) millDropdown.style.display = 'none';
         }
 
@@ -9979,7 +10011,12 @@ window.loadEfbHistoricalChartData = async () => {
         }
         
         data.forEach(item => {
-            if (selectedEstate !== 'ALL' && item.estate !== selectedEstate) return;
+            const isMillUser = currentUser && currentUser.estate && currentUser.estate.endsWith('Mill');
+            if (!isMillUser && currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+                if (item.estate !== currentUser.estate) return;
+            } else if (selectedEstate !== 'ALL') {
+                if (item.estate !== selectedEstate) return;
+            }
             
             // Format item date as YYYY-MM-DD to match the labels
             let d;
@@ -10208,10 +10245,18 @@ window.loadTonaseInputData = async () => {
     
     try {
         
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
+        
         if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            let foundMill = null;
+            if (window.masterData && window.masterData.supply_chain) {
+                const sc = window.masterData.supply_chain.find(x => x.estate === currentUser.estate);
+                if (sc && sc.mill) foundMill = sc.mill;
+            }
+            mill = foundMill || 'Bunga Tanjung Mill';
             mill = 'ALL';
-            const millDropdown = document.getElementById('monitor-tonase-mill');
+            
             if (millDropdown) {
                 if (millDropdown.options.length === 0) {
                     const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
@@ -10221,13 +10266,11 @@ window.loadTonaseInputData = async () => {
                         });
                     }
                 }
-                millDropdown.style.display = 'block';
                 if (millDropdown.offsetParent !== null) {
                     mill = millDropdown.value || mill;
                 }
             }
         } else {
-            const millDropdown = document.getElementById('monitor-tonase-mill');
             if (millDropdown) millDropdown.style.display = 'none';
         }
 
@@ -10422,16 +10465,20 @@ window.loadTonaseInputData = async () => {
 };
 
 window.saveTonaseData = async () => {
-    if (window.hasPermission && !window.hasPermission('tonase', 'input')) {
-        alert('Akses Ditolak: Anda tidak memiliki otoritas untuk input data Tonase.');
-        return;
-    }
     const date = document.getElementById('t-date').value;
     
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
+        
         if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            let foundMill = null;
+            if (window.masterData && window.masterData.supply_chain) {
+                const sc = window.masterData.supply_chain.find(x => x.estate === currentUser.estate);
+                if (sc && sc.mill) foundMill = sc.mill;
+            }
+            mill = foundMill || 'Bunga Tanjung Mill';
             mill = 'ALL';
-            const millDropdown = document.getElementById('monitor-tonase-mill');
+            
             if (millDropdown) {
                 if (millDropdown.options.length === 0) {
                     const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
@@ -10441,13 +10488,11 @@ window.saveTonaseData = async () => {
                         });
                     }
                 }
-                millDropdown.style.display = 'block';
                 if (millDropdown.offsetParent !== null) {
                     mill = millDropdown.value || mill;
                 }
             }
         } else {
-            const millDropdown = document.getElementById('monitor-tonase-mill');
             if (millDropdown) millDropdown.style.display = 'none';
         }
 
@@ -10573,8 +10618,8 @@ let tonaseChartInstance = null;
 
 window.loadTonaseChartData = async () => {
     let mill = currentUser.estate;
-    if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
-        mill = 'ALL';
+    if (!mill || !mill.endsWith('Mill')) {
+        mill = 'Bunga Tanjung Mill'; // default fallback for Admin
     }
     const date = window.getLocalDate();
     
@@ -10586,8 +10631,8 @@ window.loadTonaseChartData = async () => {
         const targets = new Array(labels.length).fill(0);
         const realized = new Array(labels.length).fill(0);
         
-        const isMillUser = currentUser && currentUser.estate && currentUser.estate.endsWith('Mill');
         tonaseData.forEach(item => {
+            const isMillUser = currentUser && currentUser.estate && currentUser.estate.endsWith('Mill');
             if (!isMillUser && currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
                 if (item.estate !== currentUser.estate) return;
             }
@@ -10643,8 +10688,11 @@ window.loadTonaseChartData = async () => {
     }
     
     if (typeof window.renderTonaseMonitorTable === 'function') {
-        window.renderTonaseMonitorTable();
-    }
+          window.renderTonaseMonitorTable();
+      }
+      if (typeof window.renderDailyArrivalTable === 'function') {
+          window.renderDailyArrivalTable();
+      }
 };
 
 window.renderTonaseMonitorTable = async (isHistorical = false) => {
@@ -10677,10 +10725,18 @@ window.renderTonaseMonitorTable = async (isHistorical = false) => {
     
     try {
         
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
+        
         if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            let foundMill = null;
+            if (window.masterData && window.masterData.supply_chain) {
+                const sc = window.masterData.supply_chain.find(x => x.estate === currentUser.estate);
+                if (sc && sc.mill) foundMill = sc.mill;
+            }
+            mill = foundMill || 'Bunga Tanjung Mill';
             mill = 'ALL';
-            const millDropdown = document.getElementById('monitor-tonase-mill');
+            
             if (millDropdown) {
                 if (millDropdown.options.length === 0) {
                     const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
@@ -10690,13 +10746,11 @@ window.renderTonaseMonitorTable = async (isHistorical = false) => {
                         });
                     }
                 }
-                millDropdown.style.display = 'block';
                 if (millDropdown.offsetParent !== null) {
                     mill = millDropdown.value || mill;
                 }
             }
         } else {
-            const millDropdown = document.getElementById('monitor-tonase-mill');
             if (millDropdown) millDropdown.style.display = 'none';
         }
 
@@ -10932,10 +10986,18 @@ window.loadPrimeTimeChart = async () => {
     
     try {
         
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
+        
         if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            let foundMill = null;
+            if (window.masterData && window.masterData.supply_chain) {
+                const sc = window.masterData.supply_chain.find(x => x.estate === currentUser.estate);
+                if (sc && sc.mill) foundMill = sc.mill;
+            }
+            mill = foundMill || 'Bunga Tanjung Mill';
             mill = 'ALL';
-            const millDropdown = document.getElementById('monitor-tonase-mill');
+            
             if (millDropdown) {
                 if (millDropdown.options.length === 0) {
                     const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
@@ -10945,13 +11007,11 @@ window.loadPrimeTimeChart = async () => {
                         });
                     }
                 }
-                millDropdown.style.display = 'block';
                 if (millDropdown.offsetParent !== null) {
                     mill = millDropdown.value || mill;
                 }
             }
         } else {
-            const millDropdown = document.getElementById('monitor-tonase-mill');
             if (millDropdown) millDropdown.style.display = 'none';
         }
 
@@ -10999,7 +11059,12 @@ window.loadPrimeTimeChart = async () => {
         const lastHours = ['19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
         
         data.forEach(item => {
-            if (selectedEstate !== 'ALL' && item.estate !== selectedEstate) return;
+            const isMillUser = currentUser && currentUser.estate && currentUser.estate.endsWith('Mill');
+            if (!isMillUser && currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+                if (item.estate !== currentUser.estate) return;
+            } else if (selectedEstate !== 'ALL') {
+                if (item.estate !== selectedEstate) return;
+            }
             
             const d = item.date.split('T')[0];
             if (!dailyData[d]) dailyData[d] = { prime: 0, middle: 0, last: 0, total: 0 };
@@ -11163,10 +11228,18 @@ window.loadHistoricalPlanningChart = async () => {
     
     try {
         
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
+        
         if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            let foundMill = null;
+            if (window.masterData && window.masterData.supply_chain) {
+                const sc = window.masterData.supply_chain.find(x => x.estate === currentUser.estate);
+                if (sc && sc.mill) foundMill = sc.mill;
+            }
+            mill = foundMill || 'Bunga Tanjung Mill';
             mill = 'ALL';
-            const millDropdown = document.getElementById('monitor-tonase-mill');
+            
             if (millDropdown) {
                 if (millDropdown.options.length === 0) {
                     const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
@@ -11176,13 +11249,214 @@ window.loadHistoricalPlanningChart = async () => {
                         });
                     }
                 }
-                millDropdown.style.display = 'block';
                 if (millDropdown.offsetParent !== null) {
                     mill = millDropdown.value || mill;
                 }
             }
         } else {
-            const millDropdown = document.getElementById('monitor-tonase-mill');
+            if (millDropdown) millDropdown.style.display = 'none';
+        }
+
+        
+        const primeSel = document.getElementById('prime-estate');
+        const selectedEstate = primeSel ? primeSel.value : 'ALL';
+        
+        const res = await fetch(`${API_URL}/tonase/${mill}/month/${month}`);
+        const data = await window.parseTonaseResponse(res);
+        
+        const year = parseInt(month.split('-')[0]);
+        const m = parseInt(month.split('-')[1]);
+        const daysInMonth = new Date(year, m, 0).getDate();
+        
+        const dailyData = {};
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dStr = `${month}-${i.toString().padStart(2, '0')}`;
+            dailyData[dStr] = { prime: 0, middle: 0, last: 0, total: 0 };
+        }
+        
+        const primeHours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00'];
+        const middleHours = ['13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+        const lastHours = ['19:00', '20:00', '21:00', '22:00', '23:00', '24:00'];
+        
+        data.forEach(item => {
+            const isMillUser = currentUser && currentUser.estate && currentUser.estate.endsWith('Mill');
+            if (!isMillUser && currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+                if (item.estate !== currentUser.estate) return;
+            } else if (selectedEstate !== 'ALL') {
+                if (item.estate !== selectedEstate) return;
+            }
+            
+            const d = item.date.split('T')[0];
+            if (!dailyData[d]) dailyData[d] = { prime: 0, middle: 0, last: 0, total: 0 };
+            
+            const kg = parseFloat(item.target_kg) || 0; // Use target_kg for planning
+            if (kg > 0) {
+                if (primeHours.includes(item.time_hour)) {
+                    dailyData[d].prime += kg;
+                } else if (middleHours.includes(item.time_hour)) {
+                    dailyData[d].middle += kg;
+                } else if (lastHours.includes(item.time_hour)) {
+                    dailyData[d].last += kg;
+                } else {
+                    // Jika target diinput secara harian tanpa jam spesifik, bagi rata ke 3 bagian
+                    const third = kg / 3;
+                    dailyData[d].prime += third;
+                    dailyData[d].middle += third;
+                    dailyData[d].last += third;
+                }
+                dailyData[d].total += kg;
+            }
+        });
+        
+        const labels = [];
+        const primePct = [];
+        const middlePct = [];
+        const lastPct = [];
+        
+        const primeRaw = [];
+        const middleRaw = [];
+        const lastRaw = [];
+        
+        for (let i = 1; i <= daysInMonth; i++) {
+            labels.push(i.toString());
+            const dStr = `${month}-${i.toString().padStart(2, '0')}`;
+            const dayRecord = dailyData[dStr];
+            
+            if (dayRecord.total > 0) {
+                primePct.push( (dayRecord.prime / dayRecord.total) * 100 );
+                middlePct.push( (dayRecord.middle / dayRecord.total) * 100 );
+                lastPct.push( (dayRecord.last / dayRecord.total) * 100 );
+            } else {
+                primePct.push(0);
+                middlePct.push(0);
+                lastPct.push(0);
+            }
+            
+            primeRaw.push(dayRecord.prime);
+            middleRaw.push(dayRecord.middle);
+            lastRaw.push(dayRecord.last);
+        }
+        
+        const ctx = document.getElementById('historicalPlanningChartCanvas');
+        if (!ctx) return;
+        
+        if (historicalPlanningChartInstance) {
+            historicalPlanningChartInstance.destroy();
+        }
+        
+        historicalPlanningChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Prime Time (06:00 - 12:00) Plan',
+                        data: primePct,
+                        rawTonase: primeRaw,
+                        backgroundColor: '#1d4ed8', // Blue
+                    },
+                    {
+                        label: 'Middle Time (13:00 - 18:00) Plan',
+                        data: middlePct,
+                        rawTonase: middleRaw,
+                        backgroundColor: '#22c55e', // Green
+                    },
+                    {
+                        label: 'Last Time (19:00 - 24:00) Plan',
+                        data: lastPct,
+                        rawTonase: lastRaw,
+                        backgroundColor: '#eab308', // Yellow
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const ds = context.dataset;
+                                const rawKg = ds.rawTonase ? ds.rawTonase[context.dataIndex] : 0;
+                                const rawTon = (rawKg / 1000).toFixed(2);
+                                return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + '% (' + rawTon + ' Ton)';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        title: { display: true, text: 'TANGGAL' }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        max: 100,
+                        title: { display: true, text: 'PERSENTASE (%)' },
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+    } catch(e) {
+        console.error('Error loading historical planning chart:', e);
+    }
+};
+
+window.renderDailyArrivalTable = async () => {
+    const dateInput = document.getElementById('daily-arrival-date');
+    if (!dateInput) return;
+    
+    if (!dateInput.value) {
+        // Fallback to monitor tonase date if available, otherwise today
+        const mainDate = document.getElementById('monitor-tonase-date');
+        if (mainDate && mainDate.value) {
+            dateInput.value = mainDate.value;
+        } else {
+            dateInput.value = window.getLocalDate();
+        }
+    }
+    const date = dateInput.value;
+    
+    const tbody = document.getElementById('tbody-daily-arrival');
+    const tfoot = document.getElementById('tfoot-daily-arrival');
+    if (!tbody || !tfoot) return;
+    
+    try {
+        
+        const millDropdown = document.getElementById('monitor-tonase-mill');
+        let mill = currentUser.estate;
+        
+        if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            let foundMill = null;
+            if (window.masterData && window.masterData.supply_chain) {
+                const sc = window.masterData.supply_chain.find(x => x.estate === currentUser.estate);
+                if (sc && sc.mill) foundMill = sc.mill;
+            }
+            mill = foundMill || 'Bunga Tanjung Mill';
+            mill = 'ALL';
+            
+            if (millDropdown) {
+                if (millDropdown.options.length === 0) {
+                    const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
+                    if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
+                        window.REGION_DATA[region].mills.forEach(m => {
+                            millDropdown.innerHTML += '<option value="' + m + '">' + m + '</option>';
+                        });
+                    }
+                }
+                if (millDropdown.offsetParent !== null) {
+                    mill = millDropdown.value || mill;
+                }
+            }
+        } else {
             if (millDropdown) millDropdown.style.display = 'none';
         }
 
@@ -11202,7 +11476,12 @@ window.loadHistoricalPlanningChart = async () => {
         let r6 = 0; // After 6pm (19 to 24, 01 to 06)
         
         data.forEach(item => {
-            if (selectedEstate !== 'ALL' && item.estate !== selectedEstate) return;
+            const isMillUser = currentUser && currentUser.estate && currentUser.estate.endsWith('Mill');
+            if (!isMillUser && currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+                if (item.estate !== currentUser.estate) return;
+            } else if (selectedEstate !== 'ALL') {
+                if (item.estate !== selectedEstate) return;
+            }
             
             const kg = parseFloat(item.realized_kg) || 0;
             if (kg > 0) {
@@ -11626,10 +11905,6 @@ window.saveMillConfig = async () => {
 };
 
 window.saveDailyMonitorData = async () => {
-    if (window.hasPermission && !window.hasPermission('tonase', 'input')) {
-        alert('Akses Ditolak: Anda tidak memiliki otoritas untuk input data Tonase.');
-        return;
-    }
     const date = document.getElementById('dm-date').value;
     if(!date) return alert("Pilih tanggal");
     let mill = currentUser.estate;
@@ -12052,17 +12327,9 @@ window.handleChangePassword = async function(e) {
     const errorEl = document.getElementById('cp-error');
     const submitBtn = document.getElementById('btn-submit-cp');
     
-    const cpUserEl = document.getElementById('cp-hidden-username'); const username = window.currentUser ? window.currentUser.username : (cpUserEl ? cpUserEl.value.trim() : '');
+    const username = (loginUsernameEl && loginUsernameEl.value.trim() !== '') ? loginUsernameEl.value.trim() : (window.currentUser ? window.currentUser.username : '');
     
     errorEl.style.display = 'none';
-    const userGroup = document.getElementById('cp-username-group');
-    if(userGroup) {
-        if(window.currentUser) {
-            userGroup.style.display = 'none';
-        } else {
-            userGroup.style.display = 'block';
-        }
-    }
     
     if (!username) {
         errorEl.innerText = 'Silakan isi Nama Pengguna di form login terlebih dahulu!';
@@ -12173,23 +12440,28 @@ window.loadHistoricalActualChart = async () => {
         let mill = currentUser.estate;
         
         if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            let foundMill = null;
+            if (window.masterData && window.masterData.supply_chain) {
+                const sc = window.masterData.supply_chain.find(x => x.estate === currentUser.estate);
+                if (sc && sc.mill) foundMill = sc.mill;
+            }
+            mill = foundMill || 'Bunga Tanjung Mill';
             mill = 'ALL';
+            
             if (millDropdown) {
                 if (millDropdown.options.length === 0) {
                     const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
                     if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
                         window.REGION_DATA[region].mills.forEach(m => {
-                            millDropdown.innerHTML += `<option value="${m}">${m}</option>`;
+                            millDropdown.innerHTML += '<option value="' + m + '">' + m + '</option>';
                         });
                     }
                 }
-                millDropdown.style.display = 'block';
                 if (millDropdown.offsetParent !== null) {
                     mill = millDropdown.value || mill;
                 }
             }
         } else {
-            // User IS a mill, hide dropdown and force their mill
             if (millDropdown) millDropdown.style.display = 'none';
         }
 
@@ -12217,8 +12489,8 @@ window.loadHistoricalActualChart = async () => {
         let bands = [0, 0, 0, 0, 0, 0];
         let totalMonth = 0;
         
-        const isMillUser = currentUser && currentUser.estate && currentUser.estate.endsWith('Mill');
         data.forEach(item => {
+            const isMillUser = currentUser && currentUser.estate && currentUser.estate.endsWith('Mill');
             if (!isMillUser && currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
                 if (item.estate !== currentUser.estate) return;
             } else if (selectedEstate !== 'ALL') {
@@ -12401,15 +12673,18 @@ window.loadDashboardProgressHistoricalChart = async () => {
     
     try {
         
+        const millDropdown = document.getElementById('monitor-tonase-mill');
         let mill = currentUser.estate;
+        
         if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
             let foundMill = null;
             if (window.masterData && window.masterData.supply_chain) {
                 const sc = window.masterData.supply_chain.find(x => x.estate === currentUser.estate);
                 if (sc && sc.mill) foundMill = sc.mill;
             }
+            mill = foundMill || 'Bunga Tanjung Mill';
             mill = 'ALL';
-            const millDropdown = document.getElementById('monitor-tonase-mill');
+            
             if (millDropdown) {
                 if (millDropdown.options.length === 0) {
                     const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
@@ -12424,9 +12699,9 @@ window.loadDashboardProgressHistoricalChart = async () => {
                 }
             }
         } else {
-            const millDropdown = document.getElementById('monitor-tonase-mill');
             if (millDropdown) millDropdown.style.display = 'none';
         }
+
         const res = await fetch(`${API_URL}/tonase/${mill}/${selectedDate}`);
         const data = await window.parseTonaseResponse(res);
         
@@ -12560,8 +12835,11 @@ window.switchTonaseSubTab = (tabId) => {
     
     if (tabId === 'monitor') {
         if (typeof window.renderTonaseMonitorTable === 'function') {
-            window.renderTonaseMonitorTable();
-        }
+          window.renderTonaseMonitorTable();
+      }
+      if (typeof window.renderDailyArrivalTable === 'function') {
+          window.renderDailyArrivalTable();
+      }
         if (typeof window.loadTonaseChartData === 'function') {
             window.loadTonaseChartData();
         }
@@ -12599,23 +12877,28 @@ window.loadTonaseSummaryData = async () => {
         let mill = currentUser.estate;
         
         if (!mill || (!mill.toUpperCase().includes('MILL') && !mill.toUpperCase().includes('POM'))) {
+            let foundMill = null;
+            if (window.masterData && window.masterData.supply_chain) {
+                const sc = window.masterData.supply_chain.find(x => x.estate === currentUser.estate);
+                if (sc && sc.mill) foundMill = sc.mill;
+            }
+            mill = foundMill || 'Bunga Tanjung Mill';
             mill = 'ALL';
+            
             if (millDropdown) {
                 if (millDropdown.options.length === 0) {
                     const region = window.getRegionForUnit(currentUser.estate) || 'BENGKULU';
                     if (window.REGION_DATA[region] && window.REGION_DATA[region].mills) {
                         window.REGION_DATA[region].mills.forEach(m => {
-                            millDropdown.innerHTML += `<option value="${m}">${m}</option>`;
+                            millDropdown.innerHTML += '<option value="' + m + '">' + m + '</option>';
                         });
                     }
                 }
-                millDropdown.style.display = 'block';
                 if (millDropdown.offsetParent !== null) {
                     mill = millDropdown.value || mill;
                 }
             }
         } else {
-            // User IS a mill, hide dropdown and force their mill
             if (millDropdown) millDropdown.style.display = 'none';
         }
 
@@ -12660,8 +12943,14 @@ window.processAndRenderTonaseSummary = () => {
     if (!window.cachedTonaseSummaryData) return;
     const { mill, selectedDate, scope, month, masterData, tonaseData, dmData } = window.cachedTonaseSummaryData;
     
-    const supplyChainFFB = (masterData.supply_chain || []).filter(s => s.is_ffb !== false).map(s => s.estate);
-    const supplyChainEFB = (masterData.supply_chain || []).filter(s => s.is_efb !== false).map(s => s.estate);
+    const isMillUser = currentUser && currentUser.estate && currentUser.estate.endsWith('Mill');
+      let supplyChainFFB = (masterData.supply_chain || []).filter(s => s.is_ffb !== false).map(s => s.estate);
+      let supplyChainEFB = (masterData.supply_chain || []).filter(s => s.is_efb !== false).map(s => s.estate);
+      
+      if (!isMillUser && currentUser && currentUser.estate && currentUser.estate !== 'Semua Estate (Khusus Admin)') {
+          supplyChainFFB = supplyChainFFB.filter(e => e === currentUser.estate);
+          supplyChainEFB = supplyChainEFB.filter(e => e === currentUser.estate);
+      }
     
     const abbrMap = {};
     if (masterData && masterData.supply_chain_list) {
@@ -16129,9 +16418,8 @@ window.renderProcessingView = function() {
     window.loadProcessingData();
     
     // Disable inputs for read-only roles
-    const viewModule = window.currentViewId || (document.getElementById('water-module-layout') ? 'water' : 'processing');
-    const canInput = window.hasPermission ? window.hasPermission(viewModule, 'input') : false;
-    if (!canInput) {
+    const readOnlyRoles = ['Senior Field Manager', 'Director', 'Senior Mill Manager', 'Office Head Assistant'];
+    if (window.currentUser && readOnlyRoles.includes(window.currentUser.role)) {
         document.querySelectorAll('#view-container .btn-success, #view-container .btn-tonase-action').forEach(el => el.style.display = 'none');
     }
 };
@@ -16938,9 +17226,8 @@ window.renderWaterView = function() {
     window.loadWaterData();
     
     // Disable inputs for read-only roles
-    const viewModule = window.currentViewId || (document.getElementById('water-module-layout') ? 'water' : 'processing');
-    const canInput = window.hasPermission ? window.hasPermission(viewModule, 'input') : false;
-    if (!canInput) {
+    const readOnlyRoles = ['Senior Field Manager', 'Director', 'Senior Mill Manager', 'Office Head Assistant'];
+    if (window.currentUser && readOnlyRoles.includes(window.currentUser.role)) {
         document.querySelectorAll('#view-container .btn-success, #view-container .btn-tonase-action').forEach(el => el.style.display = 'none');
     }
 };
@@ -24500,60 +24787,3 @@ window.deleteSupplyChainMaster = async function(name) {
         alert('Gagal menghubungi server.');
     }
 };
-
-
-
-
-window.openChangePasswordModal = function() {
-    const modal = document.getElementById('modal-change-password');
-    if (!modal) return;
-    
-    // Reset form
-    const loginSandiEl = document.getElementById('login-sandi'); document.getElementById('cp-old').value = (!window.currentUser && loginSandiEl) ? loginSandiEl.value : '';
-    document.getElementById('cp-new').value = '';
-    document.getElementById('cp-confirm').value = '';
-    
-    const errorEl = document.getElementById('cp-error');
-    if (errorEl) {
-        errorEl.style.display = 'none';
-        errorEl.innerText = '';
-    }
-    
-    const submitBtn = document.getElementById('btn-submit-cp');
-    if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerText = 'Update Password';
-        submitBtn.style.backgroundColor = '';
-    }
-    
-    // Hide username field if already logged in
-    const userGroup = document.getElementById('cp-username-group');
-    if(userGroup) {
-        if(window.currentUser) {
-            userGroup.style.display = 'none';
-        } else {
-            userGroup.style.display = 'block';
-            const cpUserEl = document.getElementById('cp-hidden-username');
-            const loginUserEl = document.getElementById('login-username');
-            if (cpUserEl && loginUserEl) {
-                cpUserEl.value = loginUserEl.value;
-            }
-        }
-    }
-    
-    modal.style.display = 'flex';
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
