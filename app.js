@@ -7733,21 +7733,36 @@ const navigate = (viewId) => {
         // Show mill sections only when a Mill is the active selected unit
         const isMillUnit = currentUser && currentUser.estate && currentUser.estate.toLowerCase().includes('mill');
         
+        const ffbAllowedRoles = [
+            'senior field manager', 'senior mill manager', 'director', 'office head assistant',
+            'senior manager estate', 'manager', 'askep', 'assistant', 
+            'krani divisi', 'mandor', 'manager mill', 
+            'supervisor mill', 'krani mill', 'analis & grading', 'analis', 'grading', 
+            'office assistant mill', 'office assistant (oaa)', 'office assistant', 'admin', 'administrator'
+        ];
+        const userRoleStr = (currentUser && currentUser.role) ? currentUser.role.toLowerCase().trim() : '';
+        const hasFfbView = window.hasPermission && (window.hasPermission('ffb_quality', 'view') || window.hasPermission('dashboard', 'view'));
+        const showFfbCards = isMillUnit || hasFfbView || ffbAllowedRoles.includes(userRoleStr);
+
         const millSec = document.getElementById('dashboard-mill-sections');
         if (millSec) {
             millSec.style.display = isMillUnit ? 'block' : 'none';
         }
         const ffbRecCard = document.getElementById('ffb-received-card');
         if (ffbRecCard) {
-            ffbRecCard.style.display = isMillUnit ? 'block' : 'none';
+            ffbRecCard.style.display = showFfbCards ? 'block' : 'none';
         }
         const ffbCropCard = document.getElementById('dash-ffb-crop-card');
         if (ffbCropCard) {
-            ffbCropCard.style.display = isMillUnit ? 'block' : 'none';
+            ffbCropCard.style.display = showFfbCards ? 'block' : 'none';
         }
         const ffbLooseCard = document.getElementById('dash-ffb-fruit-loose-card');
         if (ffbLooseCard) {
-            ffbLooseCard.style.display = isMillUnit ? 'block' : 'none';
+            ffbLooseCard.style.display = showFfbCards ? 'block' : 'none';
+        }
+        const monthlyLooseCard = document.getElementById('dash-monthly-ffb-loose-card');
+        if (monthlyLooseCard) {
+            monthlyLooseCard.style.display = showFfbCards ? 'block' : 'none';
         }
     }
     if(viewId === 'vehicle') { 
@@ -20790,7 +20805,7 @@ window.renderDashFfbCropQuality = async function() {
     const allowedRoles = [
         'Senior Field Manager', 'Senior Mill Manager', 'Director', 'Office Head Assistant',
         'Senior Manager Estate', 'Manager', 'Askep', 'Assistant', 
-        'Krani Divisi', 'Manager Mill', 'Manager MIll', 
+        'Krani Divisi', 'Mandor', 'Manager Mill', 'Manager MIll', 
         'supervisor Mill', 'Supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Analis', 'Grading', 
         'Office Assistant Mill', 'Office Assistant (OAA)', 'Office Assistant', 'Admin', 'Administrator'
     ];
@@ -21122,7 +21137,7 @@ window.renderDashFfbFruitLooseAnalysis = async function() {
     const allowedRoles = [
         'Senior Field Manager', 'Senior Mill Manager', 'Director', 'Office Head Assistant',
         'Senior Manager Estate', 'Manager', 'Askep', 'Assistant', 
-        'Krani Divisi', 'Manager Mill', 'Manager MIll', 
+        'Krani Divisi', 'Mandor', 'Manager Mill', 'Manager MIll', 
         'supervisor Mill', 'Supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Analis', 'Grading', 
         'Office Assistant Mill', 'Office Assistant (OAA)', 'Office Assistant', 'Admin', 'Administrator'
     ];
@@ -21257,7 +21272,7 @@ window.renderFfbReceivedChart = async function() {
     const allowedRoles = [
         'Senior Field Manager', 'Senior Mill Manager', 'Director', 'Office Head Assistant',
         'Senior Manager Estate', 'Manager', 'Askep', 'Assistant', 
-        'Krani Divisi', 'Manager Mill', 'Manager MIll', 
+        'Krani Divisi', 'Mandor', 'Manager Mill', 'Manager MIll', 
         'supervisor Mill', 'Supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Analis', 'Grading', 
         'Office Assistant Mill', 'Office Assistant (OAA)', 'Office Assistant', 'Admin', 'Administrator'
     ];
@@ -21528,7 +21543,7 @@ window.renderDashMonthlyFfbLooseAnalysis = async function() {
     const allowedRoles = [
         'Senior Field Manager', 'Senior Mill Manager', 'Director', 'Office Head Assistant',
         'Senior Manager Estate', 'Manager', 'Askep', 'Assistant', 
-        'Krani Divisi', 'Manager Mill', 'Manager MIll', 
+        'Krani Divisi', 'Mandor', 'Manager Mill', 'Manager MIll', 
         'supervisor Mill', 'Supervisor Mill', 'Krani Mill', 'Analis & Grading', 'Analis', 'Grading', 
         'Office Assistant Mill', 'Office Assistant (OAA)', 'Office Assistant', 'Admin', 'Administrator'
     ];
