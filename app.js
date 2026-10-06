@@ -20796,10 +20796,7 @@ window.renderDashFfbCropQuality = async function() {
     }
 
     cardEl.style.display = 'block';
-    let trendTitle = document.getElementById('dash-monthly-ffb-loose-trend-title');
-    if (trendTitle) {
-        trendTitle.innerText = `Trend % Brondolan Segar (${monthInput})`;
-    }
+    
 
 
 
@@ -21115,10 +21112,7 @@ window.renderDashFfbFruitLooseAnalysis = async function() {
     }
 
     cardEl.style.display = 'block';
-    let trendTitle = document.getElementById('dash-monthly-ffb-loose-trend-title');
-    if (trendTitle) {
-        trendTitle.innerText = `Trend % Brondolan Segar (${monthInput})`;
-    }
+    
 
 
 
@@ -21235,10 +21229,7 @@ window.renderFfbReceivedChart = async function() {
         return;
     } else {
         cardEl.style.display = 'block';
-    let trendTitle = document.getElementById('dash-monthly-ffb-loose-trend-title');
-    if (trendTitle) {
-        trendTitle.innerText = `Trend % Brondolan Segar (${monthInput})`;
-    }
+    
 
 
     }
@@ -21526,6 +21517,7 @@ window.renderDashMonthlyFfbLooseAnalysis = async function() {
     if (trendTitle) {
         trendTitle.innerText = `Trend % Brondolan Segar (${monthInput})`;
     }
+    
 
 
     
@@ -25275,4 +25267,5 @@ window.deleteSupplyChainMaster = async function(name) {
         alert('Gagal menghubungi server.');
     }
 };
+
 
